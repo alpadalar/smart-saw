@@ -1,0 +1,22 @@
+# src/requirements.txt
+
+# Temel gereksinimler
+python-dotenv==1.0.0
+pymodbus==3.5.4
+numpy==1.24.3
+pandas==2.0.3
+
+# GUI gereksinimleri
+tkinter
+matplotlib==3.7.1
+
+# Loglama ve veri işleme
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Tip kontrolü
+typing-extensions==4.7.1
+
+# Test gereksinimleri
+pytest==7.4.0
+pytest-cov==4.1.0
