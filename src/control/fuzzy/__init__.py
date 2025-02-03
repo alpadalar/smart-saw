@@ -7,6 +7,7 @@ from .controller import (
 )
 from .membership import FuzzyMembership
 from .rules import FuzzyRules
+from ...utils.speed.buffer import SpeedBuffer
 
 __all__ = [
     'adjust_speeds_fuzzy',
@@ -14,5 +15,6 @@ __all__ = [
     'fuzzy_controller',
     'fuzzy_output',
     'FuzzyMembership',
-    'FuzzyRules'
+    'FuzzyRules',
+    'SpeedBuffer'
 ]

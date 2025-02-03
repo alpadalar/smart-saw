@@ -145,29 +145,34 @@ class SmartSaw:
 
     def start(self):
         """Uygulamayı başlatır"""
-        try:
-            # Modbus bağlantısını aç
-            self.modbus_client.connect()
-            
-            # Çalışma bayrağını ayarla
-            self.is_running = True
-            
-            # Kontrol thread'ini başlat
-            self.control_thread = threading.Thread(target=self.start_control_loop)
-            self.control_thread.daemon = True
-            self.control_thread.start()
-            
-            # Veri thread'ini başlat
-            self.data_thread = threading.Thread(target=self.start_data_loop)
-            self.data_thread.daemon = True
-            self.data_thread.start()
-            
-            # GUI'yi ana thread'de başlat
-            self.gui.start()
-            
-        except Exception as e:
-            logger.error(f"Başlatma hatası: {str(e)}")
-            self.shutdown()
+        while True:
+            try:
+                # Modbus bağlantısını aç
+                logger.info("Modbus bağlantısı kuruluyor...")
+                self.modbus_client.connect()
+                logger.info("Modbus bağlantısı başarılı.")
+                break
+            except Exception as e:
+                logger.error(f"Modbus bağlantı hatası: {str(e)}")
+                logger.info("1 saniye sonra tekrar denenecek...")
+                time.sleep(1)
+                continue
+
+        # Çalışma bayrağını ayarla
+        self.is_running = True
+        
+        # Kontrol thread'ini başlat
+        self.control_thread = threading.Thread(target=self.start_control_loop)
+        self.control_thread.daemon = True
+        self.control_thread.start()
+        
+        # Veri thread'ini başlat
+        self.data_thread = threading.Thread(target=self.start_data_loop)
+        self.data_thread.daemon = True
+        self.data_thread.start()
+        
+        # GUI'yi ana thread'de başlat
+        self.gui.start()
 
     def handle_control_error(self):
         """Kontrol sistemi hatalarını yönetir"""
@@ -177,14 +182,17 @@ class SmartSaw:
 
     def handle_modbus_error(self):
         """Modbus hatalarını yönetir"""
-        try:
-            # Bağlantıyı yeniden kurmayı dene
-            self.modbus_client.disconnect()
-            time.sleep(1)
-            self.modbus_client.connect()
-        except:
-            # Başarısız olursa sistemi durdur
-            self.shutdown()
+        while self.is_running:
+            try:
+                logger.warning("Modbus bağlantısı koptu. Yeniden bağlanmaya çalışılıyor...")
+                self.modbus_client.disconnect()
+                time.sleep(1)  # 1 saniye bekle
+                self.modbus_client.connect()
+                logger.info("Modbus bağlantısı başarıyla yeniden kuruldu.")
+                return
+            except Exception as e:
+                logger.error(f"Modbus yeniden bağlanma hatası: {str(e)}")
+                time.sleep(1)  # 1 saniye bekle ve tekrar dene
 
     def handle_unexpected_error(self):
         """Beklenmeyen hataları yönetir"""
