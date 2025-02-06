@@ -1,8 +1,17 @@
 # src/control/fuzzy/controller.py
 import time
 from datetime import datetime
+from collections import deque
 from core.logger import logger
-from core.constants import SPEED_LIMITS, TestereState
+from core.constants import (
+    SPEED_LIMITS,
+    TestereState,
+    IDEAL_AKIM,
+    MIN_SPEED_UPDATE_INTERVAL,
+    BASLANGIC_GECIKMESI,
+    BUFFER_SIZE,
+    BUFFER_DURATION
+)
 from utils.helpers import (
     reverse_calculate_value,
     get_current_time_ms,
@@ -20,14 +29,20 @@ class FuzzyController:
         self.last_update_time = time.time()
         
         # Kontrol parametreleri
-        self.MIN_SPEED_UPDATE_INTERVAL = 1.0  # 1 Hz
-        self.BASLANGIC_GECIKMESI = 15000.0  # 15 saniye (ms)
-        self.IDEAL_AKIM = 17.0
+        self.MIN_SPEED_UPDATE_INTERVAL = MIN_SPEED_UPDATE_INTERVAL  # constants.py'dan al
+        self.BASLANGIC_GECIKMESI = BASLANGIC_GECIKMESI  # constants.py'dan al
+        self.IDEAL_AKIM = IDEAL_AKIM  # constants.py'dan al
         
         # Fuzzy sistem bileşenleri
         self.membership = FuzzyMembership()
         self.rules = FuzzyRules()
         self.speed_buffer = SpeedBuffer()
+        
+        # Veri tamponları
+        self.akim_buffer = deque(maxlen=BUFFER_SIZE)  # constants.py'dan al
+        self.sapma_buffer = deque(maxlen=BUFFER_SIZE)  # constants.py'dan al
+        self.titresim_buffer = deque(maxlen=BUFFER_SIZE)  # constants.py'dan al
+        self.last_buffer_update = time.time()
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
@@ -43,11 +58,46 @@ class FuzzyController:
         """Yüzdeye göre hız değişimini hesaplar"""
         speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
         return (percentage / 100) * speed_range
+        
+    def _get_max_titresim(self, processed_data):
+        """Üç eksendeki titreşim değerlerinin maksimumunu döndürür"""
+        x_hz = float(processed_data.get('ivme_olcer_x_hz', 0))
+        y_hz = float(processed_data.get('ivme_olcer_y_hz', 0))
+        z_hz = float(processed_data.get('ivme_olcer_z_hz', 0))
+        return max(x_hz, y_hz, z_hz)
+        
+    def _update_buffers(self, akim, sapma, titresim):
+        """Veri tamponlarını günceller"""
+        current_time = time.time()
+        
+        # Tamponları güncelle
+        self.akim_buffer.append((current_time, akim))
+        self.sapma_buffer.append((current_time, sapma))
+        self.titresim_buffer.append((current_time, titresim))
+        
+        # Eski verileri temizle (BUFFER_DURATION saniyeden eski)
+        while self.akim_buffer and current_time - self.akim_buffer[0][0] > BUFFER_DURATION:
+            self.akim_buffer.popleft()
+        while self.sapma_buffer and current_time - self.sapma_buffer[0][0] > BUFFER_DURATION:
+            self.sapma_buffer.popleft()
+        while self.titresim_buffer and current_time - self.titresim_buffer[0][0] > BUFFER_DURATION:
+            self.titresim_buffer.popleft()
+            
+    def _get_buffer_averages(self):
+        """Tamponlardaki verilerin ortalamasını alır"""
+        if not self.akim_buffer or not self.sapma_buffer or not self.titresim_buffer:
+            return None, None, None
+            
+        akim_avg = sum(akim for _, akim in self.akim_buffer) / len(self.akim_buffer)
+        sapma_avg = sum(sapma for _, sapma in self.sapma_buffer) / len(self.sapma_buffer)
+        titresim_avg = sum(titresim for _, titresim in self.titresim_buffer) / len(self.titresim_buffer)
+        
+        return akim_avg, sapma_avg, titresim_avg
 
     def kesim_durumu_kontrol(self, testere_durumu):
         current_time = time.time() * 1000
         
-        if testere_durumu != 3:
+        if testere_durumu != TestereState.CUTTING.value:
             if self.is_cutting:
                 self._log_kesim_bitis()
             return False
@@ -67,9 +117,9 @@ class FuzzyController:
         current_time = time.time()
         return current_time - self.last_update_time >= self.MIN_SPEED_UPDATE_INTERVAL
 
-    def calculate_fuzzy_output(self, current_akim, akim_degisim):
+    def calculate_fuzzy_output(self, current_akim, current_sapma, current_titresim):
         """Fuzzy çıkış değerini hesaplar"""
-        return self.rules.evaluate(current_akim, akim_degisim)
+        return self.rules.evaluate(current_akim, current_sapma, current_titresim)
 
     def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, 
                      speed_adjustment_interval, prev_current):
@@ -88,27 +138,36 @@ class FuzzyController:
             return last_modbus_write_time, None
 
         try:
-            # Akım ve sapma değerlerini al
+            # Akım, sapma ve titreşim değerlerini al
             current_akim = float(processed_data.get('serit_motor_akim_a', self.IDEAL_AKIM))
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
-            logger.debug(f"Mevcut akım: {current_akim:.2f}A, Sapma: {current_sapma:.2f}mm")
+            current_titresim = self._get_max_titresim(processed_data)
             
-            # Akım değişimini hesapla
-            akim_degisim = current_akim - prev_current if prev_current is not None else 0
-            logger.debug(f"Akım değişimi: {akim_degisim:.2f}A")
+            # Tamponları güncelle
+            self._update_buffers(current_akim, current_sapma, current_titresim)
             
-            # Fuzzy çıktısını hesapla
-            fuzzy_output = self.calculate_fuzzy_output(current_akim, akim_degisim)
-            logger.debug(f"Fuzzy çıktısı: {fuzzy_output}")
+            # Ortalama değerleri al
+            avg_akim, avg_sapma, avg_titresim = self._get_buffer_averages()
+            if avg_akim is None or avg_sapma is None or avg_titresim is None:
+                logger.warning("Yeterli veri yok, ham değerler kullanılıyor")
+                avg_akim, avg_sapma, avg_titresim = current_akim, current_sapma, current_titresim
+                
+            logger.debug(f"Ortalama akım: {avg_akim:.2f}A, Ortalama sapma: {avg_sapma:.2f}mm, Ortalama titreşim: {avg_titresim:.2f}Hz")
             
-            # İnme hızı için limit kontrolü
+            # Fuzzy çıktısını hesapla (değişim miktarı)
+            fuzzy_output = self.calculate_fuzzy_output(avg_akim, avg_sapma, avg_titresim)
+            logger.debug(f"Fuzzy değişim çıktısı: {fuzzy_output}")
+            
+            # İnme hızı için değişimi hesapla
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
-            new_inme_hizi = current_inme_hizi + fuzzy_output
+            new_inme_hizi = current_inme_hizi + fuzzy_output  # Direkt değişimi ekle
+            
+            # İnme hızı sınırlarını uygula
             new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
-            inme_hizi_degisim = new_inme_hizi - current_inme_hizi
             logger.debug(f"Mevcut inme hızı: {current_inme_hizi:.2f}, Yeni inme hızı: {new_inme_hizi:.2f}")
             
             # İnme hızı değişim yüzdesini hesapla
+            inme_hizi_degisim = new_inme_hizi - current_inme_hizi
             inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
             logger.debug(f"İnme hızı değişim yüzdesi: %{inme_degisim_yuzdesi:.2f}")
             
@@ -195,6 +254,6 @@ def adjust_speeds_fuzzy(processed_data, modbus_client, last_modbus_write_time, s
         prev_current=prev_current
     )
 
-def fuzzy_output(cikis_sim, current_akim, akim_degisim):
+def fuzzy_output(cikis_sim, current_akim, current_sapma):
     """Eski fuzzy_output fonksiyonu için uyumluluk katmanı"""
-    return _fuzzy_controller.calculate_fuzzy_output(current_akim, akim_degisim)
+    return _fuzzy_controller.calculate_fuzzy_output(current_akim, current_sapma, 0)

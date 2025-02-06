@@ -75,13 +75,13 @@ class LocalStorage:
                 ivme_olcer_x_hz REAL,
                 ivme_olcer_y_hz REAL,
                 ivme_olcer_z_hz REAL,
+                max_titresim_hz REAL,
                 testere_durumu INTEGER,
                 alarm_status INTEGER,
                 alarm_bilgisi VARCHAR(10),
                 serit_kesme_hizi REAL,
                 serit_inme_hizi REAL,
-                fuzzy_output REAL,
-                kesme_hizi_degisim REAL
+                fuzzy_output REAL
             )
             """
             
@@ -124,8 +124,6 @@ class LocalStorage:
             # Fuzzy verilerini düzenle
             if 'fuzzy_output' not in data:
                 data['fuzzy_output'] = 0.0
-            if 'kesme_hizi_degisim' not in data:
-                data['kesme_hizi_degisim'] = 0.0
             
             # Eski fuzzy sütunlarını kaldır
             data.pop('fuzzy_akim_uyelik', None)
@@ -234,13 +232,13 @@ class RemoteStorage:
                 ivme_olcer_x_hz REAL,
                 ivme_olcer_y_hz REAL,
                 ivme_olcer_z_hz REAL,
+                max_titresim_hz REAL,
                 testere_durumu INTEGER,
                 alarm_status INTEGER,
                 alarm_bilgisi VARCHAR(10),
                 serit_kesme_hizi REAL,
                 serit_inme_hizi REAL,
-                fuzzy_output REAL,
-                kesme_hizi_degisim REAL
+                fuzzy_output REAL
             )
             """
             

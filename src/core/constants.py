@@ -19,6 +19,15 @@ SPEED_LIMITS = {
     }
 }
 
+# Fuzzy Kontrol Parametreleri
+IDEAL_AKIM = 17.0
+MIN_SPEED_UPDATE_INTERVAL = 1.0  # 1 Hz
+BASLANGIC_GECIKMESI = 15000.0  # 15 saniye (ms)
+
+# Buffer Parametreleri
+BUFFER_SIZE = 10  # Her tampon için maksimum örnek sayısı
+BUFFER_DURATION = 1.0  # Tampon süresi (saniye)
+
 class TestereState(Enum):
     IDLE = 0
     READY = 1

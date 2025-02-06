@@ -115,8 +115,12 @@ class DataProcessor:
             else:
                 processed_data['fuzzy_output'] = self._safe_float(row_data.get('fuzzy_output', 0.0))
                 
-            processed_data['fuzzy_akim_degisim'] = self._safe_float(row_data.get('fuzzy_akim_degisim', 0.0))
-            processed_data['kesme_hizi_degisim'] = self._safe_float(row_data.get('kesme_hizi_degisim', 0.0))
+            # Maksimum titreşim değeri
+            processed_data['max_titresim_hz'] = max(
+                processed_data['ivme_olcer_x_hz'],
+                processed_data['ivme_olcer_y_hz'],
+                processed_data['ivme_olcer_z_hz']
+            )
             
             return processed_data
             

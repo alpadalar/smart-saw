@@ -3,7 +3,11 @@ import time
 from datetime import datetime
 from typing import Union, Optional
 from core.logger import logger
-from core.constants import SPEED_LIMITS, KESME_HIZI_REGISTER_ADDRESS, INME_HIZI_REGISTER_ADDRESS
+from core.constants import (
+    SPEED_LIMITS,
+    KESME_HIZI_REGISTER_ADDRESS,
+    INME_HIZI_REGISTER_ADDRESS
+)
 
 # Register adresleri
 REGISTER_ADDRESSES = {
