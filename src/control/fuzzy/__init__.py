@@ -2,17 +2,17 @@
 from .controller import (
     adjust_speeds_fuzzy,
     FuzzyController,
-    fuzzy_controller,
+    _fuzzy_controller,
     fuzzy_output
 )
 from .membership import FuzzyMembership
 from .rules import FuzzyRules
-from ...utils.speed.buffer import SpeedBuffer
+from utils.speed.buffer import SpeedBuffer
 
 __all__ = [
     'adjust_speeds_fuzzy',
     'FuzzyController',
-    'fuzzy_controller',
+    '_fuzzy_controller',
     'fuzzy_output',
     'FuzzyMembership',
     'FuzzyRules',

@@ -15,7 +15,7 @@ from utils.helpers import (
 IDEAL_AKIM = 17.0
 SAPMA_ESIK = 0.4
 MIN_SPEED_UPDATE_INTERVAL = 1.0  # 1 Hz güncelleme hızı
-BASLANGIC_GECIKMESI = 30000.0  # 30 saniye başlangıç gecikmesi (ms)
+BASLANGIC_GECIKMESI = 15000.0  # 30 saniye başlangıç gecikmesi (ms)
 BUFFER_SURESI = 1.0  # 1 saniyelik veri tamponu
 
 class VeriBuffer:
@@ -140,24 +140,41 @@ class AkimKontrol:
         self.cutting_start_time = None
 
 
-# Global kontrol nesnesi
+# Global controller nesnesi
 akim_kontrol = AkimKontrol()
 
-def adjust_speeds(processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, cikis_sim, prev_current):
+def adjust_speeds(processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, prev_current):
+    """Expert kontrol için hız ayarlama fonksiyonu"""
     if not akim_kontrol.kesim_durumu_kontrol(processed_data.get('testere_durumu')):
         return last_modbus_write_time, None
 
     if not akim_kontrol.hiz_guncelleme_zamani_geldi_mi():
         return last_modbus_write_time, None
 
-    current_akim = processed_data.get('serit_motor_akim_a', IDEAL_AKIM)
-    current_sapma = processed_data.get('serit_sapmasi', 0)
-    current_inme_hizi = processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min'])
-
-    new_inme_hizi = akim_kontrol.inme_hizi_hesapla(current_akim, current_sapma, current_inme_hizi)
-
-    inme_hizi_is_negative = new_inme_hizi < 0
-    reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
-
-    akim_kontrol.last_update_time = time.time()
-    return akim_kontrol.last_update_time, None
+    try:
+        # Mevcut değerleri al
+        current_akim = float(processed_data.get('serit_motor_akim_a', IDEAL_AKIM))
+        current_sapma = float(processed_data.get('serit_sapmasi', 0))
+        current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
+        
+        # Yeni inme hızını hesapla
+        new_inme_hizi = akim_kontrol.inme_hizi_hesapla(current_akim, current_sapma, current_inme_hizi)
+        
+        # Hız sınırlarını uygula
+        new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+        
+        # Modbus'a yaz
+        if new_inme_hizi != current_inme_hizi:
+            inme_hizi_is_negative = new_inme_hizi < 0
+            reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
+            logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
+        
+        # Son güncelleme zamanını kaydet
+        akim_kontrol.last_update_time = time.time()
+        
+        return last_modbus_write_time, new_inme_hizi
+        
+    except Exception as e:
+        logger.error(f"Expert kontrol hatası: {str(e)}")
+        logger.exception("Detaylı hata:")
+        return last_modbus_write_time, None

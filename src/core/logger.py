@@ -1,5 +1,6 @@
 # src/core/logger.py
 import os
+import sys
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
@@ -25,38 +26,52 @@ class CustomFormatter(logging.Formatter):
         formatter = self.formatters.get(record.levelno)
         return formatter.format(record)
 
-def setup_logger(config) -> logging.Logger:
-    """Logger'ı yapılandırır ve döndürür"""
-    # Log dizinini oluştur
-    log_dir = "logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+def setup_logger(config):
+    """Logger'ı yapılandırır"""
+    # Log seviyesini ayarla
+    log_level = getattr(logging, config.level.upper(), logging.INFO)
+    logger.setLevel(log_level)
     
-    # Log dosya yolunu oluştur
-    log_file = os.path.join(log_dir, config.file)
-    
-    # Logger'ı yapılandır
-    logger = logging.getLogger("SmartSaw")
-    logger.setLevel(getattr(logging, config.level.upper()))
-    
-    # Dosya handler'ı
-    file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=config.max_size,
-        backupCount=config.backup_count
-    )
-    file_handler.setFormatter(CustomFormatter())
+    # Formatı ayarla
+    formatter = CustomFormatter()
     
     # Konsol handler'ı
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(CustomFormatter())
-    
-    # Handler'ları ekle
-    logger.addHandler(file_handler)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(log_level)
+    console_handler.encoding = 'utf-8'
     logger.addHandler(console_handler)
     
+    # Log dizinini oluştur
+    if not os.path.exists(config.log_dir):
+        os.makedirs(config.log_dir)
+    
+    # Günlük log dosyası
+    daily_log_file = os.path.join(
+        config.log_dir,
+        f"testere_{datetime.now().strftime('%Y%m%d')}.log"
+    )
+    
+    # Genel log dosyası
+    general_log_file = os.path.join(config.log_dir, config.file)
+    
+    # Dosya handler'ları
+    file_handler = RotatingFileHandler(
+        general_log_file,
+        maxBytes=config.max_file_size,
+        backupCount=config.backup_count,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(log_level)
+    logger.addHandler(file_handler)
+    
+    daily_handler = logging.FileHandler(daily_log_file, encoding='utf-8')
+    daily_handler.setFormatter(formatter)
+    daily_handler.setLevel(log_level)
+    logger.addHandler(daily_handler)
+    
     logger.info("Logger başlatıldı")
-    return logger
 
 # Global logger nesnesi
 logger = logging.getLogger("SmartSaw")

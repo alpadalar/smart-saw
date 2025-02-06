@@ -1,7 +1,5 @@
 # src/control/fuzzy/controller.py
 import time
-import numpy as np
-import skfuzzy as fuzz
 from datetime import datetime
 from core.logger import logger
 from core.constants import SPEED_LIMITS, TestereState
@@ -11,6 +9,9 @@ from utils.helpers import (
     calculate_elapsed_time_ms,
     format_time
 )
+from utils.speed.buffer import SpeedBuffer
+from .membership import FuzzyMembership
+from .rules import FuzzyRules
 
 class FuzzyController:
     def __init__(self):
@@ -23,38 +24,25 @@ class FuzzyController:
         self.BASLANGIC_GECIKMESI = 15000.0  # 15 saniye (ms)
         self.IDEAL_AKIM = 17.0
         
-        # Fuzzy sistem kurulumu
-        self.setup_fuzzy_system()
-        
+        # Fuzzy sistem bileşenleri
         self.membership = FuzzyMembership()
         self.rules = FuzzyRules()
-        self.speed_buffer = SpeedBuffer()  # Yeni eklenen
+        self.speed_buffer = SpeedBuffer()
         
-    def setup_fuzzy_system(self):
-        """Fuzzy kontrol sistemini kurar"""
-        # Evrensel kümeler
-        self.akim = np.arange(0, 31, 1)
-        self.akim_degisim = np.arange(-10, 11, 1)
-        self.hiz_degisim = np.arange(-10, 11, 0.1)
-        
-        # Akım üyelik fonksiyonları
-        self.akim_cok_dusuk = fuzz.trimf(self.akim, [0, 0, 10])
-        self.akim_dusuk = fuzz.trimf(self.akim, [5, 12, 16])
-        self.akim_normal = fuzz.trimf(self.akim, [14, 17, 20])
-        self.akim_yuksek = fuzz.trimf(self.akim, [18, 22, 26])
-        self.akim_cok_yuksek = fuzz.trimf(self.akim, [24, 30, 30])
-        
-        # Akım değişim üyelik fonksiyonları
-        self.degisim_negatif = fuzz.trimf(self.akim_degisim, [-10, -5, 0])
-        self.degisim_sifir = fuzz.trimf(self.akim_degisim, [-2, 0, 2])
-        self.degisim_pozitif = fuzz.trimf(self.akim_degisim, [0, 5, 10])
-        
-        # Hız değişim üyelik fonksiyonları
-        self.hiz_azalt_cok = fuzz.trimf(self.hiz_degisim, [-10, -10, -5])
-        self.hiz_azalt = fuzz.trimf(self.hiz_degisim, [-7, -4, -1])
-        self.hiz_sabit = fuzz.trimf(self.hiz_degisim, [-2, 0, 2])
-        self.hiz_artir = fuzz.trimf(self.hiz_degisim, [1, 4, 7])
-        self.hiz_artir_cok = fuzz.trimf(self.hiz_degisim, [5, 10, 10])
+        # Kesme hızı değişim buffer'ı
+        self.kesme_hizi_degisim_buffer = 0.0
+    
+    def _calculate_speed_change_percentage(self, speed_change, speed_type):
+        """Hız değişiminin yüzdesini hesaplar"""
+        speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
+        if speed_range == 0:
+            return 0
+        return (speed_change / speed_range) * 100
+
+    def _calculate_speed_change_from_percentage(self, percentage, speed_type):
+        """Yüzdeye göre hız değişimini hesaplar"""
+        speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
+        return (percentage / 100) * speed_range
 
     def kesim_durumu_kontrol(self, testere_durumu):
         current_time = time.time() * 1000
@@ -81,89 +69,88 @@ class FuzzyController:
 
     def calculate_fuzzy_output(self, current_akim, akim_degisim):
         """Fuzzy çıkış değerini hesaplar"""
-        # Akım üyelik dereceleri
-        akim_level_cd = fuzz.interp_membership(self.akim, self.akim_cok_dusuk, current_akim)
-        akim_level_d = fuzz.interp_membership(self.akim, self.akim_dusuk, current_akim)
-        akim_level_n = fuzz.interp_membership(self.akim, self.akim_normal, current_akim)
-        akim_level_y = fuzz.interp_membership(self.akim, self.akim_yuksek, current_akim)
-        akim_level_cy = fuzz.interp_membership(self.akim, self.akim_cok_yuksek, current_akim)
-        
-        # Akım değişim üyelik dereceleri
-        degisim_level_n = fuzz.interp_membership(self.akim_degisim, self.degisim_negatif, akim_degisim)
-        degisim_level_s = fuzz.interp_membership(self.akim_degisim, self.degisim_sifir, akim_degisim)
-        degisim_level_p = fuzz.interp_membership(self.akim_degisim, self.degisim_pozitif, akim_degisim)
-        
-        # Kural aktivasyonları
-        rule1 = np.fmin(akim_level_cd, self.hiz_artir_cok)
-        rule2 = np.fmin(akim_level_d, self.hiz_artir)
-        rule3 = np.fmin(akim_level_n, self.hiz_sabit)
-        rule4 = np.fmin(akim_level_y, self.hiz_azalt)
-        rule5 = np.fmin(akim_level_cy, self.hiz_azalt_cok)
-        
-        # Değişim kuralları
-        rule6 = np.fmin(degisim_level_n, self.hiz_artir)
-        rule7 = np.fmin(degisim_level_s, self.hiz_sabit)
-        rule8 = np.fmin(degisim_level_p, self.hiz_azalt)
-        
-        # Kural birleştirme
-        aggregated = np.fmax.reduce([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8])
-        
-        # Durulaştırma
-        hiz_degisimi = fuzz.defuzz(self.hiz_degisim, aggregated, 'centroid')
-        
-        return hiz_degisimi
+        return self.rules.evaluate(current_akim, akim_degisim)
 
     def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, 
                      speed_adjustment_interval, prev_current):
+        """Hızları ayarlar ve fuzzy çıktısını döndürür"""
         # Kesim durumu kontrolü
-        if not self._check_cutting_state(processed_data.get('testere_durumu')):
+        testere_durumu = processed_data.get('testere_durumu')
+        logger.debug(f"Testere durumu: {testere_durumu}")
+        
+        if not self.kesim_durumu_kontrol(testere_durumu):
+            logger.debug("Kesim durumu uygun değil")
             return last_modbus_write_time, None
 
         # Güncelleme zamanı kontrolü
-        current_time = time.time()
-        if current_time - self.last_update_time < speed_adjustment_interval:
+        if not self.hiz_guncelleme_zamani_geldi_mi():
+            logger.debug("Hız güncelleme zamanı gelmedi")
             return last_modbus_write_time, None
 
-        # Akım ve sapma değerlerini al
-        current_akim = processed_data.get('serit_motor_akim_a', self.IDEAL_AKIM)
-        current_sapma = processed_data.get('serit_sapmasi', 0)
-        
-        # Fuzzy çıktısını hesapla
-        inme_hizi_degisimi = self.rules.evaluate(current_akim, current_sapma)
-        
-        # İnme hızı için limit kontrolü
-        current_inme_hizi = processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min'])
-        new_inme_hizi = current_inme_hizi + inme_hizi_degisimi
-        new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(SPEED_LIMITS['inme']['max'], new_inme_hizi))
-        
-        # İnme hızı değişim oranını hesapla
-        inme_hizi_range = SPEED_LIMITS['inme']['max'] - SPEED_LIMITS['inme']['min']
-        change_percentage = (inme_hizi_degisimi / inme_hizi_range) * 100
-        
-        # Kesme hızı için orantılı değişimi hesapla
-        kesme_hizi_range = SPEED_LIMITS['kesme']['max'] - SPEED_LIMITS['kesme']['min']
-        kesme_hizi_degisimi = (kesme_hizi_range * change_percentage) / 100
-        
-        # Kesme hızı değişimini buffer'a ekle
-        self.speed_buffer.add_to_buffer(0, kesme_hizi_degisimi)  # İlk parametre kesme hızı için
-        
-        # Modbus'a yazma işlemleri
-        if new_inme_hizi != current_inme_hizi:
-            inme_hizi_is_negative = new_inme_hizi < 0
-            reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
-        
-        # Buffer'dan kesme hızı değişimini kontrol et ve gerekirse uygula
-        if self.speed_buffer.should_adjust():
-            adjustment = self.speed_buffer.get_and_clear()
-            current_kesme_hizi = processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min'])
-            new_kesme_hizi = current_kesme_hizi + adjustment.kesme_hizi
-            new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(SPEED_LIMITS['kesme']['max'], new_kesme_hizi))
+        try:
+            # Akım ve sapma değerlerini al
+            current_akim = float(processed_data.get('serit_motor_akim_a', self.IDEAL_AKIM))
+            current_sapma = float(processed_data.get('serit_sapmasi', 0))
+            logger.debug(f"Mevcut akım: {current_akim:.2f}A, Sapma: {current_sapma:.2f}mm")
             
-            if new_kesme_hizi != current_kesme_hizi:
-                reverse_calculate_value(modbus_client, new_kesme_hizi, 'serit_kesme_hizi', False)
-        
-        self.last_update_time = current_time
-        return current_time, inme_hizi_degisimi
+            # Akım değişimini hesapla
+            akim_degisim = current_akim - prev_current if prev_current is not None else 0
+            logger.debug(f"Akım değişimi: {akim_degisim:.2f}A")
+            
+            # Fuzzy çıktısını hesapla
+            fuzzy_output = self.calculate_fuzzy_output(current_akim, akim_degisim)
+            logger.debug(f"Fuzzy çıktısı: {fuzzy_output}")
+            
+            # İnme hızı için limit kontrolü
+            current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
+            new_inme_hizi = current_inme_hizi + fuzzy_output
+            new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+            inme_hizi_degisim = new_inme_hizi - current_inme_hizi
+            logger.debug(f"Mevcut inme hızı: {current_inme_hizi:.2f}, Yeni inme hızı: {new_inme_hizi:.2f}")
+            
+            # İnme hızı değişim yüzdesini hesapla
+            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
+            logger.debug(f"İnme hızı değişim yüzdesi: %{inme_degisim_yuzdesi:.2f}")
+            
+            # Kesme hızı için değişimi hesapla
+            kesme_hizi_degisim = self._calculate_speed_change_from_percentage(inme_degisim_yuzdesi, 'kesme')
+            logger.debug(f"Hesaplanan kesme hızı değişimi: {kesme_hizi_degisim:.2f}")
+            
+            # Kesme hızı değişimini buffer'a ekle
+            self.kesme_hizi_degisim_buffer += kesme_hizi_degisim
+            logger.debug(f"Kesme hızı değişim buffer'ı: {self.kesme_hizi_degisim_buffer:.2f}")
+            
+            # Modbus'a yazma işlemleri
+            if new_inme_hizi != current_inme_hizi:
+                # İnme hızını yaz
+                inme_hizi_is_negative = new_inme_hizi < 0
+                reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
+                logger.debug("Yeni inme hızı değeri Modbus'a yazıldı")
+                
+                # Kesme hızı için buffer kontrolü
+                if abs(self.kesme_hizi_degisim_buffer) >= 1.0:
+                    current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
+                    new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
+                    new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+                    
+                    # Kesme hızını yaz
+                    kesme_hizi_is_negative = new_kesme_hizi < 0
+                    reverse_calculate_value(modbus_client, new_kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
+                    logger.debug(f"Yeni kesme hızı değeri Modbus'a yazıldı: {new_kesme_hizi:.2f}")
+                    
+                    # Buffer'ı sıfırla
+                    self.kesme_hizi_degisim_buffer = 0.0
+            
+            # Son güncelleme zamanını kaydet
+            self.last_update_time = time.time()
+            
+            # Fuzzy çıktısını döndür
+            return last_modbus_write_time, fuzzy_output
+            
+        except Exception as e:
+            logger.error(f"Fuzzy kontrol hatası: {str(e)}")
+            logger.exception("Detaylı hata:")
+            return last_modbus_write_time, None
 
     def _check_cutting_state(self, state):
         """Kesim durumunu kontrol eder"""
@@ -195,14 +182,19 @@ class FuzzyController:
         self.is_cutting = False
         self.cutting_start_time = None
 
-
-# Global controller nesnesi
-fuzzy_controller = FuzzyController()
+# Singleton controller nesnesi
+_fuzzy_controller = FuzzyController()
 
 def adjust_speeds_fuzzy(processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, prev_current):
-    return fuzzy_controller.adjust_speeds(processed_data, modbus_client, last_modbus_write_time,
-                                       speed_adjustment_interval, prev_current)
+    """Fuzzy kontrol için hız ayarlama fonksiyonu"""
+    return _fuzzy_controller.adjust_speeds(
+        processed_data=processed_data,
+        modbus_client=modbus_client,
+        last_modbus_write_time=last_modbus_write_time,
+        speed_adjustment_interval=speed_adjustment_interval,
+        prev_current=prev_current
+    )
 
 def fuzzy_output(cikis_sim, current_akim, akim_degisim):
     """Eski fuzzy_output fonksiyonu için uyumluluk katmanı"""
-    return fuzzy_controller.calculate_fuzzy_output(current_akim, akim_degisim)
+    return _fuzzy_controller.calculate_fuzzy_output(current_akim, akim_degisim)

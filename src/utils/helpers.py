@@ -3,7 +3,13 @@ import time
 from datetime import datetime
 from typing import Union, Optional
 from core.logger import logger
-from core.constants import SPEED_LIMITS
+from core.constants import SPEED_LIMITS, KESME_HIZI_REGISTER_ADDRESS, INME_HIZI_REGISTER_ADDRESS
+
+# Register adresleri
+REGISTER_ADDRESSES = {
+    'serit_kesme_hizi': KESME_HIZI_REGISTER_ADDRESS,  # Kesme hızı register adresi (2066)
+    'serit_inme_hizi': INME_HIZI_REGISTER_ADDRESS,   # İnme hızı register adresi (2041)
+}
 
 def reverse_calculate_value(modbus_client, value: float, register_type: str, is_negative: bool = False) -> None:
     """
@@ -19,8 +25,14 @@ def reverse_calculate_value(modbus_client, value: float, register_type: str, is_
         if register_type == 'serit_kesme_hizi':
             # Kesme hızı için dönüşüm (0.0754 katsayısı ile)
             modbus_value = int(value / 0.0754)
-            modbus_client.write_register('serit_kesme_hizi', modbus_value)
-            logger.debug(f"Kesme hızı yazıldı: {value} -> {modbus_value}")
+            logger.debug(f"Kesme hızı yazılmaya çalışılıyor:")
+            logger.debug(f"  Değer: {value}")
+            logger.debug(f"  Modbus değeri: {modbus_value}")
+            logger.debug(f"  Register: {REGISTER_ADDRESSES[register_type]}")
+            
+            result = modbus_client.write_register(REGISTER_ADDRESSES[register_type], modbus_value)
+            logger.debug(f"  Yazma sonucu: {'Başarılı' if result else 'Başarısız'}")
+            time.sleep(0.110)  # 110ms bekle
             
         elif register_type == 'serit_inme_hizi':
             # İnme hızı için dönüşüm
@@ -32,11 +44,18 @@ def reverse_calculate_value(modbus_client, value: float, register_type: str, is_
                 else:
                     modbus_value = int(value / -0.06) + 65535
             
-            modbus_client.write_register('serit_inme_hizi', modbus_value)
-            logger.debug(f"İnme hızı yazıldı: {value} -> {modbus_value}")
+            logger.debug(f"İnme hızı yazılmaya çalışılıyor:")
+            logger.debug(f"  Değer: {value}")
+            logger.debug(f"  Modbus değeri: {modbus_value}")
+            logger.debug(f"  Register: {REGISTER_ADDRESSES[register_type]}")
+            
+            result = modbus_client.write_register(REGISTER_ADDRESSES[register_type], modbus_value)
+            logger.debug(f"  Yazma sonucu: {'Başarılı' if result else 'Başarısız'}")
+            time.sleep(0.110)  # 110ms bekle
             
     except Exception as e:
         logger.error(f"Modbus yazma hatası: {str(e)}")
+        logger.exception("Detaylı hata:")
         raise
 
 
@@ -89,23 +108,17 @@ def format_time(milliseconds: float) -> str:
         milliseconds: Formatlanacak süre (milisaniye)
         
     Returns:
-        str: "DD gün HH:MM:SS.mmm" formatında süre
+        str: "MM:SS.mmm" formatında süre
     """
     # Milisaniyeleri ayır
     ms = int(milliseconds % 1000)
     seconds = milliseconds // 1000
     
-    # Gün, saat, dakika, saniye hesapla
-    days = int(seconds // (24 * 3600))
-    seconds = seconds % (24 * 3600)
-    hours = int(seconds // 3600)
-    seconds %= 3600
+    # Dakika ve saniye hesapla
     minutes = int(seconds // 60)
     seconds = int(seconds % 60)
     
-    if days > 0:
-        return f"{days} gün {hours:02d}:{minutes:02d}:{seconds:02d}.{ms:03d}"
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{ms:03d}"
+    return f"{minutes:02d}:{seconds:02d}.{ms:03d}"
 
 
 def get_current_time_ms() -> str:

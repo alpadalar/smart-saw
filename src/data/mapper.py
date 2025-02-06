@@ -7,9 +7,9 @@ from core import logger
 from models.data_models import (
     ModbusRegisters,
     RawData,
-    ProcessedData,
     SpeedData
 )
+from core.data_processor import ProcessedData
 
 @dataclass
 class DataMapper:
@@ -18,13 +18,17 @@ class DataMapper:
     def __init__(self):
         self.registers = ModbusRegisters()
         self._last_processed_data: Optional[ProcessedData] = None
+        self._last_fuzzy_output: float = 0.0
+        self._last_kesme_hizi_degisim: float = 0.0
 
-    def map_data(self, raw_data: Dict[int, float]) -> ProcessedData:
+    def map_data(self, raw_data: Dict[int, float], fuzzy_output: Optional[float] = None, kesme_hizi_degisim: Optional[float] = None) -> ProcessedData:
         """
         Ham modbus verisini işlenmiş veriye dönüştürür
         
         Args:
             raw_data: Ham modbus register değerleri
+            fuzzy_output: Fuzzy kontrolcü çıktısı
+            kesme_hizi_degisim: Kesme hızı değişimi
             
         Returns:
             ProcessedData: İşlenmiş veri
@@ -59,16 +63,24 @@ class DataMapper:
                 0.0
             )
             
+            # Fuzzy değerlerini güncelle
+            if fuzzy_output is not None:
+                self._last_fuzzy_output = fuzzy_output
+            if kesme_hizi_degisim is not None:
+                self._last_kesme_hizi_degisim = kesme_hizi_degisim
+            
             # Değerleri ölçek ve birimlere dönüştür
-            processed_data = ProcessedData(
-                timestamp=current_time,
-                serit_motor_akim_a=self._scale_current(serit_motor_akim),
-                serit_sapmasi=self._scale_deviation(serit_sapma),
-                kafa_yuksekligi_mm=self._scale_height(kafa_yukseklik),
-                testere_durumu=testere_durum,
-                serit_kesme_hizi=self._scale_speed(kesme_hiz),
-                serit_inme_hizi=self._scale_speed(inme_hiz)
-            )
+            processed_data = ProcessedData({
+                'timestamp': current_time,
+                'serit_motor_akim_a': self._scale_current(serit_motor_akim),
+                'serit_sapmasi': self._scale_deviation(serit_sapma),
+                'kafa_yuksekligi_mm': self._scale_height(kafa_yukseklik),
+                'testere_durumu': testere_durum,
+                'serit_kesme_hizi': self._scale_speed(kesme_hiz),
+                'serit_inme_hizi': self._scale_speed(inme_hiz),
+                'fuzzy_output': self._last_fuzzy_output,
+                'kesme_hizi_degisim': self._last_kesme_hizi_degisim
+            })
             
             # Son işlenmiş veriyi sakla
             self._last_processed_data = processed_data
@@ -78,9 +90,11 @@ class DataMapper:
         except Exception as e:
             logger.error(f"Veri dönüştürme hatası: {str(e)}")
             # Hata durumunda son geçerli veriyi veya varsayılan değerleri döndür
-            return self._last_processed_data or ProcessedData(
-                timestamp=datetime.now()
-            )
+            return self._last_processed_data or ProcessedData({
+                'timestamp': datetime.now(),
+                'fuzzy_output': self._last_fuzzy_output,
+                'kesme_hizi_degisim': self._last_kesme_hizi_degisim
+            })
 
     def _scale_current(self, raw_value: float) -> float:
         """Akım değerini ölçeklendirir (0-65535 -> 0-100A)"""

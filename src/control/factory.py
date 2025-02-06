@@ -1,4 +1,5 @@
 # src/control/factory.py
+import time
 from enum import Enum
 from typing import Optional, Callable, Dict, Any
 from core.logger import logger
@@ -19,11 +20,12 @@ class ControllerType(Enum):
 class ControllerFactory:
     """Kontrol sistemi factory sınıfı"""
     
-    def __init__(self):
+    def __init__(self, modbus_client=None):
+        self.modbus_client = modbus_client
         self._controllers: Dict[ControllerType, Callable] = {
+            ControllerType.FUZZY: fuzzy_adjust,
             ControllerType.EXPERT: expert_adjust,
             ControllerType.LINEAR: linear_adjust,
-            ControllerType.FUZZY: fuzzy_adjust
         }
         self._active_controller: Optional[ControllerType] = None
         self._controller_stats: Dict[ControllerType, Dict[str, Any]] = {
@@ -40,16 +42,24 @@ class ControllerFactory:
         """Aktif kontrol sistemini döndürür"""
         return self._active_controller
 
-    def set_controller(self, controller_type: ControllerType) -> None:
+    def set_controller(self, controller_type: Optional[ControllerType]) -> None:
         """
         Aktif kontrol sistemini değiştirir
         
         Args:
-            controller_type: Kullanılacak kontrol sistemi tipi
+            controller_type: Kullanılacak kontrol sistemi tipi. None ise kontrol sistemi kapatılır.
             
         Raises:
             ControllerNotFoundError: Belirtilen kontrol sistemi bulunamadığında
         """
+        if controller_type is None:
+            logger.info("Kontrol sistemi kapatıldı")
+            self._active_controller = None
+            return
+            
+        if not isinstance(controller_type, ControllerType):
+            raise ControllerNotFoundError(f"Geçersiz kontrol sistemi tipi: {controller_type}")
+            
         if controller_type not in self._controllers:
             raise ControllerNotFoundError(f"Kontrol sistemi bulunamadı: {controller_type.value}")
             
@@ -83,13 +93,17 @@ class ControllerFactory:
             ControllerNotFoundError: Aktif kontrol sistemi yoksa
         """
         if not self._active_controller:
-            raise ControllerNotFoundError("Aktif kontrol sistemi bulunamadı")
+            return kwargs.get('last_modbus_write_time', 0), None
 
         try:
             # İstatistikleri güncelle
             stats = self._controller_stats[self._active_controller]
             stats["total_runs"] += 1
             stats["last_run"] = time.time()
+            
+            # Modbus client'ı kwargs'a ekle
+            if self.modbus_client and 'modbus_client' not in kwargs:
+                kwargs['modbus_client'] = self.modbus_client
             
             # Kontrol sistemini çalıştır
             start_time = time.time()
@@ -99,13 +113,26 @@ class ControllerFactory:
             # Çalışma süresini ekle
             stats["total_time"] += elapsed
             
+            if result is None:
+                logger.warning(f"Kontrol sistemi ({self._active_controller.value}) çıktı üretmedi")
+                return kwargs.get('last_modbus_write_time', 0), None
+                
+            # Sonucu kontrol et
+            if not isinstance(result, tuple) or len(result) != 2:
+                logger.error(f"Kontrol sistemi ({self._active_controller.value}) geçersiz çıktı üretti: {result}")
+                return kwargs.get('last_modbus_write_time', 0), None
+                
+            last_modbus_write_time, output_value = result
+            logger.debug(f"Kontrol sistemi ({self._active_controller.value}) çıktısı: {output_value}")
+            
             return result
             
         except Exception as e:
             # Hata istatistiğini güncelle
             stats["errors"] += 1
             logger.error(f"Kontrol sistemi hatası ({self._active_controller.value}): {str(e)}")
-            raise
+            logger.exception("Detaylı hata:")
+            return kwargs.get('last_modbus_write_time', 0), None
 
     def get_stats(self, controller_type: Optional[ControllerType] = None) -> Dict:
         """
@@ -136,10 +163,10 @@ class ControllerFactory:
 
 
 # Global controller factory nesnesi
-controller_factory = ControllerFactory()
+_controller_factory = ControllerFactory()
 
 
 def get_controller_factory() -> ControllerFactory:
     """Global controller factory nesnesini döndürür"""
-    return controller_factory
+    return _controller_factory
 

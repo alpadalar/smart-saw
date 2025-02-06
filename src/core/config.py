@@ -1,8 +1,22 @@
 # src/core/config.py
 import os
 from typing import Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dotenv import load_dotenv
+
+@dataclass
+class DatabaseConfig:
+    # SQLite
+    sqlite_path: str = "data/testere_{}.db"  # {} makine_id için
+    total_db_path: str = "data/total.db"
+    raw_db_path: str = "data/raw.db"
+    
+    # PostgreSQL
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_db: str = "testere"
+    postgres_user: str = "postgres"
+    postgres_password: str = "postgres"
 
 @dataclass
 class ModbusConfig:
@@ -23,7 +37,8 @@ class ControlConfig:
 class LoggingConfig:
     level: str = "INFO"
     file: str = "smart_saw.log"
-    max_size: int = 10 * 1024 * 1024  # 10MB
+    log_dir: str = "logs"
+    max_file_size: int = 10 * 1024 * 1024  # 10MB
     backup_count: int = 5
 
 @dataclass
@@ -32,6 +47,7 @@ class StorageConfig:
     backup_dir: str = "backup"
     max_file_size: int = 100 * 1024 * 1024  # 100MB
     backup_interval: int = 3600  # 1 saat
+    database: DatabaseConfig = field(default_factory=DatabaseConfig)
 
 @dataclass
 class Config:
@@ -67,8 +83,21 @@ def load_config() -> Config:
     logging_config = LoggingConfig(
         level=os.getenv("LOG_LEVEL", "INFO"),
         file=os.getenv("LOG_FILE", "smart_saw.log"),
-        max_size=int(os.getenv("LOG_MAX_SIZE", str(10 * 1024 * 1024))),
+        log_dir=os.getenv("LOG_DIR", "logs"),
+        max_file_size=int(os.getenv("LOG_MAX_SIZE", str(10 * 1024 * 1024))),
         backup_count=int(os.getenv("LOG_BACKUP_COUNT", "5"))
+    )
+    
+    # Veritabanı konfigürasyonu
+    database_config = DatabaseConfig(
+        sqlite_path=os.getenv("SQLITE_PATH", "data/testere_{}.db"),
+        total_db_path=os.getenv("TOTAL_DB_PATH", "data/total.db"),
+        raw_db_path=os.getenv("RAW_DB_PATH", "data/raw.db"),
+        postgres_host=os.getenv("POSTGRES_HOST", "localhost"),
+        postgres_port=int(os.getenv("POSTGRES_PORT", "5432")),
+        postgres_db=os.getenv("POSTGRES_DB", "testere"),
+        postgres_user=os.getenv("POSTGRES_USER", "postgres"),
+        postgres_password=os.getenv("POSTGRES_PASSWORD", "postgres")
     )
     
     # Depolama konfigürasyonu
@@ -76,7 +105,8 @@ def load_config() -> Config:
         data_dir=os.getenv("DATA_DIR", "data"),
         backup_dir=os.getenv("BACKUP_DIR", "backup"),
         max_file_size=int(os.getenv("MAX_FILE_SIZE", str(100 * 1024 * 1024))),
-        backup_interval=int(os.getenv("BACKUP_INTERVAL", "3600"))
+        backup_interval=int(os.getenv("BACKUP_INTERVAL", "3600")),
+        database=database_config
     )
     
     # Ana konfigürasyon

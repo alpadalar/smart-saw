@@ -16,11 +16,11 @@ class LinearController:
         self.cutting_start_time = None
         self.is_cutting = False
         self.last_update_time = 0
-        self.katsayi = 1.10
+        self.katsayi = 1.0
         
         # Kontrol parametreleri
         self.MIN_SPEED_UPDATE_INTERVAL = 1.0  # 1 Hz
-        self.BASLANGIC_GECIKMESI = 30000.0  # 30 saniye (ms)
+        self.BASLANGIC_GECIKMESI = 0.0  # 30 saniye (ms)
     
     def interpolate_speeds_by_height(self, height):
         """Verilen yükseklik için kesme ve inme hızlarını interpolasyon ile hesaplar"""
@@ -65,50 +65,64 @@ class LinearController:
         current_time = time.time()
         return current_time - self.last_update_time >= self.MIN_SPEED_UPDATE_INTERVAL
 
-    def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, cikis_sim, prev_current):
+    def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, prev_current):
         if not self.kesim_durumu_kontrol(processed_data.get('testere_durumu')):
             return last_modbus_write_time, None
 
         if not self.hiz_guncelleme_zamani_geldi_mi():
             return last_modbus_write_time, None
 
-        # Kafa yüksekliğine göre hızları hesapla
-        kafa_yuksekligi_mm = processed_data.get('kafa_yuksekligi_mm', 0)
-        serit_kesme_hizi, serit_inme_hizi = self.interpolate_speeds_by_height(kafa_yuksekligi_mm)
-        
-        logger.debug(f"İlk hesaplanan hızlar - Kesme: {serit_kesme_hizi:.1f}, İnme: {serit_inme_hizi:.1f}")
-        
-        # Katsayı ile çarp
-        serit_inme_hizi *= self.katsayi
-        serit_kesme_hizi *= self.katsayi
-        
-        logger.debug(f"Katsayı sonrası hızlar - Kesme: {serit_kesme_hizi:.1f}, İnme: {serit_inme_hizi:.1f}")
+        try:
+            # Kafa yüksekliğine göre hızları hesapla
+            kafa_yuksekligi_mm = processed_data.get('kafa_yuksekligi_mm', 0)
+            serit_kesme_hizi, serit_inme_hizi = self.interpolate_speeds_by_height(kafa_yuksekligi_mm)
+            
+            logger.info(f"Kafa yüksekliği: {kafa_yuksekligi_mm}mm")
+            logger.info(f"İlk hesaplanan hızlar - Kesme: {serit_kesme_hizi:.1f}, İnme: {serit_inme_hizi:.1f}")
+            
+            # Katsayı ile çarp
+            serit_inme_hizi *= self.katsayi
+            serit_kesme_hizi *= self.katsayi
+            
+            logger.info(f"Katsayı ({self.katsayi}) sonrası hızlar - Kesme: {serit_kesme_hizi:.1f}, İnme: {serit_inme_hizi:.1f}")
 
-        # Hız sınırlarını uygula
-        new_serit_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(serit_inme_hizi, SPEED_LIMITS['inme']['max']))
-        new_serit_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(serit_kesme_hizi, SPEED_LIMITS['kesme']['max']))
-        
-        logger.debug(f"Sınırlandırılmış hızlar - Kesme: {new_serit_kesme_hizi:.1f}, İnme: {new_serit_inme_hizi:.1f}")
+            # Hız sınırlarını uygula
+            new_serit_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(serit_inme_hizi, SPEED_LIMITS['inme']['max']))
+            new_serit_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(serit_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+            
+            logger.info(f"Sınırlandırılmış hızlar - Kesme: {new_serit_kesme_hizi:.1f}, İnme: {new_serit_inme_hizi:.1f}")
 
-        # Fuzzy output hesapla
-        serit_motor_akim_a = processed_data.get('serit_motor_akim_a', 0)
-        akim_degisim = serit_motor_akim_a - prev_current
-        from control.fuzzy.controller import fuzzy_output
-        fuzzy_output_value = fuzzy_output(cikis_sim, serit_motor_akim_a, akim_degisim)
-
-        # Modbus'a yaz
-        inme_hizi_is_negative = new_serit_inme_hizi < 0
-        reverse_calculate_value(modbus_client, new_serit_kesme_hizi, 'serit_kesme_hizi')
-        reverse_calculate_value(modbus_client, new_serit_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
-
-        logger.info(f"Lineer hız ayarlandı:")
-        logger.info(f"Kesme Hızı: {new_serit_kesme_hizi:.1f}")
-        logger.info(f"İnme Hızı: {new_serit_inme_hizi:.1f}")
-        logger.info(f"Fuzzy Output: {fuzzy_output_value:.3f}")
-        logger.info("-" * 60)
-        
-        self.last_update_time = time.time()
-        return self.last_update_time, fuzzy_output_value
+            # Modbus'a yaz
+            try:
+                # Önce inme hızını yaz
+                logger.info(f"İnme hızı yazılıyor: {new_serit_inme_hizi:.1f}")
+                inme_hizi_is_negative = new_serit_inme_hizi < 0
+                reverse_calculate_value(modbus_client, new_serit_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
+                logger.info("İnme hızı başarıyla yazıldı")
+                
+                # 110ms bekle
+                time.sleep(0.110)
+                
+                # Sonra kesme hızını yaz
+                logger.info(f"Kesme hızı yazılıyor: {new_serit_kesme_hizi:.1f}")
+                kesme_hizi_is_negative = new_serit_kesme_hizi < 0
+                reverse_calculate_value(modbus_client, new_serit_kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
+                logger.info("Kesme hızı başarıyla yazıldı")
+                
+            except Exception as e:
+                logger.error(f"Modbus yazma hatası: {str(e)}")
+                logger.exception("Detaylı hata:")
+                raise
+            
+            # Son güncelleme zamanını kaydet
+            self.last_update_time = time.time()
+            
+            return last_modbus_write_time, new_serit_inme_hizi
+            
+        except Exception as e:
+            logger.error(f"Linear kontrol hatası: {str(e)}")
+            logger.exception("Detaylı hata:")
+            return last_modbus_write_time, None
 
     def _log_kesim_baslangic(self):
         self.cutting_start_time = time.time() * 1000
@@ -140,6 +154,12 @@ class LinearController:
 # Global controller nesnesi
 linear_controller = LinearController()
 
-def adjust_speeds_linear(processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, cikis_sim, prev_current):
-    return linear_controller.adjust_speeds(processed_data, modbus_client, last_modbus_write_time, 
-                                        speed_adjustment_interval, cikis_sim, prev_current)
+def adjust_speeds_linear(processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, prev_current):
+    """Linear kontrol için hız ayarlama fonksiyonu"""
+    return linear_controller.adjust_speeds(
+        processed_data=processed_data,
+        modbus_client=modbus_client,
+        last_modbus_write_time=last_modbus_write_time,
+        speed_adjustment_interval=speed_adjustment_interval,
+        prev_current=prev_current
+    )

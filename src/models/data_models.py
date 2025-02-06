@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from datetime import datetime
+from core.data_processor import ProcessedData
 
 @dataclass
 class ModbusRegisters:
@@ -23,18 +24,6 @@ class RawData:
     """Ham modbus verisi"""
     timestamp: datetime
     registers: Dict[int, float] = field(default_factory=dict)
-
-@dataclass
-class ProcessedData:
-    """İşlenmiş veri"""
-    timestamp: datetime
-    serit_motor_akim_a: float = 0.0
-    serit_sapmasi: float = 0.0
-    kafa_yuksekligi_mm: float = 0.0
-    testere_durumu: int = 0
-    serit_kesme_hizi: float = 0.0
-    serit_inme_hizi: float = 0.0
-    controller_output: Optional[float] = None
 
 @dataclass
 class SpeedData:

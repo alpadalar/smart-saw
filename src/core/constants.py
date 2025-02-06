@@ -26,7 +26,7 @@ class TestereState(Enum):
     CUTTING = 3
     FINISHING = 4
     MOVING_UP = 5
-    MATERIAL_FEED = 7
+    MATERIAL_FEED = 6
 
 class ControlMode(Enum):
     MANUAL = "manual"

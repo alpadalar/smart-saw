@@ -27,56 +27,95 @@ from data import (
 )
 from models import ProcessedData, SystemState
 from gui.controller import SimpleGUI
+from control import ControllerFactory
 
 class SmartSaw:
     def __init__(self):
-        """Smart Saw uygulamasını başlatır"""
-        # Konfigürasyon yükle
-        self.config: Config = load_config()
+        """Smart Saw başlatılır"""
+        # Konfigürasyon yükleme
+        self.config = load_config()
         
-        # Logger'ı ayarla
+        # Logger'ı başlat
         setup_logger(self.config.logging)
         logger.info("Smart Saw başlatılıyor...")
         
-        # Kontrol sistemi factory'sini al
-        self.controller_factory = get_controller_factory()
-        self.controller_factory.set_controller(ControllerType[self.config.control.default_controller.upper()])
-        
-        # Modbus bağlantısını kur
+        # Modbus istemcisi
         self.modbus_client = ModbusClient(
-            host=self.config.modbus.host,
-            port=self.config.modbus.port
+            host='192.168.11.186',
+            port=502
         )
         
-        # Veri işleme bileşenlerini oluştur
+        # Veri depolama ve işleme
+        self.data_storage = DataStorage(self.config)
         self.data_mapper = DataMapper()
         self.data_processor = DataProcessor()
-        self.data_storage = DataStorage(self.config.storage)
         
-        # GUI'yi oluştur
-        self.gui = SimpleGUI()
+        # Kontrol sistemi
+        self.controller_factory = ControllerFactory(modbus_client=self.modbus_client)
+        # Başlangıçta kontrol sistemini kapalı olarak başlat
+        self.controller_factory.set_controller(None)
+        
+        # GUI - controller factory'yi aktarıyoruz
+        self.gui = SimpleGUI(controller_factory=self.controller_factory)
+        
+        # Kontrol ve veri döngüleri
+        self.control_loop = None
+        self.data_loop = None
+        
+        # Thread güvenliği için lock
+        self.lock = threading.Lock()
         
         # Durum değişkenleri
         self.is_running = False
         self.last_modbus_write_time = 0
         self.prev_current = 0
-        self.system_state = SystemState.IDLE
+        self.last_processed_data = None
         
-        # Thread'ler
-        self.control_thread: Optional[threading.Thread] = None
-        self.data_thread: Optional[threading.Thread] = None
-        
-        # Thread güvenliği için lock
-        self.lock = threading.Lock()
-        
-        # Son işlenmiş veri
-        self.last_processed_data: Dict = {}
-        
-        # Sinyal yakalayıcıları
-        signal.signal(signal.SIGINT, self.handle_shutdown)
-        signal.signal(signal.SIGTERM, self.handle_shutdown)
+        # Başlatma
+        self._setup_database()
+        self._setup_modbus()
+        self._setup_control_loop()
+        self._setup_data_loop()
         
         logger.info("Başlatma tamamlandı")
+        
+    def _setup_database(self):
+        """Veritabanı başlatma"""
+        try:
+            # DataStorage sınıfı zaten veritabanını oluşturuyor
+            pass
+        except Exception as e:
+            logger.error(f"Veritabanı başlatma hatası: {e}")
+            raise
+            
+    def _setup_modbus(self):
+        """Modbus başlatma"""
+        try:
+            self.modbus_client.connect()
+        except Exception as e:
+            logger.error(f"Modbus başlatma hatası: {e}")
+            raise
+            
+    def _setup_control_loop(self):
+        """Kontrol döngüsü başlatma"""
+        try:
+            self.control_loop = threading.Thread(target=self.start_control_loop)
+            self.control_loop.daemon = True
+            self.is_running = True  # Thread'i başlatmadan önce flag'i ayarla
+            self.control_loop.start()  # Thread'i başlat
+        except Exception as e:
+            logger.error(f"Kontrol döngüsü başlatma hatası: {e}")
+            raise
+            
+    def _setup_data_loop(self):
+        """Veri döngüsü başlatma"""
+        try:
+            self.data_loop = threading.Thread(target=self.start_data_loop)
+            self.data_loop.daemon = True
+            self.data_loop.start()  # Thread'i başlat
+        except Exception as e:
+            logger.error(f"Veri döngüsü başlatma hatası: {e}")
+            raise
 
     def start_control_loop(self):
         """Kontrol döngüsünü başlatır"""
@@ -87,40 +126,78 @@ class SmartSaw:
                 with self.lock:
                     # Ham veriyi oku
                     raw_data = self.modbus_client.read_all()
+                    if raw_data is None:
+                        logger.warning("Modbus verisi okunamadı")
+                        time.sleep(1)
+                        continue
                     
                     # Veriyi işle
                     mapped_data = self.data_mapper.map_data(raw_data)
-                    processed_data: ProcessedData = self.data_processor.process_data(mapped_data)
+                    
+                    # Ham modbus verisini direkt olarak kullan
+                    base_data = raw_data.copy()
+                    
+                    # Ek alanları ekle
+                    base_data.update({
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+                        'makine_id': 1,  # Varsayılan makine ID'si
+                        'serit_id': 1,  # Varsayılan şerit ID'si
+                        'serit_tip': '',
+                        'serit_marka': '',
+                        'serit_malz': '',
+                        'malzeme_cinsi': '',
+                        'malzeme_sertlik': '',
+                        'kesit_yapisi': '',
+                        'fuzzy_output': 0.0,
+                        'kesme_hizi_degisim': 0.0
+                    })
+                    
+                    # Veriyi işle
+                    processed_data = self.data_processor.process_data(base_data)
                     
                     # Son veriyi güncelle
-                    self.last_processed_data = processed_data
+                    self.last_processed_data = dict(processed_data)
                     
                     # Kontrol sistemini çalıştır
                     if self.controller_factory.active_controller:
-                        self.last_modbus_write_time, output = self.controller_factory.adjust_speeds(
-                            processed_data=processed_data,
-                            modbus_client=self.modbus_client,
-                            last_modbus_write_time=self.last_modbus_write_time,
-                            speed_adjustment_interval=self.config.control.speed_adjustment_interval,
-                            prev_current=self.prev_current
-                        )
-                        
-                        # Önceki akımı güncelle
-                        self.prev_current = processed_data.get('serit_motor_akim_a', 0)
+                        try:
+                            logger.debug(f"Aktif kontrol sistemi: {self.controller_factory.active_controller.value}")
+                            current = float(processed_data.get('serit_motor_akim_a', 0))
+                            logger.debug(f"Mevcut akım: {current:.2f}A")
+                            
+                            self.last_modbus_write_time, output = self.controller_factory.adjust_speeds(
+                                processed_data=processed_data,
+                                modbus_client=self.modbus_client,
+                                last_modbus_write_time=self.last_modbus_write_time,
+                                speed_adjustment_interval=self.config.control.speed_adjustment_interval,
+                                prev_current=self.prev_current
+                            )
+                            
+                            # Önceki akımı güncelle
+                            self.prev_current = current
+                            
+                            # Kontrol çıktısını kaydet
+                            if output is not None:
+                                # Fuzzy değerlerini güncelle
+                                self.last_processed_data['fuzzy_output'] = output
+                                self.last_processed_data['kesme_hizi_degisim'] = output
+                                logger.debug(f"Kontrol çıktısı: {output}")
+                                logger.debug(f"Fuzzy değerleri güncellendi - Output: {output}, Kesme Hızı Değişim: {output}")
+                            else:
+                                logger.debug("Kontrol çıktısı: None")
+                            
+                        except Exception as e:
+                            logger.error(f"Hız ayarlama hatası: {str(e)}")
+                            logger.exception("Detaylı hata:")
+                    else:
+                        logger.debug("Kontrol sistemi aktif değil")
                 
                 # Döngü gecikmesi
                 time.sleep(self.config.control.loop_delay)
                 
-            except ControllerError as e:
-                logger.error(f"Kontrol sistemi hatası: {str(e)}")
-                self.handle_control_error()
-                
-            except ModbusError as e:
-                logger.error(f"Modbus iletişim hatası: {str(e)}")
-                self.handle_modbus_error()
-                
             except Exception as e:
                 logger.error(f"Beklenmeyen hata: {str(e)}")
+                logger.exception("Detaylı hata:")
                 self.handle_unexpected_error()
 
     def start_data_loop(self):
@@ -131,11 +208,15 @@ class SmartSaw:
             try:
                 with self.lock:
                     if self.last_processed_data:
-                        # Veriyi kaydet
-                        self.data_storage.store_data(self.last_processed_data)
-                        
-                        # GUI'yi güncelle
-                        self.gui.update_data(self.last_processed_data)
+                        try:
+                            # Veriyi kaydet
+                            if not self.data_storage.save_data(self.last_processed_data):
+                                logger.error("Veri kaydedilemedi")
+                            
+                            # GUI'yi güncelle
+                            self.gui.update_data(self.last_processed_data)
+                        except Exception as e:
+                            logger.error(f"Veri kaydetme/güncelleme hatası: {str(e)}")
                 
                 # Döngü gecikmesi
                 time.sleep(0.1)  # 100ms güncelleme aralığı
@@ -160,16 +241,6 @@ class SmartSaw:
 
         # Çalışma bayrağını ayarla
         self.is_running = True
-        
-        # Kontrol thread'ini başlat
-        self.control_thread = threading.Thread(target=self.start_control_loop)
-        self.control_thread.daemon = True
-        self.control_thread.start()
-        
-        # Veri thread'ini başlat
-        self.data_thread = threading.Thread(target=self.start_data_loop)
-        self.data_thread.daemon = True
-        self.data_thread.start()
         
         # GUI'yi ana thread'de başlat
         self.gui.start()
@@ -218,10 +289,10 @@ class SmartSaw:
                     logger.info(f"  {key}: {value}")
             
             # Thread'leri bekle
-            if self.control_thread and self.control_thread.is_alive():
-                self.control_thread.join(timeout=2)
-            if self.data_thread and self.data_thread.is_alive():
-                self.data_thread.join(timeout=2)
+            if self.control_loop and self.control_loop.is_alive():
+                self.control_loop.join(timeout=2)
+            if self.data_loop and self.data_loop.is_alive():
+                self.data_loop.join(timeout=2)
             
             # Modbus bağlantısını kapat
             if self.modbus_client:
