@@ -5,11 +5,35 @@ import time
 from datetime import datetime
 from typing import Dict, Optional
 from queue import Queue
+import logging
 
 from core import logger
 from control import ControllerType, get_controller_factory
 from models import ProcessedData
 from utils.helpers import reverse_calculate_value
+
+class GUILogHandler(logging.Handler):
+    """GUI için özel log handler"""
+    def __init__(self, gui):
+        super().__init__()
+        self.gui = gui
+        
+    def emit(self, record):
+        try:
+            # Log seviyesine göre renk belirle
+            level_map = {
+                'DEBUG': 'INFO',
+                'INFO': 'INFO',
+                'WARNING': 'WARNING',
+                'ERROR': 'ERROR',
+                'CRITICAL': 'ERROR'
+            }
+            level = level_map.get(record.levelname, 'INFO')
+            
+            # Log mesajını GUI'ye ekle
+            self.gui.add_log(record.getMessage(), level)
+        except Exception:
+            self.handleError(record)
 
 class SimpleGUI:
     def __init__(self, controller_factory=None):
@@ -18,10 +42,18 @@ class SimpleGUI:
         # Ana pencere
         self.root = tk.Tk()
         self.root.title("Smart Saw Control Panel")
-        self.root.geometry("768x520")
+        
+        # Logger'a GUI handler'ı ekle
+        self.log_handler = GUILogHandler(self)
+        self.log_handler.setFormatter(
+            logging.Formatter('%(message)s')  # Timestamp GUI'de ekleniyor
+        )
+        logger.addHandler(self.log_handler)
         
         # Değişkenler
         self.current_controller = tk.StringVar(value="Kontrol Sistemi Kapalı")
+        self._last_update_time = None  # datetime nesnesi
+        self._current_cut_start_time = None  # datetime nesnesi
         self.current_values = {
             # Temel bilgiler
             'makine_id': tk.StringVar(value="-"),
@@ -80,158 +112,221 @@ class SimpleGUI:
             'onceki_kesim_sure': tk.StringVar(value="-")
         }
         
-        self.last_update_time = None
         self.kesim_baslama_zamani = None
         self._create_widgets()
+        
+        # Pencereyi içeriğe göre boyutlandır
+        self.root.update_idletasks()  # Tüm widget'ların boyutlarının hesaplanmasını sağla
+        
+        # Minimum boyutu ayarla
+        width = max(
+            self.root.winfo_reqwidth(),  # İçeriğin istediği genişlik
+            800  # Minimum genişlik
+        )
+        height = max(
+            self.root.winfo_reqheight(),  # İçeriğin istediği yükseklik
+            600  # Minimum yükseklik
+        )
+        
+        # Ekran boyutlarını al
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Pencere boyutunu ekran boyutuna göre sınırla
+        width = min(width, screen_width - 100)
+        height = min(height, screen_height - 100)
+        
+        # Minimum boyutu ayarla
+        self.root.minsize(width, height)
+        
+        # Pencereyi ekranın ortasına konumlandır
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+        
+        # Yeniden boyutlandırmaya izin ver
+        self.root.resizable(True, True)
+        
         self._setup_update_loop()
 
     def _create_widgets(self):
         """GUI bileşenlerini oluşturur"""
-        # Kontrol Paneli
-        control_frame = ttk.LabelFrame(self.root, text="Kontrol Sistemi", padding=10)
-        control_frame.pack(fill=tk.X, padx=5, pady=5)
+        # Ana frame
+        main_frame = ttk.Frame(self.root, padding="5")
+        main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Kontrol sistemi seçimi ve butonları (mevcut kod)
+        # Sol panel (Kontrol ve Bilgiler)
+        left_panel = ttk.Frame(main_frame)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        
+        # Üst kısım - Kontrol ve Modbus Durumu
+        top_frame = ttk.Frame(left_panel)
+        top_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        # Modbus Durum Göstergesi
+        modbus_frame = ttk.LabelFrame(top_frame, text="Modbus Durumu", padding=(5, 5))
+        modbus_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
+        self.modbus_status = ttk.Label(modbus_frame, text="Bağlı Değil", foreground="red")
+        self.modbus_status.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Kontrol Sistemi
+        control_frame = ttk.LabelFrame(top_frame, text="Kontrol Sistemi", padding=(5, 5))
+        control_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
         ttk.Label(control_frame, text="Aktif Sistem:").pack(side=tk.LEFT, padx=5)
         ttk.Label(control_frame, textvariable=self.current_controller).pack(side=tk.LEFT, padx=5)
         
         for controller in ControllerType:
             ttk.Button(
                 control_frame,
-                text=f"{controller.value.capitalize()} Kontrol",
+                text=f"{controller.value.capitalize()}",
                 command=lambda c=controller: self._switch_controller(c)
-            ).pack(side=tk.LEFT, padx=5)
+            ).pack(side=tk.LEFT, padx=2)
         
         ttk.Button(
             control_frame,
             text="Kapat",
             command=self._disable_controller
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=2)
         
         # Manuel Hız Kontrolü
-        manual_frame = ttk.LabelFrame(self.root, text="Manuel Hız Kontrolü", padding=10)
-        manual_frame.pack(fill=tk.X, padx=5, pady=5)
+        speed_frame = ttk.LabelFrame(left_panel, text="Manuel Hız Kontrolü", padding=(5, 5))
+        speed_frame.pack(fill=tk.X, pady=5)
         
         # İnme Hızı
-        inme_frame = ttk.Frame(manual_frame)
+        inme_frame = ttk.Frame(speed_frame)
         inme_frame.pack(side=tk.LEFT, padx=5)
         ttk.Label(inme_frame, text="İnme Hızı (mm/s):").pack(side=tk.LEFT)
-        self.inme_hizi_entry = ttk.Entry(inme_frame, width=10)
+        self.inme_hizi_entry = ttk.Entry(inme_frame, width=8)
         self.inme_hizi_entry.pack(side=tk.LEFT, padx=5)
         ttk.Button(
             inme_frame,
-            text="İnme Hızı Gönder",
+            text="Gönder",
             command=lambda: self._send_manual_speed('inme')
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT)
         
         # Kesme Hızı
-        kesme_frame = ttk.Frame(manual_frame)
+        kesme_frame = ttk.Frame(speed_frame)
         kesme_frame.pack(side=tk.LEFT, padx=5)
         ttk.Label(kesme_frame, text="Kesme Hızı (mm/s):").pack(side=tk.LEFT)
-        self.kesme_hizi_entry = ttk.Entry(kesme_frame, width=10)
+        self.kesme_hizi_entry = ttk.Entry(kesme_frame, width=8)
         self.kesme_hizi_entry.pack(side=tk.LEFT, padx=5)
         ttk.Button(
             kesme_frame,
-            text="Kesme Hızı Gönder",
+            text="Gönder",
             command=lambda: self._send_manual_speed('kesme')
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT)
         
-        # Hepsini Gönder Butonu
         ttk.Button(
-            manual_frame,
+            speed_frame,
             text="Hepsini Gönder",
             command=self._send_all_speeds
         ).pack(side=tk.LEFT, padx=5)
         
-        # Ana bilgi paneli (notebook)
-        notebook = ttk.Notebook(self.root)
-        notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Kesim Bilgileri
+        cut_frame = ttk.LabelFrame(left_panel, text="Kesim Bilgileri", padding=(5, 5))
+        cut_frame.pack(fill=tk.X, pady=5)
         
-        # Kesim Bilgileri Sekmesi
-        kesim_frame = ttk.Frame(notebook)
-        notebook.add(kesim_frame, text="Kesim Bilgileri")
-        self._create_info_grid(kesim_frame, [
-            ('kesilen_parca_adeti', 'Kesilen Parça'),
-            ('serit_kesme_hizi', 'Kesme Hızı'),
-            ('serit_inme_hizi', 'İnme Hızı'),
-            ('serit_motor_akim_a', 'Motor Akımı'),
-            ('serit_sapmasi', 'Şerit Sapması'),
-            ('kafa_yuksekligi_mm', 'Kafa Yüksekliği')
+        # Mevcut Kesim Bilgileri
+        current_cut_frame = ttk.Frame(cut_frame)
+        current_cut_frame.pack(fill=tk.X, pady=2)
+        
+        ttk.Label(current_cut_frame, text="Mevcut Kesim:").pack(side=tk.LEFT, padx=2)
+        self.current_cut_start = ttk.Label(current_cut_frame, text="-")
+        self.current_cut_start.pack(side=tk.LEFT, padx=5)
+        
+        # Önceki Kesim Bilgileri
+        prev_cut_frame = ttk.Frame(cut_frame)
+        prev_cut_frame.pack(fill=tk.X, pady=2)
+        
+        # Başlangıç
+        ttk.Label(prev_cut_frame, text="Önceki Başlangıç:").pack(side=tk.LEFT, padx=2)
+        self.prev_cut_start = ttk.Label(prev_cut_frame, text="-")
+        self.prev_cut_start.pack(side=tk.LEFT, padx=5)
+        
+        # Bitiş
+        ttk.Label(prev_cut_frame, text="Önceki Bitiş:").pack(side=tk.LEFT, padx=2)
+        self.prev_cut_end = ttk.Label(prev_cut_frame, text="-")
+        self.prev_cut_end.pack(side=tk.LEFT, padx=5)
+        
+        # Toplam Süre
+        ttk.Label(prev_cut_frame, text="Toplam Süre:").pack(side=tk.LEFT, padx=2)
+        self.prev_cut_duration = ttk.Label(prev_cut_frame, text="-")
+        self.prev_cut_duration.pack(side=tk.LEFT, padx=5)
+        
+        # Sensör Değerleri Grid'i
+        values_frame = ttk.Frame(left_panel)
+        values_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Sol grid (Motor ve Hareket)
+        left_grid = ttk.LabelFrame(values_frame, text="Motor ve Hareket", padding=(5, 5))
+        left_grid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 2))
+        
+        self._create_value_grid(left_grid, [
+            ('serit_motor_akim_a', 'Motor Akım (A)'),
+            ('serit_motor_tork_percentage', 'Motor Tork (%)'),
+            ('serit_kesme_hizi', 'Kesme Hızı (mm/s)'),
+            ('serit_inme_hizi', 'İnme Hızı (mm/s)'),
+            ('serit_sapmasi', 'Sapma (mm)'),
+            ('kafa_yuksekligi_mm', 'Kafa Yüksekliği (mm)')
         ])
         
-        # Temel Bilgiler Sekmesi
-        temel_frame = ttk.Frame(notebook)
-        notebook.add(temel_frame, text="Temel Bilgiler")
-        self._create_info_grid(temel_frame, [
-            ('makine_id', 'Makine ID'),
-            ('serit_id', 'Şerit ID'),
-            ('serit_dis_mm', 'Şerit Diş (mm)'),
-            ('serit_tip', 'Şerit Tipi'),
-            ('serit_marka', 'Şerit Markası'),
-            ('serit_malz', 'Şerit Malzemesi')
+        # Orta grid (Basınç ve Sıcaklık)
+        middle_grid = ttk.LabelFrame(values_frame, text="Basınç ve Sıcaklık", padding=(5, 5))
+        middle_grid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2)
+        
+        self._create_value_grid(middle_grid, [
+            ('mengene_basinc_bar', 'Mengene Basınç (bar)'),
+            ('serit_gerginligi_bar', 'Şerit Gerginlik (bar)'),
+            ('ortam_sicakligi_c', 'Ortam Sıcaklık (°C)'),
+            ('ortam_nem_percentage', 'Ortam Nem (%)'),
+            ('sogutma_sivi_sicakligi_c', 'Soğutma Sıvı (°C)'),
+            ('hidrolik_yag_sicakligi_c', 'Hidrolik Yağ (°C)')
         ])
         
-        # Malzeme Bilgileri Sekmesi
-        malzeme_frame = ttk.Frame(notebook)
-        notebook.add(malzeme_frame, text="Malzeme Bilgileri")
-        self._create_info_grid(malzeme_frame, [
-            ('malzeme_cinsi', 'Malzeme Cinsi'),
-            ('malzeme_sertlik', 'Malzeme Sertlik'),
-            ('kesit_yapisi', 'Kesit Yapısı'),
-            ('a_mm', 'A (mm)'),
-            ('b_mm', 'B (mm)'),
-            ('c_mm', 'C (mm)'),
-            ('d_mm', 'D (mm)')
+        # Sağ grid (İvme Ölçer)
+        right_grid = ttk.LabelFrame(values_frame, text="İvme Ölçer", padding=(5, 5))
+        right_grid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(2, 0))
+        
+        self._create_value_grid(right_grid, [
+            ('ivme_olcer_x', 'X İvme (g)'),
+            ('ivme_olcer_y', 'Y İvme (g)'),
+            ('ivme_olcer_z', 'Z İvme (g)'),
+            ('ivme_olcer_x_hz', 'X Frekans (Hz)'),
+            ('ivme_olcer_y_hz', 'Y Frekans (Hz)'),
+            ('ivme_olcer_z_hz', 'Z Frekans (Hz)')
         ])
         
-        # Motor ve Hareket Sekmesi
-        motor_frame = ttk.Frame(notebook)
-        notebook.add(motor_frame, text="Motor ve Hareket")
-        self._create_info_grid(motor_frame, [
-            ('serit_motor_akim_a', 'Şerit Motor Akım'),
-            ('serit_motor_tork_percentage', 'Şerit Motor Tork'),
-            ('inme_motor_akim_a', 'İnme Motor Akım'),
-            ('inme_motor_tork_percentage', 'İnme Motor Tork'),
-            ('serit_kesme_hizi', 'Kesme Hızı'),
-            ('serit_inme_hizi', 'İnme Hızı'),
-            ('kafa_yuksekligi_mm', 'Kafa Yüksekliği')
-        ])
+        # Sağ panel (Log Görüntüleyici)
+        right_panel = ttk.Frame(main_frame)
+        right_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
         
-        # Sensör Bilgileri Sekmesi
-        sensor_frame = ttk.Frame(notebook)
-        notebook.add(sensor_frame, text="Sensör Bilgileri")
-        self._create_info_grid(sensor_frame, [
-            ('mengene_basinc_bar', 'Mengene Basıncı'),
-            ('serit_gerginligi_bar', 'Şerit Gerginliği'),
-            ('serit_sapmasi', 'Şerit Sapması'),
-            ('ortam_sicakligi_c', 'Ortam Sıcaklığı'),
-            ('ortam_nem_percentage', 'Ortam Nem'),
-            ('sogutma_sivi_sicakligi_c', 'Soğutma Sıvısı Sıc.'),
-            ('hidrolik_yag_sicakligi_c', 'Hidrolik Yağ Sıc.')
-        ])
+        # Log alanı
+        log_frame = ttk.LabelFrame(right_panel, text="Log Görüntüleyici", padding=(5, 5))
+        log_frame.pack(fill=tk.BOTH, expand=True)
         
-        # İvme Ölçer Sekmesi
-        ivme_frame = ttk.Frame(notebook)
-        notebook.add(ivme_frame, text="İvme Ölçer")
-        self._create_info_grid(ivme_frame, [
-            ('ivme_olcer_x', 'X Ekseni İvme'),
-            ('ivme_olcer_y', 'Y Ekseni İvme'),
-            ('ivme_olcer_z', 'Z Ekseni İvme'),
-            ('ivme_olcer_x_hz', 'X Ekseni Frekans'),
-            ('ivme_olcer_y_hz', 'Y Ekseni Frekans'),
-            ('ivme_olcer_z_hz', 'Z Ekseni Frekans')
-        ])
+        # Log text widget'ı
+        self.log_text = tk.Text(log_frame, wrap=tk.WORD, width=50, height=30)
+        self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Varsayılan sekmeyi ayarla
-        notebook.select(0)  # İlk sekme (Kesim Bilgileri) seçili olacak
+        # Scrollbar
+        scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.log_text.config(yscrollcommand=scrollbar.set)
         
-        # Durum çubuğu
+        # Tag'leri tanımla
+        self.log_text.tag_configure('INFO', foreground='black')
+        self.log_text.tag_configure('WARNING', foreground='orange')
+        self.log_text.tag_configure('ERROR', foreground='red')
+        
+        # Alt durum çubuğu
         status_frame = ttk.Frame(self.root)
         status_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=5, pady=5)
         
         self.status_label = ttk.Label(
             status_frame,
-            text=f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
+            text=f"Son güncelleme: {datetime.now().strftime('%H:%M:%S.%f')[:-3]}"
         )
         self.status_label.pack(side=tk.LEFT)
         
@@ -241,60 +336,15 @@ class SimpleGUI:
             command=self._quit
         ).pack(side=tk.RIGHT)
 
-    def _create_info_grid(self, parent, fields, columns=2):
-        """Bilgi grid'ini oluşturur"""
-        frame = ttk.LabelFrame(parent, text="Kesim Bilgileri", padding=(5, 5))
-        frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # Kesim zamanları için frame
-        time_frame = ttk.LabelFrame(frame, text="Zaman Bilgileri", padding=(5, 5))
-        time_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        # Mevcut kesim bilgileri
-        current_cut_frame = ttk.Frame(time_frame)
-        current_cut_frame.pack(fill=tk.X, padx=5, pady=2)
-        
-        ttk.Label(current_cut_frame, text="Mevcut Kesim Başlangıç:").pack(side=tk.LEFT)
-        self.current_cut_start = ttk.Label(current_cut_frame, text="-")
-        self.current_cut_start.pack(side=tk.LEFT, padx=5)
-        
-        # Önceki kesim bilgileri
-        prev_cut_frame = ttk.Frame(time_frame)
-        prev_cut_frame.pack(fill=tk.X, padx=5, pady=2)
-        
-        ttk.Label(prev_cut_frame, text="Önceki Kesim:").pack(side=tk.LEFT)
-        self.prev_cut_info = ttk.Label(prev_cut_frame, text="-")
-        self.prev_cut_info.pack(side=tk.LEFT, padx=5)
-        
-        # Son güncelleme zamanı
-        update_frame = ttk.Frame(time_frame)
-        update_frame.pack(fill=tk.X, padx=5, pady=2)
-        
-        ttk.Label(update_frame, text="Son Güncelleme:").pack(side=tk.LEFT)
-        self.last_update_time = ttk.Label(update_frame, text="-")
-        self.last_update_time.pack(side=tk.LEFT, padx=5)
-        
-        # Sensör değerleri için grid
-        grid_frame = ttk.Frame(frame)
-        grid_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        row = 0
-        col = 0
+    def _create_value_grid(self, parent, fields):
+        """Değer grid'ini oluşturur"""
         self.value_labels = {}
         
-        for field in fields:
-            label = ttk.Label(grid_frame, text=f"{field}:")
-            label.grid(row=row, column=col*2, sticky=tk.E, padx=5, pady=2)
-            
-            value_label = ttk.Label(grid_frame, text="-")
-            value_label.grid(row=row, column=col*2+1, sticky=tk.W, padx=5, pady=2)
-            
+        for i, (field, label) in enumerate(fields):
+            ttk.Label(parent, text=label).grid(row=i, column=0, sticky=tk.E, padx=5, pady=2)
+            value_label = ttk.Label(parent, text="-")
+            value_label.grid(row=i, column=1, sticky=tk.W, padx=5, pady=2)
             self.value_labels[field] = value_label
-            
-            col += 1
-            if col >= columns:
-                col = 0
-                row += 1
 
     def _switch_controller(self, controller_type: ControllerType):
         """Kontrol sistemini değiştirir"""
@@ -411,20 +461,20 @@ class SimpleGUI:
             self.current_values['kesim_sure'].set("-")
         
         # Son güncelleme zamanını kaydet
-        self.last_update_time = datetime.now()
+        self._last_update_time = datetime.now()
         self.status_label.config(
-            text=f"Son güncelleme: {self.last_update_time.strftime('%H:%M:%S.%f')[:-3]}"
+            text=f"Son güncelleme: {self._last_update_time.strftime('%H:%M:%S.%f')[:-3]}"
         )
 
     def _setup_update_loop(self):
         """Güncelleme döngüsünü başlatır"""
         def update_loop():
             # Son güncelleme zamanını kontrol et
-            if self.last_update_time:
-                gecen_sure = datetime.now() - self.last_update_time
+            if self._last_update_time:
+                gecen_sure = datetime.now() - self._last_update_time
                 if gecen_sure.total_seconds() > 1:
                     self.status_label.config(
-                        text=f"Son güncelleme: {self.last_update_time.strftime('%H:%M:%S.%f')[:-3]} (Veri alınamıyor)"
+                        text=f"Son güncelleme: {self._last_update_time.strftime('%H:%M:%S.%f')[:-3]} (Veri alınamıyor)"
                     )
             
             # Her 100ms'de bir güncelle
@@ -434,6 +484,8 @@ class SimpleGUI:
 
     def _quit(self):
         """Uygulamayı kapatır"""
+        # Log handler'ı kaldır
+        logger.removeHandler(self.log_handler)
         self.root.quit()
 
     def start(self):
@@ -443,48 +495,97 @@ class SimpleGUI:
     def update_data(self, processed_data: Dict):
         """Arayüz verilerini günceller"""
         try:
+            # Modbus durumunu güncelle
+            if 'modbus_connected' in processed_data:
+                self.update_modbus_status(
+                    processed_data['modbus_connected'],
+                    processed_data.get('modbus_ip', '192.168.11.186')
+                )
+            
             # Kesim durumunu kontrol et
-            testere_durumu = processed_data.get('testere_durumu', 0)
-            
-            # Mevcut zaman
-            current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-            self.last_update_time.config(text=current_time)
-            
-            # Kesim durumu değişimini kontrol et
-            if testere_durumu == 3:  # Kesim yapılıyor
-                if not hasattr(self, '_current_cut_start_time'):
-                    self._current_cut_start_time = datetime.now()
+            testere_durumu = processed_data.get('testere_durumu')
+            if testere_durumu == TestereState.CUTTING.value:
+                if not hasattr(self, '_cutting_start_time'):
+                    self._cutting_start_time = datetime.now()
                     self.current_cut_start.config(
-                        text=self._current_cut_start_time.strftime('%H:%M:%S.%f')[:-3]
+                        text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
                     )
-            elif hasattr(self, '_current_cut_start_time'):
+                    self.add_log("Yeni kesim başladı", "INFO")
+                else:
+                    # Mevcut kesim süresini güncelle
+                    elapsed = datetime.now() - self._cutting_start_time
+                    minutes = int(elapsed.total_seconds() // 60)
+                    seconds = int(elapsed.total_seconds() % 60)
+                    milliseconds = int((elapsed.total_seconds() * 1000) % 1000)
+                    self.current_cut_duration = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+                    
+            elif hasattr(self, '_cutting_start_time'):
                 # Kesim bitti
                 end_time = datetime.now()
-                duration = end_time - self._current_cut_start_time
-                duration_str = f"{int(duration.total_seconds())//60:02d}:{int(duration.total_seconds())%60:02d}.{str(duration.microseconds)[:3]}"
+                elapsed = end_time - self._cutting_start_time
+                minutes = int(elapsed.total_seconds() // 60)
+                seconds = int(elapsed.total_seconds() % 60)
+                milliseconds = int((elapsed.total_seconds() * 1000) % 1000)
                 
                 # Önceki kesim bilgilerini güncelle
-                self.prev_cut_info.config(
-                    text=f"Başlangıç: {self._current_cut_start_time.strftime('%H:%M:%S.%f')[:-3]} "
-                        f"Bitiş: {end_time.strftime('%H:%M:%S.%f')[:-3]} "
-                        f"Süre: {duration_str}"
-                )
+                self.prev_cut_start.config(text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3])
+                self.prev_cut_end.config(text=end_time.strftime('%H:%M:%S.%f')[:-3])
+                self.prev_cut_duration.config(text=f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}")
                 
                 # Mevcut kesim bilgilerini temizle
-                delattr(self, '_current_cut_start_time')
                 self.current_cut_start.config(text="-")
+                delattr(self, '_cutting_start_time')
+                self.add_log("Kesim tamamlandı", "INFO")
             
-            # Diğer değerleri güncelle
+            # Değerleri güncelle
             for field, label in self.value_labels.items():
-                value = processed_data.get(field, '-')
-                if isinstance(value, float):
-                    label.config(text=f"{value:.2f}")
-                else:
-                    label.config(text=str(value))
-                    
+                if field in processed_data:
+                    value = processed_data[field]
+                    if isinstance(value, (int, float)):
+                        formatted_value = f"{value:.2f}" if isinstance(value, float) else str(value)
+                    else:
+                        formatted_value = str(value)
+                    label.config(text=formatted_value)
+            
+            # Durum çubuğunu güncelle
+            self.status_label.config(
+                text=f"Son güncelleme: {datetime.now().strftime('%H:%M:%S.%f')[:-3]}"
+            )
+            
+            # Önemli değerleri kontrol et ve log ekle
+            self._check_critical_values(processed_data)
+            
         except Exception as e:
-            logger.error(f"GUI güncelleme hatası: {str(e)}")
+            logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
+            self.add_log(f"Veri güncelleme hatası: {str(e)}", "ERROR")
+
+    def _check_critical_values(self, data: Dict):
+        """Kritik değerleri kontrol eder ve gerekirse log ekler"""
+        # Akım kontrolü
+        current = float(data.get('serit_motor_akim_a', 0))
+        if current > 25:
+            self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
+        elif current > 30:
+            self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
+            
+        # Sapma kontrolü
+        deviation = float(data.get('serit_sapmasi', 0))
+        if abs(deviation) > 0.5:
+            self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
+        elif abs(deviation) > 1.0:
+            self.add_log(f"Kritik şerit sapması: {deviation:.2f}mm", "ERROR")
+            
+        # Titreşim kontrolü
+        vib_x = float(data.get('ivme_olcer_x_hz', 0))
+        vib_y = float(data.get('ivme_olcer_y_hz', 0))
+        vib_z = float(data.get('ivme_olcer_z_hz', 0))
+        max_vib = max(vib_x, vib_y, vib_z)
+        
+        if max_vib > 1.0:
+            self.add_log(f"Yüksek titreşim: {max_vib:.2f}Hz", "WARNING")
+        elif max_vib > 2.0:
+            self.add_log(f"Kritik titreşim: {max_vib:.2f}Hz", "ERROR")
 
     def _send_manual_speed(self, speed_type: str):
         """Tek bir hızı gönderir"""
@@ -539,4 +640,25 @@ class SimpleGUI:
         except Exception as e:
             logger.error(f"Toplu hız gönderme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
+
+    def update_modbus_status(self, is_connected: bool, ip_address: str = None):
+        """Modbus bağlantı durumunu günceller"""
+        if is_connected:
+            self.modbus_status.config(
+                text=f"Bağlı - {ip_address}",
+                foreground="green"
+            )
+        else:
+            self.modbus_status.config(
+                text="Bağlı Değil",
+                foreground="red"
+            )
+
+    def add_log(self, message: str, level: str = 'INFO'):
+        """Log mesajı ekler"""
+        timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+        log_message = f"{timestamp} [{level}] {message}\n"
+        
+        self.log_text.insert(tk.END, log_message, level)
+        self.log_text.see(tk.END)  # Son mesaja kaydır
 
