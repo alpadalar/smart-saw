@@ -9,7 +9,7 @@ import logging
 import threading
 import sys
 
-from core import logger
+from core.logger import logger
 from core.constants import TestereState
 from control import ControllerType, get_controller_factory
 from models import ProcessedData
@@ -129,17 +129,36 @@ class SimpleGUI:
         ttk.Label(control_frame, text="Aktif Sistem:").pack(side=tk.LEFT, padx=5)
         ttk.Label(control_frame, textvariable=self.current_controller).pack(side=tk.LEFT, padx=5)
         
-        for controller in ControllerType:
-            ttk.Button(
-                control_frame,
-                text=f"{controller.value.capitalize()}",
-                command=lambda c=controller: self._switch_controller(c)
-            ).pack(side=tk.LEFT, padx=2)
+        # Manuel kontrol butonu
+        ttk.Button(
+            control_frame,
+            text="Manuel",
+            command=lambda: self._switch_controller(None)
+        ).pack(side=tk.LEFT, padx=2)
+        
+        # Otomatik kontrol butonları
+        ttk.Button(
+            control_frame,
+            text="Fuzzy",
+            command=lambda: self._switch_controller(ControllerType.FUZZY)
+        ).pack(side=tk.LEFT, padx=2)
         
         ttk.Button(
             control_frame,
-            text="Kapat",
-            command=self._disable_controller
+            text="Lineer",
+            command=lambda: self._switch_controller(ControllerType.LINEAR)
+        ).pack(side=tk.LEFT, padx=2)
+        
+        ttk.Button(
+            control_frame,
+            text="Expert",
+            command=lambda: self._switch_controller(ControllerType.EXPERT)
+        ).pack(side=tk.LEFT, padx=2)
+        
+        ttk.Button(
+            control_frame,
+            text="ML",
+            command=lambda: self._switch_controller(ControllerType.ML)
         ).pack(side=tk.LEFT, padx=2)
         
         # Manuel Hız Kontrolü
@@ -303,20 +322,37 @@ class SimpleGUI:
         try:
             # Önce mevcut kontrolcüyü kapat
             self.controller_factory.set_controller(None)
-            time.sleep(0.5)  # Biraz daha uzun bekle
+            time.sleep(0.1)  # Kısa bir bekleme
             
             # Yeni kontrolcüyü etkinleştir
-            if not isinstance(controller_type, ControllerType):
-                logger.error(f"Geçersiz kontrol sistemi tipi: {controller_type}")
-                return
+            if controller_type == ControllerType.FUZZY:
+                self.controller_factory.set_controller(ControllerType.FUZZY)
+                self.current_controller.set("Fuzzy Kontrol Aktif")
+                logger.info("Fuzzy kontrol aktif edildi")
                 
-            self.controller_factory.set_controller(controller_type)
-            self.current_controller.set(f"{controller_type.value.capitalize()} Kontrol Aktif")
-            logger.info(f"Kontrol sistemi değiştirildi: {controller_type.value}")
+            elif controller_type == ControllerType.LINEAR:
+                self.controller_factory.set_controller(ControllerType.LINEAR)
+                self.current_controller.set("Lineer Kontrol Aktif")
+                logger.info("Lineer kontrol aktif edildi")
+                
+            elif controller_type == ControllerType.EXPERT:
+                self.controller_factory.set_controller(ControllerType.EXPERT)
+                self.current_controller.set("Expert Kontrol Aktif")
+                logger.info("Expert kontrol aktif edildi")
+                
+            elif controller_type == ControllerType.ML:
+                self.controller_factory.set_controller(ControllerType.ML)
+                self.current_controller.set("ML Kontrol Aktif")
+                logger.info("ML kontrol aktif edildi")
+                
+            else:
+                self.current_controller.set("Kontrol Sistemi Kapalı")
+                logger.info("Manuel kontrol aktif edildi")
+                
         except Exception as e:
-            logger.error(f"Kontrol sistemi değiştirilemedi: {str(e)}")
+            logger.error(f"Kontrol sistemi değiştirme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
-            self.current_controller.set("Kontrol Sistemi Kapalı")
+            self._disable_controller()
 
     def _disable_controller(self):
         """Kontrol sistemini kapatır"""

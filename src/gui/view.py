@@ -17,7 +17,7 @@ class MainWindow:
         
         self.control_mode = ttk.Combobox(
             control_frame,
-            values=["Manuel", "Fuzzy", "Lineer", "Dinamik", "LSTM"],
+            values=["Manuel", "Fuzzy", "Lineer", "Dinamik", "LSTM", "ML"],
             state="readonly"
         )
         self.control_mode.set("Manuel")

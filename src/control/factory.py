@@ -9,12 +9,14 @@ from core.exceptions import ControllerNotFoundError
 from .expert.controller import adjust_speeds as expert_adjust
 from .linear.controller import adjust_speeds_linear as linear_adjust
 from .fuzzy.controller import adjust_speeds_fuzzy as fuzzy_adjust
+from .ml.controller import adjust_speeds_ml as ml_adjust
 
 class ControllerType(Enum):
     """Kontrol sistemi tipleri"""
     EXPERT = "expert"
     LINEAR = "linear"
     FUZZY = "fuzzy"
+    ML = "ml"  # Yeni kontrol sistemi
 
 
 class ControllerFactory:
@@ -26,6 +28,7 @@ class ControllerFactory:
             ControllerType.FUZZY: fuzzy_adjust,
             ControllerType.EXPERT: expert_adjust,
             ControllerType.LINEAR: linear_adjust,
+            ControllerType.ML: ml_adjust,  # Yeni kontrol sistemi
         }
         self._active_controller: Optional[ControllerType] = None
         self._controller_stats: Dict[ControllerType, Dict[str, Any]] = {

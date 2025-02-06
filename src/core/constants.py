@@ -4,6 +4,9 @@ from enum import Enum
 KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
+# Model yolu
+ML_MODEL_PATH = "src/control/ml/trained_model_Random Forest.pkl"
+
 # Hız Limitleri
 MIN_SPEED = 5.0
 MAX_SPEED = 100.0
@@ -43,3 +46,4 @@ class ControlMode(Enum):
     LINEAR = "linear"
     DYNAMIC = "dynamic"
     LSTM = "lstm"
+    ML = "ml"  # Yeni kontrol modu
