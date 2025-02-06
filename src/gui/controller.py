@@ -147,6 +147,18 @@ class SimpleGUI:
         notebook = ttk.Notebook(self.root)
         notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
+        # Kesim Bilgileri Sekmesi
+        kesim_frame = ttk.Frame(notebook)
+        notebook.add(kesim_frame, text="Kesim Bilgileri")
+        self._create_info_grid(kesim_frame, [
+            ('kesilen_parca_adeti', 'Kesilen Parça'),
+            ('serit_kesme_hizi', 'Kesme Hızı'),
+            ('serit_inme_hizi', 'İnme Hızı'),
+            ('serit_motor_akim_a', 'Motor Akımı'),
+            ('serit_sapmasi', 'Şerit Sapması'),
+            ('kafa_yuksekligi_mm', 'Kafa Yüksekliği')
+        ])
+        
         # Temel Bilgiler Sekmesi
         temel_frame = ttk.Frame(notebook)
         notebook.add(temel_frame, text="Temel Bilgiler")
@@ -210,37 +222,8 @@ class SimpleGUI:
             ('ivme_olcer_z_hz', 'Z Ekseni Frekans')
         ])
         
-        # Kesim Bilgileri Paneli
-        kesim_frame = ttk.LabelFrame(self.root, text="Kesim Bilgileri", padding=10)
-        kesim_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        # Önceki kesim süresi
-        onceki_kesim_sure_label = ttk.Label(kesim_frame, text="Önceki Kesim Süresi:")
-        onceki_kesim_sure_label.grid(row=0, column=0, padx=5, pady=2, sticky="w")
-        self.current_values['onceki_kesim_sure'] = tk.StringVar(value="-")
-        onceki_kesim_sure_value = ttk.Label(kesim_frame, textvariable=self.current_values['onceki_kesim_sure'])
-        onceki_kesim_sure_value.grid(row=0, column=1, padx=5, pady=2, sticky="w")
-
-        # Önceki kesim başlangıç
-        onceki_kesim_baslama_label = ttk.Label(kesim_frame, text="Önceki Kesim Başlangıç:")
-        onceki_kesim_baslama_label.grid(row=1, column=0, padx=5, pady=2, sticky="w")
-        self.current_values['onceki_kesim_baslama'] = tk.StringVar(value="-")
-        onceki_kesim_baslama_value = ttk.Label(kesim_frame, textvariable=self.current_values['onceki_kesim_baslama'])
-        onceki_kesim_baslama_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
-
-        # Önceki kesim bitiş
-        onceki_kesim_bitis_label = ttk.Label(kesim_frame, text="Önceki Kesim Bitiş:")
-        onceki_kesim_bitis_label.grid(row=2, column=0, padx=5, pady=2, sticky="w")
-        self.current_values['onceki_kesim_bitis'] = tk.StringVar(value="-")
-        onceki_kesim_bitis_value = ttk.Label(kesim_frame, textvariable=self.current_values['onceki_kesim_bitis'])
-        onceki_kesim_bitis_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
-
-        # Mevcut kesim başlangıç
-        mevcut_kesim_baslama_label = ttk.Label(kesim_frame, text="Mevcut Kesim Başlangıç:")
-        mevcut_kesim_baslama_label.grid(row=3, column=0, padx=5, pady=2, sticky="w")
-        self.current_values['mevcut_kesim_baslama'] = tk.StringVar(value="-")
-        mevcut_kesim_baslama_value = ttk.Label(kesim_frame, textvariable=self.current_values['mevcut_kesim_baslama'])
-        mevcut_kesim_baslama_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
+        # Varsayılan sekmeyi ayarla
+        notebook.select(0)  # İlk sekme (Kesim Bilgileri) seçili olacak
         
         # Durum çubuğu
         status_frame = ttk.Frame(self.root)
@@ -259,21 +242,59 @@ class SimpleGUI:
         ).pack(side=tk.RIGHT)
 
     def _create_info_grid(self, parent, fields, columns=2):
-        """Bilgi grid'i oluşturur"""
-        for i, (key, label) in enumerate(fields):
-            row = i // columns
-            col = i % columns
+        """Bilgi grid'ini oluşturur"""
+        frame = ttk.LabelFrame(parent, text="Kesim Bilgileri", padding=(5, 5))
+        frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Kesim zamanları için frame
+        time_frame = ttk.LabelFrame(frame, text="Zaman Bilgileri", padding=(5, 5))
+        time_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Mevcut kesim bilgileri
+        current_cut_frame = ttk.Frame(time_frame)
+        current_cut_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Label(current_cut_frame, text="Mevcut Kesim Başlangıç:").pack(side=tk.LEFT)
+        self.current_cut_start = ttk.Label(current_cut_frame, text="-")
+        self.current_cut_start.pack(side=tk.LEFT, padx=5)
+        
+        # Önceki kesim bilgileri
+        prev_cut_frame = ttk.Frame(time_frame)
+        prev_cut_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Label(prev_cut_frame, text="Önceki Kesim:").pack(side=tk.LEFT)
+        self.prev_cut_info = ttk.Label(prev_cut_frame, text="-")
+        self.prev_cut_info.pack(side=tk.LEFT, padx=5)
+        
+        # Son güncelleme zamanı
+        update_frame = ttk.Frame(time_frame)
+        update_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Label(update_frame, text="Son Güncelleme:").pack(side=tk.LEFT)
+        self.last_update_time = ttk.Label(update_frame, text="-")
+        self.last_update_time.pack(side=tk.LEFT, padx=5)
+        
+        # Sensör değerleri için grid
+        grid_frame = ttk.Frame(frame)
+        grid_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        row = 0
+        col = 0
+        self.value_labels = {}
+        
+        for field in fields:
+            label = ttk.Label(grid_frame, text=f"{field}:")
+            label.grid(row=row, column=col*2, sticky=tk.E, padx=5, pady=2)
             
-            frame = ttk.Frame(parent)
-            frame.grid(row=row, column=col, padx=10, pady=5, sticky='ew')
+            value_label = ttk.Label(grid_frame, text="-")
+            value_label.grid(row=row, column=col*2+1, sticky=tk.W, padx=5, pady=2)
             
-            ttk.Label(frame, text=f"{label}:").pack(side=tk.LEFT)
-            ttk.Label(
-                frame,
-                textvariable=self.current_values[key],
-                width=15,
-                anchor='e'
-            ).pack(side=tk.RIGHT)
+            self.value_labels[field] = value_label
+            
+            col += 1
+            if col >= columns:
+                col = 0
+                row += 1
 
     def _switch_controller(self, controller_type: ControllerType):
         """Kontrol sistemini değiştirir"""
@@ -420,74 +441,49 @@ class SimpleGUI:
         self.root.mainloop()
 
     def update_data(self, processed_data: Dict):
-        """Dışarıdan veri güncellemesi için"""
+        """Arayüz verilerini günceller"""
         try:
-            # Testere durumunu kontrol et
-            testere_durumu = processed_data.get('testere_durumu')
-            if testere_durumu == 3:  # Kesim durumu
-                if not self.kesim_baslama_zamani:
-                    # Yeni kesim başladı
-                    self.kesim_baslama_zamani = datetime.now()
-                    self.current_values['kesim_baslama'].set(
-                        self.kesim_baslama_zamani.strftime('%H:%M:%S.%f')[:-3]
+            # Kesim durumunu kontrol et
+            testere_durumu = processed_data.get('testere_durumu', 0)
+            
+            # Mevcut zaman
+            current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+            self.last_update_time.config(text=current_time)
+            
+            # Kesim durumu değişimini kontrol et
+            if testere_durumu == 3:  # Kesim yapılıyor
+                if not hasattr(self, '_current_cut_start_time'):
+                    self._current_cut_start_time = datetime.now()
+                    self.current_cut_start.config(
+                        text=self._current_cut_start_time.strftime('%H:%M:%S.%f')[:-3]
                     )
-            elif testere_durumu != 3 and self.kesim_baslama_zamani:
+            elif hasattr(self, '_current_cut_start_time'):
                 # Kesim bitti
-                kesim_bitis = datetime.now()
-                kesim_sure = (kesim_bitis - self.kesim_baslama_zamani).total_seconds() * 1000  # ms cinsinden
+                end_time = datetime.now()
+                duration = end_time - self._current_cut_start_time
+                duration_str = f"{int(duration.total_seconds())//60:02d}:{int(duration.total_seconds())%60:02d}.{str(duration.microseconds)[:3]}"
                 
                 # Önceki kesim bilgilerini güncelle
-                self.current_values['onceki_kesim_baslama'].set(
-                    self.kesim_baslama_zamani.strftime('%H:%M:%S.%f')[:-3]
-                )
-                self.current_values['onceki_kesim_bitis'].set(
-                    kesim_bitis.strftime('%H:%M:%S.%f')[:-3]
-                )
-                self.current_values['onceki_kesim_sure'].set(
-                    f"{kesim_sure:.0f} ms"
+                self.prev_cut_info.config(
+                    text=f"Başlangıç: {self._current_cut_start_time.strftime('%H:%M:%S.%f')[:-3]} "
+                        f"Bitiş: {end_time.strftime('%H:%M:%S.%f')[:-3]} "
+                        f"Süre: {duration_str}"
                 )
                 
-                # Kesim başlama zamanını sıfırla
-                self.kesim_baslama_zamani = None
-                self.current_values['kesim_baslama'].set("-")
+                # Mevcut kesim bilgilerini temizle
+                delattr(self, '_current_cut_start_time')
+                self.current_cut_start.config(text="-")
             
-            # Diğer verileri güncelle
-            for key, var in self.current_values.items():
-                if key in processed_data:
-                    value = processed_data[key]
-                    if isinstance(value, float):
-                        if key in ['serit_motor_akim_a', 'inme_motor_akim_a']:
-                            var.set(f"{value:.1f} A")
-                        elif key in ['serit_motor_tork_percentage', 'inme_motor_tork_percentage', 'ortam_nem_percentage']:
-                            var.set(f"{value:.1f} %")
-                        elif key in ['mengene_basinc_bar', 'serit_gerginligi_bar']:
-                            var.set(f"{value:.1f} bar")
-                        elif key in ['serit_sapmasi']:
-                            var.set(f"{value:.2f} mm")
-                        elif key in ['ortam_sicakligi_c', 'sogutma_sivi_sicakligi_c', 'hidrolik_yag_sicakligi_c']:
-                            var.set(f"{value:.1f} °C")
-                        elif key in ['serit_kesme_hizi', 'serit_inme_hizi']:
-                            var.set(f"{value:.1f} mm/s")
-                        elif key in ['kafa_yuksekligi_mm']:
-                            var.set(f"{value:.1f} mm")
-                        elif key in ['ivme_olcer_x', 'ivme_olcer_y', 'ivme_olcer_z']:
-                            var.set(f"{value:.2f} g")
-                        elif key in ['ivme_olcer_x_hz', 'ivme_olcer_y_hz', 'ivme_olcer_z_hz']:
-                            var.set(f"{value:.1f} Hz")
-                        else:
-                            var.set(f"{value:.1f}")
-                    else:
-                        var.set(str(value))
-            
-            # Son güncelleme zamanını güncelle
-            current_time = datetime.now()
-            self.status_label.config(
-                text=f"Son güncelleme: {current_time.strftime('%H:%M:%S.%f')[:-3]}"
-            )
-            self.last_update_time = current_time
-            
+            # Diğer değerleri güncelle
+            for field, label in self.value_labels.items():
+                value = processed_data.get(field, '-')
+                if isinstance(value, float):
+                    label.config(text=f"{value:.2f}")
+                else:
+                    label.config(text=str(value))
+                    
         except Exception as e:
-            logger.error(f"Veri güncelleme hatası: {str(e)}")
+            logger.error(f"GUI güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
 
     def _send_manual_speed(self, speed_type: str):
