@@ -6,8 +6,11 @@ from datetime import datetime
 from typing import Dict, Optional
 from queue import Queue
 import logging
+import threading
+import sys
 
 from core import logger
+from core.constants import TestereState
 from control import ControllerType, get_controller_factory
 from models import ProcessedData
 from utils.helpers import reverse_calculate_value
@@ -17,137 +20,86 @@ class GUILogHandler(logging.Handler):
     def __init__(self, gui):
         super().__init__()
         self.gui = gui
-        
+        self.log_queue = Queue()
+        self.handler_ready = threading.Event()
+        self._start_queue_handler()
+    
     def emit(self, record):
         try:
-            # Log seviyesine göre renk belirle
-            level_map = {
-                'DEBUG': 'INFO',
-                'INFO': 'INFO',
-                'WARNING': 'WARNING',
-                'ERROR': 'ERROR',
-                'CRITICAL': 'ERROR'
-            }
-            level = level_map.get(record.levelname, 'INFO')
-            
-            # Log mesajını GUI'ye ekle
-            self.gui.add_log(record.getMessage(), level)
+            level = record.levelname
+            self.log_queue.put((record.getMessage(), level))
         except Exception:
             self.handleError(record)
+    
+    def _start_queue_handler(self):
+        def handle_logs():
+            # GUI hazır olana kadar bekle
+            self.gui.gui_ready.wait()
+            self.handler_ready.set()
+            
+            while True:
+                try:
+                    message, level = self.log_queue.get()
+                    if message and level:
+                        if self.gui and self.gui.root:
+                            self.gui.root.after(0, self.gui.add_log, message, level)
+                except Exception as e:
+                    # Log hatalarını standart error'a yaz
+                    print(f"Log queue handler error: {e}", file=sys.stderr)
+                time.sleep(0.1)
+        
+        thread = threading.Thread(target=handle_logs, daemon=True)
+        thread.start()
 
 class SimpleGUI:
     def __init__(self, controller_factory=None):
         self.controller_factory = controller_factory or get_controller_factory()
         
+        # Thread senkronizasyonu için event'ler
+        self.threads_ready = threading.Event()
+        self.gui_ready = threading.Event()
+        
         # Ana pencere
         self.root = tk.Tk()
         self.root.title("Smart Saw Control Panel")
-        
-        # Logger'a GUI handler'ı ekle
-        self.log_handler = GUILogHandler(self)
-        self.log_handler.setFormatter(
-            logging.Formatter('%(message)s')  # Timestamp GUI'de ekleniyor
-        )
-        logger.addHandler(self.log_handler)
+        self.root.geometry("1280x720")
         
         # Değişkenler
         self.current_controller = tk.StringVar(value="Kontrol Sistemi Kapalı")
         self._last_update_time = None  # datetime nesnesi
-        self._current_cut_start_time = None  # datetime nesnesi
-        self.current_values = {
-            # Temel bilgiler
-            'makine_id': tk.StringVar(value="-"),
-            'serit_id': tk.StringVar(value="-"),
-            'serit_dis_mm': tk.StringVar(value="-"),
-            'serit_tip': tk.StringVar(value="-"),
-            'serit_marka': tk.StringVar(value="-"),
-            'serit_malz': tk.StringVar(value="-"),
-            
-            # Malzeme bilgileri
-            'malzeme_cinsi': tk.StringVar(value="-"),
-            'malzeme_sertlik': tk.StringVar(value="-"),
-            'kesit_yapisi': tk.StringVar(value="-"),
-            'a_mm': tk.StringVar(value="-"),
-            'b_mm': tk.StringVar(value="-"),
-            'c_mm': tk.StringVar(value="-"),
-            'd_mm': tk.StringVar(value="-"),
-            
-            # Motor ve hareket bilgileri
-            'kafa_yuksekligi_mm': tk.StringVar(value="0.0 mm"),
-            'serit_motor_akim_a': tk.StringVar(value="0.0 A"),
-            'serit_motor_tork_percentage': tk.StringVar(value="0.0 %"),
-            'inme_motor_akim_a': tk.StringVar(value="0.0 A"),
-            'inme_motor_tork_percentage': tk.StringVar(value="0.0 %"),
-            
-            # Basınç ve sıcaklık bilgileri
-            'mengene_basinc_bar': tk.StringVar(value="0.0 bar"),
-            'serit_gerginligi_bar': tk.StringVar(value="0.0 bar"),
-            'serit_sapmasi': tk.StringVar(value="0.0 mm"),
-            'ortam_sicakligi_c': tk.StringVar(value="0.0 °C"),
-            'ortam_nem_percentage': tk.StringVar(value="0.0 %"),
-            'sogutma_sivi_sicakligi_c': tk.StringVar(value="0.0 °C"),
-            'hidrolik_yag_sicakligi_c': tk.StringVar(value="0.0 °C"),
-            
-            # İvme ölçer bilgileri
-            'ivme_olcer_x': tk.StringVar(value="0.0 g"),
-            'ivme_olcer_y': tk.StringVar(value="0.0 g"),
-            'ivme_olcer_z': tk.StringVar(value="0.0 g"),
-            'ivme_olcer_x_hz': tk.StringVar(value="0.0 Hz"),
-            'ivme_olcer_y_hz': tk.StringVar(value="0.0 Hz"),
-            'ivme_olcer_z_hz': tk.StringVar(value="0.0 Hz"),
-            
-            # Durum bilgileri
-            'testere_durumu': tk.StringVar(value="Bekleniyor"),
-            'alarm_status': tk.StringVar(value="-"),
-            'alarm_bilgisi': tk.StringVar(value="-"),
-            'serit_kesme_hizi': tk.StringVar(value="0.0 mm/s"),
-            'serit_inme_hizi': tk.StringVar(value="0.0 mm/s"),
-            
-            # Kesim bilgileri
-            'kesilen_parca_adeti': tk.StringVar(value="0"),
-            'kesim_baslama': tk.StringVar(value="-"),
-            'kesim_sure': tk.StringVar(value="-"),
-            'onceki_kesim_baslama': tk.StringVar(value="-"),
-            'onceki_kesim_bitis': tk.StringVar(value="-"),
-            'onceki_kesim_sure': tk.StringVar(value="-")
-        }
-        
+        self._cutting_start_time = None  # datetime nesnesi
         self.kesim_baslama_zamani = None
+        self.value_labels = {}  # Değer etiketleri sözlüğü
+        
+        # GUI bileşenlerini oluştur
         self._create_widgets()
-        
-        # Pencereyi içeriğe göre boyutlandır
-        self.root.update_idletasks()  # Tüm widget'ların boyutlarının hesaplanmasını sağla
-        
-        # Minimum boyutu ayarla
-        width = max(
-            self.root.winfo_reqwidth(),  # İçeriğin istediği genişlik
-            800  # Minimum genişlik
-        )
-        height = max(
-            self.root.winfo_reqheight(),  # İçeriğin istediği yükseklik
-            600  # Minimum yükseklik
-        )
-        
-        # Ekran boyutlarını al
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        
-        # Pencere boyutunu ekran boyutuna göre sınırla
-        width = min(width, screen_width - 100)
-        height = min(height, screen_height - 100)
-        
-        # Minimum boyutu ayarla
-        self.root.minsize(width, height)
-        
-        # Pencereyi ekranın ortasına konumlandır
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
-        self.root.geometry(f"{width}x{height}+{x}+{y}")
-        
-        # Yeniden boyutlandırmaya izin ver
-        self.root.resizable(True, True)
-        
         self._setup_update_loop()
+        
+        # Log handler'ı başlat
+        self.log_queue = Queue()
+        self.log_handler = GUILogHandler(self)
+        self.log_handler.setFormatter(
+            logging.Formatter('%(message)s')  # Timestamp GUI'de ekleniyor
+        )
+        
+        # Log queue işleyiciyi başlat
+        self._process_logs()
+        
+        # GUI hazır olduğunu bildir
+        self.gui_ready.set()
+
+    def _process_logs(self):
+        """Log kuyruğunu işler"""
+        try:
+            while not self.log_queue.empty():
+                message, level = self.log_queue.get_nowait()
+                if message and level:
+                    self.add_log(message, level)
+        except Exception as e:
+            print(f"Log işleme hatası: {e}", file=sys.stderr)
+        finally:
+            # Her 100ms'de bir tekrar kontrol et
+            self.root.after(100, self._process_logs)
 
     def _create_widgets(self):
         """GUI bileşenlerini oluşturur"""
@@ -351,7 +303,7 @@ class SimpleGUI:
         try:
             # Önce mevcut kontrolcüyü kapat
             self.controller_factory.set_controller(None)
-            time.sleep(0.5)  # Biraz daha uzun bekleme
+            time.sleep(0.5)  # Biraz daha uzun bekle
             
             # Yeni kontrolcüyü etkinleştir
             if not isinstance(controller_type, ControllerType):
@@ -489,8 +441,27 @@ class SimpleGUI:
         self.root.quit()
 
     def start(self):
-        """GUI'yi başlatır"""
+        """GUI'yi başlat ve thread'lerin hazır olmasını bekle"""
+        # Log handler'ı ekle
+        logger.addHandler(self.log_handler)
+        
+        def check_threads():
+            if not self.threads_ready.is_set():
+                # Her 100ms'de bir kontrol et
+                self.root.after(100, check_threads)
+                return
+            # Thread'ler hazır, normal güncelleme döngüsünü başlat
+            self._start_normal_operation()
+        
+        # Thread'leri kontrol etmeye başla
+        self.root.after(0, check_threads)
+        # Ana döngüyü başlat
         self.root.mainloop()
+
+    def _start_normal_operation(self):
+        """Normal GUI operasyonlarını başlat"""
+        logger.info("Tüm thread'ler hazır, GUI normal operasyona geçiyor")
+        # Normal operasyonları başlat...
 
     def update_data(self, processed_data: Dict):
         """Arayüz verilerini günceller"""
@@ -655,10 +626,21 @@ class SimpleGUI:
             )
 
     def add_log(self, message: str, level: str = 'INFO'):
-        """Log mesajı ekler"""
-        timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-        log_message = f"{timestamp} [{level}] {message}\n"
-        
-        self.log_text.insert(tk.END, log_message, level)
-        self.log_text.see(tk.END)  # Son mesaja kaydır
+        """Thread-safe log ekleme"""
+        try:
+            if not hasattr(self, 'log_text'):
+                return
+                
+            timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+            log_message = f"{timestamp} [{level}] {message}\n"
+            
+            self.log_text.insert(tk.END, log_message, level)
+            self.log_text.see(tk.END)
+            
+            # Maksimum 1000 satır tut
+            line_count = int(self.log_text.index('end-1c').split('.')[0])
+            if line_count > 1000:
+                self.log_text.delete('1.0', '2.0')
+        except Exception as e:
+            logger.error(f"Log ekleme hatası: {e}")
 
