@@ -5,6 +5,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from typing import Optional, Tuple
+from collections import deque
 
 from core.logger import logger
 from core.constants import (
@@ -12,7 +13,9 @@ from core.constants import (
     SPEED_LIMITS,
     TestereState,
     MIN_SPEED_UPDATE_INTERVAL,
-    BASLANGIC_GECIKMESI
+    BASLANGIC_GECIKMESI,
+    BUFFER_SIZE,
+    BUFFER_DURATION
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -40,6 +43,40 @@ class MLController:
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
+        
+        # Veri tamponları
+        self.akim_buffer = deque(maxlen=BUFFER_SIZE)
+        self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
+        self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
+        self.last_buffer_update = time.time()
+    
+    def _update_buffers(self, akim, kesme_hizi, inme_hizi):
+        """Veri tamponlarını günceller"""
+        current_time = time.time()
+        
+        # Tamponları güncelle
+        self.akim_buffer.append((current_time, akim))
+        self.kesme_hizi_buffer.append((current_time, kesme_hizi))
+        self.inme_hizi_buffer.append((current_time, inme_hizi))
+        
+        # Eski verileri temizle (BUFFER_DURATION saniyeden eski)
+        while self.akim_buffer and current_time - self.akim_buffer[0][0] > BUFFER_DURATION:
+            self.akim_buffer.popleft()
+        while self.kesme_hizi_buffer and current_time - self.kesme_hizi_buffer[0][0] > BUFFER_DURATION:
+            self.kesme_hizi_buffer.popleft()
+        while self.inme_hizi_buffer and current_time - self.inme_hizi_buffer[0][0] > BUFFER_DURATION:
+            self.inme_hizi_buffer.popleft()
+            
+    def _get_buffer_averages(self):
+        """Tamponlardaki verilerin ortalamasını alır"""
+        if not self.akim_buffer or not self.kesme_hizi_buffer or not self.inme_hizi_buffer:
+            return None, None, None
+            
+        akim_avg = sum(akim for _, akim in self.akim_buffer) / len(self.akim_buffer)
+        kesme_hizi_avg = sum(hiz for _, hiz in self.kesme_hizi_buffer) / len(self.kesme_hizi_buffer)
+        inme_hizi_avg = sum(hiz for _, hiz in self.inme_hizi_buffer) / len(self.inme_hizi_buffer)
+        
+        return akim_avg, kesme_hizi_avg, inme_hizi_avg
     
     def predict_next_speed(self, serit_motor_akim_a: float, serit_kesme_hizi: float, serit_inme_hizi: float) -> float:
         """Bir sonraki şerit inme hızını tahmin eder"""
@@ -47,8 +84,19 @@ class MLController:
             if self.model is None:
                 return serit_inme_hizi
                 
+            # Tamponları güncelle
+            self._update_buffers(serit_motor_akim_a, serit_kesme_hizi, serit_inme_hizi)
+            
+            # Ortalama değerleri al
+            avg_akim, avg_kesme_hizi, avg_inme_hizi = self._get_buffer_averages()
+            if avg_akim is None:
+                logger.warning("Yeterli veri yok, ham değerler kullanılıyor")
+                avg_akim, avg_kesme_hizi, avg_inme_hizi = serit_motor_akim_a, serit_kesme_hizi, serit_inme_hizi
+            
+            logger.debug(f"Ortalama değerler - Akım: {avg_akim:.2f}A, Kesme Hızı: {avg_kesme_hizi:.2f}, İnme Hızı: {avg_inme_hizi:.2f}")
+                
             # Giriş verisini oluştur
-            input_data = pd.DataFrame([[serit_motor_akim_a, serit_kesme_hizi, serit_inme_hizi]], 
+            input_data = pd.DataFrame([[avg_akim, avg_kesme_hizi, avg_inme_hizi]], 
                                     columns=self.input_features)
             
             # Tahmin yap
