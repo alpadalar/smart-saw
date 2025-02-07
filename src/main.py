@@ -149,7 +149,9 @@ class SmartSaw:
                         'malzeme_sertlik': '',
                         'kesit_yapisi': '',
                         'fuzzy_output': 0.0,
-                        'kesme_hizi_degisim': 0.0
+                        'kesme_hizi_degisim': 0.0,
+                        'modbus_connected': self.modbus_client.is_connected,
+                        'modbus_ip': '192.168.11.186'
                     })
                     
                     # Veriyi işle

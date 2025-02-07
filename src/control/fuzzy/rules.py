@@ -38,25 +38,25 @@ class FuzzyRules:
         
         # Kural aktivasyonları
         # Çok düşük akım kuralları
-        rule1 = np.fmin(akim_level_cd & sapma_level_id, self.mf.katsayi_y)
+        rule1 = np.fmin(np.minimum(akim_level_cd, sapma_level_id), self.mf.katsayi_y)
         
         # Düşük akım kuralları
-        rule2 = np.fmin(akim_level_d & sapma_level_id, self.mf.katsayi_y)
+        rule2 = np.fmin(np.minimum(akim_level_d, sapma_level_id), self.mf.katsayi_y)
         
         # İdeal akım kuralları
-        rule3 = np.fmin(akim_level_id & sapma_level_id, self.mf.katsayi_dy)
-        rule4 = np.fmin(akim_level_id & sapma_level_n, self.mf.katsayi_d)
-        rule5 = np.fmin(akim_level_id & sapma_level_p, self.mf.katsayi_d)
+        rule3 = np.fmin(np.minimum(akim_level_id, sapma_level_id), self.mf.katsayi_dy)
+        rule4 = np.fmin(np.minimum(akim_level_id, sapma_level_n), self.mf.katsayi_d)
+        rule5 = np.fmin(np.minimum(akim_level_id, sapma_level_p), self.mf.katsayi_d)
         
         # Yüksek akım kuralları
-        rule6 = np.fmin(akim_level_y & sapma_level_id, self.mf.katsayi_d)
-        rule7 = np.fmin(akim_level_y & sapma_level_n, self.mf.katsayi_d)
-        rule8 = np.fmin(akim_level_y & sapma_level_p, self.mf.katsayi_d)
+        rule6 = np.fmin(np.minimum(akim_level_y, sapma_level_id), self.mf.katsayi_d)
+        rule7 = np.fmin(np.minimum(akim_level_y, sapma_level_n), self.mf.katsayi_d)
+        rule8 = np.fmin(np.minimum(akim_level_y, sapma_level_p), self.mf.katsayi_d)
         
         # Çok yüksek akım kuralları
-        rule9 = np.fmin(akim_level_cy & sapma_level_id, self.mf.katsayi_d)
-        rule10 = np.fmin(akim_level_cy & sapma_level_n, self.mf.katsayi_cd)
-        rule11 = np.fmin(akim_level_cy & sapma_level_p, self.mf.katsayi_cd)
+        rule9 = np.fmin(np.minimum(akim_level_cy, sapma_level_id), self.mf.katsayi_d)
+        rule10 = np.fmin(np.minimum(akim_level_cy, sapma_level_n), self.mf.katsayi_cd)
+        rule11 = np.fmin(np.minimum(akim_level_cy, sapma_level_p), self.mf.katsayi_cd)
         
         # Titreşim kuralları (yorum satırı olarak)
         # rule12 = np.fmin(titresim_level_y, self.mf.katsayi_d)

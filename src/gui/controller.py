@@ -8,6 +8,7 @@ from queue import Queue
 import logging
 import threading
 import sys
+import queue
 
 from core.logger import logger
 from core.constants import TestereState
@@ -65,24 +66,77 @@ class SimpleGUI:
         self.root.geometry("1280x720")
         
         # Değişkenler
+        self.current_values = {
+            # Temel bilgiler
+            'makine_id': tk.StringVar(value="-"),
+            'serit_id': tk.StringVar(value="-"),
+            'serit_dis_mm': tk.StringVar(value="-"),
+            'serit_tip': tk.StringVar(value="-"),
+            'serit_marka': tk.StringVar(value="-"),
+            'serit_malz': tk.StringVar(value="-"),
+            
+            # Malzeme bilgileri
+            'malzeme_cinsi': tk.StringVar(value="-"),
+            'malzeme_sertlik': tk.StringVar(value="-"),
+            'kesit_yapisi': tk.StringVar(value="-"),
+            'a_mm': tk.StringVar(value="-"),
+            'b_mm': tk.StringVar(value="-"),
+            'c_mm': tk.StringVar(value="-"),
+            'd_mm': tk.StringVar(value="-"),
+            
+            # Motor ve hareket bilgileri
+            'kafa_yuksekligi_mm': tk.StringVar(value="-"),
+            'serit_motor_akim_a': tk.StringVar(value="-"),
+            'serit_motor_tork_percentage': tk.StringVar(value="-"),
+            'inme_motor_akim_a': tk.StringVar(value="-"),
+            'inme_motor_tork_percentage': tk.StringVar(value="-"),
+            'serit_kesme_hizi': tk.StringVar(value="-"),
+            'serit_inme_hizi': tk.StringVar(value="-"),
+            
+            # Basınç ve sıcaklık bilgileri
+            'mengene_basinc_bar': tk.StringVar(value="-"),
+            'serit_gerginligi_bar': tk.StringVar(value="-"),
+            'serit_sapmasi': tk.StringVar(value="-"),
+            'ortam_sicakligi_c': tk.StringVar(value="-"),
+            'ortam_nem_percentage': tk.StringVar(value="-"),
+            'sogutma_sivi_sicakligi_c': tk.StringVar(value="-"),
+            'hidrolik_yag_sicakligi_c': tk.StringVar(value="-"),
+            
+            # İvme ölçer bilgileri
+            'ivme_olcer_x': tk.StringVar(value="-"),
+            'ivme_olcer_y': tk.StringVar(value="-"),
+            'ivme_olcer_z': tk.StringVar(value="-"),
+            'ivme_olcer_x_hz': tk.StringVar(value="-"),
+            'ivme_olcer_y_hz': tk.StringVar(value="-"),
+            'ivme_olcer_z_hz': tk.StringVar(value="-"),
+            
+            # Kesim bilgileri
+            'kesilen_parca_adeti': tk.StringVar(value="-"),
+            'testere_durumu': tk.StringVar(value="-"),
+            'alarm_status': tk.StringVar(value="-"),
+            'alarm_bilgisi': tk.StringVar(value="-"),
+            'kesim_baslama': tk.StringVar(value="-"),
+            'kesim_sure': tk.StringVar(value="-"),
+            'cutting_time': tk.StringVar(value="00:00"),
+            'modbus_status': tk.StringVar(value="Bağlantı Yok")
+        }
+        
         self.current_controller = tk.StringVar(value="Kontrol Sistemi Kapalı")
-        self._last_update_time = None  # datetime nesnesi
-        self._cutting_start_time = None  # datetime nesnesi
+        self._last_update_time = None
+        self._cutting_start_time = None
         self.kesim_baslama_zamani = None
-        self.value_labels = {}  # Değer etiketleri sözlüğü
+        self.value_labels = {}
+        self.log_queue = Queue()
+        self.last_update = time.time()
+        self.update_interval = 0.1  # 100ms
         
         # GUI bileşenlerini oluştur
         self._create_widgets()
         self._setup_update_loop()
         
         # Log handler'ı başlat
-        self.log_queue = Queue()
         self.log_handler = GUILogHandler(self)
-        self.log_handler.setFormatter(
-            logging.Formatter('%(message)s')  # Timestamp GUI'de ekleniyor
-        )
-        
-        # Log queue işleyiciyi başlat
+        logger.addHandler(self.log_handler)
         self._process_logs()
         
         # GUI hazır olduğunu bildir
@@ -119,7 +173,7 @@ class SimpleGUI:
         modbus_frame = ttk.LabelFrame(top_frame, text="Modbus Durumu", padding=(5, 5))
         modbus_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         
-        self.modbus_status = ttk.Label(modbus_frame, text="Bağlı Değil", foreground="red")
+        self.modbus_status = ttk.Label(modbus_frame, textvariable=self.current_values['modbus_status'])
         self.modbus_status.pack(fill=tk.X, padx=5, pady=5)
         
         # Kontrol Sistemi
@@ -309,11 +363,10 @@ class SimpleGUI:
 
     def _create_value_grid(self, parent, fields):
         """Değer grid'ini oluşturur"""
-        self.value_labels = {}
-        
         for i, (field, label) in enumerate(fields):
+            # Etiket ve değer göstergesini oluştur
             ttk.Label(parent, text=label).grid(row=i, column=0, sticky=tk.E, padx=5, pady=2)
-            value_label = ttk.Label(parent, text="-")
+            value_label = ttk.Label(parent, textvariable=self.current_values[field])
             value_label.grid(row=i, column=1, sticky=tk.W, padx=5, pady=2)
             self.value_labels[field] = value_label
 
@@ -509,63 +562,24 @@ class SimpleGUI:
                     processed_data.get('modbus_ip', '192.168.11.186')
                 )
             
-            # Kesim durumunu kontrol et
-            testere_durumu = processed_data.get('testere_durumu')
-            if testere_durumu == TestereState.CUTTING.value:
-                if not hasattr(self, '_cutting_start_time'):
-                    self._cutting_start_time = datetime.now()
-                    self.current_cut_start.config(
-                        text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
-                    )
-                    self.add_log("Yeni kesim başladı", "INFO")
-                else:
-                    # Mevcut kesim süresini güncelle
-                    elapsed = datetime.now() - self._cutting_start_time
-                    minutes = int(elapsed.total_seconds() // 60)
-                    seconds = int(elapsed.total_seconds() % 60)
-                    milliseconds = int((elapsed.total_seconds() * 1000) % 1000)
-                    self.current_cut_duration = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
-                    
-            elif hasattr(self, '_cutting_start_time'):
-                # Kesim bitti
-                end_time = datetime.now()
+            # Kesim süresini güncelle
+            end_time = datetime.now()
+            if self._cutting_start_time is not None:
                 elapsed = end_time - self._cutting_start_time
-                minutes = int(elapsed.total_seconds() // 60)
-                seconds = int(elapsed.total_seconds() % 60)
-                milliseconds = int((elapsed.total_seconds() * 1000) % 1000)
-                
-                # Önceki kesim bilgilerini güncelle
-                self.prev_cut_start.config(text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3])
-                self.prev_cut_end.config(text=end_time.strftime('%H:%M:%S.%f')[:-3])
-                self.prev_cut_duration.config(text=f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}")
-                
-                # Mevcut kesim bilgilerini temizle
-                self.current_cut_start.config(text="-")
-                delattr(self, '_cutting_start_time')
-                self.add_log("Kesim tamamlandı", "INFO")
+                elapsed_seconds = elapsed.total_seconds()
+                minutes = int(elapsed_seconds // 60)
+                seconds = int(elapsed_seconds % 60)
+                self.current_values['cutting_time'].set(f"{minutes:02d}:{seconds:02d}")
             
-            # Değerleri güncelle
-            for field, label in self.value_labels.items():
-                if field in processed_data:
-                    value = processed_data[field]
-                    if isinstance(value, (int, float)):
-                        formatted_value = f"{value:.2f}" if isinstance(value, float) else str(value)
-                    else:
-                        formatted_value = str(value)
-                    label.config(text=formatted_value)
+            # Diğer değerleri güncelle
+            self._update_values(processed_data)
             
-            # Durum çubuğunu güncelle
-            self.status_label.config(
-                text=f"Son güncelleme: {datetime.now().strftime('%H:%M:%S.%f')[:-3]}"
-            )
-            
-            # Önemli değerleri kontrol et ve log ekle
+            # Kritik değerleri kontrol et
             self._check_critical_values(processed_data)
             
         except Exception as e:
             logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
-            self.add_log(f"Veri güncelleme hatası: {str(e)}", "ERROR")
 
     def _check_critical_values(self, data: Dict):
         """Kritik değerleri kontrol eder ve gerekirse log ekler"""
@@ -576,12 +590,14 @@ class SimpleGUI:
         elif current > 30:
             self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
             
-        # Sapma kontrolü
-        deviation = float(data.get('serit_sapmasi', 0))
-        if abs(deviation) > 0.5:
-            self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
-        elif abs(deviation) > 1.0:
-            self.add_log(f"Kritik şerit sapması: {deviation:.2f}mm", "ERROR")
+        # Sapma kontrolü - sadece kesim durumunda
+        testere_durumu = int(data.get('testere_durumu', 0))
+        if testere_durumu == 3:  # Kesim yapılıyor
+            deviation = float(data.get('serit_sapmasi', 0))
+            if abs(deviation) > 0.4:
+                self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
+            elif abs(deviation) > 0.6:
+                self.add_log(f"Kritik şerit sapması: {deviation:.2f}mm", "ERROR")
             
         # Titreşim kontrolü
         vib_x = float(data.get('ivme_olcer_x_hz', 0))
@@ -650,16 +666,14 @@ class SimpleGUI:
 
     def update_modbus_status(self, is_connected: bool, ip_address: str = None):
         """Modbus bağlantı durumunu günceller"""
-        if is_connected:
-            self.modbus_status.config(
-                text=f"Bağlı - {ip_address}",
-                foreground="green"
-            )
-        else:
-            self.modbus_status.config(
-                text="Bağlı Değil",
-                foreground="red"
-            )
+        try:
+            if is_connected:
+                self.current_values['modbus_status'].set(f"Bağlı - {ip_address}")
+            else:
+                self.current_values['modbus_status'].set("Bağlantı Yok")
+        except Exception as e:
+            logger.error(f"Modbus durum güncelleme hatası: {str(e)}")
+            logger.exception("Detaylı hata:")
 
     def add_log(self, message: str, level: str = 'INFO'):
         """Thread-safe log ekleme"""

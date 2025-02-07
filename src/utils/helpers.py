@@ -1,5 +1,6 @@
 # src/utils/helpers.py
 import time
+import math
 from datetime import datetime
 from typing import Union, Optional
 from core.logger import logger
@@ -28,7 +29,7 @@ def reverse_calculate_value(modbus_client, value: float, register_type: str, is_
     try:
         if register_type == 'serit_kesme_hizi':
             # Kesme hızı için dönüşüm (0.0754 katsayısı ile)
-            modbus_value = int(value / 0.0754)
+            modbus_value = math.ceil(value / 0.0754)
             logger.debug(f"Kesme hızı yazılmaya çalışılıyor:")
             logger.debug(f"  Değer: {value}")
             logger.debug(f"  Modbus değeri: {modbus_value}")
@@ -44,9 +45,9 @@ def reverse_calculate_value(modbus_client, value: float, register_type: str, is_
                 modbus_value = 0
             else:
                 if is_negative:
-                    modbus_value = int((-value / -0.06) + 65535)
+                    modbus_value = math.ceil((value / -0.06) + 65535)
                 else:
-                    modbus_value = int(value / -0.06) + 65535
+                    modbus_value = math.ceil(value / -0.06) + 65535
             
             logger.debug(f"İnme hızı yazılmaya çalışılıyor:")
             logger.debug(f"  Değer: {value}")

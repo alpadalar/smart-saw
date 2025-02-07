@@ -187,15 +187,17 @@ class FuzzyController:
                 logger.debug("Yeni inme hızı değeri Modbus'a yazıldı")
                 
                 # Kesme hızı için buffer kontrolü
-                if abs(self.kesme_hizi_degisim_buffer) >= 1.0:
+                if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
                     current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
                     new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
+                    
+                    # Sınırları uygula
                     new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
                     
                     # Kesme hızını yaz
                     kesme_hizi_is_negative = new_kesme_hizi < 0
                     reverse_calculate_value(modbus_client, new_kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
-                    logger.debug(f"Yeni kesme hızı değeri Modbus'a yazıldı: {new_kesme_hizi:.2f}")
+                    logger.debug(f"Yeni kesme hızı değeri Modbus'a yazıldı: {new_kesme_hizi:.2f} (Buffer: {self.kesme_hizi_degisim_buffer:+.2f})")
                     
                     # Buffer'ı sıfırla
                     self.kesme_hizi_degisim_buffer = 0.0

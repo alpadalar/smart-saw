@@ -81,7 +81,10 @@ class LocalStorage:
                 alarm_bilgisi VARCHAR(10),
                 serit_kesme_hizi REAL,
                 serit_inme_hizi REAL,
-                fuzzy_output REAL
+                fuzzy_output REAL,
+                kesme_hizi_degisim REAL,
+                modbus_connected INTEGER,
+                modbus_ip VARCHAR(50)
             )
             """
             
@@ -238,7 +241,10 @@ class RemoteStorage:
                 alarm_bilgisi VARCHAR(10),
                 serit_kesme_hizi REAL,
                 serit_inme_hizi REAL,
-                fuzzy_output REAL
+                fuzzy_output REAL,
+                kesme_hizi_degisim REAL,
+                modbus_connected INTEGER,
+                modbus_ip VARCHAR(50)
             )
             """
             
