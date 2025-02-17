@@ -562,14 +562,34 @@ class SimpleGUI:
                     processed_data.get('modbus_ip', '192.168.11.186')
                 )
             
-            # Kesim süresini güncelle
-            end_time = datetime.now()
-            if self._cutting_start_time is not None:
+            # Kesim durumunu kontrol et
+            testere_durumu = int(processed_data.get('testere_durumu', 0))
+            if testere_durumu == 3:  # Kesim yapılıyor
+                if not self._cutting_start_time:
+                    self._cutting_start_time = datetime.now()
+                    self.current_cut_start.config(text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3])
+                
+                # Geçen süreyi hesapla ve göster
+                elapsed = datetime.now() - self._cutting_start_time
+                minutes = int(elapsed.total_seconds() // 60)
+                seconds = int(elapsed.total_seconds() % 60)
+                milliseconds = int(elapsed.total_seconds() * 1000) % 1000
+                self.current_values['cutting_time'].set(f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}")
+                
+            elif testere_durumu != 3 and self._cutting_start_time:
+                # Kesim bitti, süreleri kaydet
+                end_time = datetime.now()
                 elapsed = end_time - self._cutting_start_time
-                elapsed_seconds = elapsed.total_seconds()
-                minutes = int(elapsed_seconds // 60)
-                seconds = int(elapsed_seconds % 60)
-                self.current_values['cutting_time'].set(f"{minutes:02d}:{seconds:02d}")
+                
+                # Önceki kesim bilgilerini güncelle
+                self.prev_cut_start.config(text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3])
+                self.prev_cut_end.config(text=end_time.strftime('%H:%M:%S.%f')[:-3])
+                self.prev_cut_duration.config(text=f"{int(elapsed.total_seconds() // 60):02d}:{int(elapsed.total_seconds() % 60):02d}")
+                
+                # Kesim bilgilerini sıfırla
+                self._cutting_start_time = None
+                self.current_cut_start.config(text="-")
+                self.current_values['cutting_time'].set("00:00")
             
             # Diğer değerleri güncelle
             self._update_values(processed_data)
@@ -584,11 +604,12 @@ class SimpleGUI:
     def _check_critical_values(self, data: Dict):
         """Kritik değerleri kontrol eder ve gerekirse log ekler"""
         # Akım kontrolü
-        current = float(data.get('serit_motor_akim_a', 0))
-        if current > 25:
-            self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
-        elif current > 30:
-            self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
+        if testere_durumu == 3:  # Kesim yapılıyor
+            current = float(data.get('serit_motor_akim_a', 0))
+            if current > 25:
+                self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
+            elif current > 30:
+                self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
             
         # Sapma kontrolü - sadece kesim durumunda
         testere_durumu = int(data.get('testere_durumu', 0))
@@ -605,9 +626,9 @@ class SimpleGUI:
         vib_z = float(data.get('ivme_olcer_z_hz', 0))
         max_vib = max(vib_x, vib_y, vib_z)
         
-        if max_vib > 1.0:
+        if max_vib > 200.0:
             self.add_log(f"Yüksek titreşim: {max_vib:.2f}Hz", "WARNING")
-        elif max_vib > 2.0:
+        elif max_vib > 300.0:
             self.add_log(f"Kritik titreşim: {max_vib:.2f}Hz", "ERROR")
 
     def _send_manual_speed(self, speed_type: str):

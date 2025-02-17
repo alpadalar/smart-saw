@@ -3,6 +3,8 @@ from fastapi import WebSocket
 from typing import List, Dict, Any
 import json
 import asyncio
+from datetime import datetime
+from .api_models import WebSocketMessage
 
 class WebSocketManager:
     def __init__(self):
@@ -10,24 +12,46 @@ class WebSocketManager:
         self.last_data: Dict[str, Any] = {}
     
     async def connect(self, websocket: WebSocket):
+        """Yeni WebSocket bağlantısı kabul eder"""
         await websocket.accept()
         self.active_connections.append(websocket)
+        
+        # Bağlantı sonrası son durumu gönder
+        if self.last_data:
+            await websocket.send_json(WebSocketMessage(
+                type="initial_state",
+                data=self.last_data
+            ).dict())
     
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        """WebSocket bağlantısını kapatır"""
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
     
-    async def broadcast(self, data: Dict[str, Any]):
-        """Tüm bağlı clientlara veri gönderir"""
-        self.last_data = data
+    async def broadcast(self, message: Dict[str, Any]):
+        """Tüm bağlı istemcilere mesaj gönderir"""
+        if not isinstance(message, dict):
+            message = {"type": "data", "data": message}
+        
+        self.last_data = message
+        disconnected = []
+        
         for connection in self.active_connections:
             try:
-                await connection.send_json(data)
-            except:
-                await self.disconnect(connection)
+                await connection.send_json(message)
+            except Exception:
+                disconnected.append(connection)
+        
+        # Kopan bağlantıları temizle
+        for conn in disconnected:
+            self.disconnect(conn)
     
     async def send_updates(self):
-        """Periyodik olarak güncellemeleri gönderir"""
+        """Periyodik güncellemeleri gönderir"""
         while True:
-            if self.active_connections:
-                await self.broadcast(self.last_data)
+            if self.active_connections and self.last_data:
+                await self.broadcast(WebSocketMessage(
+                    type="update",
+                    data=self.last_data
+                ).dict())
             await asyncio.sleep(0.1)  # 100ms güncelleme aralığı

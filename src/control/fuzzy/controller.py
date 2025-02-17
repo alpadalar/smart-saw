@@ -10,7 +10,8 @@ from core.constants import (
     MIN_SPEED_UPDATE_INTERVAL,
     BASLANGIC_GECIKMESI,
     BUFFER_SIZE,
-    BUFFER_DURATION
+    BUFFER_DURATION,
+    KATSAYI
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -156,6 +157,7 @@ class FuzzyController:
             
             # Fuzzy çıktısını hesapla (değişim miktarı)
             fuzzy_output = self.calculate_fuzzy_output(avg_akim, avg_sapma, avg_titresim)
+            fuzzy_output = fuzzy_output * KATSAYI
             logger.debug(f"Fuzzy değişim çıktısı: {fuzzy_output}")
             
             # İnme hızı için değişimi hesapla
@@ -172,8 +174,19 @@ class FuzzyController:
             logger.debug(f"İnme hızı değişim yüzdesi: %{inme_degisim_yuzdesi:.2f}")
             
             # Kesme hızı için değişimi hesapla
-            kesme_hizi_degisim = self._calculate_speed_change_from_percentage(inme_degisim_yuzdesi, 'kesme')
-            logger.debug(f"Hesaplanan kesme hızı değişimi: {kesme_hizi_degisim:.2f}")
+            current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
+            
+            # Fuzzy çıktısının işaretine göre referans aralığı belirle
+            if fuzzy_output < 0:
+                # Negatif değişim: mevcut hız ile minimum hız arası
+                speed_range = current_kesme_hizi - SPEED_LIMITS['kesme']['min']
+                kesme_hizi_degisim = -(speed_range * abs(inme_degisim_yuzdesi) / 100)
+                logger.debug(f"Negatif değişim - Aralık: {speed_range:.2f}, Değişim: {kesme_hizi_degisim:.2f}")
+            else:
+                # Pozitif değişim: mevcut hız ile maksimum hız arası
+                speed_range = SPEED_LIMITS['kesme']['max'] - current_kesme_hizi
+                kesme_hizi_degisim = (speed_range * abs(inme_degisim_yuzdesi) / 100)
+                logger.debug(f"Pozitif değişim - Aralık: {speed_range:.2f}, Değişim: {kesme_hizi_degisim:.2f}")
             
             # Kesme hızı değişimini buffer'a ekle
             self.kesme_hizi_degisim_buffer += kesme_hizi_degisim
@@ -188,7 +201,6 @@ class FuzzyController:
                 
                 # Kesme hızı için buffer kontrolü
                 if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
-                    current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
                     new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
                     
                     # Sınırları uygula
