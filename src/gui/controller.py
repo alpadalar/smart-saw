@@ -11,7 +11,7 @@ import sys
 import queue
 
 from core.logger import logger
-from core.constants import TestereState
+from core.constants import TestereState, KATSAYI
 from control import ControllerType, get_controller_factory
 from models import ProcessedData
 from utils.helpers import reverse_calculate_value
@@ -214,6 +214,23 @@ class SimpleGUI:
             text="ML",
             command=lambda: self._switch_controller(ControllerType.ML)
         ).pack(side=tk.LEFT, padx=2)
+
+        # Katsayı Ayarı Frame'i
+        coefficient_frame = ttk.LabelFrame(left_panel, text="Katsayı Ayarı", padding=(5, 5))
+        coefficient_frame.pack(fill=tk.X, pady=5)
+        
+        # Katsayı değeri için Entry ve Label
+        ttk.Label(coefficient_frame, text="Katsayı:").pack(side=tk.LEFT, padx=5)
+        self.coefficient_var = tk.StringVar(value="1.0")
+        self.coefficient_entry = ttk.Entry(coefficient_frame, textvariable=self.coefficient_var, width=8)
+        self.coefficient_entry.pack(side=tk.LEFT, padx=5)
+        
+        # Uygula butonu
+        ttk.Button(
+            coefficient_frame,
+            text="Uygula",
+            command=lambda: self._on_coefficient_change(self.coefficient_var.get())
+        ).pack(side=tk.LEFT, padx=5)
         
         # Manuel Hız Kontrolü
         speed_frame = ttk.LabelFrame(left_panel, text="Manuel Hız Kontrolü", padding=(5, 5))
@@ -603,6 +620,9 @@ class SimpleGUI:
 
     def _check_critical_values(self, data: Dict):
         """Kritik değerleri kontrol eder ve gerekirse log ekler"""
+        # Testere durumunu al
+        testere_durumu = int(data.get('testere_durumu', 0))
+        
         # Akım kontrolü
         if testere_durumu == 3:  # Kesim yapılıyor
             current = float(data.get('serit_motor_akim_a', 0))
@@ -611,16 +631,14 @@ class SimpleGUI:
             elif current > 30:
                 self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
             
-        # Sapma kontrolü - sadece kesim durumunda
-        testere_durumu = int(data.get('testere_durumu', 0))
-        if testere_durumu == 3:  # Kesim yapılıyor
+            # Sapma kontrolü - sadece kesim durumunda
             deviation = float(data.get('serit_sapmasi', 0))
             if abs(deviation) > 0.4:
                 self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
             elif abs(deviation) > 0.6:
                 self.add_log(f"Kritik şerit sapması: {deviation:.2f}mm", "ERROR")
             
-        # Titreşim kontrolü
+        # Titreşim kontrolü - her durumda kontrol et
         vib_x = float(data.get('ivme_olcer_x_hz', 0))
         vib_y = float(data.get('ivme_olcer_y_hz', 0))
         vib_z = float(data.get('ivme_olcer_z_hz', 0))
@@ -714,4 +732,31 @@ class SimpleGUI:
                 self.log_text.delete('1.0', '2.0')
         except Exception as e:
             logger.error(f"Log ekleme hatası: {e}")
+
+    def update_coefficient(self, new_value: float):
+        """Katsayı değerini günceller"""
+        try:
+            # constants.py dosyasındaki KATSAYI değerini güncelle
+            import core.constants
+            core.constants.KATSAYI = float(new_value)
+            logger.info(f"Katsayı değeri güncellendi: {new_value}")
+            return True
+        except ValueError as e:
+            logger.error(f"Katsayı güncellenirken hata oluştu: {e}")
+            return False
+
+    def _on_coefficient_change(self, new_value: str):
+        """GUI'den katsayı değişikliği olduğunda çağrılır"""
+        try:
+            value = float(new_value)
+            if value <= 0:
+                logger.error("Katsayı değeri 0'dan büyük olmalıdır")
+                return
+            
+            if self.update_coefficient(value):
+                self.add_log(f"Katsayı başarıyla güncellendi: {value}", "INFO")
+            else:
+                self.add_log("Katsayı güncellenirken bir hata oluştu", "ERROR")
+        except ValueError:
+            self.add_log("Geçersiz katsayı değeri", "ERROR")
 

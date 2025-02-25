@@ -5,7 +5,7 @@ KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
 # Model yolu
-ML_MODEL_PATH = "src/control/ml/trained_model_Support Vector Regressor.pkl"
+ML_MODEL_PATH = "src/control/ml/RandomForest.pkl"
 
 # Hız Limitleri
 MIN_SPEED = 5.0
@@ -13,20 +13,20 @@ MAX_SPEED = 100.0
 
 SPEED_LIMITS = {
     'kesme': {
-        'min': 60.0,
-        'max': 80.0
+        'min': 50.0,
+        'max': 90.0
     },
     'inme': {
         'min': 20.0,
-        'max': 100.0
+        'max': 80.0
     }
 }
 
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
-MIN_SPEED_UPDATE_INTERVAL = 1.0  # 1 Hz
+MIN_SPEED_UPDATE_INTERVAL = 0.20  # 5 Hz
 BASLANGIC_GECIKMESI = 15000.0  # 15 saniye (ms)
-KATSAYI = 1.2
+KATSAYI = 1.0
 
 # Buffer Parametreleri
 BUFFER_SIZE = 10  # Her tampon için maksimum örnek sayısı

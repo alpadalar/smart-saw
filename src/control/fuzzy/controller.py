@@ -1,5 +1,7 @@
 # src/control/fuzzy/controller.py
 import time
+import sqlite3
+import threading
 from datetime import datetime
 from collections import deque
 from core.logger import logger
@@ -25,9 +27,17 @@ from .rules import FuzzyRules
 
 class FuzzyController:
     def __init__(self):
+        """Fuzzy kontrol sistemi başlatılır"""
         self.cutting_start_time = None
         self.is_cutting = False
         self.last_update_time = time.time()
+        
+        # Thread-local storage için
+        self.thread_local = threading.local()
+        
+        # Veritabanı dizinini oluştur
+        import os
+        os.makedirs('data', exist_ok=True)
         
         # Kontrol parametreleri
         self.MIN_SPEED_UPDATE_INTERVAL = MIN_SPEED_UPDATE_INTERVAL  # constants.py'dan al
@@ -39,15 +49,65 @@ class FuzzyController:
         self.rules = FuzzyRules()
         self.speed_buffer = SpeedBuffer()
         
-        # Veri tamponları
-        self.akim_buffer = deque(maxlen=BUFFER_SIZE)  # constants.py'dan al
-        self.sapma_buffer = deque(maxlen=BUFFER_SIZE)  # constants.py'dan al
-        self.titresim_buffer = deque(maxlen=BUFFER_SIZE)  # constants.py'dan al
+        # Veri tamponları - sabit 10 veri
+        self.akim_buffer = deque(maxlen=10)
+        self.sapma_buffer = deque(maxlen=10)
+        self.titresim_buffer = deque(maxlen=10)
         self.last_buffer_update = time.time()
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
     
+    def _get_db(self):
+        """Thread-safe veritabanı bağlantısı döndürür"""
+        if not hasattr(self.thread_local, 'db'):
+            try:
+                self.thread_local.db = sqlite3.connect('data/fuzzy_control.db')
+                cursor = self.thread_local.db.cursor()
+                
+                # Fuzzy kontrol verilerini saklayacak tablo
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS fuzzy_control_data (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp TEXT NOT NULL,
+                        akim_input REAL,
+                        sapma_input REAL,
+                        titresim_input REAL,
+                        kesme_hizi REAL,
+                        inme_hizi REAL,
+                        katsayi REAL,
+                        fuzzy_output REAL
+                    )
+                ''')
+                self.thread_local.db.commit()
+                logger.debug(f"Thread {threading.get_ident()} için yeni veritabanı bağlantısı oluşturuldu")
+                
+            except Exception as e:
+                logger.error(f"Veritabanı bağlantı hatası: {str(e)}")
+                return None
+                
+        return self.thread_local.db
+
+    def _save_control_data(self, akim: float, sapma: float, titresim: float, kesme_hizi: float, inme_hizi: float, katsayi: float, fuzzy_output: float):
+        """Kontrol verilerini veritabanına kaydeder"""
+        try:
+            db = self._get_db()
+            if db:
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                
+                cursor = db.cursor()
+                cursor.execute('''
+                    INSERT INTO fuzzy_control_data 
+                    (timestamp, akim_input, sapma_input, titresim_input, kesme_hizi, inme_hizi, katsayi, fuzzy_output)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (current_time, akim, sapma, titresim, kesme_hizi, inme_hizi, katsayi, fuzzy_output))
+                
+                db.commit()
+                logger.debug(f"Fuzzy kontrol verisi kaydedildi - Zaman: {current_time}, Çıktı: {fuzzy_output}")
+                
+        except Exception as e:
+            logger.error(f"Veri kaydetme hatası: {str(e)}")
+
     def _calculate_speed_change_percentage(self, speed_change, speed_type):
         """Hız değişiminin yüzdesini hesaplar"""
         speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
@@ -75,14 +135,6 @@ class FuzzyController:
         self.akim_buffer.append((current_time, akim))
         self.sapma_buffer.append((current_time, sapma))
         self.titresim_buffer.append((current_time, titresim))
-        
-        # Eski verileri temizle (BUFFER_DURATION saniyeden eski)
-        while self.akim_buffer and current_time - self.akim_buffer[0][0] > BUFFER_DURATION:
-            self.akim_buffer.popleft()
-        while self.sapma_buffer and current_time - self.sapma_buffer[0][0] > BUFFER_DURATION:
-            self.sapma_buffer.popleft()
-        while self.titresim_buffer and current_time - self.titresim_buffer[0][0] > BUFFER_DURATION:
-            self.titresim_buffer.popleft()
             
     def _get_buffer_averages(self):
         """Tamponlardaki verilerin ortalamasını alır"""
@@ -118,9 +170,22 @@ class FuzzyController:
         current_time = time.time()
         return current_time - self.last_update_time >= self.MIN_SPEED_UPDATE_INTERVAL
 
-    def calculate_fuzzy_output(self, current_akim, current_sapma, current_titresim):
-        """Fuzzy çıkış değerini hesaplar"""
-        return self.rules.evaluate(current_akim, current_sapma, current_titresim)
+    def calculate_fuzzy_output(self, current_akim, current_sapma, current_titresim, current_kesme_hizi, current_inme_hizi):
+        """Fuzzy çıkış değerini hesaplar ve kaydeder"""
+        fuzzy_output = self.rules.evaluate(current_akim, current_sapma, current_titresim)
+        
+        # Verileri kaydet
+        self._save_control_data(
+            akim=current_akim,
+            sapma=current_sapma,
+            titresim=current_titresim,
+            kesme_hizi=current_kesme_hizi,
+            inme_hizi=current_inme_hizi,
+            katsayi=KATSAYI,
+            fuzzy_output=fuzzy_output
+        )
+        
+        return fuzzy_output
 
     def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, 
                      speed_adjustment_interval, prev_current):
@@ -156,7 +221,7 @@ class FuzzyController:
             logger.debug(f"Ortalama akım: {avg_akim:.2f}A, Ortalama sapma: {avg_sapma:.2f}mm, Ortalama titreşim: {avg_titresim:.2f}Hz")
             
             # Fuzzy çıktısını hesapla (değişim miktarı)
-            fuzzy_output = self.calculate_fuzzy_output(avg_akim, avg_sapma, avg_titresim)
+            fuzzy_output = self.calculate_fuzzy_output(avg_akim, avg_sapma, avg_titresim, 0, 0)
             fuzzy_output = fuzzy_output * KATSAYI
             logger.debug(f"Fuzzy değişim çıktısı: {fuzzy_output}")
             
@@ -255,6 +320,14 @@ class FuzzyController:
         self.is_cutting = False
         self.cutting_start_time = None
 
+    def __del__(self):
+        """Yıkıcı metod - tüm veritabanı bağlantılarını kapatır"""
+        if hasattr(self.thread_local, 'db'):
+            try:
+                self.thread_local.db.close()
+            except Exception:
+                pass
+
 # Singleton controller nesnesi
 _fuzzy_controller = FuzzyController()
 
@@ -270,4 +343,4 @@ def adjust_speeds_fuzzy(processed_data, modbus_client, last_modbus_write_time, s
 
 def fuzzy_output(cikis_sim, current_akim, current_sapma):
     """Eski fuzzy_output fonksiyonu için uyumluluk katmanı"""
-    return _fuzzy_controller.calculate_fuzzy_output(current_akim, current_sapma, 0)
+    return _fuzzy_controller.calculate_fuzzy_output(current_akim, current_sapma, 0, 0, 0)

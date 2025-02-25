@@ -23,6 +23,17 @@ class MainWindow:
         self.control_mode.set("Manuel")
         self.control_mode.pack(fill=tk.X, padx=5, pady=5)
         
+        # Katsayı ayarı
+        coefficient_frame = ttk.LabelFrame(top_frame, text="Katsayı Ayarı", padding=(5, 5))
+        coefficient_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        
+        self.coefficient_var = tk.StringVar(value="1.0")
+        coefficient_entry = ttk.Entry(coefficient_frame, textvariable=self.coefficient_var, width=10)
+        coefficient_entry.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        coefficient_button = ttk.Button(coefficient_frame, text="Uygula", command=self.on_coefficient_change)
+        coefficient_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
         # Durum göstergesi
         status_frame = ttk.LabelFrame(top_frame, text="Durum", padding=(5, 5))
         status_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
@@ -71,3 +82,9 @@ class MainWindow:
         self.ax.set_xlabel('Zaman')
         self.ax.set_ylabel('Değer')
         self.figure.tight_layout() 
+
+    def on_coefficient_change(self):
+        """Katsayı değişikliği butonuna tıklandığında çağrılır"""
+        new_value = self.coefficient_var.get()
+        if hasattr(self, 'controller'):
+            self.controller._on_coefficient_change(new_value) 

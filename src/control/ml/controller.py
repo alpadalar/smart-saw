@@ -1,11 +1,14 @@
 # src/control/ml/controller.py
 import time
+import sqlite3
+import threading
 from datetime import datetime
 import joblib
 import numpy as np
 import pandas as pd
 from typing import Optional, Tuple
 from collections import deque
+import os
 
 from core.logger import logger
 from core.constants import (
@@ -15,7 +18,8 @@ from core.constants import (
     MIN_SPEED_UPDATE_INTERVAL,
     BASLANGIC_GECIKMESI,
     BUFFER_SIZE,
-    BUFFER_DURATION
+    BUFFER_DURATION,
+    KATSAYI
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -31,6 +35,12 @@ class MLController:
         self.is_cutting = False
         self.last_update_time = 0
         
+        # Thread-local storage için
+        self.thread_local = threading.local()
+        
+        # Veritabanı dizinini oluştur
+        os.makedirs('data', exist_ok=True)
+        
         # Model ve özellikler
         try:
             self.model = joblib.load(ML_MODEL_PATH)
@@ -39,78 +49,167 @@ class MLController:
             logger.error(f"ML modeli yüklenemedi: {str(e)}")
             self.model = None
             
-        self.input_features = ['serit_motor_akim_a', 'serit_kesme_hizi', 'serit_inme_hizi']
+        # Giriş özelliklerinin sıralaması önemli
+        self.input_features = [
+            'serit_motor_akim_a',
+            'serit_sapmasi',
+            'serit_kesme_hizi',
+            'serit_inme_hizi'
+        ]
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
         
-        # Veri tamponları
-        self.akim_buffer = deque(maxlen=BUFFER_SIZE)
-        self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
-        self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
+        # Veri tamponları - sabit 10 veri
+        self.akim_buffer = deque(maxlen=10)
+        self.sapma_buffer = deque(maxlen=10)  # Yeni tampon
+        self.kesme_hizi_buffer = deque(maxlen=10)
+        self.inme_hizi_buffer = deque(maxlen=10)
         self.last_buffer_update = time.time()
     
-    def _update_buffers(self, akim, kesme_hizi, inme_hizi):
+    def _get_db(self):
+        """Thread-safe veritabanı bağlantısı döndürür"""
+        if not hasattr(self.thread_local, 'db'):
+            try:
+                self.thread_local.db = sqlite3.connect('data/ml_control.db')
+                cursor = self.thread_local.db.cursor()
+                
+                # ML kontrol verilerini saklayacak tablo
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS ml_control_data (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp TEXT NOT NULL,
+                        akim_input REAL,
+                        sapma_input REAL,
+                        kesme_hizi_input REAL,
+                        inme_hizi_input REAL,
+                        yeni_kesme_hizi REAL,
+                        yeni_inme_hizi REAL,
+                        katsayi REAL,
+                        ml_output REAL
+                    )
+                ''')
+                self.thread_local.db.commit()
+                logger.debug(f"Thread {threading.get_ident()} için yeni veritabanı bağlantısı oluşturuldu")
+                
+            except Exception as e:
+                logger.error(f"Veritabanı bağlantı hatası: {str(e)}")
+                return None
+                
+        return self.thread_local.db
+
+    def _save_control_data(self, akim: float, sapma: float, kesme_hizi: float, 
+                          inme_hizi: float, yeni_kesme_hizi: float, yeni_inme_hizi: float,
+                          katsayi: float, ml_output: float):
+        """Kontrol verilerini veritabanına kaydeder"""
+        try:
+            db = self._get_db()
+            if db:
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                
+                cursor = db.cursor()
+                cursor.execute('''
+                    INSERT INTO ml_control_data 
+                    (timestamp, akim_input, sapma_input, kesme_hizi_input, 
+                     inme_hizi_input, yeni_kesme_hizi, yeni_inme_hizi, katsayi, ml_output)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (current_time, akim, sapma, kesme_hizi, inme_hizi, 
+                     yeni_kesme_hizi, yeni_inme_hizi, katsayi, ml_output))
+                
+                db.commit()
+                logger.debug(f"ML kontrol verisi kaydedildi - Zaman: {current_time}, Çıktı: {ml_output}")
+                
+        except Exception as e:
+            logger.error(f"Veri kaydetme hatası: {str(e)}")
+
+    def _update_buffers(self, akim, sapma, kesme_hizi, inme_hizi):
         """Veri tamponlarını günceller"""
         current_time = time.time()
         
         # Tamponları güncelle
         self.akim_buffer.append((current_time, akim))
+        self.sapma_buffer.append((current_time, sapma))
         self.kesme_hizi_buffer.append((current_time, kesme_hizi))
         self.inme_hizi_buffer.append((current_time, inme_hizi))
-        
-        # Eski verileri temizle (BUFFER_DURATION saniyeden eski)
-        while self.akim_buffer and current_time - self.akim_buffer[0][0] > BUFFER_DURATION:
-            self.akim_buffer.popleft()
-        while self.kesme_hizi_buffer and current_time - self.kesme_hizi_buffer[0][0] > BUFFER_DURATION:
-            self.kesme_hizi_buffer.popleft()
-        while self.inme_hizi_buffer and current_time - self.inme_hizi_buffer[0][0] > BUFFER_DURATION:
-            self.inme_hizi_buffer.popleft()
             
     def _get_buffer_averages(self):
         """Tamponlardaki verilerin ortalamasını alır"""
-        if not self.akim_buffer or not self.kesme_hizi_buffer or not self.inme_hizi_buffer:
-            return None, None, None
+        if not self.akim_buffer or not self.sapma_buffer or not self.kesme_hizi_buffer or not self.inme_hizi_buffer:
+            return None, None, None, None
             
         akim_avg = sum(akim for _, akim in self.akim_buffer) / len(self.akim_buffer)
+        sapma_avg = sum(sapma for _, sapma in self.sapma_buffer) / len(self.sapma_buffer)
         kesme_hizi_avg = sum(hiz for _, hiz in self.kesme_hizi_buffer) / len(self.kesme_hizi_buffer)
         inme_hizi_avg = sum(hiz for _, hiz in self.inme_hizi_buffer) / len(self.inme_hizi_buffer)
         
-        return akim_avg, kesme_hizi_avg, inme_hizi_avg
+        return akim_avg, sapma_avg, kesme_hizi_avg, inme_hizi_avg
     
-    def predict_next_speed(self, serit_motor_akim_a: float, serit_kesme_hizi: float, serit_inme_hizi: float) -> float:
-        """Bir sonraki şerit inme hızını tahmin eder"""
+    def predict_coefficient(self, serit_motor_akim_a: float, serit_sapmasi: float, serit_kesme_hizi: float, serit_inme_hizi: float) -> float:
+        """ML modeli ile katsayı tahmin eder (-1 ile 1 arası)"""
         try:
             if self.model is None:
-                return serit_inme_hizi
+                return 0.0
                 
             # Tamponları güncelle
-            self._update_buffers(serit_motor_akim_a, serit_kesme_hizi, serit_inme_hizi)
+            self._update_buffers(serit_motor_akim_a, serit_sapmasi, serit_kesme_hizi, serit_inme_hizi)
             
             # Ortalama değerleri al
-            avg_akim, avg_kesme_hizi, avg_inme_hizi = self._get_buffer_averages()
+            avg_akim, avg_sapma, avg_kesme_hizi, avg_inme_hizi = self._get_buffer_averages()
             if avg_akim is None:
                 logger.warning("Yeterli veri yok, ham değerler kullanılıyor")
-                avg_akim, avg_kesme_hizi, avg_inme_hizi = serit_motor_akim_a, serit_kesme_hizi, serit_inme_hizi
+                avg_akim, avg_sapma, avg_kesme_hizi, avg_inme_hizi = serit_motor_akim_a, serit_sapmasi, serit_kesme_hizi, serit_inme_hizi
             
-            logger.debug(f"Ortalama değerler - Akım: {avg_akim:.2f}A, Kesme Hızı: {avg_kesme_hizi:.2f}, İnme Hızı: {avg_inme_hizi:.2f}")
+            logger.debug(f"Ortalama değerler - Akım: {avg_akim:.2f}A, Sapma: {avg_sapma:.2f}mm, Kesme Hızı: {avg_kesme_hizi:.2f}, İnme Hızı: {avg_inme_hizi:.2f}")
                 
             # Giriş verisini oluştur
-            input_data = pd.DataFrame([[avg_akim, avg_kesme_hizi, avg_inme_hizi]], 
+            input_data = pd.DataFrame([[avg_akim, avg_sapma, avg_kesme_hizi, avg_inme_hizi]], 
                                     columns=self.input_features)
             
             # Tahmin yap
-            predicted_speed = self.model.predict(input_data)[0]
+            coefficient = self.model.predict(input_data)[0]
             
-            # Hız sınırlarını uygula
-            predicted_speed = max(SPEED_LIMITS['inme']['min'], 
-                                min(predicted_speed, SPEED_LIMITS['inme']['max']))
+            # Katsayıyı -1 ile 1 arasına sınırla
+            coefficient = max(-1.0, min(coefficient, 1.0))
             
-            return predicted_speed
+            # Yeni hızları hesapla
+            new_inme_hizi = avg_inme_hizi + coefficient
+            new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+            
+            # İnme hızı değişim yüzdesini hesapla
+            inme_hizi_degisim = new_inme_hizi - avg_inme_hizi
+            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
+            
+            # Kesme hızı için değişimi hesapla
+            if coefficient < 0:
+                # Negatif değişim: mevcut hız ile minimum hız arası
+                speed_range = avg_kesme_hizi - SPEED_LIMITS['kesme']['min']
+                kesme_hizi_degisim = -(speed_range * abs(inme_degisim_yuzdesi) / 100)
+            else:
+                # Pozitif değişim: mevcut hız ile maksimum hız arası
+                speed_range = SPEED_LIMITS['kesme']['max'] - avg_kesme_hizi
+                kesme_hizi_degisim = (speed_range * abs(inme_degisim_yuzdesi) / 100)
+            
+            # Yeni kesme hızını hesapla
+            new_kesme_hizi = avg_kesme_hizi + kesme_hizi_degisim
+            new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+            
+            # Verileri kaydet
+            self._save_control_data(
+                akim=avg_akim,
+                sapma=avg_sapma,
+                kesme_hizi=avg_kesme_hizi,
+                inme_hizi=avg_inme_hizi,
+                yeni_kesme_hizi=new_kesme_hizi,
+                yeni_inme_hizi=new_inme_hizi,
+                katsayi=KATSAYI,
+                ml_output=coefficient
+            )
+            
+            return coefficient
             
         except Exception as e:
-            logger.error(f"Hız tahmini hatası: {str(e)}")
-            return serit_inme_hizi
+            logger.error(f"Katsayı tahmini hatası: {str(e)}")
+            return 0.0
     
     def _calculate_speed_change_percentage(self, speed_change: float, speed_type: str) -> float:
         """Hız değişiminin yüzdesini hesaplar"""
@@ -161,20 +260,36 @@ class MLController:
         try:
             # Mevcut değerleri al
             current_akim = float(processed_data.get('serit_motor_akim_a', 0))
+            current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
             
-            # Yeni inme hızını tahmin et
-            new_inme_hizi = self.predict_next_speed(current_akim, current_kesme_hizi, current_inme_hizi)
+            # ML modelinden katsayı tahmin et
+            coefficient = self.predict_coefficient(current_akim, current_sapma, current_kesme_hizi, current_inme_hizi)
+            
+            # Katsayıyı KATSAYI ile çarp
+            coefficient = coefficient * KATSAYI
+            logger.debug(f"ML katsayı çıktısı: {coefficient:.3f}")
             
             # İnme hızı değişimini hesapla
-            inme_hizi_degisim = new_inme_hizi - current_inme_hizi
+            inme_hizi_degisim = coefficient
+            new_inme_hizi = current_inme_hizi + inme_hizi_degisim
+            
+            # İnme hızı sınırlarını uygula
+            new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
             
             # İnme hızı değişim yüzdesini hesapla
-            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
+            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(new_inme_hizi - current_inme_hizi, 'inme')
             
             # Kesme hızı için değişimi hesapla
-            kesme_hizi_degisim = self._calculate_speed_change_from_percentage(inme_degisim_yuzdesi, 'kesme')
+            if coefficient < 0:
+                # Negatif değişim: mevcut hız ile minimum hız arası
+                speed_range = current_kesme_hizi - SPEED_LIMITS['kesme']['min']
+                kesme_hizi_degisim = -(speed_range * abs(inme_degisim_yuzdesi) / 100)
+            else:
+                # Pozitif değişim: mevcut hız ile maksimum hız arası
+                speed_range = SPEED_LIMITS['kesme']['max'] - current_kesme_hizi
+                kesme_hizi_degisim = (speed_range * abs(inme_degisim_yuzdesi) / 100)
             
             # Kesme hızı değişimini buffer'a ekle
             self.kesme_hizi_degisim_buffer += kesme_hizi_degisim
@@ -187,7 +302,7 @@ class MLController:
                 logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
                 
                 # Kesme hızı için buffer kontrolü
-                if abs(self.kesme_hizi_degisim_buffer) >= 1.0:
+                if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
                     new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
                     new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], 
                                        min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
@@ -203,7 +318,7 @@ class MLController:
             # Son güncelleme zamanını kaydet
             self.last_update_time = time.time()
             
-            return last_modbus_write_time, new_inme_hizi
+            return last_modbus_write_time, coefficient
             
         except Exception as e:
             logger.error(f"ML kontrol hatası: {str(e)}")
@@ -238,6 +353,14 @@ class MLController:
         self.is_cutting = False
         self.cutting_start_time = None
 
+    def __del__(self):
+        """Yıkıcı metod - tüm veritabanı bağlantılarını kapatır"""
+        if hasattr(self.thread_local, 'db'):
+            try:
+                self.thread_local.db.close()
+            except Exception:
+                pass
+
 
 # Global controller nesnesi
 ml_controller = MLController()
@@ -251,4 +374,4 @@ def adjust_speeds_ml(processed_data: dict, modbus_client, last_modbus_write_time
         last_modbus_write_time=last_modbus_write_time,
         speed_adjustment_interval=speed_adjustment_interval,
         prev_current=prev_current
-    ) 
+    )
