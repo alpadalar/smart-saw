@@ -73,3 +73,7 @@ coverage.xml
 src/.env
 *.bak
 *.tmp 
+
+# Kayıt ve geçici dosyalar
+recordings/
+temp/ 
