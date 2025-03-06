@@ -1,6 +1,6 @@
 # src/gui/controller.py
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import time
 from datetime import datetime
 from typing import Dict, Optional
@@ -9,12 +9,23 @@ import logging
 import threading
 import sys
 import queue
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+from tkhtmlview import HTMLLabel
+import plotly.io as pio
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import os
+import webbrowser
+from tkwebview2.tkwebview2 import WebView2
 
 from core.logger import logger
 from core.constants import TestereState, KATSAYI
 from control import ControllerType, get_controller_factory
 from models import ProcessedData
 from utils.helpers import reverse_calculate_value
+from core.camera import CameraModule
 
 class GUILogHandler(logging.Handler):
     """GUI için özel log handler"""
@@ -60,10 +71,22 @@ class SimpleGUI:
         self.threads_ready = threading.Event()
         self.gui_ready = threading.Event()
         
+        # Veritabanı bağlantısı
+        try:
+            import sqlite3
+            self.db = sqlite3.connect('testere_1.db')
+            logger.info("Veritabanı bağlantısı başarılı")
+        except Exception as e:
+            logger.error(f"Veritabanı bağlantı hatası: {e}")
+            self.db = None
+        
+        # Kamera modülünü başlat
+        self.camera = CameraModule()
+        
         # Ana pencere
         self.root = tk.Tk()
         self.root.title("Smart Saw Control Panel")
-        self.root.geometry("1280x720")
+        self.root.geometry("1366x720")
         
         # Değişkenler
         self.current_values = {
@@ -118,7 +141,11 @@ class SimpleGUI:
             'kesim_baslama': tk.StringVar(value="-"),
             'kesim_sure': tk.StringVar(value="-"),
             'cutting_time': tk.StringVar(value="00:00"),
-            'modbus_status': tk.StringVar(value="Bağlantı Yok")
+            'modbus_status': tk.StringVar(value="Bağlantı Yok"),
+            
+            # Kamera durumu için değişkenler
+            'camera_status': tk.StringVar(value="Hazır"),
+            'camera_frame_count': tk.StringVar(value="0")
         }
         
         self.current_controller = tk.StringVar(value="Kontrol Sistemi Kapalı")
@@ -169,12 +196,34 @@ class SimpleGUI:
         top_frame = ttk.Frame(left_panel)
         top_frame.pack(fill=tk.X, pady=(0, 5))
         
+        # Testere Durum Göstergesi
+        testere_frame = ttk.LabelFrame(top_frame, text="Testere Durumu", padding=(5, 5))
+        testere_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        testere_status_frame = ttk.Frame(testere_frame)
+        testere_status_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        ttk.Label(testere_status_frame, text="Durum:").pack(side=tk.LEFT, padx=5)
+        self.testere_status_label = ttk.Label(
+            testere_status_frame,
+            textvariable=self.current_values['testere_durumu'],
+            font=('TkDefaultFont', 10, 'bold')
+        )
+        self.testere_status_label.pack(side=tk.LEFT, padx=5)
+        
         # Modbus Durum Göstergesi
-        modbus_frame = ttk.LabelFrame(top_frame, text="Modbus Durumu", padding=(5, 5))
+        status_control_frame = ttk.Frame(top_frame)
+        status_control_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        # Modbus Durum Göstergesi
+        modbus_frame = ttk.LabelFrame(status_control_frame, text="Modbus Durumu", padding=(5, 5))
         modbus_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         
-        self.modbus_status = ttk.Label(modbus_frame, textvariable=self.current_values['modbus_status'])
-        self.modbus_status.pack(fill=tk.X, padx=5, pady=5)
+        modbus_status_frame = ttk.Frame(modbus_frame)
+        modbus_status_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        self.modbus_status = ttk.Label(modbus_status_frame, textvariable=self.current_values['modbus_status'])
+        self.modbus_status.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         # Kontrol Sistemi
         control_frame = ttk.LabelFrame(top_frame, text="Kontrol Sistemi", padding=(5, 5))
@@ -232,40 +281,6 @@ class SimpleGUI:
             command=lambda: self._on_coefficient_change(self.coefficient_var.get())
         ).pack(side=tk.LEFT, padx=5)
         
-        # Manuel Hız Kontrolü
-        speed_frame = ttk.LabelFrame(left_panel, text="Manuel Hız Kontrolü", padding=(5, 5))
-        speed_frame.pack(fill=tk.X, pady=5)
-        
-        # İnme Hızı
-        inme_frame = ttk.Frame(speed_frame)
-        inme_frame.pack(side=tk.LEFT, padx=5)
-        ttk.Label(inme_frame, text="İnme Hızı (mm/s):").pack(side=tk.LEFT)
-        self.inme_hizi_entry = ttk.Entry(inme_frame, width=8)
-        self.inme_hizi_entry.pack(side=tk.LEFT, padx=5)
-        ttk.Button(
-            inme_frame,
-            text="Gönder",
-            command=lambda: self._send_manual_speed('inme')
-        ).pack(side=tk.LEFT)
-        
-        # Kesme Hızı
-        kesme_frame = ttk.Frame(speed_frame)
-        kesme_frame.pack(side=tk.LEFT, padx=5)
-        ttk.Label(kesme_frame, text="Kesme Hızı (mm/s):").pack(side=tk.LEFT)
-        self.kesme_hizi_entry = ttk.Entry(kesme_frame, width=8)
-        self.kesme_hizi_entry.pack(side=tk.LEFT, padx=5)
-        ttk.Button(
-            kesme_frame,
-            text="Gönder",
-            command=lambda: self._send_manual_speed('kesme')
-        ).pack(side=tk.LEFT)
-        
-        ttk.Button(
-            speed_frame,
-            text="Hepsini Gönder",
-            command=self._send_all_speeds
-        ).pack(side=tk.LEFT, padx=5)
-        
         # Kesim Bilgileri
         cut_frame = ttk.LabelFrame(left_panel, text="Kesim Bilgileri", padding=(5, 5))
         cut_frame.pack(fill=tk.X, pady=5)
@@ -296,6 +311,10 @@ class SimpleGUI:
         ttk.Label(prev_cut_frame, text="Toplam Süre:").pack(side=tk.LEFT, padx=2)
         self.prev_cut_duration = ttk.Label(prev_cut_frame, text="-")
         self.prev_cut_duration.pack(side=tk.LEFT, padx=5)
+        
+        # Kesim Özeti Butonu - son satırın sağına ekle
+        self.summary_button = ttk.Button(prev_cut_frame, text="Kesim Özeti", command=self.show_cutting_summary)
+        self.summary_button.pack(side=tk.RIGHT, padx=5)
         
         # Sensör Değerleri Grid'i
         values_frame = ttk.Frame(left_panel)
@@ -339,6 +358,37 @@ class SimpleGUI:
             ('ivme_olcer_y_hz', 'Y Frekans (Hz)'),
             ('ivme_olcer_z_hz', 'Z Frekans (Hz)')
         ])
+        
+        # Kamera Kontrolleri
+        camera_frame = ttk.LabelFrame(left_panel, text="Kamera Kontrolleri", padding=(5, 5))
+        camera_frame.pack(fill=tk.X, pady=5)
+        
+        # Kamera durum bilgisi
+        camera_status_frame = ttk.Frame(camera_frame)
+        camera_status_frame.pack(fill=tk.X, pady=2)
+        
+        ttk.Label(camera_status_frame, text="Durum:").pack(side=tk.LEFT, padx=5)
+        ttk.Label(camera_status_frame, textvariable=self.current_values['camera_status']).pack(side=tk.LEFT, padx=5)
+        ttk.Label(camera_status_frame, text="Frame:").pack(side=tk.LEFT, padx=5)
+        ttk.Label(camera_status_frame, textvariable=self.current_values['camera_frame_count']).pack(side=tk.LEFT, padx=5)
+        
+        # Kamera kontrol butonları
+        camera_buttons_frame = ttk.Frame(camera_frame)
+        camera_buttons_frame.pack(fill=tk.X, pady=2)
+        
+        self.record_button = ttk.Button(
+            camera_buttons_frame,
+            text="Kayıt Başlat",
+            command=self._toggle_recording
+        )
+        self.record_button.pack(side=tk.LEFT, padx=5)
+        
+        self.view_button = ttk.Button(
+            camera_buttons_frame,
+            text="Kamera İzle",
+            command=self._toggle_viewing
+        )
+        self.view_button.pack(side=tk.LEFT, padx=5)
         
         # Sağ panel (Log Görüntüleyici)
         right_panel = ttk.Frame(main_frame)
@@ -486,20 +536,21 @@ class SimpleGUI:
         # Durum ve alarm bilgileri
         testere_durumu = processed_data.get('testere_durumu', 0)
         durum_text = {
-            0: "Bekleniyor",
-            1: "Hazırlanıyor",
-            2: "Hazır",
-            3: "Kesim Yapılıyor",
-            4: "Tamamlandı",
-            5: "Hata"
-        }.get(testere_durumu, "Bilinmiyor")
+            TestereState.BOSTA.value: "BOŞTA",
+            TestereState.HIDROLIK_AKTIF.value: "HİDROLİK AKTİF",
+            TestereState.SERIT_MOTOR_CALISIYOR.value: "ŞERİT MOTOR ÇALIŞIYOR",
+            TestereState.KESIM_YAPILIYOR.value: "KESİM YAPILIYOR",
+            TestereState.KESIM_BITTI.value: "KESİM BİTTİ",
+            TestereState.SERIT_YUKARI_CIKIYOR.value: "ŞERİT YUKARI ÇIKIYOR",
+            TestereState.MALZEME_BESLEME.value: "MALZEME BESLEME"
+        }.get(testere_durumu, "BİLİNMİYOR")
         
         self.current_values['testere_durumu'].set(durum_text)
         self.current_values['alarm_status'].set(str(processed_data.get('alarm_status', '-')))
         self.current_values['alarm_bilgisi'].set(str(processed_data.get('alarm_bilgisi', '-')))
         
         # Kesim durumunu kontrol et
-        if testere_durumu == 3:  # Kesim yapılıyor
+        if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # Kesim yapılıyor
             if not self.kesim_baslama_zamani:
                 self.kesim_baslama_zamani = datetime.now()
                 self.current_values['kesim_baslama'].set(
@@ -512,7 +563,7 @@ class SimpleGUI:
                 self.current_values['kesim_sure'].set(
                     f"{int(sure.total_seconds())} saniye"
                 )
-        elif testere_durumu != 3 and self.kesim_baslama_zamani:
+        elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self.kesim_baslama_zamani:
             # Kesim bitti, süreyi sıfırla
             self.kesim_baslama_zamani = None
             self.current_values['kesim_baslama'].set("-")
@@ -542,6 +593,10 @@ class SimpleGUI:
 
     def _quit(self):
         """Uygulamayı kapatır"""
+        # Kamera modülünü kapat
+        if hasattr(self, 'camera'):
+            self.camera.close()
+        
         # Log handler'ı kaldır
         logger.removeHandler(self.log_handler)
         self.root.quit()
@@ -579,9 +634,34 @@ class SimpleGUI:
                     processed_data.get('modbus_ip', '192.168.11.186')
                 )
             
-            # Kesim durumunu kontrol et
+            # Testere durumunu güncelle
             testere_durumu = int(processed_data.get('testere_durumu', 0))
-            if testere_durumu == 3:  # Kesim yapılıyor
+            durum_text = {
+                TestereState.BOSTA.value: "BOŞTA",
+                TestereState.HIDROLIK_AKTIF.value: "HİDROLİK AKTİF",
+                TestereState.SERIT_MOTOR_CALISIYOR.value: "ŞERİT MOTOR ÇALIŞIYOR",
+                TestereState.KESIM_YAPILIYOR.value: "KESİM YAPILIYOR",
+                TestereState.KESIM_BITTI.value: "KESİM BİTTİ",
+                TestereState.SERIT_YUKARI_CIKIYOR.value: "ŞERİT YUKARI ÇIKIYOR",
+                TestereState.MALZEME_BESLEME.value: "MALZEME BESLEME"
+            }.get(testere_durumu, "BİLİNMİYOR")
+            
+            self.current_values['testere_durumu'].set(durum_text)
+            
+            # Duruma göre label rengini güncelle
+            durum_renkleri = {
+                TestereState.BOSTA.value: 'gray',      # BOŞTA
+                TestereState.HIDROLIK_AKTIF.value: 'orange',    # HİDROLİK AKTİF
+                TestereState.SERIT_MOTOR_CALISIYOR.value: 'blue',      # ŞERİT MOTOR ÇALIŞIYOR
+                TestereState.KESIM_YAPILIYOR.value: 'red',       # KESİM YAPILIYOR
+                TestereState.KESIM_BITTI.value: 'green',     # KESİM BİTTİ
+                TestereState.SERIT_YUKARI_CIKIYOR.value: 'purple',    # ŞERİT YUKARI ÇIKIYOR
+                TestereState.MALZEME_BESLEME.value: 'brown'      # MALZEME BESLEME
+            }
+            self.testere_status_label.configure(foreground=durum_renkleri.get(testere_durumu, 'black'))
+            
+            # Kesim durumunu kontrol et
+            if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # Kesim yapılıyor
                 if not self._cutting_start_time:
                     self._cutting_start_time = datetime.now()
                     self.current_cut_start.config(text=self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3])
@@ -593,7 +673,7 @@ class SimpleGUI:
                 milliseconds = int(elapsed.total_seconds() * 1000) % 1000
                 self.current_values['cutting_time'].set(f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}")
                 
-            elif testere_durumu != 3 and self._cutting_start_time:
+            elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self._cutting_start_time:
                 # Kesim bitti, süreleri kaydet
                 end_time = datetime.now()
                 elapsed = end_time - self._cutting_start_time
@@ -614,6 +694,10 @@ class SimpleGUI:
             # Kritik değerleri kontrol et
             self._check_critical_values(processed_data)
             
+            # Kamera frame sayısını güncelle
+            if hasattr(self, 'camera') and self.camera.is_recording:
+                self.current_values['camera_frame_count'].set(str(self.camera.frame_count))
+            
         except Exception as e:
             logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
@@ -624,7 +708,7 @@ class SimpleGUI:
         testere_durumu = int(data.get('testere_durumu', 0))
         
         # Akım kontrolü
-        if testere_durumu == 3:  # Kesim yapılıyor
+        if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # Kesim yapılıyor
             current = float(data.get('serit_motor_akim_a', 0))
             if current > 25:
                 self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
@@ -690,14 +774,14 @@ class SimpleGUI:
     def _send_all_speeds(self):
         """Tüm hızları gönderir"""
         try:
-            # Önce inme hızını gönder
-            self._send_manual_speed('inme')
+            # Önce kesme hızını gönder
+            self._send_manual_speed('kesme')
             
             # Modbus yazma işlemleri arasında biraz bekle
             self.root.after(110)  # 110ms bekle
             
-            # Sonra kesme hızını gönder
-            self._send_manual_speed('kesme')
+            # Sonra inme hızını gönder
+            self._send_manual_speed('inme')
             
         except Exception as e:
             logger.error(f"Toplu hız gönderme hatası: {str(e)}")
@@ -759,4 +843,168 @@ class SimpleGUI:
                 self.add_log("Katsayı güncellenirken bir hata oluştu", "ERROR")
         except ValueError:
             self.add_log("Geçersiz katsayı değeri", "ERROR")
+
+    def get_last_cut_data(self):
+        """Son kesimin verilerini döndürür"""
+        try:
+            if hasattr(self, 'db'):
+                # Son kesimin verilerini veritabanından al
+                # testere_durumu = 3 kesim yapılıyor anlamına geliyor
+                query = """
+                    WITH kesim_gruplari AS (
+                        SELECT 
+                            timestamp,
+                            serit_motor_akim_a,
+                            inme_motor_akim_a,
+                            kafa_yuksekligi_mm,
+                            serit_kesme_hizi,
+                            serit_inme_hizi,
+                            serit_sapmasi,
+                            testere_durumu,
+                            LAG(testere_durumu) OVER (ORDER BY timestamp) as prev_durum
+                        FROM testere_data
+                        ORDER BY timestamp DESC
+                        LIMIT 1000
+                    ),
+                    son_kesim AS (
+                        SELECT *
+                        FROM kesim_gruplari
+                        WHERE testere_durumu = 3 
+                        AND (prev_durum IS NULL OR prev_durum != 3)
+                        LIMIT 1
+                    )
+                    SELECT 
+                        timestamp,
+                        serit_motor_akim_a,
+                        inme_motor_akim_a,
+                        kafa_yuksekligi_mm,
+                        serit_kesme_hizi,
+                        serit_inme_hizi,
+                        serit_sapmasi
+                    FROM testere_data
+                    WHERE timestamp >= (SELECT timestamp FROM son_kesim)
+                    AND testere_durumu = 3
+                    ORDER BY timestamp
+                """
+                result = self.db.execute(query).fetchall()
+                
+                if result:
+                    # Verileri sözlük formatına dönüştür
+                    data = {
+                        'timestamp': [row[0] for row in result],
+                        'serit_motor_akim_a': [row[1] for row in result],
+                        'inme_motor_akim_a': [row[2] for row in result],
+                        'kafa_yuksekligi_mm': [row[3] for row in result],
+                        'serit_kesme_hizi': [row[4] for row in result],
+                        'serit_inme_hizi': [row[5] for row in result],
+                        'serit_sapmasi': [row[6] for row in result]
+                    }
+                    return data
+            return None
+        except Exception as e:
+            logger.error(f"Son kesim verilerini alırken hata: {e}")
+            return None
+
+    def show_cutting_summary(self):
+        """Son kesimin akım değerlerini gösteren pencereyi açar"""
+        try:
+            # Son kesim verilerini al
+            last_cut_data = self.get_last_cut_data()
+            
+            if last_cut_data:
+                # Yeni pencere oluştur
+                summary_window = tk.Toplevel(self.root)
+                summary_window.title("Kesim Özeti")
+                summary_window.geometry("1000x600")
+                
+                # Plotly figure oluştur
+                fig = make_subplots(rows=1, cols=1)
+                
+                # Ana grafik - Kafa yüksekliği vs Akım
+                fig.add_trace(
+                    go.Scatter(
+                        x=last_cut_data['kafa_yuksekligi_mm'],
+                        y=last_cut_data['serit_motor_akim_a'],
+                        mode='lines+markers',
+                        name='Şerit Motor Akım',
+                        hovertemplate='Zaman: %{customdata[3]}<br>' +
+                                    'Kafa Yüksekliği: %{x:.1f} mm<br>' +
+                                    'Akım: %{y:.2f} A<br>' +
+                                    'Kesme Hızı: %{customdata[0]:.1f} mm/s<br>' +
+                                    'İnme Hızı: %{customdata[1]:.1f} mm/s<br>' +
+                                    'Sapma: %{customdata[2]:.2f} mm<br>' +
+                                    '<extra></extra>',
+                        customdata=list(zip(
+                            last_cut_data['serit_kesme_hizi'],
+                            last_cut_data['serit_inme_hizi'],
+                            last_cut_data['serit_sapmasi'],
+                            last_cut_data['timestamp']
+                        ))
+                    )
+                )
+                
+                # Grafik düzeni
+                fig.update_layout(
+                    title='Kesim Özeti - Kafa Yüksekliği vs Akım',
+                    xaxis_title='Kafa Yüksekliği (mm)',
+                    yaxis_title='Motor Akımı (A)',
+                    hovermode='closest',
+                    showlegend=True,
+                    width=1000,
+                    height=600
+                )
+                
+                # Geçici dosya adı oluştur
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                temp_dir = os.path.join(os.getcwd(), "temp")
+                os.makedirs(temp_dir, exist_ok=True)
+                html_file = os.path.join(temp_dir, f"kesim_ozeti_{timestamp}.html")
+                
+                # HTML dosyasını kaydet
+                fig.write_html(
+                    html_file,
+                    include_plotlyjs='cdn',
+                    full_html=True,
+                    config={'displayModeBar': True}
+                )
+                
+                # HTML dosyasını varsayılan tarayıcıda aç
+                webbrowser.open(f'file://{html_file}')
+                logger.info(f"Kesim özeti grafiği oluşturuldu: {html_file}")
+                
+                # Pencereyi kapat
+                summary_window.destroy()
+                
+            else:
+                messagebox.showinfo("Bilgi", "Son kesim verisi bulunamadı")
+                
+        except Exception as e:
+            logger.error(f"Kesim özeti gösterilirken hata: {e}")
+            logger.exception("Detaylı hata:")
+            messagebox.showerror("Hata", "Kesim özeti gösterilirken bir hata oluştu")
+
+    def _toggle_recording(self):
+        """Kamera kaydını başlatır/durdurur"""
+        if not self.camera.is_recording:
+            if self.camera.start_recording():
+                self.record_button.config(text="Kayıt Durdur")
+                self.current_values['camera_status'].set("Kayıt Yapılıyor")
+                # Frame sayacı callback'ini ayarla
+                self.camera.set_frame_count_callback(
+                    lambda count: self.current_values['camera_frame_count'].set(str(count))
+                )
+        else:
+            if self.camera.stop_recording():
+                self.record_button.config(text="Kayıt Başlat")
+                self.current_values['camera_status'].set("Hazır")
+                self.current_values['camera_frame_count'].set("0")
+
+    def _toggle_viewing(self):
+        """Kamera görüntüsünü başlatır/durdurur"""
+        if not self.camera.is_viewing:
+            if self.camera.start_viewing():
+                self.view_button.config(text="Kamera Kapat")
+        else:
+            if self.camera.stop_viewing():
+                self.view_button.config(text="Kamera İzle")
 

@@ -40,19 +40,19 @@ class FuzzyController:
         os.makedirs('data', exist_ok=True)
         
         # Kontrol parametreleri
-        self.MIN_SPEED_UPDATE_INTERVAL = MIN_SPEED_UPDATE_INTERVAL  # constants.py'dan al
-        self.BASLANGIC_GECIKMESI = BASLANGIC_GECIKMESI  # constants.py'dan al
-        self.IDEAL_AKIM = IDEAL_AKIM  # constants.py'dan al
+        self.MIN_SPEED_UPDATE_INTERVAL = MIN_SPEED_UPDATE_INTERVAL
+        self.BASLANGIC_GECIKMESI = BASLANGIC_GECIKMESI
+        self.IDEAL_AKIM = IDEAL_AKIM
         
         # Fuzzy sistem bileşenleri
         self.membership = FuzzyMembership()
         self.rules = FuzzyRules()
         self.speed_buffer = SpeedBuffer()
         
-        # Veri tamponları - sabit 10 veri
-        self.akim_buffer = deque(maxlen=10)
-        self.sapma_buffer = deque(maxlen=10)
-        self.titresim_buffer = deque(maxlen=10)
+        # Veri tamponları - constants.py'dan alınan boyut
+        self.akim_buffer = deque(maxlen=BUFFER_SIZE)
+        self.sapma_buffer = deque(maxlen=BUFFER_SIZE)
+        self.titresim_buffer = deque(maxlen=BUFFER_SIZE)
         self.last_buffer_update = time.time()
         
         # Kesme hızı değişim buffer'ı

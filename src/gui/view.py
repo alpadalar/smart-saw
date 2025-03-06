@@ -1,3 +1,35 @@
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+from tkinter import ttk, messagebox
+from tkhtmlview import HTMLLabel
+import tkinter as tk
+
+class InfoGrid:
+    """Sensör verilerini gösteren grid"""
+    def __init__(self, parent, fields):
+        self.frame = ttk.Frame(parent)
+        self.frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        # Her satırda 3 değer göster
+        row = 0
+        col = 0
+        for field in fields:
+            # Label oluştur
+            label = ttk.Label(self.frame, text=field.replace('_', ' ').title())
+            label.grid(row=row, column=col*2, padx=5, pady=2, sticky=tk.E)
+            
+            # Değer göstergesi
+            value = ttk.Label(self.frame, text="-")
+            value.grid(row=row, column=col*2+1, padx=5, pady=2, sticky=tk.W)
+            
+            # Sonraki sütuna geç
+            col += 1
+            if col >= 3:  # 3 sütun dolunca alt satıra geç
+                col = 0
+                row += 1
+
 class MainWindow:
     def __init__(self, root):
         self.root = root
@@ -34,12 +66,18 @@ class MainWindow:
         coefficient_button = ttk.Button(coefficient_frame, text="Uygula", command=self.on_coefficient_change)
         coefficient_button.pack(side=tk.LEFT, padx=5, pady=5)
         
-        # Durum göstergesi
+        # Durum göstergesi ve Kesim Özeti butonu
         status_frame = ttk.LabelFrame(top_frame, text="Durum", padding=(5, 5))
         status_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
         
-        self.status_label = ttk.Label(status_frame, text="Hazır")
-        self.status_label.pack(fill=tk.X, padx=5, pady=5)
+        status_button_frame = ttk.Frame(status_frame)
+        status_button_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        self.status_label = ttk.Label(status_button_frame, text="Hazır")
+        self.status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        self.summary_button = ttk.Button(status_button_frame, text="Kesim Özeti", command=self.show_cutting_summary)
+        self.summary_button.pack(side=tk.RIGHT, padx=(5, 0))
         
         # Orta kısım - Sensör verileri
         self.info_grid = InfoGrid(main_frame, [
@@ -88,3 +126,77 @@ class MainWindow:
         new_value = self.coefficient_var.get()
         if hasattr(self, 'controller'):
             self.controller._on_coefficient_change(new_value) 
+
+    def show_cutting_summary(self):
+        """Son kesimin akım değerlerini gösteren pencereyi açar"""
+        summary_window = tk.Toplevel(self.root)
+        summary_window.title("Kesim Özeti")
+        summary_window.geometry("800x600")
+        
+        # Grafik için frame
+        plot_frame = ttk.Frame(summary_window, padding="10")
+        plot_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Plotly grafiği için figure oluştur
+        fig = go.Figure()
+        
+        # Verileri ekle (controller'dan alınacak)
+        if hasattr(self, 'controller'):
+            last_cut_data = self.controller.get_last_cut_data()
+            if last_cut_data:
+                fig.add_trace(go.Scatter(
+                    x=last_cut_data['timestamp'],
+                    y=last_cut_data['serit_motor_akim_a'],
+                    name='Sol Kol Akım',
+                    hovertemplate='Zaman: %{x}<br>' +
+                                'Akım: %{y:.2f} A<br>' +
+                                'Hız: %{customdata[0]:.2f} mm/s<br>' +
+                                'Sapma: %{customdata[1]:.2f} mm<br>' +
+                                '<extra></extra>',
+                    customdata=list(zip(
+                        last_cut_data['serit_kesme_hizi'],
+                        last_cut_data['serit_sapmasi']
+                    ))
+                ))
+                
+                fig.add_trace(go.Scatter(
+                    x=last_cut_data['timestamp'],
+                    y=last_cut_data['inme_motor_akim_a'],
+                    name='Alt Kol Akım',
+                    hovertemplate='Zaman: %{x}<br>' +
+                                'Akım: %{y:.2f} A<br>' +
+                                'Hız: %{customdata[0]:.2f} mm/s<br>' +
+                                'Sapma: %{customdata[1]:.2f} mm<br>' +
+                                '<extra></extra>',
+                    customdata=list(zip(
+                        last_cut_data['serit_inme_hizi'],
+                        last_cut_data['serit_sapmasi']
+                    ))
+                ))
+                
+                fig.add_trace(go.Scatter(
+                    x=last_cut_data['timestamp'],
+                    y=last_cut_data['kafa_yuksekligi_mm'],
+                    name='Kafa Yüksekliği',
+                    hovertemplate='Zaman: %{x}<br>' +
+                                'Yükseklik: %{y:.2f} mm<br>' +
+                                'Hız: %{customdata[0]:.2f} mm/s<br>' +
+                                'Sapma: %{customdata[1]:.2f} mm<br>' +
+                                '<extra></extra>',
+                    customdata=list(zip(
+                        last_cut_data['serit_inme_hizi'],
+                        last_cut_data['serit_sapmasi']
+                    ))
+                ))
+                
+                # Grafik düzeni
+                fig.update_layout(
+                    title='Son Kesim Verileri',
+                    xaxis_title='Zaman',
+                    yaxis_title='Değer',
+                    hovermode='x unified'
+                )
+                
+                # Plotly grafiğini HTML olarak kaydet ve göster
+                html_widget = HTMLLabel(plot_frame, html=fig.to_html(include_plotlyjs='cdn'))
+                html_widget.pack(fill=tk.BOTH, expand=True) 

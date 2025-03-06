@@ -7,10 +7,13 @@ numpy==1.24.3
 pandas==2.2.3
 joblib==1.4.2
 scikit-learn==1.6.0
+opencv-python==4.8.0.74
 
 # GUI gereksinimleri
-tkinter
 matplotlib==3.7.1
+plotly==5.18.0
+tkhtmlview==0.2.0
+tkwebview2==3.5.0
 
 # Loglama ve veri işleme
 python-dateutil==2.8.2

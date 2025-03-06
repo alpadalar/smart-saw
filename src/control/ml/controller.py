@@ -60,11 +60,11 @@ class MLController:
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
         
-        # Veri tamponları - sabit 10 veri
-        self.akim_buffer = deque(maxlen=10)
-        self.sapma_buffer = deque(maxlen=10)  # Yeni tampon
-        self.kesme_hizi_buffer = deque(maxlen=10)
-        self.inme_hizi_buffer = deque(maxlen=10)
+        # Veri tamponları - constants.py'dan alınan boyut
+        self.akim_buffer = deque(maxlen=BUFFER_SIZE)
+        self.sapma_buffer = deque(maxlen=BUFFER_SIZE)
+        self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
+        self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         self.last_buffer_update = time.time()
     
     def _get_db(self):
