@@ -148,23 +148,34 @@ class FuzzyController:
         return akim_avg, sapma_avg, titresim_avg
 
     def kesim_durumu_kontrol(self, testere_durumu):
-        current_time = time.time() * 1000
-        
-        if testere_durumu != TestereState.CUTTING.value:
-            if self.is_cutting:
-                self._log_kesim_bitis()
+        """Kesim durumunu kontrol eder ve loglama yapar"""
+        try:
+            current_time = time.time() * 1000
+            
+            # Kesim durumu değişikliğini kontrol et
+            if testere_durumu != TestereState.KESIM_YAPILIYOR.value:
+                if self.is_cutting:
+                    self._log_kesim_bitis()
+                    self.is_cutting = False
+                return False
+
+            # Kesim başlangıcını kontrol et
+            if not self.is_cutting:
+                self._log_kesim_baslangic()
+                self.is_cutting = True
+
+            # Başlangıç gecikmesi kontrolü
+            if current_time - self.cutting_start_time < self.BASLANGIC_GECIKMESI:
+                kalan_sure = int((self.BASLANGIC_GECIKMESI - (current_time - self.cutting_start_time)) / 1000)
+                if kalan_sure % 5 == 0:
+                    logger.info(f"Kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
+                return False
+
+            return True
+            
+        except Exception as e:
+            logger.error(f"Kesim durumu kontrol hatası: {str(e)}")
             return False
-
-        if not self.is_cutting:
-            self._log_kesim_baslangic()
-
-        if current_time - self.cutting_start_time < self.BASLANGIC_GECIKMESI:
-            kalan_sure = int((self.BASLANGIC_GECIKMESI - (current_time - self.cutting_start_time)) / 1000)
-            if kalan_sure % 5 == 0:
-                logger.info(f"Kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
-            return False
-
-        return True
 
     def hiz_guncelleme_zamani_geldi_mi(self):
         current_time = time.time()
@@ -172,26 +183,32 @@ class FuzzyController:
 
     def calculate_fuzzy_output(self, current_akim, current_sapma, current_titresim, current_kesme_hizi, current_inme_hizi):
         """Fuzzy çıkış değerini hesaplar ve kaydeder"""
-        fuzzy_output = self.rules.evaluate(current_akim, current_sapma, current_titresim)
-        
-        # Verileri kaydet
-        self._save_control_data(
-            akim=current_akim,
-            sapma=current_sapma,
-            titresim=current_titresim,
-            kesme_hizi=current_kesme_hizi,
-            inme_hizi=current_inme_hizi,
-            katsayi=KATSAYI,
-            fuzzy_output=fuzzy_output
-        )
-        
-        return fuzzy_output
+        try:
+            # Fuzzy çıkış değerini hesapla
+            fuzzy_output = self.rules.evaluate(current_akim, current_sapma, current_titresim)
+            
+            # Verileri kaydet
+            self._save_control_data(
+                akim=current_akim,
+                sapma=current_sapma,
+                titresim=current_titresim,
+                kesme_hizi=current_kesme_hizi,
+                inme_hizi=current_inme_hizi,
+                katsayi=KATSAYI,
+                fuzzy_output=fuzzy_output
+            )
+            
+            return fuzzy_output
+            
+        except Exception as e:
+            logger.error(f"Fuzzy çıkış hesaplama hatası: {str(e)}")
+            return 0.0
 
     def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, 
                      speed_adjustment_interval, prev_current):
         """Hızları ayarlar ve fuzzy çıktısını döndürür"""
         # Kesim durumu kontrolü
-        testere_durumu = processed_data.get('testere_durumu')
+        testere_durumu = int(processed_data.get('testere_durumu', 0))
         logger.debug(f"Testere durumu: {testere_durumu}")
         
         if not self.kesim_durumu_kontrol(testere_durumu):
@@ -204,9 +221,13 @@ class FuzzyController:
             return last_modbus_write_time, None
 
         try:
+            # Mevcut hızları al
+            current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
+            current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
+            
             # Akım, sapma ve titreşim değerlerini al
             current_akim = float(processed_data.get('serit_motor_akim_a', self.IDEAL_AKIM))
-            current_sapma = float(processed_data.get('serit_sapmasi', 0))
+            current_sapma = float(processed_data.get('serit_sapmasi', 0)) / 5
             current_titresim = self._get_max_titresim(processed_data)
             
             # Tamponları güncelle
@@ -221,12 +242,11 @@ class FuzzyController:
             logger.debug(f"Ortalama akım: {avg_akim:.2f}A, Ortalama sapma: {avg_sapma:.2f}mm, Ortalama titreşim: {avg_titresim:.2f}Hz")
             
             # Fuzzy çıktısını hesapla (değişim miktarı)
-            fuzzy_output = self.calculate_fuzzy_output(avg_akim, avg_sapma, avg_titresim, 0, 0)
+            fuzzy_output = self.calculate_fuzzy_output(avg_akim, avg_sapma, avg_titresim, current_kesme_hizi, current_inme_hizi)
             fuzzy_output = fuzzy_output * KATSAYI
             logger.debug(f"Fuzzy değişim çıktısı: {fuzzy_output}")
             
             # İnme hızı için değişimi hesapla
-            current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
             new_inme_hizi = current_inme_hizi + fuzzy_output  # Direkt değişimi ekle
             
             # İnme hızı sınırlarını uygula
@@ -292,7 +312,7 @@ class FuzzyController:
 
     def _check_cutting_state(self, state):
         """Kesim durumunu kontrol eder"""
-        return state in [TestereState.CUTTING.value, TestereState.STARTING.value]
+        return state in [TestereState.KESIM_YAPILIYOR.value, TestereState.SERIT_MOTOR_CALISIYOR.value]
 
     def _log_kesim_baslangic(self):
         self.cutting_start_time = time.time() * 1000

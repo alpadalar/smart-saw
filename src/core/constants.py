@@ -25,7 +25,7 @@ SPEED_LIMITS = {
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
 MIN_SPEED_UPDATE_INTERVAL = 0.33  # 3 Hz
-BASLANGIC_GECIKMESI = 12000.0  # 15 saniye (ms)
+BASLANGIC_GECIKMESI = 1000.0 * 30 # n saniye
 KATSAYI = 1.0
 
 # Buffer Parametreleri
@@ -36,7 +36,7 @@ BUFFER_DURATION = 1.0  # Tampon süresi (saniye)
 CAMERA_WIDTH = 1920
 CAMERA_HEIGHT = 1200
 CAMERA_FPS = 50
-CAMERA_DEVICE_ID = 0  # 0: dahili kamera, 1: harici kamera
+CAMERA_DEVICE_ID = 1  # 0: dahili kamera, 1: harici kamera
 CAMERA_JPEG_QUALITY = 92
 CAMERA_NUM_THREADS = 4
 CAMERA_RECORDINGS_DIR = "recordings"  # Kayıtların saklanacağı ana dizin

@@ -74,8 +74,8 @@ class SimpleGUI:
         # Veritabanı bağlantısı
         try:
             import sqlite3
-            self.db = sqlite3.connect('testere_1.db')
-            logger.info("Veritabanı bağlantısı başarılı")
+            self.db = sqlite3.connect('data/total.db')
+            logger.info("Veritabanı bağlantısı başarılı: data/total.db")
         except Exception as e:
             logger.error(f"Veritabanı bağlantı hatası: {e}")
             self.db = None
@@ -851,26 +851,37 @@ class SimpleGUI:
                 # Son kesimin verilerini veritabanından al
                 # testere_durumu = 3 kesim yapılıyor anlamına geliyor
                 query = """
-                    WITH kesim_gruplari AS (
+                    WITH kesim_baslangic_bitis AS (
                         SELECT 
                             timestamp,
-                            serit_motor_akim_a,
-                            inme_motor_akim_a,
-                            kafa_yuksekligi_mm,
-                            serit_kesme_hizi,
-                            serit_inme_hizi,
-                            serit_sapmasi,
                             testere_durumu,
-                            LAG(testere_durumu) OVER (ORDER BY timestamp) as prev_durum
+                            LAG(testere_durumu) OVER (ORDER BY timestamp) as prev_durum,
+                            LEAD(testere_durumu) OVER (ORDER BY timestamp) as next_durum
                         FROM testere_data
                         ORDER BY timestamp DESC
-                        LIMIT 1000
                     ),
-                    son_kesim AS (
-                        SELECT *
+                    kesim_gruplari AS (
+                        SELECT 
+                            timestamp,
+                            CASE 
+                                WHEN testere_durumu = 3 AND (prev_durum IS NULL OR prev_durum != 3) THEN 1 -- Kesim başlangıcı
+                                WHEN testere_durumu = 3 AND (next_durum IS NULL OR next_durum != 3) THEN 2 -- Kesim bitişi
+                                ELSE 0
+                            END as kesim_noktasi
+                        FROM kesim_baslangic_bitis
+                    ),
+                    son_kesim_baslangic AS (
+                        SELECT timestamp
                         FROM kesim_gruplari
-                        WHERE testere_durumu = 3 
-                        AND (prev_durum IS NULL OR prev_durum != 3)
+                        WHERE kesim_noktasi = 1
+                        ORDER BY timestamp DESC
+                        LIMIT 1
+                    ),
+                    son_kesim_bitis AS (
+                        SELECT timestamp
+                        FROM kesim_gruplari
+                        WHERE kesim_noktasi = 2 AND timestamp > (SELECT timestamp FROM son_kesim_baslangic)
+                        ORDER BY timestamp ASC
                         LIMIT 1
                     )
                     SELECT 
@@ -882,9 +893,15 @@ class SimpleGUI:
                         serit_inme_hizi,
                         serit_sapmasi
                     FROM testere_data
-                    WHERE timestamp >= (SELECT timestamp FROM son_kesim)
+                    WHERE timestamp >= (SELECT timestamp FROM son_kesim_baslangic)
+                    AND (
+                        timestamp <= (SELECT timestamp FROM son_kesim_bitis)
+                        OR (SELECT COUNT(*) FROM son_kesim_bitis) = 0
+                    )
                     AND testere_durumu = 3
-                    ORDER BY timestamp
+                    AND serit_motor_akim_a IS NOT NULL
+                    AND kafa_yuksekligi_mm IS NOT NULL
+                    ORDER BY timestamp ASC
                 """
                 result = self.db.execute(query).fetchall()
                 
@@ -925,7 +942,7 @@ class SimpleGUI:
                     go.Scatter(
                         x=last_cut_data['kafa_yuksekligi_mm'],
                         y=last_cut_data['serit_motor_akim_a'],
-                        mode='lines+markers',
+                        mode='lines',
                         name='Şerit Motor Akım',
                         hovertemplate='Zaman: %{customdata[3]}<br>' +
                                     'Kafa Yüksekliği: %{x:.1f} mm<br>' +
@@ -938,7 +955,8 @@ class SimpleGUI:
                             last_cut_data['serit_kesme_hizi'],
                             last_cut_data['serit_inme_hizi'],
                             last_cut_data['serit_sapmasi'],
-                            last_cut_data['timestamp']
+                            last_cut_data['timestamp'],
+                            last_cut_data['f']
                         ))
                     )
                 )
@@ -950,8 +968,8 @@ class SimpleGUI:
                     yaxis_title='Motor Akımı (A)',
                     hovermode='closest',
                     showlegend=True,
-                    width=1000,
-                    height=600
+                    width=1600,
+                    height=900
                 )
                 
                 # Geçici dosya adı oluştur

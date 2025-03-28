@@ -24,13 +24,13 @@ class ControllerFactory:
     
     def __init__(self, modbus_client=None):
         self.modbus_client = modbus_client
+        self._active_controller = None
         self._controllers: Dict[ControllerType, Callable] = {
             ControllerType.FUZZY: fuzzy_adjust,
             ControllerType.EXPERT: expert_adjust,
             ControllerType.LINEAR: linear_adjust,
             ControllerType.ML: ml_adjust,  # Yeni kontrol sistemi
         }
-        self._active_controller: Optional[ControllerType] = None
         self._controller_stats: Dict[ControllerType, Dict[str, Any]] = {
             controller_type: {
                 "total_runs": 0,
@@ -44,6 +44,11 @@ class ControllerFactory:
     def active_controller(self) -> Optional[ControllerType]:
         """Aktif kontrol sistemini döndürür"""
         return self._active_controller
+
+    @active_controller.setter
+    def active_controller(self, value):
+        """Aktif kontrol sistemini ayarlar"""
+        self._active_controller = value
 
     def set_controller(self, controller_type: Optional[ControllerType]) -> None:
         """
@@ -70,6 +75,10 @@ class ControllerFactory:
             logger.info(f"Kontrol sistemi değiştirildi: {controller_type.value}")
             self._active_controller = controller_type
 
+    def set_modbus_client(self, modbus_client):
+        """Modbus client'ı ayarlar"""
+        self.modbus_client = modbus_client
+
     def get_controller(self) -> Callable:
         """
         Aktif kontrol sisteminin fonksiyonunu döndürür
@@ -85,57 +94,35 @@ class ControllerFactory:
             
         return self._controllers[self._active_controller]
 
-    def adjust_speeds(self, *args, **kwargs) -> tuple:
-        """
-        Aktif kontrol sistemi ile hız ayarlaması yapar
-        
-        Returns:
-            tuple: (last_modbus_write_time, output_value)
-            
-        Raises:
-            ControllerNotFoundError: Aktif kontrol sistemi yoksa
-        """
-        if not self._active_controller:
-            return kwargs.get('last_modbus_write_time', 0), None
-
+    def adjust_speeds(self, processed_data, modbus_client, last_modbus_write_time, 
+                     speed_adjustment_interval, prev_current):
+        """Aktif kontrolcü ile hız ayarlaması yapar"""
         try:
-            # İstatistikleri güncelle
-            stats = self._controller_stats[self._active_controller]
-            stats["total_runs"] += 1
-            stats["last_run"] = time.time()
-            
-            # Modbus client'ı kwargs'a ekle
-            if self.modbus_client and 'modbus_client' not in kwargs:
-                kwargs['modbus_client'] = self.modbus_client
-            
-            # Kontrol sistemini çalıştır
-            start_time = time.time()
-            result = self._controllers[self._active_controller](*args, **kwargs)
-            elapsed = time.time() - start_time
-            
-            # Çalışma süresini ekle
-            stats["total_time"] += elapsed
-            
-            if result is None:
-                logger.warning(f"Kontrol sistemi ({self._active_controller.value}) çıktı üretmedi")
-                return kwargs.get('last_modbus_write_time', 0), None
-                
-            # Sonucu kontrol et
-            if not isinstance(result, tuple) or len(result) != 2:
-                logger.error(f"Kontrol sistemi ({self._active_controller.value}) geçersiz çıktı üretti: {result}")
-                return kwargs.get('last_modbus_write_time', 0), None
-                
-            last_modbus_write_time, output_value = result
-            logger.debug(f"Kontrol sistemi ({self._active_controller.value}) çıktısı: {output_value}")
-            
-            return result
+            # İnme hızı kontrolü - 0 ise hiçbir işlem yapma
+            current_inme_hizi = float(processed_data.get('serit_inme_hizi', 0))
+            if current_inme_hizi == 0:
+                logger.debug("İnme hızı 0, hız ayarlaması yapılmayacak")
+                return last_modbus_write_time, None
+
+            # Aktif kontrolcü ile hız ayarlaması yap
+            if self._active_controller:
+                return self._controllers[self._active_controller](
+                    processed_data=processed_data,
+                    modbus_client=modbus_client,
+                    last_modbus_write_time=last_modbus_write_time,
+                    speed_adjustment_interval=speed_adjustment_interval,
+                    prev_current=prev_current
+                )
+            return last_modbus_write_time, None
             
         except Exception as e:
             # Hata istatistiğini güncelle
-            stats["errors"] += 1
-            logger.error(f"Kontrol sistemi hatası ({self._active_controller.value}): {str(e)}")
+            if self._active_controller:
+                stats = self._controller_stats[self._active_controller]
+                stats["errors"] += 1
+            logger.error(f"Hız ayarlama hatası: {str(e)}")
             logger.exception("Detaylı hata:")
-            return kwargs.get('last_modbus_write_time', 0), None
+            return last_modbus_write_time, None
 
     def get_stats(self, controller_type: Optional[ControllerType] = None) -> Dict:
         """
