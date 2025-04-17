@@ -12,9 +12,9 @@ class FuzzyMembership:
         
         # Akım üyelik fonksiyonları
         self.akim_cd = fuzz.trimf(self.akim, [4, 8, 12])     # çok düşük
-        self.akim_d = fuzz.trimf(self.akim, [11, 13, 15])    # düşük
+        self.akim_d = fuzz.trimf(self.akim, [10, 13, 16])    # düşük
         self.akim_id = fuzz.trimf(self.akim, [14, 17, 20])   # ideal
-        self.akim_y = fuzz.trimf(self.akim, [19, 21, 23])    # yüksek
+        self.akim_y = fuzz.trimf(self.akim, [18, 21, 24])    # yüksek
         self.akim_cy = fuzz.trimf(self.akim, [22, 30, 38])   # çok yüksek
         
         # Sapma üyelik fonksiyonları
@@ -33,3 +33,10 @@ class FuzzyMembership:
         self.katsayi_dy = fuzz.trimf(self.katsayi, [-0.2, 0, 0.3])      # değişim yok
         self.katsayi_y = fuzz.trimf(self.katsayi, [0.2, 0.5, 1])        # yükselt
         self.katsayi_cy = fuzz.trimf(self.katsayi, [0.8, 1, 1.4])       # çok yükselt
+
+        # Akım üyelik fonksiyonları
+        # self.akim_cd = fuzz.trimf(self.akim, [4, 8, 12])  # çok düşük
+        # self.akim_d = fuzz.trimf(self.akim, [11, 13, 15])  # düşük
+        # self.akim_id = fuzz.trimf(self.akim, [14, 17, 20])  # ideal
+        # self.akim_y = fuzz.trimf(self.akim, [19, 21, 23])  # yüksek
+        # self.akim_cy = fuzz.trimf(self.akim, [22, 30, 38])  # çok yüksek
