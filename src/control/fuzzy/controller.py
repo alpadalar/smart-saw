@@ -147,6 +147,27 @@ class FuzzyController:
         
         return akim_avg, sapma_avg, titresim_avg
 
+    def _calculate_initial_delay(self, inme_hizi):
+        """İnme hızına göre 20mm'lik mesafeyi kaç saniyede ineceğini hesaplar"""
+        try:
+            # İnme hızı mm/dakika cinsinden
+            if inme_hizi <= 0:
+                return self.BASLANGIC_GECIKMESI  # Varsayılan değeri kullan
+            
+            # 20mm'yi inmek için gereken süreyi hesapla (milisaniye cinsinden)
+            # inme_hizi mm/dakika -> mm/saniye -> 20mm için gereken süre
+            delay_ms = (20 / (inme_hizi / 60)) * 1000
+            
+            # Minimum 5 saniye, maksimum 60 saniye olacak şekilde sınırla
+            delay_ms = max(5000, min(delay_ms, 60000))
+            
+            logger.info(f"İnme hızı: {inme_hizi:.2f} mm/dakika için hesaplanan bekleme süresi: {delay_ms/1000:.1f} saniye")
+            return delay_ms
+            
+        except Exception as e:
+            logger.error(f"Bekleme süresi hesaplama hatası: {str(e)}")
+            return self.BASLANGIC_GECIKMESI  # Hata durumunda varsayılan değeri kullan
+
     def kesim_durumu_kontrol(self, testere_durumu):
         """Kesim durumunu kontrol eder ve loglama yapar"""
         try:
@@ -163,6 +184,10 @@ class FuzzyController:
             if not self.is_cutting:
                 self._log_kesim_baslangic()
                 self.is_cutting = True
+                # İnme hızını al ve dinamik bekleme süresini hesapla
+                inme_hizi = float(self.last_processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min'])) if hasattr(self, 'last_processed_data') else SPEED_LIMITS['inme']['min']
+                self.BASLANGIC_GECIKMESI = self._calculate_initial_delay(inme_hizi)
+                logger.info(f"Yeni bekleme süresi: {self.BASLANGIC_GECIKMESI/1000:.1f} saniye")
 
             # Başlangıç gecikmesi kontrolü
             if current_time - self.cutting_start_time < self.BASLANGIC_GECIKMESI:
@@ -210,6 +235,9 @@ class FuzzyController:
         # Kesim durumu kontrolü
         testere_durumu = int(processed_data.get('testere_durumu', 0))
         logger.debug(f"Testere durumu: {testere_durumu}")
+        
+        # Son işlenen veriyi güncelle
+        self.last_processed_data = processed_data
         
         if not self.kesim_durumu_kontrol(testere_durumu):
             logger.debug("Kesim durumu uygun değil")
