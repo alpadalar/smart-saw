@@ -14,31 +14,30 @@ MAX_SPEED = 100.0
 SPEED_LIMITS = {
     'kesme': {
         'min': 40.0,
-        'max': 110.0
+        'max': 140.0
     },
     'inme': {
         'min': 10.0,
-        'max': 80.0
+        'max': 100.0
     }
 }
 
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
 MIN_SPEED_UPDATE_INTERVAL = 0.33  # 3 Hz
-BASLANGIC_GECIKMESI = 1000.0 * 0 # n saniye
 KATSAYI = 1.0
 
 # Kontrol Sistemi Başlangıç Parametreleri
 CONTROL_INITIAL_DELAY = {
     'MIN_DELAY_MS': 5000,  # Minimum bekleme süresi (5 saniye)
     'MAX_DELAY_MS': 60000,  # Maksimum bekleme süresi (60 saniye)
-    'TARGET_DISTANCE_MM': 20,  # Hedef inme mesafesi (mm)
+    'TARGET_DISTANCE_MM': 14,  # Hedef inme mesafesi (mm)
     'DEFAULT_DELAY_MS': 30000  # Varsayılan bekleme süresi (30 saniye)
 }
 
 # Buffer Parametreleri
-BUFFER_SIZE = 6  # Her tampon için maksimum örnek sayısı
-BUFFER_DURATION = 1.0  # Tampon süresi (saniye)
+BUFFER_SIZE = 3  # Her tampon için maksimum örnek sayısı
+BUFFER_DURATION = 0.5  # Tampon süresi (saniye)
 
 # Kamera Ayarları
 CAMERA_WIDTH = 1920

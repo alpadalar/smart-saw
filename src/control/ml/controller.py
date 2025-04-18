@@ -16,7 +16,6 @@ from core.constants import (
     SPEED_LIMITS,
     TestereState,
     MIN_SPEED_UPDATE_INTERVAL,
-    BASLANGIC_GECIKMESI,
     BUFFER_SIZE,
     BUFFER_DURATION,
     KATSAYI
@@ -235,12 +234,6 @@ class MLController:
         if not self.is_cutting:
             self._log_kesim_baslangic()
 
-        if current_time - self.cutting_start_time < BASLANGIC_GECIKMESI:
-            kalan_sure = int((BASLANGIC_GECIKMESI - (current_time - self.cutting_start_time)) / 1000)
-            if kalan_sure % 5 == 0:
-                logger.info(f"Kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
-            return False
-
         return True
 
     def hiz_guncelleme_zamani_geldi_mi(self) -> bool:
@@ -334,7 +327,7 @@ class MLController:
         logger.info("YENİ KESİM BAŞLADI (ML Kontrol)")
         logger.info("-"*60)
         logger.info(f"Başlangıç Zamanı : {start_time_str}")
-        logger.info(f"Kontrol sistemi {BASLANGIC_GECIKMESI/1000} saniye sonra devreye girecek...")
+        logger.info("Kontrol sistemi başlangıç gecikmesi sonrası devreye girecek...")
         logger.info("="*60 + "\n")
 
     def _log_kesim_bitis(self):

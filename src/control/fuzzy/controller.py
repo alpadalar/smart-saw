@@ -10,7 +10,6 @@ from core.constants import (
     TestereState,
     IDEAL_AKIM,
     MIN_SPEED_UPDATE_INTERVAL,
-    BASLANGIC_GECIKMESI,
     BUFFER_SIZE,
     BUFFER_DURATION,
     KATSAYI
@@ -41,7 +40,6 @@ class FuzzyController:
         
         # Kontrol parametreleri
         self.MIN_SPEED_UPDATE_INTERVAL = MIN_SPEED_UPDATE_INTERVAL
-        self.BASLANGIC_GECIKMESI = BASLANGIC_GECIKMESI
         self.IDEAL_AKIM = IDEAL_AKIM
         
         # Fuzzy sistem bileşenleri
@@ -184,17 +182,6 @@ class FuzzyController:
             if not self.is_cutting:
                 self._log_kesim_baslangic()
                 self.is_cutting = True
-                # İnme hızını al ve dinamik bekleme süresini hesapla
-                inme_hizi = float(self.last_processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min'])) if hasattr(self, 'last_processed_data') else SPEED_LIMITS['inme']['min']
-                self.BASLANGIC_GECIKMESI = self._calculate_initial_delay(inme_hizi)
-                logger.info(f"Yeni bekleme süresi: {self.BASLANGIC_GECIKMESI/1000:.1f} saniye")
-
-            # Başlangıç gecikmesi kontrolü
-            if current_time - self.cutting_start_time < self.BASLANGIC_GECIKMESI:
-                kalan_sure = int((self.BASLANGIC_GECIKMESI - (current_time - self.cutting_start_time)) / 1000)
-                if kalan_sure % 5 == 0:
-                    logger.info(f"Kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
-                return False
 
             return True
             
@@ -350,7 +337,7 @@ class FuzzyController:
         logger.info("YENİ KESİM BAŞLADI (Fuzzy Kontrol)")
         logger.info("-"*60)
         logger.info(f"Başlangıç Zamanı : {start_time_str}")
-        logger.info(f"Kontrol sistemi {self.BASLANGIC_GECIKMESI/1000} saniye sonra devreye girecek...")
+        logger.info("Kontrol sistemi başlangıç gecikmesi sonrası devreye girecek...")
         logger.info("="*60 + "\n")
 
     def _log_kesim_bitis(self):
