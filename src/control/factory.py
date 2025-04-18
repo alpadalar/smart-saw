@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional, Callable, Dict, Any
 from core.logger import logger
 from core.exceptions import ControllerNotFoundError
-from core.constants import CONTROL_INITIAL_DELAY, SPEED_LIMITS
+from core.constants import CONTROL_INITIAL_DELAY, SPEED_LIMITS, TestereState
 
 # Kontrol sistemleri
 from .expert.controller import adjust_speeds as expert_adjust
@@ -77,7 +77,7 @@ class ControllerFactory:
             current_time = time.time() * 1000
             
             # Kesim durumu değişikliğini kontrol et
-            if testere_durumu != 3:  # KESIM_YAPILIYOR
+            if testere_durumu != TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
                 if self.is_cutting:
                     self.is_cutting = False
                     self.cutting_start_time = None

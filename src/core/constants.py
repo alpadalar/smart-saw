@@ -5,7 +5,7 @@ KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
 # Model yolu
-ML_MODEL_PATH = "src/control/ml/dataset_v5_model_MLPRegressor.pkl"
+ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\RandomForest_20250418.pkl"
 
 # Hız Limitleri
 MIN_SPEED = 5.0
@@ -25,7 +25,7 @@ SPEED_LIMITS = {
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
 MIN_SPEED_UPDATE_INTERVAL = 0.33  # 3 Hz
-BASLANGIC_GECIKMESI = 1000.0 * 30 # n saniye
+BASLANGIC_GECIKMESI = 1000.0 * 0 # n saniye
 KATSAYI = 1.0
 
 # Kontrol Sistemi Başlangıç Parametreleri

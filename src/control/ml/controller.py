@@ -51,10 +51,10 @@ class MLController:
             
         # Giriş özelliklerinin sıralaması önemli
         self.input_features = [
-            'serit_motor_akim_a',
-            'serit_sapmasi',
-            'serit_kesme_hizi',
-            'serit_inme_hizi'
+            'akim_input',
+            'sapma_input',
+            'kesme_hizi',
+            'inme_hizi'
         ]
         
         # Kesme hızı değişim buffer'ı
@@ -227,7 +227,7 @@ class MLController:
         """Kesim durumunu kontrol eder"""
         current_time = time.time() * 1000
         
-        if testere_durumu != TestereState.CUTTING.value:
+        if testere_durumu != TestereState.KESIM_YAPILIYOR.value:
             if self.is_cutting:
                 self._log_kesim_bitis()
             return False
