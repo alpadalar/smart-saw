@@ -5,7 +5,7 @@ KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
 # Model yolu
-ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\RandomForest_20250418.pkl"
+ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\Bagging_20250425_dataset_16.pkl"
 
 # Hız Limitleri
 MIN_SPEED = 5.0
