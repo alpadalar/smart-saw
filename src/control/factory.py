@@ -4,20 +4,13 @@ from enum import Enum
 from typing import Optional, Callable, Dict, Any
 from core.logger import logger
 from core.exceptions import ControllerNotFoundError
-from core.constants import CONTROL_INITIAL_DELAY, SPEED_LIMITS, TestereState
+from core.constants import CONTROL_INITIAL_DELAY, SPEED_LIMITS, TestereState, ControllerType
 
 # Kontrol sistemleri
 from .expert.controller import adjust_speeds as expert_adjust
 from .linear.controller import adjust_speeds_linear as linear_adjust
 from .fuzzy.controller import adjust_speeds_fuzzy as fuzzy_adjust
 from .ml.controller import adjust_speeds_ml as ml_adjust
-
-class ControllerType(Enum):
-    """Kontrol sistemi tipleri"""
-    EXPERT = "expert"
-    LINEAR = "linear"
-    FUZZY = "fuzzy"
-    ML = "ml"  # Yeni kontrol sistemi
 
 
 class ControllerFactory:

@@ -58,10 +58,15 @@ class TestereState(Enum):
     SERIT_YUKARI_CIKIYOR = 5
     MALZEME_BESLEME = 6
 
-class ControlMode(Enum):
+# Kontrol modları
+class ControllerType(Enum):
     MANUAL = "manual"
     FUZZY = "fuzzy"
     LINEAR = "linear"
     DYNAMIC = "dynamic"
     LSTM = "lstm"
-    ML = "ml"  # Yeni kontrol modu
+    ML = "ml"
+    EXPERT = "expert"  # Uzman sistemi
+
+# Geriye dönük uyumluluk için ControlMode'u da koruyalım
+ControlMode = ControllerType

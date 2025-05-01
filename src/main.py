@@ -1,11 +1,17 @@
 # src/main.py
 import sys
+import os
 import time
 import signal
 import threading
+import uvicorn
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from queue import Queue
 from typing import Optional, Dict
 from datetime import datetime
+import subprocess
 
 from core import (
     logger,
@@ -25,9 +31,12 @@ from data import (
     DataStorage,
     DataMapper
 )
+from data.cutting_tracker import get_cutting_tracker
 from models import ProcessedData, SystemState
 from gui.controller import SimpleGUI
 from control import ControllerFactory
+from core.constants import TestereState
+from api import create_app, router
 
 class SmartSaw:
     def __init__(self):
@@ -38,6 +47,10 @@ class SmartSaw:
         # Logger'ı başlat
         setup_logger(self.config.logging)
         logger.info("Smart Saw başlatılıyor...")
+        
+        # Web sunucusu
+        self.web_server = None
+        self.api_app = None
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
@@ -50,6 +63,9 @@ class SmartSaw:
         self.data_mapper = DataMapper()
         self.data_processor = DataProcessor()
         
+        # Kesim takipçisi
+        self.cutting_tracker = get_cutting_tracker()
+        
         # Kontrol sistemi
         self.controller_factory = ControllerFactory(modbus_client=self.modbus_client)
         # Başlangıçta kontrol sistemini kapalı olarak başlat
@@ -61,6 +77,7 @@ class SmartSaw:
         # Kontrol ve veri döngüleri
         self.control_loop = None
         self.data_loop = None
+        self.web_server_thread = None
         
         # Thread güvenliği için lock
         self.lock = threading.Lock()
@@ -76,6 +93,7 @@ class SmartSaw:
         self._setup_modbus()
         self._setup_control_loop()
         self._setup_data_loop()
+        self._setup_web_server()
         
         logger.info("Başlatma tamamlandı")
         
@@ -95,6 +113,84 @@ class SmartSaw:
         except Exception as e:
             logger.error(f"Modbus başlatma hatası: {e}")
             raise
+    
+    def _setup_web_server(self):
+        """Web sunucusu başlatma"""
+        try:
+            import os
+            import subprocess
+            import sys
+            
+            # Mevcut çalışma dizinini ve Python yolunu al
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Webui dizinini bul
+            webui_dir = os.path.join(current_dir, "webui")
+            if not os.path.exists(webui_dir):
+                logger.warning(f"Webui dizini bulunamadı: {webui_dir}")
+                
+            # Python yorumlayıcı yolu
+            python_exe = sys.executable
+            
+            # Bir komut dosyası oluştur
+            server_script = os.path.join(current_dir, "run_server.py")
+            
+            # Eğer script yoksa, oluştur
+            if not os.path.exists(server_script):
+                with open(server_script, 'w', encoding='utf-8') as f:
+                    f.write("""
+import os
+import sys
+import uvicorn
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
+
+# API modülünü import et
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from api import create_app
+
+# FastAPI uygulamasi olustur
+app = create_app()
+
+# Webui dizinini bul
+current_dir = os.path.dirname(os.path.abspath(__file__))
+webui_dir = os.path.join(current_dir, "webui")
+
+# Statik dosyalari monte et
+app.mount("/", StaticFiles(directory=webui_dir, html=True), name="webui")
+
+# Ana sayfaya yonlendirme
+@app.get("/")
+async def redirect_to_index():
+    return RedirectResponse(url="/index.html")
+
+if __name__ == "__main__":
+    print(f"Web arayuzu dosyalari: {webui_dir}")
+    print("Web sunucusu baslatiliyor. http://localhost:8080 adresinden erisebilirsiniz...")
+    uvicorn.run(app, host="0.0.0.0", port=8080)
+""")
+            
+            # Web sunucusunu ayrı bir süreç olarak başlat
+            self.web_server = subprocess.Popen(
+                [python_exe, server_script],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NEW_CONSOLE  # Windows'ta yeni konsol penceresi aç
+            )
+            
+            logger.info("Web sunucusu başlatıldı. http://localhost:8080 adresinden erişebilirsiniz...")
+            
+        except Exception as e:
+            logger.error(f"Web sunucusu başlatma hatası: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+    
+    def _setup_web_server_thread(self):
+        """
+        Web sunucusu ayrı bir process olarak çalıştığından, bu metot artık kullanılmıyor.
+        """
+        pass
             
     def _setup_control_loop(self):
         """Kontrol döngüsü başlatma"""
@@ -159,6 +255,15 @@ class SmartSaw:
                     
                     # Son veriyi güncelle
                     self.last_processed_data = dict(processed_data)
+                    
+                    # Kesim durumunu takip et
+                    testere_durumu = int(processed_data.get('testere_durumu', 0))
+                    is_cutting = testere_durumu == TestereState.KESIM_YAPILIYOR.value
+                    active_controller = self.controller_factory.active_controller
+                    controller_name = active_controller.value if active_controller else None
+                    
+                    # Kesim takipçisini güncelle
+                    self.cutting_tracker.update_cutting_state(is_cutting, controller_name)
                     
                     # Kontrol sistemini çalıştır
                     if self.controller_factory.active_controller:
@@ -255,6 +360,9 @@ class SmartSaw:
             self._setup_control_loop()
             self._setup_data_loop()
             
+            # Web sunucusunu başlat
+            self._setup_web_server()
+            
             # Thread'lerin başladığını bildir
             self.gui.threads_ready.set()
             
@@ -310,6 +418,19 @@ class SmartSaw:
                 self.control_loop.join(timeout=2)
             if self.data_loop and self.data_loop.is_alive():
                 self.data_loop.join(timeout=2)
+            
+            # Web sunucusunu kapat
+            if hasattr(self, 'web_server') and self.web_server and self.web_server.poll() is None:
+                logger.info("Web sunucusu kapatılıyor...")
+                try:
+                    self.web_server.terminate()  # Güvenli bir şekilde sonlandır
+                    self.web_server.wait(timeout=3)  # En fazla 3 saniye bekle
+                except Exception as e:
+                    logger.error(f"Web sunucusu kapatma hatası: {str(e)}")
+                    try:
+                        self.web_server.kill()  # Son çare olarak zorla sonlandır
+                    except:
+                        pass
             
             # Modbus bağlantısını kapat
             if self.modbus_client:

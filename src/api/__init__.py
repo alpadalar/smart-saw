@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from .routes import router
 from .websocket import WebSocketManager
+from .log_reader import get_log_reader, LogReader
 from core.logger import logger
 
 def create_app() -> FastAPI:
@@ -9,7 +10,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Smart Saw API",
         description="Akıllı Testere Kontrol Sistemi API",
-        version="1.0.0"
+        version="1.0.0",
+        root_path=""  # Ana sunucu ile birlikte çalıştığında boş olmalı
     )
     
     # API router'ını ekle
@@ -30,4 +32,9 @@ def create_app() -> FastAPI:
     
     return app
 
-__all__ = ['create_app', 'WebSocketManager']
+__all__ = [
+    'router',
+    'WebSocketManager',
+    'LogReader',
+    'get_log_reader'
+]
