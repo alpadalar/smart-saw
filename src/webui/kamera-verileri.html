@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./vars.css">
+  <link rel="stylesheet" href="./style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>Smart Saw - Kamera Verileri</title>
+</head>
+<body>
+  <div class="page-transition">
+    <div class="top"></div>
+    <div class="bottom"></div>
+  </div>
+  <div class="slide-16-9-1">
+    <div class="nav-item kontrol-paneli">
+      <img class="nav-icon" src="assets/images/kontrol-panel-icon0.svg" />
+      <div class="nav-text">Kontrol Paneli</div>
+    </div>
+    <div class="nav-item konumland-rma">
+      <img class="nav-icon" src="assets/images/group-86570.svg" />
+      <div class="nav-text">Konumlandırma</div>
+    </div>
+    <div class="nav-item kamera-verileri">
+      <img class="nav-icon" src="assets/images/group-86730.svg" />
+      <div class="nav-text">Kamera Verileri</div>
+    </div>
+    <div class="nav-item sens-r-verileri">
+      <img class="nav-icon" src="assets/images/sens-r-verileri-icon0.svg" />
+      <div class="nav-text">Sensör Verileri</div>
+    </div>
+    <div class="nav-item zleme">
+      <div class="nav-icon">
+        <img class="group-8656" src="assets/images/group-86560.svg" />
+        <img class="subtract" src="assets/images/subtract0.svg" />
+      </div>
+      <div class="nav-text">İzleme</div>
+    </div>
+    <div class="smartsaw">
+      <span class="smartsaw-span">SMART</span>
+      <span class="smartsaw-span2">SAW</span>
+    </div>
+  </div>
+  <div class="kv-container">
+    <div class="kv-baslik">Kamera Verileri</div>
+    <div class="kv-line-1"></div>
+    <div class="kv-line-2"></div>
+    <div class="kv-row-1-1">
+      <div class="kv-row-1-1-text">Kamera Durumu</div>
+      <div class="kv-row-1-1-value">Aktif</div>
+    </div>
+    <div class="kv-row-1-2">
+      <div class="kv-row-1-2-text">Kırık Diş Sayısı</div>
+      <div class="kv-row-1-2-value">11</div>
+    </div>
+    <div class="kv-line-3"></div>
+    <div class="kv-row-2-1">
+      <div class="kv-row-2-1-text">Kırık Yüzdesi</div>
+      <div class="kv-row-2-1-value">%11</div>
+    </div>
+    <div class="kv-row-2-2">
+      <div class="kv-row-2-2-text">Çatlak Sayısı</div>
+      <div class="kv-row-2-2-value">14</div>
+    </div>
+    <div class="kv-line-4"></div>
+    <div class="kv-row-3-1">
+      <div class="kv-row-3-1-text">Aşınma Yüzdesi</div>
+      <div class="kv-row-3-1-value">%11</div>
+    </div>
+    <div class="kv-row-3-2">
+      <div class="kv-row-3-2-text">Son Anomali Tarihi</div>
+      <div class="kv-row-3-2-value">14/12/2024</div>
+    </div>
+    <div class="kv-line-5"></div>
+    <div class="kv-row-4-1">
+      <div class="kv-row-4-1-text">Testere Sağlığı</div>
+      <div class="kv-row-4-1-value">%84</div>
+    </div>
+    <div class="kv-row-4-2">
+      <div class="kv-row-4-2-text">Testere Durumu</div>
+      <div class="kv-row-4-2-value">Sağlıklı</div>
+    </div>
+  </div>
+
+  <script>
+    // Sayfa geçiş animasyonu için fonksiyon
+    function pageTransition(url) {
+      const transition = document.querySelector('.page-transition');
+      transition.classList.add('active');
+      setTimeout(() => {
+        window.location.href = url;
+      }, 300);
+    }
+
+    // Nav item'lara click event listener'ları
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const className = this.classList[1];
+        let url;
+        switch(className) {
+          case 'kontrol-paneli':
+            url = './index.html';
+            break;
+          case 'konumland-rma':
+            url = './konumlandirma.html';
+            break;
+          case 'kamera-verileri':
+            url = './kamera-verileri.html';
+            break;
+          case 'sens-r-verileri':
+            url = './sensor-verileri.html';
+            break;
+          case 'zleme':
+            url = './izleme.html';
+            break;
+        }
+        pageTransition(url);
+      });
+    });
+
+    // Sayfa yüklendiğinde giriş animasyonunu göster
+    document.addEventListener('DOMContentLoaded', function() {
+      const transition = document.querySelector('.page-transition');
+      transition.classList.add('active');
+      setTimeout(() => {
+        transition.classList.remove('active');
+      }, 100);
+
+      // Nav-bar active state yönetimi
+      document.querySelectorAll('.nav-item').forEach(item => {
+        const text = item.querySelector('.nav-text');
+        const icon = item.querySelector('.nav-icon');
+        text.style.color = '#9999a7';
+        text.style.textDecoration = 'none';
+        if (icon) {
+          icon.style.filter = 'none';
+        }
+      });
+
+      const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+      const activeNavItem = {
+        'index.html': 'kontrol-paneli',
+        'sensor-verileri.html': 'sens-r-verileri',
+        'izleme.html': 'zleme',
+        'konumlandirma.html': 'konumland-rma',
+        'kamera-verileri.html': 'kamera-verileri'
+      };
+
+      const activeClass = activeNavItem[currentPage];
+      if (activeClass) {
+        const activeItem = document.querySelector(`.nav-item.${activeClass}`);
+        if (activeItem) {
+          const text = activeItem.querySelector('.nav-text');
+          const icon = activeItem.querySelector('.nav-icon');
+          text.style.color = '#f4f6fc';
+          text.style.textDecoration = 'underline';
+          text.style.textUnderlineOffset = '5px';
+          text.style.textDecorationThickness = '1px';
+          if (icon) {
+            icon.style.filter = 'brightness(0) invert(100%)';
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

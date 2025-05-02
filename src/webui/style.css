@@ -1,0 +1,4651 @@
+@font-face {
+    font-family: 'NotoSans-ExtraBold';
+    src: url('../fonts/NotoSans-ExtraBold.woff2') format('woff2'),
+         url('../fonts/NotoSans-ExtraBold.woff') format('woff');
+    font-weight: 800;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'NotoSans-ExtraLight';
+    src: url('../fonts/NotoSans-ExtraLight.woff2') format('woff2'),
+         url('../fonts/NotoSans-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+.slide-16-9-1,
+.slide-16-9-1 * {
+  box-sizing: border-box;
+}
+
+/* Ana container için stil */
+.slide-16-9-1 {
+  background: radial-gradient(
+    closest-side,
+    rgba(20, 58, 119, 1) 0%,
+    rgba(18, 25, 36, 1) 100%
+  );
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Y ekseni için ortalama */
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* Sayfa boyutuna göre ölçekleme */
+@media screen and (max-width: 1920px) {
+  .slide-16-9-1 {
+    transform: none; /* Ölçeklemeyi kaldır */
+    margin: 0 auto; /* Ortalamayı koru */
+  }
+}
+
+.group-8656 {
+  width: 25%;
+  height: 25%;
+  position: absolute;
+  right: 12.5%;
+  left: 62.5%;
+  bottom: 12.5%;
+  top: 62.5%;
+  overflow: visible;
+}
+.subtract {
+  width: 28px;
+  height: 35.83px;
+  position: absolute;
+  left: 7px;
+  top: 3.58px;
+  overflow: visible;
+}
+.sens-r-verileri {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-Light", sans-serif;
+  font-size: 32px;
+  font-weight: 300;
+  position: absolute;
+  right: 16.41%;
+  left: 72.66%;
+  width: 10.94%;
+  bottom: 92.22%;
+  top: 3.7%;
+  height: 4.07%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.sens-r-verileri-icon {
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  left: 1355px;
+  top: 46px;
+  overflow: visible;
+}
+.kamera-verileri {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-Light", sans-serif;
+  font-size: 32px;
+  font-weight: 300;
+  position: absolute;
+  right: 32.6%;
+  left: 55.89%;
+  width: 11.51%;
+  bottom: 92.31%;
+  top: 3.61%;
+  height: 4.07%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.kamera-verileri-icon {
+  width: 28px;
+  height: 28px;
+  position: absolute;
+  left: 1035px;
+  top: 48px;
+  overflow: hidden;
+}
+.group-8673 {
+  height: auto;
+  position: absolute;
+  left: 0px;
+  top: 10000px;
+  overflow: visible;
+}
+.konumland-rma {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-Light", sans-serif;
+  font-size: 32px;
+  font-weight: 300;
+  position: absolute;
+  right: 49.27%;
+  left: 38.59%;
+  width: 12.14%;
+  bottom: 92.22%;
+  top: 3.7%;
+  height: 4.07%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.konumland-rma-icon {
+  width: 38px;
+  height: 39px;
+  position: absolute;
+  left: 698px;
+  top: 45px;
+  overflow: hidden;
+}
+.group-8657 {
+  height: auto;
+  position: absolute;
+  left: 10px;
+  top: 0px;
+  overflow: visible;
+}
+.kontrol-paneli {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-Light", sans-serif;
+  font-size: 32px;
+  font-weight: 300;
+  position: absolute;
+  right: 66.82%;
+  left: 22.66%;
+  width: 10.52%;
+  bottom: 92.22%;
+  top: 3.7%;
+  height: 4.07%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.kontrol-panel-icon {
+  width: 28px;
+  height: 29px;
+  position: absolute;
+  left: 397px;
+  top: 50px;
+  overflow: visible;
+  filter: brightness(0) invert(100%) !important;
+}
+.smartsaw {
+  position: absolute;
+  left: 57px;
+  top: 30px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  z-index: 1;
+}
+.smartsaw-span {
+  color: #f4f6fc;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 65px;
+}
+.smartsaw-span2 {
+  color: #f4f6fc;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 48px;
+  font-weight: 200;
+  line-height: 65px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #121924;
+}
+
+.smartsaw {
+  position: absolute;
+  left: 57px;
+  top: 30px;
+  width: 261px;
+  height: 65px;
+  display: flex;
+  align-items: center;
+}
+
+.kontrol-paneli {
+  position: absolute;
+  left: 435px;
+  top: 40px;
+  width: 202px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.kontrol-panel-icon {
+  position: absolute;
+  left: 397px;
+  top: 47px;
+  width: 28px;
+  height: 29px;
+}
+
+.konumland-rma {
+  position: absolute;
+  left: 741px;
+  top: 40px;
+  width: 233px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.konumland-rma-icon {
+  position: absolute;
+  left: 698px;
+  top: 42px;
+  width: 38px;
+  height: 39px;
+}
+
+.kamera-verileri {
+  position: absolute;
+  left: 1073px;
+  top: 40px;
+  width: 221px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.kamera-verileri-icon {
+  position: absolute;
+  left: 1035px;
+  top: 45px;
+  width: 28px;
+  height: 28px;
+}
+
+.sens-r-verileri {
+  position: absolute;
+  left: 1395px;
+  top: 40px;
+  width: 210px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.sens-r-verileri-icon {
+  position: absolute;
+  left: 1355px;
+  top: 43px;
+  width: 32px;
+  height: 32px;
+}
+/* Nav itemlar için genel stiller */
+.nav-item {
+    position: absolute;
+    height: 44px;
+    top: 40px;
+    z-index: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.nav-text {
+    color: #9999a7;
+    font-family: "NotoSans-Light", sans-serif;
+    font-size: 32px;
+    font-weight: 300;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+/* Her bir nav item için özel pozisyonlar */
+.kontrol-paneli {
+    left: 397px;
+}
+
+.konumland-rma {
+    left: 698px;
+}
+
+.kamera-verileri {
+    left: 1035px;
+}
+
+.sens-r-verileri {
+    left: 1355px;
+}
+
+.zleme {
+    left: 1666px;
+}
+
+/* Icon boyutları */
+.kontrol-paneli .nav-icon {
+    width: 28px;
+    height: 29px;
+}
+
+.konumland-rma .nav-icon {
+    width: 38px;
+    height: 39px;
+}
+
+.kamera-verileri .nav-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.sens-r-verileri .nav-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.zleme .nav-icon {
+    width: 42px;
+    height: 43px;
+}
+
+/* Tüm nav ikonları için varsayılan gri renk */
+.nav-item .nav-icon img {
+    filter: brightness(0.7); /* Varsayılan gri renk (#9999a7) */
+}
+
+/* Kontrol Paneli aktif sayfa stilleri */
+.kontrol-paneli .nav-text {
+    color: #f4f6fc;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+}
+
+.kontrol-paneli .nav-icon {
+    filter: brightness(0) invert(100%);
+}
+
+/* Hover efektleri */
+.nav-item:hover .nav-text {
+    color: #f4f6fc;
+}
+
+.nav-item:hover .nav-icon img {
+    filter: brightness(1);
+}
+
+/* Active (tıklama) efektleri */
+.nav-item:active {
+    transform: scale(0.95);
+}
+
+.nav-item:active .nav-icon {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+.nav-item:active .nav-text {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+/* Nav itemlar için z-index ekliyoruz */
+.nav-item {
+  z-index: 1;
+}
+
+/* Smartsaw logo için z-index ekliyoruz */
+.smartsaw {
+  z-index: 1;
+}
+
+/* Tüm nav textler için genel renk */
+.nav-text {
+  color: #9999a7;
+}
+/* Nav item hover ve click stilleri */
+.nav-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.kp-kesim-kontrol {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 15px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 837px;
+  position: absolute;
+  left: 1212px;
+  top: 145px;
+}
+.kp-kesim-kontrol2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  top: 10px;
+  font-weight: 500;
+  position: relative;
+}
+.kp-line-3 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #FF5C00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: absolute;
+  left: 23px;
+  top: 86px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.kp-kesim-ba-latma-buton,
+.kp-kesim-durdurma-buton,
+.kp-so-utma-s-v-s-buton,
+.kp-mengene-kontrol-buton,
+.kp-tala-temizli-i-buton {
+  width: 70px;
+  height: 70px;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Buton rectangle'ı için stil */
+.kp-button {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  border: 1px solid #e46b27;
+  background: rgba(30, 38, 51, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  transition: all 0.3s ease;
+  z-index: 1; /* Butonları altta tutuyoruz */
+}
+
+/* İkon container'ı için stil */
+.kp-icon {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2; /* İkonları üste çıkarıyoruz */
+  pointer-events: none; /* İkonların tıklamayı engellemesini önler */
+  transition: all 0.3s ease;
+}
+
+/* Hover efekti */
+.kp-button:hover {
+  background: rgba(30, 38, 51, 0.7);
+  border-color: #FF5C00;
+}
+
+/* Active (tıklama) efekti - hem buton hem ikon için */
+.kp-button:active {
+  transform: scale(0.95);
+  background: rgba(30, 38, 51, 0.5);
+}
+
+.kp-button:active + .kp-icon {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* İkon resimleri için stil */
+.kp-icon img {
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.kp-kesim-ba-latma.active ~ .kp-kesim-ba-latma-buton .kp-button {
+  background: rgba(68, 246, 65, 0.1);
+}
+
+.kp-kesim-durdurma.active ~ .kp-kesim-durdurma-buton .kp-button {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.kp-so-utma-s-v-s.active ~ .kp-so-utma-s-v-s-buton .kp-button {
+  background: rgba(68, 246, 65, 0.1);
+}
+
+.kp-mengene-kontrol.active ~ .kp-mengene-kontrol-buton .kp-button {
+  background: rgba(68, 246, 65, 0.1);
+}
+
+.kp-tala-temizli-i.active ~ .kp-tala-temizli-i-buton .kp-button {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.kp-kesim-ba-latma.active {
+  color: #f4f6fc;
+}
+
+.kp-kesim-ba-latma.deactive {
+  color: #9999a7;
+}
+
+.kp-kesim-durdurma.active {
+  color: #f4f6fc;
+}
+
+.kp-kesim-durdurma.deactive {
+  color: #9999a7;
+}
+
+.kp-so-utma-s-v-s.active {
+  color: #f4f6fc;
+}
+
+.kp-so-utma-s-v-s.deactive {
+  color: #9999a7;
+}
+
+.kp-mengene-kontrol.active {
+  color: #f4f6fc;
+}
+
+.kp-mengene-kontrol.deactive {
+  color: #9999a7;
+}
+
+.kp-tala-temizli-i.active {
+  color: #f4f6fc;
+}
+
+.kp-tala-temizli-i.deactive {
+  color: #9999a7;
+}
+
+.kp-kesim-ba-latma-daire.active,
+.kp-kesim-durdurma-daire.active,
+.kp-so-utma-s-v-s-daire.active,
+.kp-mengene-kontrol-daire.active,
+.kp-tala-temizli-i-daire.active {
+  background: #44f641;
+}
+
+.kp-kesim-ba-latma-daire.deactive,
+.kp-kesim-durdurma-daire.deactive,
+.kp-so-utma-s-v-s-daire.deactive,
+.kp-mengene-kontrol-daire.deactive,
+.kp-tala-temizli-i-daire.deactive {
+  background: #ff0000;
+}
+
+.kp-kesim-ba-latma-buton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 125px;
+  height: 125px;
+  position: absolute;
+  left: 23px;
+  top: 100px;
+}
+.kp-icon {
+  width: 115px;
+  height: 115px;
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  overflow: hidden;
+}
+.kp-vector {
+  width: 100.87%;
+  height: 8.05%;
+  position: absolute;
+  right: -0.06%;
+  left: -0.81%;
+  bottom: 24.96%;
+  top: 66.99%;
+  overflow: visible;
+}
+.kp-clip-path-group {
+  height: auto;
+  position: absolute;
+  left: 0px;
+  top: 59.51px;
+  overflow: visible;
+}
+.kp-vector2 {
+  width: 39.99%;
+  height: 40%;
+  position: absolute;
+  right: 30%;
+  left: 30%;
+  bottom: 50%;
+  top: 10%;
+  overflow: visible;
+}
+.kp-vector3 {
+  width: 15.55%;
+  height: 17.74%;
+  position: absolute;
+  right: 40.75%;
+  left: 43.7%;
+  bottom: 61.13%;
+  top: 21.13%;
+  overflow: visible;
+}
+.kp-kesim-ba-latma {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  position: absolute;
+  left: 185px;
+  top: 148px;
+}
+.kp-kesim-ba-latma-daire {
+  background: #44f641;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 415px;
+  top: 151px;
+}
+.kp-kesim-durdurma-buton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 125px;
+  height: 125px;
+  position: absolute;
+  left: 23px;
+  top: 248px;
+}
+.kp-icon2 {
+  width: 115px;
+  height: 115px;
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  overflow: hidden;
+}
+.kp-vector4 {
+  width: 100.87%;
+  height: 8.05%;
+  position: absolute;
+  right: -0.06%;
+  left: -0.81%;
+  bottom: 24.96%;
+  top: 66.99%;
+  overflow: visible;
+}
+.kp-clip-path-group2 {
+  height: auto;
+  position: absolute;
+  left: 0px;
+  top: 59.51px;
+  overflow: visible;
+}
+.kp-vector5 {
+  width: 40%;
+  height: 40%;
+  position: absolute;
+  right: 30%;
+  left: 30%;
+  bottom: 50%;
+  top: 10%;
+  overflow: visible;
+}
+.kp-vector6 {
+  width: 15.38%;
+  height: 15.38%;
+  position: absolute;
+  right: 42.31%;
+  left: 42.31%;
+  bottom: 62.31%;
+  top: 22.31%;
+  overflow: visible;
+}
+.kp-div {
+  color: var(--primary, #e46b27);
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  position: relative;
+}
+.kp-kesim-durdurma {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  position: absolute;
+  left: 185px;
+  top: 298px;
+}
+.kp-kesim-durdurma-daire {
+  background: #ff0000;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 414px;
+  top: 299px;
+}
+.kp-so-utma-s-v-s-buton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 125px;
+  height: 125px;
+  position: absolute;
+  left: 23px;
+  top: 396px;
+}
+.kp-icon3 {
+  width: 115px;
+  height: 115px;
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  overflow: visible;
+}
+.kp-so-utma-s-v-s {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  position: absolute;
+  left: 186px;
+  top: 444px;
+}
+.kp-so-utma-s-v-s-daire {
+  background: #44f641;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 415px;
+  top: 448px;
+}
+.kp-mengene-kontrol-buton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 125px;
+  height: 125px;
+  position: absolute;
+  left: 23px;
+  top: 544px;
+}
+.kp-icon4 {
+  width: 105px;
+  height: 105px;
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  overflow: hidden;
+}
+.kp-group {
+  height: auto;
+  position: absolute;
+  left: 59.37px;
+  top: 33.98px;
+  overflow: visible;
+}
+.kp-group2 {
+  height: auto;
+  position: absolute;
+  left: 16.98px;
+  top: 0px;
+  overflow: visible;
+}
+.kp-group3 {
+  height: auto;
+  position: absolute;
+  left: 49.22px;
+  top: 80.22px;
+  overflow: visible;
+}
+.kp-mengene-kontrol {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  position: absolute;
+  left: 186px;
+  top: 592px;
+}
+.kp-mengene-kontrol-daire {
+  background: #44f641;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 415px;
+  top: 595px;
+}
+.kp-tala-temizli-i-buton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 125px;
+  height: 125px;
+  position: absolute;
+  left: 23px;
+  top: 692px;
+}
+.kp-icon5 {
+  width: 105px;
+  height: 105px;
+  position: absolute;
+  left: 8px;
+  top: 10px;
+  overflow: visible;
+}
+.kp-group4 {
+  height: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.kp-tala-temizli-i {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  position: absolute;
+  left: 185px;
+  top: 741px;
+}
+.kp-tala-temizli-i-daire {
+  background: #ff0000;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 415px;
+  top: 743px;
+}
+.kp-nme-verileri {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 15px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 526px;
+  position: absolute;
+  left: 720px;
+  top: 145px;
+}
+.kp-nme-verileri2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+  top: 10px;
+  position: relative;
+}
+.kp-line-32 {
+  border-style: solid;
+  border-color: #ff5c00;
+  border-width: 1px 0 0 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  margin-top: -1px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.kp-nme-h-z {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 40px;
+  font-weight: 500;
+  position: absolute;
+  left: 24px;
+  top: 50px;
+}
+.kp-inme-meter {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  left: 277px;
+  top: 0px;
+  transform: rotate(-90deg);
+  cursor: pointer;
+}
+.kp-meter-circle {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 10;
+}
+.kp-meter-value {
+  fill: none;
+  stroke: url(#gradient);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s;
+}
+.kp-16-00 {
+  color: #f4f6fc;
+  text-align: center;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  margin: 0;
+  width: 100px;
+}
+.kp-line-4 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #FF5C00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: absolute;
+  left: 23px;
+  top: 280px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.kp-nme-motor-ak-m {
+  flex-shrink: 0;
+  width: 388px;
+  height: 44px;
+  position: static;
+}
+.kp-nme-motor-ak-m2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  position: absolute;
+  left: 62px;
+  top: 330px;
+}
+.kp-16-002 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+  position: absolute;
+  left: 338px;
+  top: 325px;
+}
+.kp-nme-motor-tork {
+  flex-shrink: 0;
+  width: 388px;
+  height: 44px;
+  position: static;
+}
+.kp-nme-motor-tork2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  position: absolute;
+  left: 62px;
+  top: 440px;
+}
+.kp-16-003 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+  position: absolute;
+  left: 338px;
+  top: 435px;
+}
+.kp-kesme-verileri {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 15px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 526px;
+  position: absolute;
+  left: 226px;
+  top: 145px;
+}
+.kp-kesme-verileri2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  top: 10px;
+  font-weight: 500;
+  position: relative;
+}
+.kp-line-22 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #FF5C00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.kp-kesme-h-z {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 40px;
+  font-weight: 500;
+  position: absolute;
+  left: 47px;
+  top: 150px;
+}
+.kp-kesme-meter {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  position: absolute;
+  left: 300px;
+  top: 100px;
+  transform: rotate(-90deg);
+  cursor: pointer;
+}
+.kp-kesme-input {
+  position: absolute;
+  width: 150px;
+  height: 65px;
+  background: #1E2633;
+  border: 1px solid #4E4E60;
+  border-radius: 8px;
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 42px;
+  text-align: center;
+  padding: 5px;
+  z-index: 1000;
+  transform: rotate(90deg);
+  left: 15px;
+  top: 50px;
+  opacity: 0;
+}
+
+.kp-kesme-input:focus {
+  outline: none;
+  border-color: #FF5C00;
+}
+
+/* Chrome, Safari, Edge için input spinbutton'ları gizle */
+.kp-kesme-input::-webkit-outer-spin-button,
+.kp-kesme-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox için input spinbutton'ları gizle */
+.kp-kesme-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.kp-16-004 {
+  color: #f4f6fc;
+  text-align: center;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  margin: 0;
+  width: 100px;
+}
+.kp-line-33 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #FF5C00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: absolute;
+  left: 23px;
+  top: 280px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.kp-erit-motor-ak-m {
+  flex-shrink: 0;
+  width: 358px;
+  height: 44px;
+  position: static;
+}
+.kp-erit-motor-ak-m2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  position: absolute;
+  left: 62px;
+  top: 330px;
+}
+.kp-16-005 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+  position: absolute;
+  left: 338px;
+  top: 325px;
+}
+.kp-erit-motor-tork {
+  flex-shrink: 0;
+  width: 358px;
+  height: 44px;
+  position: static;
+}
+.kp-erit-motor-tork2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  position: absolute;
+  left: 62px;
+  top: 440px;
+}
+.kp-16-006 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+  position: absolute;
+  left: 338px;
+  top: 435px;
+}
+
+/* Aktif/Pasif durumlar için stiller */
+.kp-yava.active .kp-yava-daire,
+.kp-standart.active .kp-standart-daire,
+.kp-h-zl.active .kp-ellipse-15,
+.kp-lineer.active ~ .kp-lineer-kesim-daire,
+.kp-akilli.active ~ .kp-ak-ll-kesim-daire,
+.kp-yapay-zeka.active ~ .kp-yapay-zeka-daire {
+  background: #44f641;
+}
+
+.kp-yava.deactive .kp-yava-daire,
+.kp-standart.deactive .kp-standart-daire,
+.kp-h-zl.deactive .kp-ellipse-15,
+.kp-lineer.deactive ~ .kp-lineer-kesim-daire,
+.kp-akilli.deactive ~ .kp-ak-ll-kesim-daire,
+.kp-yapay-zeka.deactive ~ .kp-yapay-zeka-daire {
+  background: #ff0000;
+}
+
+.kp-icon2 img, .kp-icon5 img {
+  filter: brightness(0) invert(100%);
+}
+
+/* Butonlar aktif olmadığında ikonların rengi */
+.kp-kesim-durdurma.deactive ~ .kp-kesim-durdurma-buton .kp-icon2 img,
+.kp-tala-temizli-i.deactive ~ .kp-tala-temizli-i-buton .kp-icon5 img {
+  filter: brightness(0) saturate(100%) invert(65%) sepia(11%) saturate(207%) hue-rotate(202deg) brightness(86%) contrast(90%);
+}
+
+/* Butonlar aktif olduğunda ikonların rengi */
+.kp-kesim-durdurma.active ~ .kp-kesim-durdurma-buton .kp-icon2 img,
+.kp-tala-temizli-i.active ~ .kp-tala-temizli-i-buton .kp-icon5 img {
+  filter: brightness(0) invert(100%);
+}
+
+.kp-kesme-hiz-alani {
+  position: absolute;
+  width: 435px;
+  height: 180px;
+  cursor: pointer;
+  left: 23px;
+  top: 100px;
+  overflow: visible;
+}
+
+.kp-kesme-h-z {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 40px;
+  font-weight: 500;
+  position: absolute;
+  left: 24px;
+  top: 50px;
+}
+
+.kp-kesme-meter {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  left: 277px;
+  top: 0px;
+  transform: rotate(-90deg);
+}
+
+.kp-kesme-input {
+  position: absolute;
+  width: 150px;
+  height: 65px;
+  background: #1E2633;
+  border: 1px solid #4E4E60;
+  border-radius: 8px;
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 42px;
+  text-align: center;
+  padding: 5px;
+  z-index: 1000;
+  transform: rotate(90deg);
+  left: 0px;
+  top: 42px;
+  opacity: 0;
+}
+
+.kp-inme-hiz-alani {
+  position: absolute;
+  width: 435px;
+  height: 180px;
+  cursor: pointer;
+  left: 23px;
+  top: 100px;
+  overflow: visible;
+}
+
+.kp-inme-input {
+  position: absolute;
+  width: 150px;
+  height: 65px;
+  background: #1E2633;
+  border: 1px solid #4E4E60;
+  border-radius: 8px;
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 42px;
+  text-align: center;
+  padding: 5px;
+  z-index: 1000;
+  transform: rotate(90deg);
+  left: 0px;
+  top: 42px;
+  opacity: 0;
+}
+
+.kp-inme-input:focus {
+  outline: none;
+  border-color: #FF5C00;
+}
+
+/* Chrome, Safari, Edge için input spinbutton'ları gizle */
+.kp-inme-input::-webkit-outer-spin-button,
+.kp-inme-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox için input spinbutton'ları gizle */
+.kp-inme-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.kp-adaptif-kesim-header, .kp-kesim-modu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.kp-adaptif-kesim-title, .kp-kesim-modu-title {
+  color: #FFFFFF;
+  font-size: 32px;
+  font-weight: 500;
+  font-family: "NotoSans-Medium", sans-serif;
+  border-bottom: 2px solid #FF5C00;
+  padding-bottom: 8px;
+  margin-bottom: 30px;
+}
+
+.kp-kesim-options {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  margin-top: 40px;
+  transform: translateY(-15px);
+}
+
+.kp-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  transform: translateY(-15px);
+}
+
+.kp-option-text {
+  color: #9999a7;
+  font-size: 24px;
+  font-family: "NotoSans-Light", sans-serif;
+}
+
+.kp-option .kp-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-left: 15px;
+}
+
+.kp-indicator.active {
+  background-color: #00FF00;
+}
+
+.kp-indicator.deactive {
+  background-color: #FF0000;
+}
+
+/* ON/OFF Switch Styles */
+.kp-on-off-buton {
+  position: absolute;
+  width: 72px;
+  height: 226px;
+  right: 45px;
+  top: 37px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.kp-rectangle-1 {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 1) 0%,
+    rgba(255, 92, 0, 1) 100%
+  );
+  border-radius: 150px;
+  width: 72px;
+  height: 226px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: background 0.3s ease;
+}
+
+.kp-ellipse-1 {
+  background: #ffffff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  position: absolute;
+  left: 6px;
+  top: 15px;
+  transition: all 0.3s ease;
+}
+
+.kp-on-off-text {
+  color: #FF5C00;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  position: absolute;
+  left: 585px;
+  top: 70px;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.kp-on-off-buton.active .kp-rectangle-1 {
+  background: linear-gradient(
+    90deg,
+    rgba(68, 246, 65, 1) 0%,
+    rgba(39, 228, 107, 1) 100%
+  );
+}
+
+.kp-on-off-buton.active .kp-ellipse-1 {
+  top: 190px;
+  left: 574px;
+}
+
+.kp-on-off-buton.active .kp-on-off-text {
+  color: #44F641;
+  top: 220px;
+  left: 604px;
+  transform: translate(-50%, -50%);
+}
+
+/* SVG gradient tanımı */
+.kp-inme-meter svg, .kp-kesme-meter svg {
+  width: 100%;
+  height: 100%;
+}
+
+.kp-inme-meter svg defs, .kp-kesme-meter svg defs {
+  position: absolute;
+}
+
+/* HTML'de SVG içine eklenecek gradient tanımı */
+.kp-kesme-meter, .kp-inme-meter {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  left: 277px;
+  top: 0px;
+  transform: rotate(-90deg);
+}
+
+.kp-inme-meter .kp-meter-value {
+  stroke: url(#gradient);
+}
+
+.kp-kesme-meter .kp-meter-value {
+  stroke: url(#gradient2);
+}
+
+.kp-adaptif-kesim,
+.kp-adaptif-kesim * {
+  box-sizing: border-box;
+}
+.kp-adaptif-kesim {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 15px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 300px;
+  position: absolute;
+  width: 708px;
+  left: 493px;
+  top: 682px;
+}
+.kp-lineer {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 23px;
+  top: 85px;
+  white-space: nowrap;
+}
+.kp-lineer-kesim {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 23px;
+  top: 85px;
+  width: 115px;
+}
+.kp-lineer-kesim-daire {
+  background: #44f641;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 210px;
+  top: 89px;
+}
+.kp-akilli {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 23px;
+  top: 152px;
+  white-space: nowrap;
+}
+.kp-ak-ll-kesim {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 23px;
+  top: 147px;
+  width: 101px;
+}
+.kp-ak-ll-kesim-daire {
+  background: #ff0000;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 210px;
+  top: 155px;
+}
+.kp-yava {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 293px;
+  top: 85px;
+}
+.kp-yava-daire {
+  background: #44f641;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 464px;
+  top: 89px;
+}
+.kp-standart {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 293px;
+  top: 155px;
+}
+.kp-standart-daire {
+  background: #ff0000;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 464px;
+  top: 159px;
+}
+.kp-h-zl {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 293px;
+  top: 225px;
+}
+.kp-ellipse-15 {
+  background: #ff0000;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 464px;
+  top: 229px;
+}
+.kp-line-4 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #FF5C00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: absolute;
+  left: 23px;
+  top: 280px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.kp-kesim-modu {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  position: absolute;
+  left: 293px;
+  top: 15px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  border-bottom: 1px solid #FF5C00;
+  padding-bottom: 8px;
+  width: 160px;
+}
+.kp-on-off-buton {
+  flex-shrink: 0;
+  width: 72.07px;
+  height: 225.52px;
+  position: static;
+}
+.kp-rectangle-1 {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 1) 0%,
+    rgba(255, 92, 0, 1) 100%
+  );
+  border-radius: 150px;
+  width: 225.52px;
+  height: 72.07px;
+  position: absolute;
+  left: 640.07px;
+  top: 37px;
+  transform-origin: 0 0;
+  transform: rotate(90deg) scale(1, 1);
+}
+.kp-ellipse-1 {
+  background: #ffffff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  position: absolute;
+  left: 574px;
+  top: 50px;
+  transition: all 0.3s ease;
+}
+.kp-adaptif-kesim2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  position: absolute;
+  left: 23px;
+  top: 15px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  border-bottom: 1px solid #FF5C00;
+  padding-bottom: 8px;
+  width: 200px;
+}
+
+.kp-kafa,
+.kp-kafa * {
+  box-sizing: border-box;
+}
+.kp-kafa {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 15px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 256px;
+  height: 300px;
+  position: absolute;
+  left: 225px;
+  top: 682px;
+}
+
+.kp-line-61 {
+  display: none;
+}
+
+.kp-lineer, .kp-akilli, .kp-yava, .kp-standart, .kp-h-zl {
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.kp-lineer, .kp-yava {
+  color: #f4f6fc;
+}
+
+.kp-akilli, .kp-standart, .kp-h-zl {
+  color: #9999a7;
+}
+
+.kp-lineer-kesim-daire, .kp-yava-daire {
+  background: #44f641;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.kp-ak-ll-kesim-daire, .kp-standart-daire, .kp-ellipse-15 {
+  background: #ff0000;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  transition: background-color 0.3s ease;
+}
+
+/* Aktif durumlar */
+.kp-lineer.active, .kp-akilli.active, .kp-yava.active, .kp-standart.active, .kp-h-zl.active {
+  color: #f4f6fc;
+}
+
+.kp-lineer.active ~ .kp-lineer-kesim-daire,
+.kp-akilli.active ~ .kp-ak-ll-kesim-daire,
+.kp-yava.active ~ .kp-yava-daire,
+.kp-standart.active ~ .kp-standart-daire,
+.kp-h-zl.active ~ .kp-ellipse-15 {
+  background: #44f641;
+}
+
+/* Pasif durumlar */
+.kp-lineer.deactive, .kp-akilli.deactive, .kp-yava.deactive, .kp-standart.deactive, .kp-h-zl.deactive {
+  color: #9999a7;
+}
+
+.kp-lineer.deactive ~ .kp-lineer-kesim-daire,
+.kp-akilli.deactive ~ .kp-ak-ll-kesim-daire,
+.kp-yava.deactive ~ .kp-yava-daire,
+.kp-standart.deactive ~ .kp-standart-daire,
+.kp-h-zl.deactive ~ .kp-ellipse-15 {
+  background: #ff0000;
+}
+
+/* On/Off butonu off konumundayken */
+.kp-on-off-buton:not(.active) ~ .kp-lineer-kesim-daire,
+.kp-on-off-buton:not(.active) ~ .kp-ak-ll-kesim-daire,
+.kp-on-off-buton:not(.active) ~ .kp-yava-daire,
+.kp-on-off-buton:not(.active) ~ .kp-standart-daire,
+.kp-on-off-buton:not(.active) ~ .kp-ellipse-15 {
+  background: #4e4e60;
+}
+
+/* Aktif/Pasif durumlar için stiller */
+.kp-yava.active .kp-yava-daire,
+.kp-standart.active .kp-standart-daire,
+.kp-h-zl.active .kp-ellipse-15,
+.kp-lineer.active ~ .kp-lineer-kesim-daire,
+.kp-akilli.active ~ .kp-ak-ll-kesim-daire,
+.kp-yapay-zeka.active ~ .kp-yapay-zeka-daire {
+  background: #44f641;
+}
+
+.kp-yava.deactive .kp-yava-daire,
+.kp-standart.deactive .kp-standart-daire,
+.kp-h-zl.deactive .kp-ellipse-15,
+.kp-lineer.deactive ~ .kp-lineer-kesim-daire,
+.kp-akilli.deactive ~ .kp-ak-ll-kesim-daire,
+.kp-yapay-zeka.deactive ~ .kp-yapay-zeka-daire {
+  background: #ff0000;
+}
+
+/* On/Off butonu off konumundayken tüm butonların ellipse'leri gri olacak */
+.kp-on-off-buton:not(.active) ~ * .kp-yava-daire,
+.kp-on-off-buton:not(.active) ~ * .kp-standart-daire,
+.kp-on-off-buton:not(.active) ~ * .kp-ellipse-15,
+.kp-on-off-buton:not(.active) ~ * .kp-lineer-kesim-daire,
+.kp-on-off-buton:not(.active) ~ * .kp-ak-ll-kesim-daire,
+.kp-on-off-buton:not(.active) ~ * .kp-yapay-zeka-daire {
+  background: #4e4e60 !important;
+}
+
+.kp-kafa-title {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #FF5C00;
+  padding-bottom: 8px;
+  width: 90%;
+}
+
+.kp-kesim-ba-latma-buton .kp-icon,
+.kp-kesim-durdurma-buton .kp-icon2,
+.kp-so-utma-s-v-s-buton .kp-icon3,
+.kp-mengene-kontrol-buton .kp-icon4,
+.kp-tala-temizli-i-buton .kp-icon5 {
+  transition: all 0.2s ease;
+}
+
+.kp-kesim-ba-latma-buton:active .kp-icon,
+.kp-kesim-durdurma-buton:active .kp-icon2,
+.kp-so-utma-s-v-s-buton:active .kp-icon3,
+.kp-mengene-kontrol-buton:active .kp-icon4,
+.kp-tala-temizli-i-buton:active .kp-icon5 {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+.kp-kesim-ba-latma-buton .kp-icon img,
+.kp-kesim-durdurma-buton .kp-icon2 img,
+.kp-so-utma-s-v-s-buton .kp-icon3 img,
+.kp-mengene-kontrol-buton .kp-icon4 img,
+.kp-tala-temizli-i-buton .kp-icon5 img {
+  transition: all 0.3s ease;
+}
+.sv-sens-ralt {
+    position: absolute;
+    width: 1462px;
+    height: 837px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* Hem yatayda hem dikeyde ortala */
+    border-radius: 9px;
+    border: 1px solid #4e4e60;
+    padding: 30px 23px 15px 23px;
+    margin-top: 50px; /* Nav-bar'dan uzaklık için üst margin */
+}
+
+.sv-sens-ralt-baslik {
+  position: absolute;
+  left: 23px;
+  top: 23px;
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+}
+
+.sv-line-1 {
+  position: absolute;
+  width: 1416px;
+  height: 0px;
+  left: 23px;
+  top: 80px;
+  border-top: 1px solid #FF5C00;
+}
+
+.sv-line-2 {
+  position: absolute;
+  width: 321px;
+  height: 0px;
+  top: 715px; /* 765px'den 715px'e */
+  left: 50px;
+  border-top: 1px solid #FF5C00;
+}
+
+.sv-line-3 {
+  position: absolute;
+  width: 321px;
+  height: 0px;
+  top: 715px; /* 765px'den 715px'e */
+  left: 399px;
+  border-top: 1px solid #FF5C00;
+}
+
+.sv-line-4 {
+  position: absolute;
+  width: 321px;
+  height: 0px;
+  top: 715px; /* 765px'den 715px'e */
+  left: 748px;
+  border-top: 1px solid #FF5C00;
+}
+
+.sv-line-5 {
+  position: absolute;
+  width: 321px;
+  height: 0px;
+  top: 715px; /* 765px'den 715px'e */
+  left: 1097px;
+  border-top: 1px solid #FF5C00;
+}
+
+.sv-titre-im-y-zdesi {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-titre-im-y-zdesi2 {
+  position: absolute;
+  left: 50px;
+  top: 744px; /* 794px'den 744px'e */
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+}
+
+.sv-_16 {
+  position: absolute;
+  left: 349px;
+  top: 744px; /* 794px'den 744px'e */
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  text-align: right;
+}
+
+.sv-sapma-y-zdesi {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-sapma-y-zdesi2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 50px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+.sv-_162 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 349px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+.sv-titre-im-durumu {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-titre-im-durumu2 {
+  position: absolute;
+  left: 399px;
+  top: 744px; /* 794px'den 744px'e */
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+}
+
+.sv-sa-l-kl {
+  position: absolute;
+  left: 657px;
+  top: 744px; /* 794px'den 744px'e */
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  text-align: right;
+}
+
+.sv-sapma-durumu {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-sapma-durumu2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 399px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+.sv-sa-l-kl2 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 657px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+.sv-line-6 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 457px;
+  height: 0px;
+  position: absolute;
+  left: 500px;
+  top: 321px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+
+.sv-sapma-son-anomali {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-sapma-son-anomali2 {
+  position: absolute;
+  left: 1097px;
+  top: 744px; /* 794px'den 744px'e */
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+}
+
+.sv-_14-12-2004 {
+  position: absolute;
+  left: 1318px;
+  top: 744px; /* 794px'den 744px'e */
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  text-align: right;
+}
+
+.sv-titre-im-son-anomali {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-titre-im-son-anomali2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 1097px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+.sv-_14-12-20042 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 1318px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+/* Sensör Verileri için aktif sayfa stilleri */
+.sv-sens-r-verileri .nav-text {
+    color: #f4f6fc;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+}
+
+.sv-sens-r-verileri .nav-icon img {
+    filter: brightness(0) invert(100%);
+}
+.izleme-group-5 {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 412px;
+  position: absolute;
+  left: 1212px;
+  top: 570px;
+}
+.izleme-kafa-y-ksekli-i-mm {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-kafa-y-ksekli-i-mm-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-kafa-y-ksekli-i-mm-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-00 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 30px;
+}
+.izleme-line-3 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-kesilen-par-a-adeti {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+  width: 324px;
+}
+.izleme-16-002 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 93px;
+}
+.izleme-line-4 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-testere-durum {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+  width: 324px;
+}
+.izleme-16-003 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 156px;
+}
+.izleme-line-5 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-alarm-status {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+  width: 324px;
+}
+.izleme-16-004 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 219px;
+}
+.izleme-line-6 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-alarm-bilgisi {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+  width: 324px;
+}
+.izleme-16-005 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 282px;
+}
+.izleme-group-4 {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 976px;
+  height: 412px;
+  position: absolute;
+  left: 226px;
+  top: 569px;
+}
+.izleme-mengene-bas-n {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-16-006 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 895px;
+  top: 30px;
+}
+.izleme-line-2 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 934px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-titre-im-x {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-titre-im-x-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-titre-im-x-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-007 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 646px;
+  top: 91px;
+}
+.izleme-ad {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-right: 10px;
+  margin-top: -5px; /* -20px yerine -10px yaparak biraz aşağı indirdik */
+  margin-left: 15px; /* Sağa kaydırmak için margin ekledik */
+}
+.izleme-16-008 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 823px;
+  top: 91px;
+}
+.izleme-hz {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-top: -10px; /* -20px yerine -10px yaparak biraz aşağı indirdik */
+  margin-left: 15px; /* Sağa kaydırmak için margin ekledik */
+}
+.izleme-line-32 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 934px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-titre-im-y {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-titre-im-y-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-titre-im-y-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-009 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 646px;
+  top: 152px;
+}
+.izleme-ad2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-right: 10px;
+  margin-top: -10px; /* -20px yerine -10px yaparak biraz aşağı indirdik */
+  margin-left: 15px; /* Sağa kaydırmak için margin ekledik */
+}
+.izleme-16-0010 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 823px;
+  top: 152px;
+}
+.izleme-hz2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-top: -10px; /* -20px yerine -10px yaparak biraz aşağı indirdik */
+  margin-left: 15px; /* Sağa kaydırmak için margin ekledik */
+}
+.izleme-line-42 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 934px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-titre-im-z {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-titre-im-z-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-titre-im-z-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-0011 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 646px;
+  top: 213px;
+}
+.izleme-ad3 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-right: 10px;
+  margin-top: -10px; /* -20px yerine -10px yaparak biraz aşağı indirdik */
+  margin-left: 15px; /* Sağa kaydırmak için margin ekledik */
+}
+.izleme-16-0012 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 823px;
+  top: 213px;
+}
+.izleme-hz3 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-top: -10px; /* -20px yerine -10px yaparak biraz aşağı indirdik */
+  margin-left: 15px; /* Sağa kaydırmak için margin ekledik */
+}
+.izleme-line-52 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 934px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-erit-gerginli-i {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-16-0013 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 415px;
+  top: 274px;
+}
+.izleme-ortam-s-cakl {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 518px;
+  top: 274px;
+}
+.izleme-16-0014 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 895px;
+  top: 274px;
+}
+.izleme-line-62 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 454px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-line-7 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 457px;
+  height: 0px;
+  position: absolute;
+  left: 500px;
+  top: 321px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-erit-sapmas {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-16-0015 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 415px;
+  top: 335px;
+}
+.izleme-ortam-nem {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 518px;
+  top: 335px;
+}
+.izleme-16-0016 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 895px;
+  top: 335px;
+}
+.izleme-group-3 {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 412px;
+  position: absolute;
+  left: 1212px;
+  top: 144px;
+}
+.izleme-erit-motor-h-z {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: relative;
+}
+.izleme-16-0017 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: absolute;
+  left: 396px;
+  top: 30px;
+}
+.izleme-erit-motor-ak-m-a {
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: relative;
+  width: 324px;
+}
+.izleme-erit-motor-ak-m-a-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-erit-motor-ak-m-a-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-16-0018 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: absolute;
+  left: 396px;
+  top: 93px;
+}
+.izleme-erit-motor-tork-kgf-m {
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: relative;
+  width: 324px;
+}
+.izleme-erit-motor-tork-kgf-m-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-erit-motor-tork-kgf-m-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-16-0019 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: absolute;
+  left: 396px;
+  top: 156px;
+}
+.izleme-nme-motor-h-z {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: relative;
+  width: 324px;
+}
+.izleme-16-0020 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: absolute;
+  left: 396px;
+  top: 219px;
+}
+.izleme-nme-motor-ak-m-a {
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: relative;
+  width: 324px;
+}
+.izleme-nme-motor-ak-m-a-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-nme-motor-ak-m-a-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-16-0021 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: absolute;
+  left: 396px;
+  top: 282px;
+}
+.izleme-line-72 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-nme-motor-tork {
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: relative;
+  width: 324px;
+}
+.izleme-nme-motor-tork-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-nme-motor-tork-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.izleme-16-0022 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayBold", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  position: absolute;
+  left: 396px;
+  top: 345px;
+}
+.izleme-group-2 {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 412px;
+  position: absolute;
+  left: 720px;
+  top: 144px;
+}
+.izleme-malzeme-cinsi {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-malzeme-sertli-i {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-kesit-yap-s {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-a-mm {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-a-mm-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-a-mm-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-0023 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 165px;
+  top: 245px;
+}
+.izleme-b-mm {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 254px;
+  top: 219px;
+}
+.izleme-b-mm-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-b-mm-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-0024 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 245px;
+}
+.izleme-line-63 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 204px;
+  height: 0px;
+  position: absolute;
+  left: 23px;
+  top: 299px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-line-9 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 204px;
+  height: 0px;
+  position: absolute;
+  left: 254px;
+  top: 299px;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-c-mm {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 23px;
+  top: 305px;
+}
+.izleme-c-mm-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-c-mm-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-0025 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 165px;
+  top: 338px;
+}
+.izleme-d-mm {
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 254px;
+  top: 305px;
+}
+.izleme-d-mm-span {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-d-mm-span2 {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.izleme-16-0026 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 338px;
+}
+.izleme-group-1 {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 520px;
+  height: 445px;
+  position: absolute;
+  left: 180px;
+  top: 130px;
+}
+.izleme-makine-id {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-line-22 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #9999a7;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.izleme-erit-id {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-erit-di-l-s {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-erit-tipi {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-erit-markas {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-erit-malzemesi {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: relative;
+}
+.izleme-16-0027 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  position: absolute;
+  left: 396px;
+  top: 345px;
+}
+.izleme-group-1, .izleme-group-2, .izleme-group-3, .izleme-group-4, .izleme-group-5 {
+  position: absolute;
+  width: 520px;
+  height: 445px;
+  border-radius: 9px;
+  border: 1px solid #4e4e60;
+  padding: 15px 23px 15px 23px;
+  box-sizing: border-box;
+}
+
+.izleme-group-1 {
+  left: 180px;
+  top: 130px;
+}
+
+.izleme-group-2 {
+  left: 710px;
+  top: 130px;
+}
+
+.izleme-group-3 {
+  left: 1240px;
+  top: 130px;
+}
+
+.izleme-group-4 {
+  left: 180px;
+  top: 585px;
+  width: 1050px;
+}
+
+.izleme-group-5 {
+  left: 1240px;
+  top: 585px;
+}
+
+/* Grup içindeki satırlar için genel stil */
+.izleme-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 0px;
+  position: relative;
+}
+
+/* Satır içindeki text için stil */
+.izleme-row-item-text {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* Birim gösterimi için stil (mm, A, % gibi) */
+.izleme-row-item-unit {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  margin-left: 3px;
+}
+
+/* Satır içindeki değer (16.00) için stil */
+.izleme-row-item-value {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* Çizgi için stil */
+.izleme-row-line {
+  width: 100%;
+  height: 1px;
+  background-color: #FF5C00;
+  margin: 0px 0;
+}
+
+/* İkili satırlar için container stil */
+.izleme-row-item-double {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 0px;
+  position: relative;
+}
+
+/* İkili satırdaki her bir eleman için stil */
+.izleme-row-item-half {
+  width: 48%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Normal tekli satırlar için çizgi */
+.izleme-row-line {
+  width: 100%;
+  height: 1px;
+  background-color: #FF5C00;
+  margin: 0px 0;
+}
+
+/* İkili satırların altındaki çizgi için özel stil */
+.izleme-row-item-double + .izleme-row-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  height: 1px;
+}
+
+/* İkili satırların altındaki yarım çizgiler için stil */
+.izleme-row-item-double + .izleme-row-line::before,
+.izleme-row-item-double + .izleme-row-line::after {
+  content: '';
+  width: 48%;
+  height: 1px;
+  background-color: #FF5C00;
+}
+
+/* Titreşim satırları için özel stil */
+.izleme-row-item-vibration {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 0px;
+  position: relative;
+}
+
+/* Titreşim satırının sol kısmı (text ve birim) */
+.izleme-vibration-left {
+  display: flex;
+  align-items: center;
+}
+.izleme-group-1, .izleme-group-2, .izleme-group-3, .izleme-group-4, .izleme-group-5 {
+  z-index: 1;
+}
+
+/* Sensör Durumu ve Motor Durumu için stiller */
+.sv-sens-r-durumu {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-sens-r-durumu2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 748px;
+  top: 744px; /* 794px'den 744px'e */
+}
+
+.sv-sa-l-kl3 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 1006px;
+  top: 744px; /* 794px'den 744px'e */
+}
+
+.sv-motor-durumu {
+  flex-shrink: 0;
+  width: 321px;
+  height: 27px;
+  position: static;
+}
+
+.sv-motor-durumu2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 748px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+.sv-sa-l-kl4 {
+  color: #f4f6fc;
+  text-align: right;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 1006px;
+  top: 800px; /* 850px'den 800px'e */
+}
+
+/* Temel sayfa stilleri */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #121924;
+  overflow: hidden;
+}
+
+/* Ana container - sabit boyut ve pozisyon */
+.slide-16-9-1 {
+  background: radial-gradient(
+    closest-side,
+    rgba(20, 58, 119, 1) 0%,
+    rgba(18, 25, 36, 1) 100%
+  );
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* Media query'i kaldırıyoruz çünkü responsive olmasını istemiyoruz */
+
+/* Sensör verileri container - merkeze yakın sabit pozisyon */
+.sv-sens-ralt {
+  position: absolute;
+  width: 1462px;
+  height: 837px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); /* Hem yatayda hem dikeyde ortala */
+  border-radius: 9px;
+  border: 1px solid #4e4e60;
+  padding: 30px 23px 15px 23px;
+  margin-top: 50px; /* Nav-bar'dan uzaklık için üst margin */
+}
+
+/* Sayfa küçüldüğünde scrollbar ekle */
+@media screen and (max-width: 1920px) {
+  body {
+    overflow: auto;
+  }
+  
+  .slide-16-9-1 {
+    transform: none; /* Ölçeklemeyi kaldır */
+    margin: 0 auto; /* Ortalamayı koru */
+  }
+}
+
+/* İzleme sayfası titreşim satırları için düzeltmeler */
+.izleme-titre-im-x,
+.izleme-titre-im-y,
+.izleme-titre-im-z {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  padding: 10px 0;
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* Titreşim değerleri için container */
+.izleme-values-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 0; /* Sağ margin'i kaldırdık */
+  margin-left: auto; /* Sola otomatik margin ekleyerek sağa yasladık */
+  width: 300px; /* Container'a sabit genişlik verdik */
+  justify-content: flex-end; /* İçeriği sağa yasladık */
+}
+
+/* İlk değer */
+.izleme-value-1 {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 70px;
+  text-align: right;
+}
+
+/* "ad" text */
+.izleme-ad {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-right: 10px;
+  margin-top: 0px;
+  margin-left: 10px;
+}
+
+/* İkinci değer */
+.izleme-value-2 {
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 70px;
+  text-align: right;
+  margin-right: 5px;
+}
+
+/* "Hz" text */
+.izleme-hz {
+  color: #9999a7;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  width: 35px;
+  text-align: left;
+  margin-top: 0px;
+  margin-left: 10px;
+}
+
+/* Kamera verileri sayfası için container stil */
+.kv-container {
+  position: absolute;
+  width: 1462px;
+  height: 837px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 9px;
+  border: 1px solid #4e4e60;
+  padding: 30px 23px 15px 23px;
+  margin-top: 50px;
+}
+
+/* Kamera verileri başlık */
+.kv-baslik {
+  position: absolute;
+  left: 23px;
+  top: 23px;
+  color: #f4f6fc;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+}
+
+/* Kamera verileri line'lar */
+.kv-line-1 {
+  position: absolute;
+  width: 1416px;
+  height: 0px;
+  left: 23px;
+  top: 80px;
+  border-top: 1px solid #FF5C00;
+}
+
+.kv-line-2, .kv-line-3, .kv-line-4, .kv-line-5 {
+  position: absolute;
+  width: 321px;
+  height: 0px;
+  top: 715px;
+  border-top: 1px solid #FF5C00;
+}
+
+.kv-line-2 { left: 50px; }
+.kv-line-3 { left: 399px; }
+.kv-line-4 { left: 748px; }
+.kv-line-5 { left: 1097px; }
+
+/* Kamera verileri row'lar */
+.kv-row-1-1-text, .kv-row-1-2-text,
+.kv-row-2-1-text, .kv-row-2-2-text,
+.kv-row-3-1-text, .kv-row-3-2-text,
+.kv-row-4-1-text, .kv-row-4-2-text {
+  position: absolute;
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.kv-row-1-1-value, .kv-row-1-2-value,
+.kv-row-2-1-value, .kv-row-2-2-value,
+.kv-row-3-1-value, .kv-row-3-2-value,
+.kv-row-4-1-value, .kv-row-4-2-value {
+  position: absolute;
+  width: 100px; /* Value için sabit genişlik */
+  text-align: right;
+  color: #f4f6fc;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+/* İlk sütun pozisyonları */
+.kv-row-1-1-text, .kv-row-1-2-text { left: 50px; }
+.kv-row-1-1-value, .kv-row-1-2-value { 
+  right: calc(1462px - 322px); /* 350px yerine 340px yaparak daha sola kaydırdık */
+}
+.kv-row-1-1-text, .kv-row-1-1-value { top: 744px; }
+.kv-row-1-2-text, .kv-row-1-2-value { top: 800px; }
+
+/* İkinci sütun pozisyonları */
+.kv-row-2-1-text, .kv-row-2-2-text { left: 399px; }
+.kv-row-2-1-value, .kv-row-2-2-value { 
+  right: calc(1462px - 671px); /* 699px yerine 689px yaparak daha sola kaydırdık */
+}
+.kv-row-2-1-text, .kv-row-2-1-value { top: 744px; }
+.kv-row-2-2-text, .kv-row-2-2-value { top: 800px; }
+
+/* Üçüncü sütun pozisyonları */
+.kv-row-3-1-text, .kv-row-3-2-text { left: 748px; }
+.kv-row-3-1-value, .kv-row-3-2-value { 
+  right: calc(1462px - 1020px); /* 1048px yerine 1038px yaparak daha sola kaydırdık */
+}
+.kv-row-3-1-text, .kv-row-3-1-value { top: 744px; }
+.kv-row-3-2-text, .kv-row-3-2-value { top: 800px; }
+
+/* Dördüncü sütun pozisyonları */
+.kv-row-4-1-text, .kv-row-4-2-text { left: 1097px; }
+.kv-row-4-1-value, .kv-row-4-2-value { 
+  right: calc(1462px - 1369px); /* 1397px yerine 1387px yaparak daha sola kaydırdık */
+}
+.kv-row-4-1-text, .kv-row-4-1-value { top: 744px; }
+.kv-row-4-2-text, .kv-row-4-2-value { top: 800px; }
+.km-malzeme-konumlandirma {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: var(--c3, #4e4e60);
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 482px;
+  height: 837px;
+  position: absolute;
+  left: 226px;
+  top: 130px;
+}
+.km-malzeme-konumland-rma {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  position: relative;
+}
+.km-line-2 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #ff5c00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.km-malzeme-geri-butonu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  left: 91px;
+  top: 131px;
+}
+.km-button {
+  border-radius: 29px;
+  border-style: solid;
+  border-color: #e46b27;
+  border-width: 1px;
+  padding: 7px 26px 7px 26px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.km-div {
+  color: var(--primary, #e46b27);
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  position: relative;
+}
+.km-malzeme-geri {
+  flex-shrink: 0;
+  width: 263px;
+  height: 263px;
+  position: absolute;
+  left: 19px;
+  top: 19px;
+  overflow: hidden;
+}
+.km-clip-path-group {
+  height: auto;
+  position: absolute;
+  left: 105.01px;
+  top: 0px;
+  overflow: visible;
+}
+.km-clip-path-group2 {
+  height: auto;
+  position: absolute;
+  left: 77.66px;
+  top: 37.5px;
+  overflow: visible;
+}
+.km-clip-path-group3 {
+  height: auto;
+  position: absolute;
+  left: 62.04px;
+  top: 53.04px;
+  overflow: visible;
+}
+.km-clip-path-group4 {
+  height: auto;
+  position: absolute;
+  left: 161.16px;
+  top: 37.49px;
+  overflow: visible;
+}
+.km-clip-path-group5 {
+  height: auto;
+  position: absolute;
+  left: 176.78px;
+  top: 53.04px;
+  overflow: visible;
+}
+.km-clip-path-group6 {
+  height: auto;
+  position: absolute;
+  left: 77.66px;
+  top: 154.68px;
+  overflow: visible;
+}
+.km-clip-path-group7 {
+  height: auto;
+  position: absolute;
+  left: 62.04px;
+  top: 170.23px;
+  overflow: visible;
+}
+.km-clip-path-group8 {
+  height: auto;
+  position: absolute;
+  left: 161.16px;
+  top: 154.68px;
+  overflow: visible;
+}
+.km-clip-path-group9 {
+  height: auto;
+  position: absolute;
+  left: 176.78px;
+  top: 170.22px;
+  overflow: visible;
+}
+.km-clip-path-group10 {
+  height: auto;
+  position: absolute;
+  left: 108.34px;
+  top: 51.45px;
+  overflow: visible;
+}
+.km-clip-path-group11 {
+  height: auto;
+  position: absolute;
+  left: 122.19px;
+  top: 87.32px;
+  overflow: visible;
+}
+.km-malzeme-ileri-butonu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  left: 91px;
+  top: 491px;
+}
+.km-malzeme-ileri {
+  flex-shrink: 0;
+  width: 263px;
+  height: 263px;
+  position: absolute;
+  left: 19px;
+  top: 18px;
+  overflow: hidden;
+}
+.km-clip-path-group12 {
+  height: auto;
+  position: absolute;
+  left: 105.01px;
+  top: 0px;
+  overflow: visible;
+}
+.km-clip-path-group13 {
+  height: auto;
+  position: absolute;
+  left: 77.66px;
+  top: 37.49px;
+  overflow: visible;
+}
+.km-clip-path-group14 {
+  height: auto;
+  position: absolute;
+  left: 62.04px;
+  top: 53.04px;
+  overflow: visible;
+}
+.km-clip-path-group15 {
+  height: auto;
+  position: absolute;
+  left: 161.16px;
+  top: 37.49px;
+  overflow: visible;
+}
+.km-clip-path-group16 {
+  height: auto;
+  position: absolute;
+  left: 176.78px;
+  top: 53.04px;
+  overflow: visible;
+}
+.km-clip-path-group17 {
+  height: auto;
+  position: absolute;
+  left: 77.66px;
+  top: 154.68px;
+  overflow: visible;
+}
+.km-clip-path-group18 {
+  height: auto;
+  position: absolute;
+  left: 62.04px;
+  top: 170.22px;
+  overflow: visible;
+}
+.km-clip-path-group19 {
+  height: auto;
+  position: absolute;
+  left: 161.16px;
+  top: 154.67px;
+  overflow: visible;
+}
+.km-clip-path-group20 {
+  height: auto;
+  position: absolute;
+  left: 176.78px;
+  top: 170.22px;
+  overflow: visible;
+}
+.km-clip-path-group21 {
+  height: auto;
+  position: absolute;
+  left: 108.33px;
+  top: 51.46px;
+  overflow: visible;
+}
+.km-clip-path-group22 {
+  height: auto;
+  position: absolute;
+  left: 122.18px;
+  top: 51.46px;
+  overflow: visible;
+}
+.km-mengene-kontrol {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: #4e4e60;
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 482px;
+  height: 837px;
+  position: absolute;
+  left: 719px;
+  top: 130px;
+}
+.km-mengene-kontrol2 {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  position: relative;
+}
+.km-line-3 {
+  margin-top: -1px;
+  border-style: solid;
+  border-color: #ff5c00;
+  border-width: 1px 0 0 0;
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  transform-origin: 0 0;
+  transform: rotate(0deg) scale(1, 1);
+}
+.km-arka-mengene-a-butonu {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  left: 91px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.km-arka-mengene-a-butonu { top: 129px; }
+.km-mengene-s-k-t-r-butonu {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  left: 91px;
+  top: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.km-mengene-s-k-t-r-butonu { top: 360px; }
+.km-mengene-s-k-t-r {
+  flex-shrink: 0;
+  width: 175px;
+  height: 175px;
+  position: absolute;
+  left: 12px;
+  top: 13px;
+  overflow: hidden;
+}
+.km-arka-mengene-a {
+  flex-shrink: 0;
+  width: 175px;
+  height: 175px;
+  position: absolute;
+  left: 12px;
+  top: 13px;
+  overflow: hidden;
+}
+.km-clip-path-group23 {
+  height: auto;
+  position: absolute;
+  left: 69.87px;
+  top: 0px;
+  overflow: visible;
+}
+.km-clip-path-group24 {
+  height: auto;
+  position: absolute;
+  left: 51.68px;
+  top: 24.95px;
+  overflow: visible;
+}
+.km-clip-path-group25 {
+  height: auto;
+  position: absolute;
+  left: 41.28px;
+  top: 35.29px;
+  overflow: visible;
+}
+.km-clip-path-group26 {
+  height: auto;
+  position: absolute;
+  left: 123.31px;
+  top: 24.95px;
+  overflow: visible;
+}
+.km-clip-path-group27 {
+  height: auto;
+  position: absolute;
+  left: 133.71px;
+  top: 35.29px;
+  overflow: visible;
+}
+.km-clip-path-group28 {
+  height: auto;
+  position: absolute;
+  left: 51.68px;
+  top: 102.92px;
+  overflow: visible;
+}
+.km-clip-path-group29 {
+  height: auto;
+  position: absolute;
+  left: 41.28px;
+  top: 113.27px;
+  overflow: visible;
+}
+.km-clip-path-group30 {
+  height: auto;
+  position: absolute;
+  left: 107.24px;
+  top: 102.92px;
+  overflow: visible;
+}
+.km-clip-path-group31 {
+  height: auto;
+  position: absolute;
+  left: 117.63px;
+  top: 113.27px;
+  overflow: visible;
+}
+.km-mengene-s-k-t-r {
+  flex-shrink: 0;
+  width: 175px;
+  height: 175px;
+  position: absolute;
+  left: 12px;
+  top: 13px;
+  overflow: hidden;
+}
+.km-clip-path-group32 {
+  height: auto;
+  position: absolute;
+  left: 69.87px;
+  top: 0px;
+  overflow: visible;
+}
+.km-clip-path-group33 {
+  height: auto;
+  position: absolute;
+  left: 51.68px;
+  top: 24.95px;
+  overflow: visible;
+}
+.km-clip-path-group34 {
+  height: auto;
+  position: absolute;
+  left: 41.28px;
+  top: 35.29px;
+  overflow: visible;
+}
+.km-clip-path-group35 {
+  height: auto;
+  position: absolute;
+  left: 107.24px;
+  top: 24.95px;
+  overflow: visible;
+}
+.km-clip-path-group36 {
+  height: auto;
+  position: absolute;
+  left: 117.63px;
+  top: 35.29px;
+  overflow: visible;
+}
+.km-clip-path-group37 {
+  height: auto;
+  position: absolute;
+  left: 51.68px;
+  top: 102.92px;
+  overflow: visible;
+}
+.km-clip-path-group38 {
+  height: auto;
+  position: absolute;
+  left: 41.28px;
+  top: 113.27px;
+  overflow: visible;
+}
+.km-clip-path-group39 {
+  height: auto;
+  position: absolute;
+  left: 107.24px;
+  top: 102.92px;
+  overflow: visible;
+}
+.km-clip-path-group40 {
+  height: auto;
+  position: absolute;
+  left: 117.63px;
+  top: 113.27px;
+  overflow: visible;
+}
+.km-n-mengene-a-butonu {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  left: 91px;
+  top: 590px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.km-n-mengene-a-butonu { top: 590px; }
+.km-n-mengene-a {
+  flex-shrink: 0;
+  width: 175px;
+  height: 175px;
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  overflow: hidden;
+}
+.km-clip-path-group41 {
+  height: auto;
+  position: absolute;
+  left: 69.87px;
+  top: 0px;
+  overflow: visible;
+}
+.km-clip-path-group42 {
+  height: auto;
+  position: absolute;
+  left: 51.68px;
+  top: 24.95px;
+  overflow: visible;
+}
+.km-clip-path-group43 {
+  height: auto;
+  position: absolute;
+  left: 41.28px;
+  top: 35.29px;
+  overflow: visible;
+}
+.km-clip-path-group44 {
+  height: auto;
+  position: absolute;
+  left: 107.24px;
+  top: 24.95px;
+  overflow: visible;
+}
+.km-clip-path-group45 {
+  height: auto;
+  position: absolute;
+  left: 117.63px;
+  top: 35.29px;
+  overflow: visible;
+}
+.km-clip-path-group46 {
+  height: auto;
+  position: absolute;
+  left: 25.21px;
+  top: 102.92px;
+  overflow: visible;
+}
+.km-clip-path-group47 {
+  height: auto;
+  position: absolute;
+  left: 14.82px;
+  top: 113.27px;
+  overflow: visible;
+}
+.km-clip-path-group48 {
+  height: auto;
+  position: absolute;
+  left: 107.24px;
+  top: 102.92px;
+  overflow: visible;
+}
+.km-clip-path-group49 {
+  height: auto;
+  position: absolute;
+  left: 117.63px;
+  top: 113.27px;
+  overflow: visible;
+}
+.km-testere-konumlandirma {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: #4e4e60;
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 482px;
+  height: 837px;
+  position: absolute;
+  left: 1212px;
+  top: 130px;
+}
+.km-testere-konumland-rma {
+  color: #f4f6fc;
+  text-align: left;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 30px;
+  font-weight: 500;
+  position: relative;
+  align-self: stretch;
+  height: 39px;
+}
+.km-line-32 {
+  flex-shrink: 0;
+  width: 435px;
+  height: 0px;
+  position: relative;
+  overflow: visible;
+}
+.km-testere-yukar-butonu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  left: 91px;
+  top: 129px;
+}
+.km-testere-yukar {
+  flex-shrink: 0;
+  width: 263px;
+  height: 263px;
+  position: absolute;
+  left: 18px;
+  top: 19px;
+  overflow: hidden;
+}
+.km-vector {
+  width: 100.87%;
+  height: 8.05%;
+  position: absolute;
+  right: -0.06%;
+  left: -0.81%;
+  bottom: 23.7%;
+  top: 68.25%;
+  overflow: visible;
+}
+.km-clip-path-group50 {
+  height: auto;
+  position: absolute;
+  left: 0px;
+  top: 138.85px;
+  overflow: visible;
+}
+.km-clip-path-group51 {
+  height: auto;
+  position: absolute;
+  left: 92.05px;
+  top: 54.04px;
+  overflow: visible;
+}
+.km-testere-a-a-butonu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  left: 91px;
+  top: 489px;
+}
+.km-testere-a-a {
+  flex-shrink: 0;
+  width: 263px;
+  height: 263px;
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  overflow: hidden;
+}
+.km-vector2 {
+  width: 100.87%;
+  height: 8.05%;
+  position: absolute;
+  right: -0.06%;
+  left: -0.81%;
+  bottom: 23.7%;
+  top: 68.25%;
+  overflow: visible;
+}
+.km-clip-path-group52 {
+  height: auto;
+  position: absolute;
+  left: 0px;
+  top: 138.85px;
+  overflow: visible;
+}
+.km-clip-path-group53 {
+  height: auto;
+  position: absolute;
+  left: 92.05px;
+  top: 54.04px;
+  overflow: visible;
+}
+
+/* Butonlar için genel stiller */
+.km-button, .km-button2 {
+  border-radius: 29px;
+  border-style: solid;
+  border-color: #e46b27;
+  border-width: 1px;
+  background: rgba(30, 38, 51, 0.9);
+  padding: 7px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1; /* Buton z-index'i 1 */
+}
+
+/* Hover efekti */
+.km-button:hover, .km-button2:hover {
+  background: rgba(30, 38, 51, 0.7);
+  border-color: #FF5C00;
+}
+
+/* Active (tıklama) efekti */
+.km-button:active, .km-button2:active {
+  transform: scale(0.95);
+  background: rgba(30, 38, 51, 0.5);
+}
+
+/* İkonlar için hover efekti */
+.km-button:hover img, .km-button2:hover img {
+  filter: brightness(1.2);
+}
+
+/* Buton container'ları için stil */
+.km-malzeme-geri-butonu,
+.km-malzeme-ileri-butonu,
+.km-arka-mengene-a-butonu,
+.km-mengene-s-k-t-r-butonu,
+.km-n-mengene-a-butonu,
+.km-testere-yukar-butonu,
+.km-testere-a-a-butonu {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+/* Butonlar için güncellenen stiller */
+.km-button, .km-button2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 29px;
+  border-style: solid;
+  border-color: #e46b27;
+  border-width: 1px;
+  background: rgba(30, 38, 51, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+/* İkon container'ları için stil */
+.km-malzeme-geri,
+.km-malzeme-ileri,
+.km-arka-mengene-a,
+.km-mengene-s-k-t-r,
+.km-n-mengene-a,
+.km-testere-yukar,
+.km-testere-a-a {
+  position: absolute;
+  width: 263px;
+  height: 263px;
+  left: 18px;
+  top: 18px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+/* Mengene kontrol ikonları için özel pozisyonlar */
+.km-arka-mengene-a,
+.km-mengene-s-k-t-r,
+.km-n-mengene-a {
+  width: 175px;
+  height: 175px;
+  left: 12px;
+  top: 13px;
+}
+
+/* İkon resimleri için stil */
+.km-malzeme-geri img,
+.km-malzeme-ileri img,
+.km-arka-mengene-a img,
+.km-mengene-s-k-t-r img,
+.km-n-mengene-a img,
+.km-testere-yukar img,
+.km-testere-a-a img {
+  position: absolute;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Buton active olduğunda içindeki ikonun da küçülmesi için */
+.km-button:active ~ div,
+.km-button2:active ~ div,
+.km-mengene-button:active ~ div {
+  transform: scale(0.95);
+}
+
+/* Mengene kontrol butonları için stil */
+.km-mengene-button {
+  width: 200px;
+  height: 200px;
+  border-radius: 29px;
+  border: 1px solid #e46b27;
+  background: rgba(30, 38, 51, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+/* Mengene kontrol butonları için hover efekti */
+.km-mengene-button:hover {
+  background: rgba(30, 38, 51, 0.7);
+  border-color: #FF5C00;
+}
+
+/* Mengene kontrol butonları için active efekti */
+.km-mengene-button:active {
+  transform: scale(0.95);
+  background: rgba(30, 38, 51, 0.5);
+}
+
+/* Mengene kontrol container'ı için stil */
+.km-mengene-kontrol {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: #4e4e60;
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  width: 482px;
+  height: 837px;
+  position: absolute;
+  left: 719px;
+  top: 130px;
+}
+
+/* Mengene buton container'ları için stil */
+.km-arka-mengene-a-butonu,
+.km-mengene-s-k-t-r-butonu,
+.km-n-mengene-a-butonu {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Butonların y ekseni pozisyonları */
+.km-arka-mengene-a-butonu {
+  top: 129px;
+}
+
+.km-mengene-s-k-t-r-butonu {
+  top: 359px;
+}
+
+.km-n-mengene-a-butonu {
+  top: 589px;
+}
+
+/* Kesim başlatma butonu için özel icon pozisyonlaması */
+.kp-kesim-ba-latma-buton .kp-icon {
+  width: 115px;
+  height: 115px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  z-index: 2; /* İkonu üste çıkarıyoruz */
+  pointer-events: none; /* İkonun tıklamayı engellemesini önler */
+  transition: transform 0.3s ease;
+}
+
+/* Kesim başlatma butonu tıklandığında icon efekti */
+.kp-kesim-ba-latma-buton .kp-button:active + .kp-icon {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* Kesim durdurma, soğutma sıvısı, mengene kontrolü ve talaş temizliği için özel stil */
+.kp-kesim-durdurma-buton .kp-icon2,
+.kp-so-utma-s-v-s-buton .kp-icon3,
+.kp-mengene-kontrol-buton .kp-icon4,
+.kp-tala-temizli-i-buton .kp-icon5 {
+  position: absolute;
+  width: 115px;
+  height: 115px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3; /* İkonları butonların üzerine çıkarıyoruz */
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Bu butonlar için active efekti */
+.kp-kesim-durdurma-buton .kp-button:active + .kp-icon2,
+.kp-so-utma-s-v-s-buton .kp-button:active + .kp-icon3,
+.kp-mengene-kontrol-buton .kp-button:active + .kp-icon4,
+.kp-tala-temizli-i-buton .kp-button:active + .kp-icon5 {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* Mengene kontrolü ikonu için özel stil */
+.kp-mengene-kontrol-buton .kp-icon4 {
+  position: absolute;
+  width: 80px; /* Daha küçük boyut */
+  height: 90px;
+  left: 43%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Talaş temizliği ikonu için özel stil */
+.kp-tala-temizli-i-buton .kp-icon5 {
+  position: absolute;
+  width: 100px; /* Daha küçük boyut */
+  height: 100px;
+  left: 45%; /* Sola kaydırma */
+  top: 53%; /* Aşağı kaydırma */
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Konumlandırma sayfası container'ları için stil */
+.km-malzeme-konumlandirma,
+.km-mengene-kontrol,
+.km-testere-konumlandirma {
+  border-radius: 9px;
+  border-style: solid;
+  border-color: #4e4e60;
+  border-width: 1px;
+  padding: 30px 23px 15px 23px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  width: 482px;
+  height: 837px;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 23px; /* 65px'ten 45px'e düşürdük - yukarı taşımak için */
+}
+
+/* Her container için özel left pozisyonu - ana container'ın ortasına göre */
+.km-malzeme-konumlandirma {
+  left: calc(50% - 733px); /* 847px'ten 827px'e düşürdük - sağa taşımak için */
+}
+
+.km-mengene-kontrol {
+  left: calc(50% - 239px); /* 354px'ten 334px'e düşürdük - sağa taşımak için */
+}
+
+.km-testere-konumlandirma {
+  left: calc(50% + 254px); /* 139px'ten 159px'e çıkardık - sağa taşımak için */
+}
+
+/* Container başlıkları için stil */
+.km-malzeme-konumland-rma,
+.km-mengene-kontrol2,
+.km-testere-konumland-rma {
+  color: #f4f6fc;
+  text-align: center;
+  font-family: "NotoSans-Medium", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
+  width: 435px;
+  margin-bottom: 3px;
+}
+
+/* Yapay Zeka butonu için stiller */
+.kp-yapay-zeka {
+  color: #9999a7;
+  text-align: left;
+  font-family: "NotoSans-DisplayRegular", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  position: absolute;
+  left: 23px;
+  top: 219px; /* Fuzzy'nin altına konumlandırma */
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.kp-yapay-zeka-daire {
+  background: #ff0000;
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 210px;
+  top: 221px;
+  transition: background-color 0.3s ease;
+}
+
+/* Aktif/Pasif durumlar için güncellenen seçiciler */
+.kp-lineer.active, .kp-akilli.active, .kp-yapay-zeka.active {
+  color: #f4f6fc;
+}
+
+.kp-lineer.active ~ .kp-lineer-kesim-daire,
+.kp-akilli.active ~ .kp-ak-ll-kesim-daire,
+.kp-yapay-zeka.active ~ .kp-yapay-zeka-daire {
+  background: #44f641;
+}
+
+.kp-lineer.deactive, .kp-akilli.deactive, .kp-yapay-zeka.deactive {
+  color: #9999a7;
+}
+
+.kp-lineer.deactive ~ .kp-lineer-kesim-daire,
+.kp-akilli.deactive ~ .kp-ak-ll-kesim-daire,
+.kp-yapay-zeka.deactive ~ .kp-yapay-zeka-daire {
+  background: #ff0000;
+}
+
+/* On/Off butonu off konumundayken güncellenen seçiciler */
+.kp-on-off-buton:not(.active) ~ * .kp-lineer-kesim-daire,
+.kp-on-off-buton:not(.active) ~ * .kp-ak-ll-kesim-daire,
+.kp-on-off-buton:not(.active) ~ * .kp-yapay-zeka-daire {
+  background: #4e4e60 !important;
+}
