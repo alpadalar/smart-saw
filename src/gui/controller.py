@@ -87,7 +87,10 @@ class SimpleGUI:
         # Ana pencere
         self.root = tk.Tk()
         self.root.title("Smart Saw Control Panel")
-        self.root.geometry("1366x720")
+        self.root.geometry("1920x1080")
+        # screen_width = self.root.winfo_screenwidth()
+        # screen_height = self.root.winfo_screenheight()
+        # self.root.geometry(f"{screen_width}x{screen_height}")
         
         # Değişkenler
         self.current_values = {
@@ -428,141 +431,6 @@ class SimpleGUI:
             text="Uygulamayı Kapat",
             command=self._quit
         ).pack(side=tk.RIGHT)
-
-        # Son Gün Analizi Alanı
-        daily_analysis_frame = ttk.LabelFrame(left_panel, text="Son Gün Analizi", padding="5")
-        daily_analysis_frame.pack(fill=tk.X, pady=10)
-
-        # Grafik parametreleri
-        param_frame = ttk.Frame(daily_analysis_frame)
-        param_frame.pack(fill=tk.X, pady=5)
-
-        # X ekseni seçimi
-        ttk.Label(param_frame, text="X Ekseni:").pack(anchor=tk.W)
-        daily_x_column_var = tk.StringVar(value="timestamp")
-        daily_x_column_combo = ttk.Combobox(param_frame, textvariable=daily_x_column_var, 
-                                          values=["timestamp", "kafa_yuksekligi_mm", "serit_motor_akim_a", 
-                                                 "serit_sapmasi", "serit_kesme_hizi", "serit_inme_hizi", 
-                                                 "fuzzy_output"])
-        daily_x_column_combo.pack(fill=tk.X, pady=(0, 5))
-
-        # Y ekseni seçimi
-        ttk.Label(param_frame, text="Y Ekseni:").pack(anchor=tk.W)
-        daily_y_column_var = tk.StringVar(value="serit_motor_akim_a")
-        daily_y_column_combo = ttk.Combobox(param_frame, textvariable=daily_y_column_var,
-                                          values=["serit_motor_akim_a", "serit_sapmasi", 
-                                                 "serit_kesme_hizi", "serit_inme_hizi", "fuzzy_output",
-                                                 "ivme_olcer_x_hz", "ivme_olcer_y_hz", "ivme_olcer_z_hz"])
-        daily_y_column_combo.pack(fill=tk.X, pady=(0, 5))
-
-        # Hover kolonları seçimi
-        ttk.Label(param_frame, text="Hover Kolonları:").pack(anchor=tk.W)
-        daily_hover_columns_var = tk.StringVar(value="serit_kesme_hizi,serit_inme_hizi,fuzzy_output,serit_sapmasi")
-        daily_hover_columns_entry = ttk.Entry(param_frame, textvariable=daily_hover_columns_var)
-        daily_hover_columns_entry.pack(fill=tk.X, pady=(0, 5))
-
-        # Smoothing ayarları
-        ttk.Label(param_frame, text="Smoothing Penceresi:").pack(anchor=tk.W)
-        daily_smooth_window_var = tk.StringVar(value="0")
-        daily_smooth_window_entry = ttk.Entry(param_frame, textvariable=daily_smooth_window_var)
-        daily_smooth_window_entry.pack(fill=tk.X, pady=(0, 5))
-
-        ttk.Label(param_frame, text="Smoothing Metodu:").pack(anchor=tk.W)
-        daily_smooth_method_var = tk.StringVar(value="avg")
-        daily_smooth_method_combo = ttk.Combobox(param_frame, textvariable=daily_smooth_method_var,
-                                               values=["avg", "median"])
-        daily_smooth_method_combo.pack(fill=tk.X, pady=(0, 5))
-
-        def show_daily_analysis():
-            try:
-                # Son günün verilerini al
-                daily_data = self.get_cutting_data()
-                if daily_data is None:
-                    messagebox.showwarning("Uyarı", "Son gün verisi bulunamadı")
-                    return
-
-                # DataFrame oluştur
-                df = pd.DataFrame(daily_data)
-
-                # Parametreleri al
-                x_column = daily_x_column_var.get()
-                y_column = daily_y_column_var.get()
-                hover_columns = [col.strip() for col in daily_hover_columns_var.get().split(",")]
-                smooth_window = int(daily_smooth_window_var.get())
-                smooth_method = daily_smooth_method_var.get()
-
-                # Grafik oluştur
-                fig = go.Figure()
-                colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
-                color_index = 0
-
-                # Her kesim için ayrı çizgi ekle
-                for kesim_id in df['kesim_id'].unique():
-                    kesim_data = df[df['kesim_id'] == kesim_id].copy()
-
-                    # Smoothing işlemi
-                    if smooth_window and smooth_window > 1:
-                        if smooth_method == "avg":
-                            kesim_data[y_column] = kesim_data[y_column].rolling(window=smooth_window, min_periods=1).mean()
-                        elif smooth_method == "median":
-                            kesim_data[y_column] = kesim_data[y_column].rolling(window=smooth_window, min_periods=1).median()
-
-                    # Hover için ek sütunları customdata'ya ekle
-                    custom_data = kesim_data[hover_columns].values
-
-                    # Veri ekle
-                    fig.add_trace(
-                        go.Scatter(
-                            x=kesim_data[x_column],
-                            y=kesim_data[y_column],
-                            mode='lines',
-                            name=f"Kesim ID: {kesim_id} ({smooth_method} {smooth_window})" if smooth_window > 1 else f"Kesim ID: {kesim_id}",
-                            line=dict(color=colors[color_index % len(colors)]),
-                            customdata=custom_data,
-                            hovertemplate=(
-                                f"<b>{x_column.replace('_', ' ').title()}:</b> %{{x}}<br>"
-                                f"<b>{y_column.replace('_', ' ').title()}:</b> %{{y:.2f}}<br>"
-                                + "<br>".join([
-                                    f"<b>{col.replace('_', ' ').title()}:</b> %{{customdata[{i}]}}"
-                                    for i, col in enumerate(hover_columns)
-                                ]) + "<extra></extra>"
-                            ),
-                            visible=True
-                        )
-                    )
-                    color_index += 1
-
-                # Grafik düzenlemeleri
-                fig.update_layout(
-                    title=f"{y_column.replace('_', ' ').title()} vs {x_column.replace('_', ' ').title()}",
-                    xaxis_title=x_column.replace('_', ' ').title(),
-                    yaxis_title=y_column.replace('_', ' ').title(),
-                    xaxis=dict(autorange='reversed', showgrid=True, zeroline=False, showline=True, mirror=True, linewidth=1),
-                    yaxis=dict(showgrid=True, zeroline=False, showline=True, mirror=True, linewidth=1),
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='black'),
-                    hovermode='x',
-                    autosize=True,
-                    showlegend=True,
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="right",
-                        x=1
-                    )
-                )
-
-                # Grafiği göster
-                self.show_plot(fig, "Son Gün Analizi")
-
-            except Exception as e:
-                logger.error(f"Günlük analiz grafiği oluşturma hatası: {e}")
-                messagebox.showerror("Hata", f"Grafik oluşturulurken hata oluştu: {str(e)}")
-
-        ttk.Button(param_frame, text="Günlük Analizi Göster", 
-                  command=show_daily_analysis).pack(fill=tk.X, pady=10)
 
     def _create_value_grid(self, parent, fields):
         """Değer grid'ini oluşturur"""
@@ -1071,6 +939,357 @@ class SimpleGUI:
             logger.error(f"Son kesim verilerini alırken hata: {e}")
             logger.exception("Detaylı hata:")
             return None
+    def get_cutting_data_by_date(self, date_str):
+        try:
+            if not hasattr(self, 'db') or self.db is None:
+                logger.error("Veritabanı bağlantısı bulunamadı")
+                return None
+
+            query = """
+                WITH kesim_durumlari AS (
+                    SELECT 
+                        timestamp,
+                        testere_durumu,
+                        LAG(testere_durumu) OVER (ORDER BY timestamp) as prev_durum,
+                        LEAD(testere_durumu) OVER (ORDER BY timestamp) as next_durum
+                    FROM testere_data
+                    WHERE date(timestamp) = ?
+                    AND (testere_durumu = 3 OR testere_durumu = 4)
+                    ORDER BY timestamp
+                ),
+                kesim_baslangic_bitis AS (
+                    SELECT 
+                        timestamp,
+                        testere_durumu,
+                        CASE 
+                            WHEN testere_durumu = 3 AND (prev_durum IS NULL OR prev_durum != 3) THEN 1
+                            WHEN testere_durumu = 4 AND prev_durum = 3 THEN 2
+                            ELSE 0
+                        END as kesim_noktasi
+                    FROM kesim_durumlari
+                ),
+                kesim_id_atanan AS (
+                    SELECT 
+                        t.timestamp,
+                        t.serit_motor_akim_a,
+                        t.inme_motor_akim_a,
+                        t.kafa_yuksekligi_mm,
+                        t.serit_kesme_hizi,
+                        t.serit_inme_hizi,
+                        t.serit_sapmasi,
+                        t.ivme_olcer_x_hz,
+                        t.ivme_olcer_y_hz,
+                        t.ivme_olcer_z_hz,
+                        t.fuzzy_output,
+                        SUM(CASE WHEN k.kesim_noktasi = 1 THEN 1 ELSE 0 END) 
+                            OVER (ORDER BY t.timestamp) as kesim_id
+                    FROM testere_data t
+                    LEFT JOIN kesim_baslangic_bitis k ON t.timestamp = k.timestamp
+                    WHERE date(t.timestamp) = ?
+                    AND t.testere_durumu IN (3, 4)
+                )
+                SELECT * FROM kesim_id_atanan
+                WHERE kesim_id > 0
+                ORDER BY timestamp ASC
+            """
+
+            cursor = self.db.cursor()
+            result = cursor.execute(query, (date_str, date_str)).fetchall()
+
+            if not result:
+                return None
+
+            data = {
+                'timestamp': [row[0] for row in result],
+                'serit_motor_akim_a': [float(row[1]) for row in result],
+                'inme_motor_akim_a': [float(row[2]) for row in result],
+                'kafa_yuksekligi_mm': [float(row[3]) for row in result],
+                'serit_kesme_hizi': [float(row[4]) for row in result],
+                'serit_inme_hizi': [float(row[5]) for row in result],
+                'serit_sapmasi': [float(row[6]) for row in result],
+                'ivme_olcer_x_hz': [float(row[7]) for row in result],
+                'ivme_olcer_y_hz': [float(row[8]) for row in result],
+                'ivme_olcer_z_hz': [float(row[9]) for row in result],
+                'fuzzy_output': [float(row[10]) for row in result],
+                'kesim_id': [int(row[11]) for row in result]
+            }
+
+            return data
+
+        except Exception as e:
+            logger.error(f"Tarih bazlı veri alma hatası: {e}")
+            return None
+
+    def show_all_summary_table(self):
+        try:
+            date_str = self.daily_date_entry.get()
+            data = self.get_cutting_data_by_date(date_str)
+            if data is None:
+                self.daily_warning_label.config(text=f"{date_str} tarihli veri bulunamadı.")
+                return
+
+            self.daily_warning_label.config(text="")  # varsa eski uyarıyı temizle
+            df = pd.DataFrame(data)
+            numeric_columns = [
+                'serit_motor_akim_a', 'serit_sapmasi', 'serit_kesme_hizi',
+                'serit_inme_hizi', 'fuzzy_output'
+            ]
+            rows = []
+            for kesim_id, group in df.groupby('kesim_id'):
+                for col in numeric_columns:
+                    desc = group[col].describe()
+                    rows.append({
+                        'kesim_id': kesim_id,
+                        'nitelik': col,
+                        'count': round(desc['count'], 2),
+                        'mean': round(desc['mean'], 2),
+                        'std': round(desc['std'], 2),
+                        'min': round(desc['min'], 2),
+                        '25%': round(desc['25%'], 2),
+                        '50%': round(desc['50%'], 2),
+                        '75%': round(desc['75%'], 2),
+                        'max': round(desc['max'], 2)
+                    })
+
+            summary_df = pd.DataFrame(rows)
+            self.show_table(summary_df, parent_frame=self.table_frame1, title="Tüm Kesim Özeti")
+
+        except Exception as e:
+            logger.error(f"Tüm tablo gösterim hatası: {e}")
+            messagebox.showerror("Hata", str(e))
+
+    def show_last_cut_summary_table(self):
+        try:
+            data = self.get_last_cut_data()
+            if data is None:
+                messagebox.showwarning("Uyarı", "Son kesim verisi bulunamadı")
+                return
+
+            df = pd.DataFrame(data)
+            columns = [
+                'serit_motor_akim_a', 'serit_kesme_hizi',
+                'serit_inme_hizi', 'serit_sapmasi'
+            ]
+            rows = []
+            for col in columns:
+                desc = df[col].describe()
+                rows.append({
+                    'nitelik': col,
+                    'count': round(desc['count'], 2),
+                    'mean': round(desc['mean'], 2),
+                    'std': round(desc['std'], 2),
+                    'min': round(desc['min'], 2),
+                    '25%': round(desc['25%'], 2),
+                    '50%': round(desc['50%'], 2),
+                    '75%': round(desc['75%'], 2),
+                    'max': round(desc['max'], 2)
+                })
+
+            summary_df = pd.DataFrame(rows)
+            self.show_table(summary_df, parent_frame=self.plot_frame2, title="Son Kesim Özeti")
+
+        except Exception as e:
+            logger.error(f"Son kesim tablo hatası: {e}")
+            messagebox.showerror("Hata", str(e))
+
+    def plot_kesim_grafigi(self, df, x_column, y_column, hover_columns, smooth_window, smooth_method, title=""):
+        import plotly.graph_objects as go
+
+        fig = go.Figure()
+        colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
+        color_index = 0
+
+        for kesim_id in df['kesim_id'].unique():
+            kesim_data = df[df['kesim_id'] == kesim_id].copy()
+
+            # Smoothing işlemi
+            if smooth_window and smooth_window > 1:
+                if smooth_method == "avg":
+                    kesim_data[y_column] = kesim_data[y_column].rolling(window=smooth_window, min_periods=1).mean()
+                elif smooth_method == "median":
+                    kesim_data[y_column] = kesim_data[y_column].rolling(window=smooth_window, min_periods=1).median()
+
+            custom_data = kesim_data[hover_columns].values
+
+            fig.add_trace(
+                go.Scatter(
+                    x=kesim_data[x_column],
+                    y=kesim_data[y_column],
+                    mode='lines',
+                    name=f"Kesim ID: {kesim_id} ({smooth_method} {smooth_window})" if smooth_window > 1 else f"Kesim ID: {kesim_id}",
+                    line=dict(color=colors[color_index % len(colors)]),
+                    customdata=custom_data,
+                    hovertemplate=(
+                        f"<b>{x_column.replace('_', ' ').title()}:</b> %{{x}}<br>"
+                        f"<b>{y_column.replace('_', ' ').title()}:</b> %{{y:.2f}}<br>"
+                        + "<br>".join([
+                            f"<b>{col.replace('_', ' ').title()}:</b> %{{customdata[{i}]}}"
+                            for i, col in enumerate(hover_columns)
+                        ]) + "<extra></extra>"
+                    ),
+                    visible=True
+                )
+            )
+            color_index += 1
+
+        fig.update_layout(
+            title=title or f"{y_column.replace('_', ' ').title()} vs {x_column.replace('_', ' ').title()}",
+            xaxis_title=x_column.replace('_', ' ').title(),
+            yaxis_title=y_column.replace('_', ' ').title(),
+            xaxis=dict(
+                autorange='reversed' if x_column == "kafa_yuksekligi_mm" else True,
+                showgrid=True,
+                gridcolor='lightgray',
+                zeroline=False,
+                showline=True,
+                mirror=True,
+                linewidth=1
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='lightgray',
+                zeroline=False,
+                showline=True,
+                mirror=True,
+                linewidth=1
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            hovermode='x',
+            autosize=True,
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            height=800
+        )
+        return fig
+
+    def plot_all_cuts_timeseries(self, df, x_column, y_column, hover_columns, smooth_window, smooth_method, title=""):
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+
+        fig = go.Figure()
+        df = df.copy()
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+        if smooth_window and smooth_window > 1:
+            if smooth_method == "avg":
+                df[y_column] = df[y_column].rolling(window=smooth_window, min_periods=1).mean()
+            elif smooth_method == "median":
+                df[y_column] = df[y_column].rolling(window=smooth_window, min_periods=1).median()
+
+        custom_data = df[hover_columns].values
+
+        fig.add_trace(
+            go.Scatter(
+                x=df['timestamp'],
+                y=df[y_column],
+                mode='lines',
+                name=f"Tüm Kesimler",
+                line=dict(width=1.5),
+                customdata=custom_data,
+                hovertemplate=(
+                    f"<b>{x_column.replace('_', ' ').title()}:</b> %{{x}}<br>"
+                    f"<b>{y_column.replace('_', ' ').title()}:</b> %{{y:.2f}}<br>"
+                    + "<br>".join([
+                        f"<b>{col.replace('_', ' ').title()}:</b> %{{customdata[{i}]}}"
+                        for i, col in enumerate(hover_columns)
+                    ]) + "<extra></extra>"
+                )
+            )
+        )
+        fig.update_layout(
+            title=title or f"Tüm Kesimler Zaman Serisi ({y_column})",
+            xaxis_title=x_column,
+            yaxis_title=y_column,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            hovermode='x',
+            height=800,
+            showlegend=False,
+            xaxis=dict(
+                showgrid=True,
+                gridcolor='lightgray'
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='lightgray'
+            )
+        )
+        return fig
+    
+    def _show_all_cuts_timeseries_plot(self, data, x_column, y_column, hover_columns, smooth_window, smooth_method):
+        try:
+            if data is None:
+                self.daily_warning_label.config(text="Veri bulunamadı.")
+                return
+            self.daily_warning_label.config(text="")  # Önceki uyarıyı temizle
+
+            df = pd.DataFrame(data)
+            fig = self.plot_all_cuts_timeseries(df, x_column, y_column, hover_columns, smooth_window, smooth_method)
+            self.show_plot(fig, title="Tüm Kesimler Zaman Serisi")
+
+        except Exception as e:
+            logger.error(f"Tüm kesim zaman serisi hatası: {e}")
+            messagebox.showerror("Hata", str(e))
+
+    def get_data_by_kesim_ids(self, df, kesim_ids):
+        """DataFrame'den kesim_id listesine göre filtrelenmiş veri döndürür"""
+        try:
+            if kesim_ids:
+                return df[df['kesim_id'].isin(kesim_ids)].copy()
+            else:
+                return df.copy()
+        except Exception as e:
+            logger.error(f"Veri filtreleme hatası: {e}")
+            return df
+
+    #Son gün verilerini al
+    def get_last_date_cutting_data(self):
+        return self.get_cutting_data()
+
+    def get_today_cutting_data(self):
+        """Bugünün tarihine ait kesim verilerini getirir"""
+        try:
+            today_str = datetime.now().strftime("%Y-%m-%d")  # bugünün tarihi
+            return self.get_cutting_data_by_date(today_str)
+        except Exception as e:
+            logger.error(f"Bugünkü kesim verisi alınamadı: {e}")
+            return None
+
+    def get_cutting_data_by_date(self, date_str):
+        try:
+            if not hasattr(self, 'db') or self.db is None:
+                return None
+
+            query = """
+                SELECT * FROM testere_data
+                WHERE date(timestamp) = ?
+                ORDER BY timestamp ASC
+            """
+            cursor = self.db.cursor()
+            result = cursor.execute(query, (date_str,)).fetchall()
+            if not result:
+                return None
+
+            # Kolonları uygun şekilde ayrıştır
+            columns = [desc[0] for desc in cursor.description]
+            data = {col: [] for col in columns}
+            for row in result:
+                for col, val in zip(columns, row):
+                    data[col].append(val)
+            return data
+
+        except Exception as e:
+            logger.error(f"{date_str} tarihli veri alınamadı: {e}")
+            return None
 
     def show_cutting_summary(self):
         """Kesim özeti penceresini açar"""
@@ -1084,7 +1303,7 @@ class SimpleGUI:
             # Yeni pencere oluştur
             summary_window = tk.Toplevel(self.root)
             summary_window.title("Kesim Özeti")
-            summary_window.geometry("1600x900")
+            summary_window.geometry("1920x1080")
 
             # Ana frame
             main_frame = ttk.Frame(summary_window, padding="10")
@@ -1100,7 +1319,7 @@ class SimpleGUI:
 
             # X ekseni seçimi
             ttk.Label(param_frame, text="X Ekseni:").pack(anchor=tk.W)
-            x_column_var = tk.StringVar(value="timestamp")
+            x_column_var = tk.StringVar(value="kafa_yuksekligi_mm")
             x_column_combo = ttk.Combobox(param_frame, textvariable=x_column_var, 
                                         values=["timestamp", "kafa_yuksekligi_mm", "serit_motor_akim_a", 
                                                "serit_sapmasi", "serit_kesme_hizi", "serit_inme_hizi", 
@@ -1147,311 +1366,108 @@ class SimpleGUI:
                     x_column = x_column_var.get()
                     y_column = y_column_var.get()
                     hover_columns = [col.strip() for col in hover_columns_var.get().split(",")]
-                    kesim_ids = [int(id.strip()) for id in kesim_ids_var.get().split(",")]
+                    kesim_ids = [int(id.strip()) for id in kesim_ids_var.get().split(",") if id.strip()]
                     smooth_window = int(smooth_window_var.get())
                     smooth_method = smooth_method_var.get()
 
-                    # Verileri al
-                    data = self.get_cutting_data()
+                    # Veriyi al (o güne ait tüm kesimler)
+                    # all_data = self.get_cutting_data()
+                    all_data = self.get_today_cutting_data()
+
+                    if all_data is None:
+                        logger.warning("Bugünün verisi bulunamadı")
+                        self.add_log("Bugünün verisi bulunamadı", "WARNING")
+                        return
+
+                    # DataFrame’e çevir
+                    df = pd.DataFrame(all_data)
+
+                    # Kesim ID’lerine göre filtrele
+                    df_filtered = self.get_data_by_kesim_ids(df, kesim_ids)
+
+                    # Grafiği çiz
+                    fig = self.plot_kesim_grafigi(
+                        df_filtered,
+                        x_column=x_column,
+                        y_column=y_column,
+                        hover_columns=hover_columns,
+                        smooth_window=smooth_window,
+                        smooth_method=smooth_method,
+                        title="Kesim Grafiği")
+                    self.show_plot(fig, title="Kesim Grafiği")
+
+                except Exception as e:
+                    logger.error(f"Grafikleri oluşturma hatası: {e}")
+                    messagebox.showerror("Hata", f"Grafik oluşturulurken hata oluştu: {str(e)}")
+
+            def on_all_cuts_plot_button_click(daily_date_var, x_column_var, y_column_var,
+                                   hover_columns_var, smooth_window_var, smooth_method_var):
+                try:
+                    date_str = daily_date_var.get().strip()
+                    data = self.get_cutting_data_by_date(date_str) if date_str else self.get_cutting_data_by_date(datetime.now().strftime("%Y-%m-%d"))
+
                     if data is None:
+                        logger.warning("Tüm kesim grafiği oluşturulamadı: Veri bulunamadı.")
+                        self.add_log("Tüm kesim grafiği oluşturulamadı: Veri bulunamadı.", "WARNING")
                         return
 
-                    # DataFrame oluştur
-                    df = pd.DataFrame(data)
-
-                    # İlk grafik - Tüm kesimler
-                    fig1 = self.create_timeseries_plot(df, x_column, [y_column], 
-                                                     "Zaman", y_column, hover_columns)
-                    
-                    # İkinci grafik - Seçili kesimler
-                    fig2 = self.create_kesim_timeseries_plot(df, kesim_ids, x_column, 
-                                                           y_column, hover_columns)
-
-                    # Grafikleri göster
-                    self.show_plot(fig1, "Tüm Kesimler")
-                    self.show_plot(fig2, "Seçili Kesimler")
-
-                    # Tabloları oluştur
-                    self.show_summary_tables(df, kesim_ids, main_frame)
-
+                    self._show_all_cuts_timeseries_plot(
+                        data,
+                        x_column_var.get(), y_column_var.get(),
+                        [col.strip() for col in hover_columns_var.get().split(",")],
+                        int(smooth_window_var.get()), smooth_method_var.get()
+                    )
                 except Exception as e:
-                    logger.error(f"Grafik oluşturma hatası: {e}")
-                    messagebox.showerror("Hata", f"Grafik oluşturulurken hata oluştu: {str(e)}")
+                    logger.error(f"Tüm kesim grafiği oluşturma hatası: {e}")
+                    self.add_log(f"Tüm kesim grafiği oluşturma hatası: {e}", "ERROR")
 
-            ttk.Button(param_frame, text="Grafikleri Oluştur", 
+            ttk.Button(param_frame, text="Kesim Grafiğini Oluştur", 
                       command=create_plots).pack(fill=tk.X, pady=10)
-
-            # Son Veriler Alanı
-            last_data_frame = ttk.LabelFrame(left_panel, text="Son Veriler", padding="5")
-            last_data_frame.pack(fill=tk.X, pady=10)
-
-            # Son verileri göster butonu
-            def show_last_data():
-                try:
-                    # Son kesim verilerini al
-                    last_data = self.get_last_cut_data()
-                    if last_data is None:
-                        messagebox.showwarning("Uyarı", "Son kesim verisi bulunamadı")
-                        return
-
-                    # DataFrame oluştur
-                    df = pd.DataFrame(last_data)
-
-                    # Başlangıç ve bitiş saatlerini al
-                    start_time = df['timestamp'].min()
-                    end_time = df['timestamp'].max()
-
-                    # Özet tablosu için temel parametreler
-                    summary_data = {
-                        'Parametre': ['Başlangıç Zamanı', 'Bitiş Zamanı', 'Motor Akımı (A)', 
-                                    'Kesme Hızı (mm/s)', 'İnme Hızı (mm/s)', 'Sapma (mm)'],
-                        'Ortalama': [
-                            '-',
-                            '-',
-                            f"{df['serit_motor_akim_a'].mean():.2f}",
-                            f"{df['serit_kesme_hizi'].mean():.2f}",
-                            f"{df['serit_inme_hizi'].mean():.2f}",
-                            f"{df['serit_sapmasi'].mean():.2f}"
-                        ],
-                        'Maksimum': [
-                            '-',
-                            '-',
-                            f"{df['serit_motor_akim_a'].max():.2f}",
-                            f"{df['serit_kesme_hizi'].max():.2f}",
-                            f"{df['serit_inme_hizi'].max():.2f}",
-                            f"{df['serit_sapmasi'].max():.2f}"
-                        ],
-                        'Minimum': [
-                            '-',
-                            '-',
-                            f"{df['serit_motor_akim_a'].min():.2f}",
-                            f"{df['serit_kesme_hizi'].min():.2f}",
-                            f"{df['serit_inme_hizi'].min():.2f}",
-                            f"{df['serit_sapmasi'].min():.2f}"
-                        ]
-                    }
-
-                    # İvme ölçer verilerini kontrol ederek ekle
-                    if 'ivme_olcer_x_hz' in df.columns:
-                        summary_data['Parametre'].append('X İvme (Hz)')
-                        summary_data['Ortalama'].append(f"{df['ivme_olcer_x_hz'].mean():.2f}")
-                        summary_data['Maksimum'].append(f"{df['ivme_olcer_x_hz'].max():.2f}")
-                        summary_data['Minimum'].append(f"{df['ivme_olcer_x_hz'].min():.2f}")
-
-                    if 'ivme_olcer_y_hz' in df.columns:
-                        summary_data['Parametre'].append('Y İvme (Hz)')
-                        summary_data['Ortalama'].append(f"{df['ivme_olcer_y_hz'].mean():.2f}")
-                        summary_data['Maksimum'].append(f"{df['ivme_olcer_y_hz'].max():.2f}")
-                        summary_data['Minimum'].append(f"{df['ivme_olcer_y_hz'].min():.2f}")
-
-                    if 'ivme_olcer_z_hz' in df.columns:
-                        summary_data['Parametre'].append('Z İvme (Hz)')
-                        summary_data['Ortalama'].append(f"{df['ivme_olcer_z_hz'].mean():.2f}")
-                        summary_data['Maksimum'].append(f"{df['ivme_olcer_z_hz'].max():.2f}")
-                        summary_data['Minimum'].append(f"{df['ivme_olcer_z_hz'].min():.2f}")
-
-                    # Fuzzy çıkış varsa ekle
-                    if 'fuzzy_output' in df.columns:
-                        summary_data['Parametre'].append('Fuzzy Çıkış')
-                        summary_data['Ortalama'].append(f"{df['fuzzy_output'].mean():.2f}")
-                        summary_data['Maksimum'].append(f"{df['fuzzy_output'].max():.2f}")
-                        summary_data['Minimum'].append(f"{df['fuzzy_output'].min():.2f}")
-
-                    summary_df = pd.DataFrame(summary_data)
-
-                    # Tabloyu göster
-                    self.show_table(summary_df, last_data_frame, "Son Kesim Özeti")
-
-                    # Grafik oluştur
-                    fig = go.Figure()
-
-                    # Motor akımı grafiği
-                    fig.add_trace(go.Scatter(
-                        x=df['timestamp'],
-                        y=df['serit_motor_akim_a'],
-                        name='Motor Akımı (A)',
-                        hovertemplate='Zaman: %{x}<br>' +
-                                    'Akım: %{y:.2f} A<br>' +
-                                    'Kesme Hızı: %{customdata[0]:.2f} mm/s<br>' +
-                                    'İnme Hızı: %{customdata[1]:.2f} mm/s<br>' +
-                                    'Sapma: %{customdata[2]:.2f} mm<br>' +
-                                    '<extra></extra>',
-                        customdata=list(zip(
-                            df['serit_kesme_hizi'],
-                            df['serit_inme_hizi'],
-                            df['serit_sapmasi']
-                        ))
-                    ))
-
-                    # Kesme hızı grafiği
-                    fig.add_trace(go.Scatter(
-                        x=df['timestamp'],
-                        y=df['serit_kesme_hizi'],
-                        name='Kesme Hızı (mm/s)',
-                        hovertemplate='Zaman: %{x}<br>' +
-                                    'Hız: %{y:.2f} mm/s<br>' +
-                                    'Motor Akımı: %{customdata[0]:.2f} A<br>' +
-                                    'İnme Hızı: %{customdata[1]:.2f} mm/s<br>' +
-                                    'Sapma: %{customdata[2]:.2f} mm<br>' +
-                                    '<extra></extra>',
-                        customdata=list(zip(
-                            df['serit_motor_akim_a'],
-                            df['serit_inme_hizi'],
-                            df['serit_sapmasi']
-                        ))
-                    ))
-
-                    # İnme hızı grafiği
-                    fig.add_trace(go.Scatter(
-                        x=df['timestamp'],
-                        y=df['serit_inme_hizi'],
-                        name='İnme Hızı (mm/s)',
-                        hovertemplate='Zaman: %{x}<br>' +
-                                    'Hız: %{y:.2f} mm/s<br>' +
-                                    'Motor Akımı: %{customdata[0]:.2f} A<br>' +
-                                    'Kesme Hızı: %{customdata[1]:.2f} mm/s<br>' +
-                                    'Sapma: %{customdata[2]:.2f} mm<br>' +
-                                    '<extra></extra>',
-                        customdata=list(zip(
-                            df['serit_motor_akim_a'],
-                            df['serit_kesme_hizi'],
-                            df['serit_sapmasi']
-                        ))
-                    ))
-
-                    # Sapma grafiği
-                    fig.add_trace(go.Scatter(
-                        x=df['timestamp'],
-                        y=df['serit_sapmasi'],
-                        name='Sapma (mm)',
-                        hovertemplate='Zaman: %{x}<br>' +
-                                    'Sapma: %{y:.2f} mm<br>' +
-                                    'Motor Akımı: %{customdata[0]:.2f} A<br>' +
-                                    'Kesme Hızı: %{customdata[1]:.2f} mm/s<br>' +
-                                    'İnme Hızı: %{customdata[2]:.2f} mm/s<br>' +
-                                    '<extra></extra>',
-                        customdata=list(zip(
-                            df['serit_motor_akim_a'],
-                            df['serit_kesme_hizi'],
-                            df['serit_inme_hizi']
-                        ))
-                    ))
-
-                    # Grafik düzenini ayarla
-                    fig.update_layout(
-                        title='Son Kesim Verileri',
-                        xaxis_title='Zaman',
-                        yaxis_title='Değer',
-                        hovermode='x unified',
-                        height=400
+            ttk.Button(
+                    param_frame,
+                    text="Tüm Kesim Grafiği Oluştur",
+                    command=lambda: on_all_cuts_plot_button_click(
+                        tk.StringVar(value=datetime.now().strftime("%Y-%m-%d")),  # Gün Analizi alanından bağımsız tarih ver
+                        x_column_var, y_column_var,
+                        hover_columns_var, smooth_window_var, smooth_method_var
                     )
+                ).pack(fill=tk.X, pady=5)
 
-                    # Grafiği göster
-                    self.show_plot(fig, "Son Kesim Grafiği")
-
-                except Exception as e:
-                    logger.error(f"Son verileri gösterme hatası: {e}")
-                    messagebox.showerror("Hata", f"Son veriler gösterilirken hata oluştu: {str(e)}")
-
-            ttk.Button(last_data_frame, text="Son Verileri Göster", 
-                      command=show_last_data).pack(fill=tk.X, pady=5)
-
-            # Grafik Seçim Alanı
-            graph_frame = ttk.LabelFrame(left_panel, text="Grafik Seçimleri", padding="5")
-            graph_frame.pack(fill=tk.X, pady=10)
-
-            # X ekseni seçimi
-            ttk.Label(graph_frame, text="X Ekseni:").pack(anchor=tk.W)
-            x_column_var = tk.StringVar(value="timestamp")
-            x_column_combo = ttk.Combobox(graph_frame, textvariable=x_column_var, 
-                                        values=["timestamp", "kafa_yuksekligi_mm", "serit_motor_akim_a", 
-                                               "serit_sapmasi", "serit_kesme_hizi", "serit_inme_hizi", 
-                                               "fuzzy_output"])
-            x_column_combo.pack(fill=tk.X, pady=(0, 5))
-
-            # Y ekseni seçimi
-            ttk.Label(graph_frame, text="Y Ekseni:").pack(anchor=tk.W)
-            y_column_var = tk.StringVar(value="serit_motor_akim_a")
-            y_column_combo = ttk.Combobox(graph_frame, textvariable=y_column_var,
-                                        values=["serit_motor_akim_a", "serit_sapmasi", 
-                                               "serit_kesme_hizi", "serit_inme_hizi", "fuzzy_output",
-                                               "ivme_olcer_x_hz", "ivme_olcer_y_hz", "ivme_olcer_z_hz"])
-            y_column_combo.pack(fill=tk.X, pady=(0, 5))
-
-            def show_selected_graph():
-                try:
-                    # Son kesim verilerini al
-                    last_data = self.get_last_cut_data()
-                    if last_data is None:
-                        messagebox.showwarning("Uyarı", "Son kesim verisi bulunamadı")
-                        return
-
-                    # DataFrame oluştur
-                    df = pd.DataFrame(last_data)
-
-                    # Seçilen sütunları kontrol et
-                    x_column = x_column_var.get()
-                    y_column = y_column_var.get()
-
-                    if x_column not in df.columns or y_column not in df.columns:
-                        messagebox.showwarning("Uyarı", "Seçilen sütunlar veri setinde bulunamadı")
-                        return
-
-                    # Grafik oluştur
-                    fig = go.Figure()
-                    
-                    fig.add_trace(go.Scatter(
-                        x=df[x_column],
-                        y=df[y_column],
-                        name=f'{y_column} vs {x_column}',
-                        line=dict(color='blue')
-                    ))
-
-                    fig.update_layout(
-                        title=f'{y_column} vs {x_column}',
-                        xaxis_title=x_column,
-                        yaxis_title=y_column,
-                        height=400
-                    )
-
-                    # Grafiği göster
-                    self.show_plot(fig, f"Son Kesim - {y_column} vs {x_column}")
-
-                except Exception as e:
-                    logger.error(f"Grafik oluşturma hatası: {e}")
-                    messagebox.showerror("Hata", f"Grafik oluşturulurken hata oluştu: {str(e)}")
-
-            ttk.Button(graph_frame, text="Grafiği Göster", 
-                      command=show_selected_graph).pack(fill=tk.X, pady=5)
 
             # Sağ panel - Grafikler ve tablolar için
             right_panel = ttk.Frame(main_frame)
             right_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
             # Grafik ve tablo alanları
-            self.plot_frame1 = ttk.LabelFrame(right_panel, text="Tüm Kesimler Grafiği")
+            self.plot_frame1 = ttk.LabelFrame(right_panel, text="Tüm Kesimler")
             self.plot_frame1.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
 
             self.table_frame1 = ttk.LabelFrame(right_panel, text="Genel İstatistikler")
             self.table_frame1.pack(fill=tk.X, pady=(0, 5))
 
-            self.plot_frame2 = ttk.LabelFrame(right_panel, text="Seçili Kesimler Grafiği")
+            self.plot_frame2 = ttk.LabelFrame(right_panel, text="Son Kesim")
             self.plot_frame2.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
 
             self.table_frame2 = ttk.LabelFrame(right_panel, text="Kesim Detayları")
             self.table_frame2.pack(fill=tk.X, pady=(0, 5))
 
-            # Son Gün Analizi Alanı
-            daily_analysis_frame = ttk.LabelFrame(left_panel, text="Son Gün Analizi", padding="5")
+            # Gün Analizi Alanı
+            daily_analysis_frame = ttk.LabelFrame(left_panel, text="Gün Analizi", padding="5")
             daily_analysis_frame.pack(fill=tk.X, pady=10)
 
             # Grafik parametreleri
             param_frame = ttk.Frame(daily_analysis_frame)
             param_frame.pack(fill=tk.X, pady=5)
 
+            # Tarih seçimi alanı
+            ttk.Label(param_frame, text="Tarih (YYYY-MM-DD):").pack(anchor=tk.W)
+            daily_date_var = tk.StringVar()
+            daily_date_entry = ttk.Entry(param_frame, textvariable=daily_date_var)
+            daily_date_entry.pack(fill=tk.X, pady=(0, 5))
+            
             # X ekseni seçimi
             ttk.Label(param_frame, text="X Ekseni:").pack(anchor=tk.W)
-            daily_x_column_var = tk.StringVar(value="timestamp")
+            daily_x_column_var = tk.StringVar(value="kafa_yuksekligi_mm")
             daily_x_column_combo = ttk.Combobox(param_frame, textvariable=daily_x_column_var, 
                                               values=["timestamp", "kafa_yuksekligi_mm", "serit_motor_akim_a", 
                                                      "serit_sapmasi", "serit_kesme_hizi", "serit_inme_hizi", 
@@ -1487,94 +1503,49 @@ class SimpleGUI:
 
             def show_daily_analysis():
                 try:
-                    # Son günün verilerini al
-                    daily_data = self.get_cutting_data()
-                    if daily_data is None:
-                        messagebox.showwarning("Uyarı", "Son gün verisi bulunamadı")
-                        return
+                    date_str = daily_date_var.get().strip()
+                    self.daily_warning_label.config(text="")  # Önceki uyarıyı temizle
 
-                    # DataFrame oluştur
-                    df = pd.DataFrame(daily_data)
+                    if date_str:
+                        data = self.get_cutting_data_by_date(date_str)
+                        if data is None:
+                            self.daily_warning_label.config(text=f"{date_str} tarihli veri bulunamadı.")
+                            return
+                    else:
+                        data = self.get_last_date_cutting_data()
+                        if data is None:
+                            self.daily_warning_label.config(text="Son gün verisi bulunamadı.")
+                            return
 
-                    # Parametreleri al
+                    df = pd.DataFrame(data)
                     x_column = daily_x_column_var.get()
                     y_column = daily_y_column_var.get()
                     hover_columns = [col.strip() for col in daily_hover_columns_var.get().split(",")]
                     smooth_window = int(daily_smooth_window_var.get())
                     smooth_method = daily_smooth_method_var.get()
 
-                    # Grafik oluştur
-                    fig = go.Figure()
-                    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
-                    color_index = 0
-
-                    # Her kesim için ayrı çizgi ekle
-                    for kesim_id in df['kesim_id'].unique():
-                        kesim_data = df[df['kesim_id'] == kesim_id].copy()
-
-                        # Smoothing işlemi
-                        if smooth_window and smooth_window > 1:
-                            if smooth_method == "avg":
-                                kesim_data[y_column] = kesim_data[y_column].rolling(window=smooth_window, min_periods=1).mean()
-                            elif smooth_method == "median":
-                                kesim_data[y_column] = kesim_data[y_column].rolling(window=smooth_window, min_periods=1).median()
-
-                        # Hover için ek sütunları customdata'ya ekle
-                        custom_data = kesim_data[hover_columns].values
-
-                        # Veri ekle
-                        fig.add_trace(
-                            go.Scatter(
-                                x=kesim_data[x_column],
-                                y=kesim_data[y_column],
-                                mode='lines',
-                                name=f"Kesim ID: {kesim_id} ({smooth_method} {smooth_window})" if smooth_window > 1 else f"Kesim ID: {kesim_id}",
-                                line=dict(color=colors[color_index % len(colors)]),
-                                customdata=custom_data,
-                                hovertemplate=(
-                                    f"<b>{x_column.replace('_', ' ').title()}:</b> %{{x}}<br>"
-                                    f"<b>{y_column.replace('_', ' ').title()}:</b> %{{y:.2f}}<br>"
-                                    + "<br>".join([
-                                        f"<b>{col.replace('_', ' ').title()}:</b> %{{customdata[{i}]}}"
-                                        for i, col in enumerate(hover_columns)
-                                    ]) + "<extra></extra>"
-                                ),
-                                visible=True
-                            )
-                        )
-                        color_index += 1
-
-                    # Grafik düzenlemeleri
-                    fig.update_layout(
-                        title=f"{y_column.replace('_', ' ').title()} vs {x_column.replace('_', ' ').title()}",
-                        xaxis_title=x_column.replace('_', ' ').title(),
-                        yaxis_title=y_column.replace('_', ' ').title(),
-                        xaxis=dict(autorange='reversed', showgrid=True, zeroline=False, showline=True, mirror=True, linewidth=1),
-                        yaxis=dict(showgrid=True, zeroline=False, showline=True, mirror=True, linewidth=1),
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        font=dict(color='black'),
-                        hovermode='x',
-                        autosize=True,
-                        showlegend=True,
-                        legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.02,
-                            xanchor="right",
-                            x=1
-                        )
-                    )
-
-                    # Grafiği göster
-                    self.show_plot(fig, "Son Gün Analizi")
+                    fig = self.plot_kesim_grafigi(df, x_column, y_column, hover_columns, smooth_window, smooth_method, title="Günlük Analiz Grafiği")
+                    self.show_plot(fig, "Günlük Analiz Grafiği")
 
                 except Exception as e:
-                    logger.error(f"Günlük analiz grafiği oluşturma hatası: {e}")
-                    messagebox.showerror("Hata", f"Grafik oluşturulurken hata oluştu: {str(e)}")
+                    logger.error(f"Günlük analiz grafiği hatası: {e}")
+                    self.daily_warning_label.config(text=f"Hata: {str(e)}")
 
-            ttk.Button(param_frame, text="Günlük Analizi Göster", 
+            ttk.Button(param_frame, text="Günlük Kesim Grafiğini Göster", 
                       command=show_daily_analysis).pack(fill=tk.X, pady=10)
+            ttk.Button(param_frame, text="Günlük Tüm Kesim Grafiği", command=lambda: self._show_all_cuts_timeseries_plot(
+                    self.get_cutting_data_by_date(daily_date_var.get().strip()) if daily_date_var.get().strip() else self.get_last_date_cutting_data(),
+                    daily_x_column_var.get(), daily_y_column_var.get(),
+                    [col.strip() for col in daily_hover_columns_var.get().split(",")],
+                    int(daily_smooth_window_var.get()), daily_smooth_method_var.get()
+                )).pack(fill=tk.X, pady=5)
+
+            ttk.Button(param_frame, text="Tüm Tabloyu Göster", command=self.show_all_summary_table).pack(pady=(0, 5))
+            ttk.Button(param_frame, text="Son Kesim Tablo Göster", command=self.show_last_cut_summary_table).pack(pady=(0, 5))
+            
+            self.daily_warning_label = ttk.Label(daily_analysis_frame, text="", foreground="red")
+            self.daily_warning_label.pack()
+
 
         except Exception as e:
             logger.error(f"Kesim özeti penceresi oluşturulurken hata: {e}")
@@ -1713,15 +1684,12 @@ class SimpleGUI:
             logger.exception("Detaylı hata:")
             return None
 
-    def show_plot(self, fig, title):
-        """Plotly grafiğini gösterir"""
+    def show_plot(self, fig, title=""):
         try:
             if fig is None:
                 logger.error("Gösterilecek grafik bulunamadı")
                 return
-                
-            fig.show()
-                
+            fig.show()  # sadece tarayıcıda aç
         except Exception as e:
             logger.error(f"Grafik gösterilirken hata: {e}")
             logger.exception("Detaylı hata:")

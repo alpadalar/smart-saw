@@ -131,8 +131,12 @@ class MainWindow:
         """Son kesimin akım değerlerini gösteren pencereyi açar"""
         summary_window = tk.Toplevel(self.root)
         summary_window.title("Kesim Özeti")
-        summary_window.geometry("800x600")
-        
+        summary_window.geometry("1920x1080")
+        # screen_width = summary_window.winfo_screenwidth()
+        # screen_height = summary_window.winfo_screenheight()
+        # summary_window.geometry(f"{screen_width}x{screen_height}")
+
+
         # Grafik için frame
         plot_frame = ttk.Frame(summary_window, padding="10")
         plot_frame.pack(fill=tk.BOTH, expand=True)
