@@ -1580,7 +1580,7 @@ class SimpleGUI:
             logger.error(f"Kesim özeti penceresi oluşturulurken hata: {e}")
             logger.exception("Detaylı hata:")
             messagebox.showerror("Hata", f"Kesim özeti penceresi oluşturulurken hata oluştu: {str(e)}")
-
+    
     def create_timeseries_plot(self, data, x_axis, y_axis, hover_cols, kesim_ids=None):
         """Zaman serisi grafiği oluşturur"""
         try:
