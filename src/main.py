@@ -33,7 +33,7 @@ from data import (
 )
 from data.cutting_tracker import get_cutting_tracker
 from models import ProcessedData, SystemState
-from gui.controller import SimpleGUI
+from gui.qt_controller import SimpleGUI
 from control import ControllerFactory
 from core.constants import TestereState
 from api import create_app, router
