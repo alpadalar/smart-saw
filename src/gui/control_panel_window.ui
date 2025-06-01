@@ -888,7 +888,7 @@ QPushButton:checked {
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QLabel" name="labelHeadHeight_2">
+    <widget class="QLabel" name="labelBandDeviation">
      <property name="geometry">
       <rect>
        <x>27</x>
@@ -910,7 +910,7 @@ QPushButton:checked {
       <string>Şerit Sapması</string>
      </property>
     </widget>
-    <widget class="QFrame" name="infoFrame">
+    <widget class="QFrame" name="maxBandDeviationFrame">
      <property name="geometry">
       <rect>
        <x>59</x>
@@ -936,7 +936,7 @@ QPushButton:checked {
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QLabel" name="label">
+     <widget class="QLabel" name="labelMaxBandDeviation">
       <property name="geometry">
        <rect>
         <x>32</x>
@@ -958,7 +958,7 @@ QPushButton:checked {
        <string>Maksimum Şerit Sapması</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_2">
+     <widget class="QLabel" name="labelMaxBandDeviationValue">
       <property name="geometry">
        <rect>
         <x>91</x>
@@ -1016,7 +1016,7 @@ QPushButton:checked {
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QLabel" name="labelHeadHeight_3">
+    <widget class="QLabel" name="labelSystemStatus">
      <property name="geometry">
       <rect>
        <x>27</x>
@@ -1038,7 +1038,7 @@ QPushButton:checked {
       <string>Sistem Durumu</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_3">
+    <widget class="QLabel" name="labelSystemStatusInfo">
      <property name="geometry">
       <rect>
        <x>61</x>
@@ -1110,7 +1110,7 @@ QPushButton:checked {
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QLabel" name="labelHeadHeight_4">
+    <widget class="QLabel" name="labelBandCuttingSpeed">
      <property name="geometry">
       <rect>
        <x>31</x>
@@ -1132,7 +1132,7 @@ QPushButton:checked {
       <string>Şerit Kesme Hızı</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_4">
+    <widget class="QLabel" name="labelBandCuttingInfo">
      <property name="geometry">
       <rect>
        <x>31</x>
@@ -1155,7 +1155,7 @@ QPushButton:checked {
 belirlemek için tıklayın.</string>
      </property>
     </widget>
-    <widget class="QFrame" name="infoFrame_2">
+    <widget class="QFrame" name="BandCuttingCurrentFrame">
      <property name="geometry">
       <rect>
        <x>31</x>
@@ -1181,7 +1181,7 @@ belirlemek için tıklayın.</string>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QLabel" name="label_6">
+     <widget class="QLabel" name="labelBandCuttingCurrent">
       <property name="geometry">
        <rect>
         <x>33</x>
@@ -1203,7 +1203,7 @@ belirlemek için tıklayın.</string>
        <string>Şerit Motor Akım</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_7">
+     <widget class="QLabel" name="labelBandCuttingCurrentValue">
       <property name="geometry">
        <rect>
         <x>91</x>
@@ -1261,7 +1261,7 @@ belirlemek için tıklayın.</string>
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QLabel" name="labelHeadHeight_5">
+    <widget class="QLabel" name="labelBandDescentSpeed">
      <property name="geometry">
       <rect>
        <x>31</x>
@@ -1283,7 +1283,7 @@ belirlemek için tıklayın.</string>
       <string>Şerit İnme Hızı</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_5">
+    <widget class="QLabel" name="labelBandDescentInfo">
      <property name="geometry">
       <rect>
        <x>31</x>
@@ -1306,7 +1306,7 @@ belirlemek için tıklayın.</string>
 belirlemek için tıklayın.</string>
      </property>
     </widget>
-    <widget class="QFrame" name="infoFrame_3">
+    <widget class="QFrame" name="BandDescentCurrentFrame">
      <property name="geometry">
       <rect>
        <x>31</x>
@@ -1332,7 +1332,7 @@ belirlemek için tıklayın.</string>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QLabel" name="label_8">
+     <widget class="QLabel" name="labelBandDescentCurrent">
       <property name="geometry">
        <rect>
         <x>33</x>
@@ -1354,7 +1354,7 @@ belirlemek için tıklayın.</string>
        <string>Şerit Motor Akım</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_9">
+     <widget class="QLabel" name="labelBandDescentCurrentValue">
       <property name="geometry">
        <rect>
         <x>91</x>
@@ -1469,65 +1469,7 @@ QWidget#scrollAreaWidgetContents {
         <height>461</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="label_10">
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    color: #F4F6FC;
-    font-family: 'Plus Jakarta Sans';
-    font-size: 20px;
-    font-weight: normal;
-    background-color: rgba(6, 12, 41, 0.2); /* %20 opak */
-    border-radius: 20px;
-    padding: 10px 15px;
-}
-</string>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_12">
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    color: #F4F6FC;
-    font-family: 'Plus Jakarta Sans';
-    font-size: 20px;
-    font-weight: normal;
-    background-color: rgba(6, 12, 41, 0.2); /* %20 opak */
-    border-radius: 20px;
-    padding: 10px 15px;
-}
-</string>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_11">
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    color: #F4F6FC;
-    font-family: 'Plus Jakarta Sans';
-    font-size: 20px;
-    font-weight: normal;
-    background-color: rgba(6, 12, 41, 0.2); /* %20 opak */
-    border-radius: 20px;
-    padding: 10px 15px;
-}
-</string>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QVBoxLayout" name="verticalLayout"/>
      </widget>
     </widget>
    </widget>
@@ -1557,7 +1499,7 @@ QWidget#scrollAreaWidgetContents {
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QToolButton" name="toolButton">
+    <widget class="QToolButton" name="toolBtnCuttingStart">
      <property name="enabled">
       <bool>true</bool>
      </property>
@@ -1616,7 +1558,7 @@ QToolButton:checked {
       <enum>Qt::ToolButtonTextUnderIcon</enum>
      </property>
     </widget>
-    <widget class="QToolButton" name="toolButton_2">
+    <widget class="QToolButton" name="toolBtnCuttingStop">
      <property name="geometry">
       <rect>
        <x>312</x>
@@ -1690,7 +1632,7 @@ QToolButton:checked {
       <enum>Qt::ToolButtonTextUnderIcon</enum>
      </property>
     </widget>
-    <widget class="QToolButton" name="toolButton_3">
+    <widget class="QToolButton" name="toolBtnCoolant">
      <property name="geometry">
       <rect>
        <x>596</x>
@@ -1746,7 +1688,7 @@ QToolButton:checked {
       <enum>Qt::ToolButtonTextUnderIcon</enum>
      </property>
     </widget>
-    <widget class="QToolButton" name="toolButton_4">
+    <widget class="QToolButton" name="toolBtnSawdustCleaning">
      <property name="geometry">
       <rect>
        <x>881</x>
