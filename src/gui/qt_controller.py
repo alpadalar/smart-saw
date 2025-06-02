@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTextEdit, QWidget, QVBoxLayout, QLabel, QApplication, QInputDialog
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, QTimer, Qt
-from PyQt5.QtGui import QTextCursor
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTextEdit, QWidget, QVBoxLayout, QLabel, QApplication, QInputDialog, QFrame, QScrollArea
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, QTimer, Qt, QRect
+from PyQt5.QtGui import QTextCursor, QColor, QFont, QPalette, QTextCharFormat
 import logging
 import time
 from datetime import datetime
@@ -148,7 +148,11 @@ class SimpleGUI(QMainWindow):
             
             # Kamera durumu için değişkenler
             'camera_status': "Hazır",
-            'camera_frame_count': "0"
+            'camera_frame_count': "0",
+            
+            # Tarih ve saat için değişkenler
+            'current_date': "-",
+            'current_time': "-"
         }
         
         self._last_update_time = None
@@ -181,12 +185,17 @@ class SimpleGUI(QMainWindow):
         # Güncelleme timer'ı
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_loop)
-        self.update_timer.start(int(self.update_interval * 1000))  # ms cinsinden
+        self.update_timer.start(1000)
         
         # Log işleme timer'ı
         self.log_timer = QTimer()
         self.log_timer.timeout.connect(self._process_logs)
         self.log_timer.start(100)  # 100ms
+        
+        # Tarih ve saat güncelleme timer'ı (her saniye)
+        self.datetime_timer = QTimer()
+        self.datetime_timer.timeout.connect(self._update_datetime_labels)
+        self.datetime_timer.start(1000) # 1000ms = 1 saniye
 
     def setup_connections(self):
         """Sinyal bağlantılarını kurar"""
@@ -310,7 +319,7 @@ class SimpleGUI(QMainWindow):
                 logger.info("Kontrol sistemi kapatıldı")
             else:
                 self.controller_factory.set_controller(controller_type)
-                logger.info(f"Kontrol sistemi değiştirildi: {controller_type.value}")
+                logger.info(f"Kontrol sistemi {controller_type.value} olarak değiştirildi")
         except Exception as e:
             logger.error(f"Kontrol sistemi değiştirme hatası: {e}")
             logger.exception("Detaylı hata:")
@@ -374,6 +383,23 @@ class SimpleGUI(QMainWindow):
                 self.add_log(log_entry['message'], log_entry['level'])
         except Exception as e:
             logger.error(f"Log işleme hatası: {e}")
+
+    def _update_datetime_labels(self):
+        """Tarih ve saat etiketlerini günceller"""
+        try:
+            now = datetime.now()
+            # Qt arayüzünde kullanılacak format
+            date_str = now.strftime('%d.%m.%Y %A') 
+            time_str = now.strftime('%H:%M')      
+            
+            self.current_values['current_date'] = date_str
+            self.current_values['current_time'] = time_str
+            
+            self.ui.labelDate.setText(date_str)
+            self.ui.labelTime.setText(time_str)
+            
+        except Exception as e:
+            logger.error(f"Tarih/Saat güncelleme hatası: {e}")
 
     def _update_values(self, processed_data: Dict):
         """Gösterilen değerleri günceller"""
@@ -485,18 +511,64 @@ class SimpleGUI(QMainWindow):
     def add_log(self, message: str, level: str = 'INFO'):
         """Thread-safe log ekleme"""
         try:
-            timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-            log_message = f"{timestamp} [{level}] {message}\n"
+            if not hasattr(self.ui, 'log_text') or not self.ui.log_text:
+                return
+                
+            # Saat ve dakika formatı
+            timestamp = datetime.now().strftime('%H:%M')
             
-            # Log widget'ına ekle
-            self.ui.log_text.append(log_message)
+            # Log seviyesine göre renk belirle
+            color = "#F4F6FC" # Varsayılan renk
+            # Hata mesajları için rengi koruyalım
+            if level == 'WARNING':
+                color = "orange"
+            elif level == 'ERROR':
+                color = "red"
             
-            # Maksimum 1000 satır tut
-            if self.ui.log_text.document().blockCount() > 1000:
+            # Mesaj içeriğini kontrol edip kullanıcı dostu hale getir
+            display_message = message
+            # Örnek: Hız gönderme mesajlarını yakala ve yeniden biçimlendir
+            if "Kesme hızı gönderildi" in message:
+                try:
+                    # Mesajdaki parantez içindeki hız seviyesini al (ör: slow, normal, fast)
+                    import re
+                    match_level = re.search(r'\((.*?)\)', message)
+                    
+                    speed_value = float(message.split(":")[-1].strip().split(" ")[0])
+                    display_message = f"Şerit Kesme Hızı \"{speed_value:.2f}\" olarak ayarlandı!"
+                except (ValueError, IndexError, AttributeError):
+                    pass # Hata olursa orijinal mesajı kullan
+            elif "İnme hızı gönderildi" in message:
+                 try:
+                    # Mesajdaki parantez içindeki hız seviyesini al (ör: slow, normal, fast)
+                    import re
+                    match_level = re.search(r'\((.*?)\)', message)
+
+                    speed_value = float(message.split(":")[-1].strip().split(" ")[0])
+                    display_message = f"Şerit İnme Hızı \"{speed_value:.2f}\"  olarak ayarlandı!"
+                 except (ValueError, IndexError, AttributeError):
+                    pass # Hata olursa orijinal mesajı kullan
+                
+            # HTML formatında mesaj oluştur
+            # Saat ve mesajı ayrı satırlarda ve istenen stilde göster
+            # Saat için daha ince, mesaj için daha kalın font ağırlığı
+            log_message_html = f"<span style='font-size:20px; color:{color}; font-weight:extra-light;'>{timestamp}</span><br>"
+            log_message_html += f"<span style='font-size:20px; color:{color}; font-weight:medium;'>{display_message}</span><br><br>"
+            
+            # HTML olarak ekle
+            self.ui.log_text.insertHtml(log_message_html)
+            
+            # En alta kaydır
+            self.ui.log_text.verticalScrollBar().setValue(self.ui.log_text.verticalScrollBar().maximum())
+            
+            
+            while self.ui.log_text.document().blockCount() > 1000:
                 cursor = self.ui.log_text.textCursor()
                 cursor.movePosition(QTextCursor.Start)
-                cursor.movePosition(QTextCursor.Down, QTextCursor.KeepAnchor)
+                # İlk bloğu sil
+                cursor.selectCharacteristic(QTextCursor.BlockUnderCursor)
                 cursor.removeSelectedText()
+                
         except Exception as e:
             logger.error(f"Log ekleme hatası: {e}")
 
@@ -776,13 +848,13 @@ class SimpleGUI(QMainWindow):
             # Kesme hızını gönder
             # Negatif hız değerleri olabilir mi? Varsayılan olarak pozitif kabul edelim.
             reverse_calculate_value(modbus_client, cutting_speed, 'serit_kesme_hizi', False)
-            logger.info(f"Kesme hızı gönderildi ({speed_level}): {cutting_speed:.1f} mm/s")
-            self.add_log(f"Kesme hızı ayarlandı ({speed_level}): {cutting_speed:.1f} mm/s", "INFO")
+            logger.info(f"Kesme hızı {cutting_speed:.1f} mm/s olarak ayarlandı")
+            self.add_log(f"Kesme hızı {cutting_speed:.1f} mm/s olarak ayarlandı", "INFO")
             
             # İnme hızını gönder
             reverse_calculate_value(modbus_client, descent_speed, 'serit_inme_hizi', False)
-            logger.info(f"İnme hızı gönderildi ({speed_level}): {descent_speed:.1f} mm/s")
-            self.add_log(f"İnme hızı ayarlandı ({speed_level}): {descent_speed:.1f} mm/s", "INFO")
+            logger.info(f"İnme hızı {descent_speed:.1f} mm/s olarak ayarlandı")
+            self.add_log(f"İnme hızı {descent_speed:.1f} mm/s olarak ayarlandı", "INFO")
 
         except Exception as e:
             logger.error(f"Hız gönderme hatası: {str(e)}")
@@ -818,7 +890,7 @@ class SimpleGUI(QMainWindow):
                 self.ui.labelBandCuttingSpeedValue.setText(f"{value:.2f}")
                 
                 # Log ekle
-                self.add_log(f"Kesme hızı manuel olarak {value:.2f} mm/s olarak ayarlandı", "INFO")
+                self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
                 
         except Exception as e:
             logger.error(f"Kesme hızı ayarlama hatası: {e}")
@@ -837,7 +909,7 @@ class SimpleGUI(QMainWindow):
             
             # Kesme hızını gönder
             reverse_calculate_value(modbus_client, speed_value, 'serit_kesme_hizi', False)
-            logger.info(f"Kesme hızı gönderildi: {speed_value:.1f} mm/s")
+            logger.info(f"Kesme hızı {speed_value:.1f} mm/s olarak gönderildi")
             
         except Exception as e:
             logger.error(f"Hız gönderme hatası: {str(e)}")
@@ -873,7 +945,7 @@ class SimpleGUI(QMainWindow):
                 self.ui.labelBandDescentSpeedValue.setText(f"{value:.2f}")
                 
                 # Log ekle
-                self.add_log(f"İnme hızı manuel olarak {value:.2f} mm/s olarak ayarlandı", "INFO")
+                self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
                 
         except Exception as e:
             logger.error(f"İnme hızı ayarlama hatası: {e}")
@@ -892,7 +964,7 @@ class SimpleGUI(QMainWindow):
             
             # İnme hızını gönder
             reverse_calculate_value(modbus_client, speed_value, 'serit_inme_hizi', False)
-            logger.info(f"İnme hızı gönderildi: {speed_value:.2f} mm/s")
+            logger.info(f"İnme hızı {speed_value:.2f} mm/s olarak gönderildi")
             
         except Exception as e:
             logger.error(f"Hız gönderme hatası: {str(e)}")
