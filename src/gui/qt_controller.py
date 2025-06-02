@@ -226,6 +226,10 @@ class SimpleGUI(QMainWindow):
             self.ui.log_text.setReadOnly(True)
             
             # Başlangıç değerlerini ayarla
+            self.ui.labelBandCuttingSpeedValue.setText("NULL")
+            self.ui.labelBandDescentSpeedValue.setText("NULL")
+            
+            # Başlangıç değerlerini ayarla
             self.update_ui()
             
         except Exception as e:
@@ -414,6 +418,20 @@ class SimpleGUI(QMainWindow):
             # Hız bilgileri
             self.current_values['serit_kesme_hizi'] = f"{processed_data.get('serit_kesme_hizi', 0):.1f} mm/s"
             self.current_values['serit_inme_hizi'] = f"{processed_data.get('serit_inme_hizi', 0):.1f} mm/s"
+            
+            # Şerit kesme hızı değerini güncelle
+            cutting_speed = processed_data.get('serit_kesme_hizi')
+            if cutting_speed is not None:
+                self.ui.labelBandCuttingSpeedValue.setText(f"{cutting_speed:.1f}")
+            else:
+                self.ui.labelBandCuttingSpeedValue.setText("NULL")
+                
+            # Şerit inme hızı değerini güncelle
+            descent_speed = processed_data.get('serit_inme_hizi')
+            if descent_speed is not None:
+                self.ui.labelBandDescentSpeedValue.setText(f"{descent_speed:.1f}")
+            else:
+                self.ui.labelBandDescentSpeedValue.setText("NULL")
             
             # Kesim bilgileri
             self.current_values['kesilen_parca_adeti'] = str(processed_data.get('kesilen_parca_adeti', 0))

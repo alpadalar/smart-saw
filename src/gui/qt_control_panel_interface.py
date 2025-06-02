@@ -526,7 +526,7 @@ class Ui_MainWindow(object):
         self.labelMaxBandDeviation.setGeometry(QtCore.QRect(32, 20, 221, 20))
         self.labelMaxBandDeviation.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
-"    color: rgba(244, 246, 252, 151);\n"
+"    color: #F4F6FC;\n"
 "    font-family: \'Plus-Jakarta-Sans\';\n"
 "    font-weight: medium;\n"
 "    font-size: 20px;\n"
@@ -620,12 +620,22 @@ class Ui_MainWindow(object):
         self.labelBandCuttingInfo.setGeometry(QtCore.QRect(31, 106, 255, 51))
         self.labelBandCuttingInfo.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
-"    color: rgba(244, 246, 252, 151);\n"
+"    color: #F4F6FC;\n"
 "    font-family: \'Plus-Jakarta-Sans\';\n"
 "    font-weight: medium;\n"
 "    font-size: 22px;\n"
 "}")
         self.labelBandCuttingInfo.setObjectName("labelBandCuttingInfo")
+        self.labelBandCuttingSpeedValue = QtWidgets.QLabel(self.bandCuttingSpeedFrame)
+        self.labelBandCuttingSpeedValue.setGeometry(QtCore.QRect(330, 156, 200, 55))
+        self.labelBandCuttingSpeedValue.setStyleSheet("QLabel{\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: \'Plus-Jakarta-Sans\';\n"
+"    font-weight: bold;\n"
+"    font-size: 55px;\n"
+"}")
+        self.labelBandCuttingSpeedValue.setObjectName("labelBandCuttingSpeedValue")
         self.BandCuttingCurrentFrame = QtWidgets.QFrame(self.bandCuttingSpeedFrame)
         self.BandCuttingCurrentFrame.setGeometry(QtCore.QRect(31, 200, 217, 109))
         self.BandCuttingCurrentFrame.setStyleSheet("QFrame {\n"
@@ -644,7 +654,7 @@ class Ui_MainWindow(object):
         self.labelBandCuttingCurrent.setGeometry(QtCore.QRect(33, 20, 151, 20))
         self.labelBandCuttingCurrent.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
-"    color: rgba(244, 246, 252, 151);\n"
+"    color: #F4F6FC;\n"
 "    font-family: \'Plus-Jakarta-Sans\';\n"
 "    font-weight: medium;\n"
 "    font-size: 20px;\n"
@@ -694,12 +704,22 @@ class Ui_MainWindow(object):
         self.labelBandDescentInfo.setGeometry(QtCore.QRect(31, 106, 255, 51))
         self.labelBandDescentInfo.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
-"    color: rgba(244, 246, 252, 151);\n"
+"    color: #F4F6FC;\n"
 "    font-family: \'Plus-Jakarta-Sans\';\n"
 "    font-weight: medium;\n"
 "    font-size: 22px;\n"
 "}")
         self.labelBandDescentInfo.setObjectName("labelBandDescentInfo")
+        self.labelBandDescentSpeedValue = QtWidgets.QLabel(self.bandDescentSpeedFrame)
+        self.labelBandDescentSpeedValue.setGeometry(QtCore.QRect(330, 156, 200, 55))
+        self.labelBandDescentSpeedValue.setStyleSheet("QLabel{\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: \'Plus-Jakarta-Sans\';\n"
+"    font-weight: bold;\n"
+"    font-size: 55px;\n"
+"}")
+        self.labelBandDescentSpeedValue.setObjectName("labelBandDescentSpeedValue")
         self.BandDescentCurrentFrame = QtWidgets.QFrame(self.bandDescentSpeedFrame)
         self.BandDescentCurrentFrame.setGeometry(QtCore.QRect(31, 200, 217, 109))
         self.BandDescentCurrentFrame.setStyleSheet("QFrame {\n"
@@ -718,7 +738,7 @@ class Ui_MainWindow(object):
         self.labelBandDescentCurrent.setGeometry(QtCore.QRect(33, 20, 151, 20))
         self.labelBandDescentCurrent.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
-"    color: rgba(244, 246, 252, 151);\n"
+"    color: #F4F6FC;\n"
 "    font-family: \'Plus-Jakarta-Sans\';\n"
 "    font-weight: medium;\n"
 "    font-size: 20px;\n"
