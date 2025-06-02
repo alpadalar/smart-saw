@@ -233,6 +233,8 @@ class SimpleGUI(QMainWindow):
             self.ui.log_text = QTextEdit()
             self.ui.logViewerScroll.widget().layout().addWidget(self.ui.log_text)
             self.ui.log_text.setReadOnly(True)
+            # Log text arkaplanını şeffaf yap
+            self.ui.log_text.setStyleSheet("background-color: transparent;")
             
             # Başlangıç değerlerini ayarla
             self.ui.labelBandCuttingSpeedValue.setText("NULL")
@@ -316,10 +318,10 @@ class SimpleGUI(QMainWindow):
         try:
             if controller_type is None:
                 self.controller_factory.set_controller(None)
-                logger.info("Kontrol sistemi kapatıldı")
+                self.add_log("Kontrol sistemi manuel olarak değiştirildi.", "INFO")
             else:
                 self.controller_factory.set_controller(controller_type)
-                logger.info(f"Kontrol sistemi {controller_type.value} olarak değiştirildi")
+                self.add_log(f"Kontrol sistemi {controller_type.value} olarak değiştirildi", "INFO")
         except Exception as e:
             logger.error(f"Kontrol sistemi değiştirme hatası: {e}")
             logger.exception("Detaylı hata:")

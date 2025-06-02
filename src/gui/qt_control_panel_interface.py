@@ -779,13 +779,13 @@ class Ui_MainWindow(object):
         self.labelLogViewer.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
 "    color: #F4F6FC;\n"
-"    font-family: \'Plus-Jakarta-Sans\';\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
 "    font-weight: bold;\n"
 "    font-size: 24px;\n"
 "}")
         self.labelLogViewer.setObjectName("labelLogViewer")
         self.logViewerScroll = QtWidgets.QScrollArea(self.logViewerFrame)
-        self.logViewerScroll.setGeometry(QtCore.QRect(30, 90, 251, 461))
+        self.logViewerScroll.setGeometry(QtCore.QRect(15, 90, 280, 461))
         self.logViewerScroll.setStyleSheet("QScrollArea {\n"
 "    background-color: transparent;\n"
 "    border: none;\n"
