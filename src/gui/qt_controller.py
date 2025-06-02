@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTextEdit, QWidget, QVBoxLayout, QLabel, QApplication
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTextEdit, QWidget, QVBoxLayout, QLabel, QApplication, QInputDialog
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, QTimer, Qt
 from PyQt5.QtGui import QTextCursor
 import logging
@@ -228,6 +228,10 @@ class SimpleGUI(QMainWindow):
             # Başlangıç değerlerini ayarla
             self.ui.labelBandCuttingSpeedValue.setText("NULL")
             self.ui.labelBandDescentSpeedValue.setText("NULL")
+            
+            # Frame'leri tıklanabilir yap
+            self.ui.bandCuttingSpeedFrame.mousePressEvent = self._handle_cutting_speed_frame_click
+            self.ui.bandDescentSpeedFrame.mousePressEvent = self._handle_descent_speed_frame_click
             
             # Başlangıç değerlerini ayarla
             self.update_ui()
@@ -780,6 +784,116 @@ class SimpleGUI(QMainWindow):
             logger.info(f"İnme hızı gönderildi ({speed_level}): {descent_speed:.1f} mm/s")
             self.add_log(f"İnme hızı ayarlandı ({speed_level}): {descent_speed:.1f} mm/s", "INFO")
 
+        except Exception as e:
+            logger.error(f"Hız gönderme hatası: {str(e)}")
+            logger.exception("Detaylı hata:")
+            self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
+
+    def _handle_cutting_speed_frame_click(self, event):
+        """BandCuttingSpeedFrame tıklama olayını yönetir"""
+        try:
+            # Mevcut değeri al ve float'a çevir
+            current_value = self.ui.labelBandCuttingSpeedValue.text()
+            try:
+                initial_value = float(current_value) if current_value != "NULL" else 0.0
+            except ValueError:
+                initial_value = 0.0
+            
+            # QInputDialog ile kullanıcıdan değer al
+            value, ok = QInputDialog.getDouble(
+                self,
+                "Kesme Hızı Ayarı",
+                "Kesme hızını girin (mm/s):",
+                initial_value,
+                0,  # minimum değer
+                100,  # maximum değer
+                2  # ondalık basamak sayısı
+            )
+            
+            if ok and value > 0:  # Geçerli bir değer girildiyse
+                # Manuel hız gönderme fonksiyonunu çağır
+                self._send_manual_speed_value(value)
+                
+                # Label'ı güncelle
+                self.ui.labelBandCuttingSpeedValue.setText(f"{value:.2f}")
+                
+                # Log ekle
+                self.add_log(f"Kesme hızı manuel olarak {value:.2f} mm/s olarak ayarlandı", "INFO")
+                
+        except Exception as e:
+            logger.error(f"Kesme hızı ayarlama hatası: {e}")
+            self.add_log(f"Kesme hızı ayarlama hatası: {str(e)}", "ERROR")
+
+    def _send_manual_speed_value(self, speed_value: float):
+        """Belirli bir hız değerini gönderir"""
+        try:
+            # Modbus client'ı al
+            if not self.controller_factory or not self.controller_factory.modbus_client:
+                logger.error("Modbus bağlantısı bulunamadı")
+                self.add_log("Hız ayarlanamadı: Modbus bağlantısı yok.", "ERROR")
+                return
+            
+            modbus_client = self.controller_factory.modbus_client
+            
+            # Kesme hızını gönder
+            reverse_calculate_value(modbus_client, speed_value, 'serit_kesme_hizi', False)
+            logger.info(f"Kesme hızı gönderildi: {speed_value:.1f} mm/s")
+            
+        except Exception as e:
+            logger.error(f"Hız gönderme hatası: {str(e)}")
+            logger.exception("Detaylı hata:")
+            self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
+
+    def _handle_descent_speed_frame_click(self, event):
+        """BandDescentSpeedFrame tıklama olayını yönetir"""
+        try:
+            # Mevcut değeri al ve float'a çevir
+            current_value = self.ui.labelBandDescentSpeedValue.text()
+            try:
+                initial_value = float(current_value) if current_value != "NULL" else 0.0
+            except ValueError:
+                initial_value = 0.0
+            
+            # QInputDialog ile kullanıcıdan değer al
+            value, ok = QInputDialog.getDouble(
+                self,
+                "İnme Hızı Ayarı",
+                "İnme hızını girin (mm/s):",
+                initial_value,
+                0,  # minimum değer
+                100,  # maximum değer
+                2  # ondalık basamak sayısı
+            )
+            
+            if ok and value > 0:  # Geçerli bir değer girildiyse
+                # Manuel hız gönderme fonksiyonunu çağır
+                self._send_manual_descent_speed_value(value)
+                
+                # Label'ı güncelle
+                self.ui.labelBandDescentSpeedValue.setText(f"{value:.2f}")
+                
+                # Log ekle
+                self.add_log(f"İnme hızı manuel olarak {value:.2f} mm/s olarak ayarlandı", "INFO")
+                
+        except Exception as e:
+            logger.error(f"İnme hızı ayarlama hatası: {e}")
+            self.add_log(f"İnme hızı ayarlama hatası: {str(e)}", "ERROR")
+
+    def _send_manual_descent_speed_value(self, speed_value: float):
+        """Belirli bir inme hızı değerini gönderir"""
+        try:
+            # Modbus client'ı al
+            if not self.controller_factory or not self.controller_factory.modbus_client:
+                logger.error("Modbus bağlantısı bulunamadı")
+                self.add_log("Hız ayarlanamadı: Modbus bağlantısı yok.", "ERROR")
+                return
+            
+            modbus_client = self.controller_factory.modbus_client
+            
+            # İnme hızını gönder
+            reverse_calculate_value(modbus_client, speed_value, 'serit_inme_hizi', False)
+            logger.info(f"İnme hızı gönderildi: {speed_value:.2f} mm/s")
+            
         except Exception as e:
             logger.error(f"Hız gönderme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
