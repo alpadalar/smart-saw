@@ -240,6 +240,9 @@ class SimpleGUI(QMainWindow):
             self.ui.labelBandCuttingSpeedValue.setText("NULL")
             self.ui.labelBandDescentSpeedValue.setText("NULL")
             
+            # Sistem durumu etiketi başlangıç metni
+            self.ui.labelSystemStatusInfo.setText("Bağlantı Kontrol Ediliyor...")
+            
             # Frame'leri tıklanabilir yap
             self.ui.bandCuttingSpeedFrame.mousePressEvent = self._handle_cutting_speed_frame_click
             self.ui.bandDescentSpeedFrame.mousePressEvent = self._handle_descent_speed_frame_click
@@ -580,9 +583,13 @@ class SimpleGUI(QMainWindow):
             if connected:
                 self.current_values['modbus_status'] = f"Bağlı ({ip})"
                 self.ui.modbus_status_label.setStyleSheet("color: green")
+                # Bağlantı kurulduğunda sistem durumu etiketini temizle veya varsayılana döndür
+                # Veri geldiğinde _update_values metodu güncel durumu yazacaktır.
+                self.ui.labelSystemStatusInfo.setText("Veri bekleniyor...")
             else:
                 self.current_values['modbus_status'] = f"Bağlantı Yok ({ip})"
                 self.ui.modbus_status_label.setStyleSheet("color: red")
+                self.ui.labelSystemStatusInfo.setText("Bağlantı Yok")
         except Exception as e:
             logger.error(f"Modbus durum güncelleme hatası: {e}")
 
@@ -687,6 +694,9 @@ class SimpleGUI(QMainWindow):
             self.ui.kesim_sure_label.setText(self.current_values['kesim_sure'])
             self.ui.cutting_time_label.setText(self.current_values['cutting_time'])
             self.ui.modbus_status_label.setText(self.current_values['modbus_status'])
+            
+            # Sistem durumu etiketi
+            self.ui.labelSystemStatusInfo.setText(self.current_values['testere_durumu'])
             
             # Kamera durumu
             self.ui.camera_status_label.setText(self.current_values['camera_status'])

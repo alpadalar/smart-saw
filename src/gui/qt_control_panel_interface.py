@@ -573,14 +573,15 @@ class Ui_MainWindow(object):
 "}")
         self.labelSystemStatus.setObjectName("labelSystemStatus")
         self.labelSystemStatusInfo = QtWidgets.QLabel(self.systemStatusFrame)
-        self.labelSystemStatusInfo.setGeometry(QtCore.QRect(61, 132, 191, 31))
+        self.labelSystemStatusInfo.setGeometry(QtCore.QRect(61, 132, 191, 60))
         self.labelSystemStatusInfo.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
 "    color: rgba(244, 246, 252);\n"
-"    font-family: \'Plus-Jakarta-Sans\';\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
 "    font-weight: medium;\n"
 "    font-size: 24px;\n"
 "}")
+        self.labelSystemStatusInfo.setWordWrap(True)
         self.labelSystemStatusInfo.setObjectName("labelSystemStatusInfo")
         self.iconStatus = QtWidgets.QLabel(self.systemStatusFrame)
         self.iconStatus.setGeometry(QtCore.QRect(121, 230, 71, 71))
@@ -1012,7 +1013,6 @@ class Ui_MainWindow(object):
         self.labelMaxBandDeviation.setText(_translate("MainWindow", "Maksimum Şerit Sapması"))
         self.labelMaxBandDeviationValue.setText(_translate("MainWindow", "16.35"))
         self.labelSystemStatus.setText(_translate("MainWindow", "Sistem Durumu"))
-        self.labelSystemStatusInfo.setText(_translate("MainWindow", "Her Şey Yolunda !"))
         self.labelBandCuttingSpeed.setText(_translate("MainWindow", "Şerit Kesme Hızı"))
         self.labelBandCuttingInfo.setText(_translate("MainWindow", "Başlangıç hızını\n"
 "belirlemek için tıklayın."))
