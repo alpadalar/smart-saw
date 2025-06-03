@@ -427,16 +427,16 @@ class SimpleGUI(QMainWindow):
             # self.current_values['d_mm'] = str(processed_data.get('d_mm', '-'))
             
             # Motor ve hareket bilgileri
-            # self.current_values['kafa_yuksekligi_mm'] = f"{processed_data.get('kafa_yuksekligi_mm', 0):.1f} mm"
-            # self.current_values['serit_motor_akim_a'] = f"{processed_data.get('serit_motor_akim_a', 0):.1f} A"
+            self.current_values['kafa_yuksekligi_mm'] = f"{processed_data.get('kafa_yuksekligi_mm', 0):.1f} mm"
+            self.current_values['serit_motor_akim_a'] = f"{processed_data.get('serit_motor_akim_a', 0):.1f} A"
             # self.current_values['serit_motor_tork_percentage'] = f"{processed_data.get('serit_motor_tork_percentage', 0):.1f} %"
-            # self.current_values['inme_motor_akim_a'] = f"{processed_data.get('inme_motor_akim_a', 0):.1f} A"
+            self.current_values['inme_motor_akim_a'] = f"{processed_data.get('inme_motor_akim_a', 0):.1f} A"
             # self.current_values['inme_motor_tork_percentage'] = f"{processed_data.get('inme_motor_tork_percentage', 0):.1f} %"
             
             # Basınç ve sıcaklık bilgileri
             # self.current_values['mengene_basinc_bar'] = f"{processed_data.get('mengene_basinc_bar', 0):.1f} bar"
             # self.current_values['serit_gerginligi_bar'] = f"{processed_data.get('serit_gerginligi_bar', 0):.1f} bar"
-            # self.current_values['serit_sapmasi'] = f"{processed_data.get('serit_sapmasi', 0):.2f} mm"
+            self.current_values['serit_sapmasi'] = f"{processed_data.get('serit_sapmasi', 0):.2f} mm"
             # self.current_values['ortam_sicakligi_c'] = f"{processed_data.get('ortam_sicakligi_c', 0):.1f} °C"
             # self.current_values['ortam_nem_percentage'] = f"{processed_data.get('ortam_nem_percentage', 0):.1f} %"
             # self.current_values['sogutma_sivi_sicakligi_c'] = f"{processed_data.get('sogutma_sivi_sicakligi_c', 0):.1f} °C"
@@ -662,10 +662,18 @@ class SimpleGUI(QMainWindow):
             # self.ui.d_mm_label.setText(self.current_values['d_mm'])
             
             # Motor ve hareket bilgileri
-            # self.ui.kafa_yuksekligi_label.setText(self.current_values['kafa_yuksekligi_mm'])
-            # self.ui.serit_motor_akim_label.setText(self.current_values['serit_motor_akim_a'])
+            self.ui.labelValue.setText(self.current_values['kafa_yuksekligi_mm'])
+            
+            # Progress bar değerini güncelle
+            try:
+                height_value = float(self.current_values['kafa_yuksekligi_mm'].split()[0])
+                self.ui.progressBarHeight.setValue(int(height_value))
+            except (ValueError, IndexError):
+                self.ui.progressBarHeight.setValue(0)
+            
+            self.ui.labelBandCuttingCurrentValue.setText(self.current_values['serit_motor_akim_a'])
             # self.ui.serit_motor_tork_label.setText(self.current_values['serit_motor_tork_percentage'])
-            # self.ui.inme_motor_akim_label.setText(self.current_values['inme_motor_akim_a'])
+            self.ui.labelBandDescentCurrentValue.setText(self.current_values['inme_motor_akim_a'])
             # self.ui.inme_motor_tork_label.setText(self.current_values['inme_motor_tork_percentage'])
             self.ui.labelBandCuttingSpeedValue.setText(self.current_values['serit_kesme_hizi'])
             self.ui.labelBandDescentSpeedValue.setText(self.current_values['serit_inme_hizi'])
@@ -673,7 +681,7 @@ class SimpleGUI(QMainWindow):
             # Basınç ve sıcaklık bilgileri
             # self.ui.mengene_basinc_label.setText(self.current_values['mengene_basinc_bar'])
             # self.ui.serit_gerginlik_label.setText(self.current_values['serit_gerginligi_bar'])
-            # self.ui.serit_sapma_label.setText(self.current_values['serit_sapmasi'])
+            self.ui.labelMaxBandDeviationValue.setText(self.current_values['serit_sapmasi'])
             # self.ui.ortam_sicaklik_label.setText(self.current_values['ortam_sicakligi_c'])
             # self.ui.ortam_nem_label.setText(self.current_values['ortam_nem_percentage'])
             # self.ui.sogutma_sivi_sicaklik_label.setText(self.current_values['sogutma_sivi_sicakligi_c'])

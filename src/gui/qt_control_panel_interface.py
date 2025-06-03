@@ -5,7 +5,9 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1920, 1080)
+        MainWindow.showFullScreen()
         MainWindow.setStyleSheet("")
+        
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("QWidget#centralwidget {\n"
 "    background-image: url(\"src/gui/images/background.png\");\n"
@@ -474,6 +476,28 @@ class Ui_MainWindow(object):
 "    font-size: 32px;\n"
 "}")
         self.labelValue.setObjectName("labelValue")
+
+        # Progress bar
+        self.progressBarHeight = QtWidgets.QProgressBar(self.headHeightFrame)
+        self.progressBarHeight.setGeometry(QtCore.QRect(27, 78, 50, 250))
+        self.progressBarHeight.setStyleSheet("""
+            QProgressBar {
+                border: none;
+                border-radius: 25px;
+                background-color: rgba(149, 9, 82, 0.2);
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                border-radius: 25px;
+                background-color: #950952;
+            }
+        """)
+        self.progressBarHeight.setOrientation(QtCore.Qt.Vertical)
+        self.progressBarHeight.setRange(0, 420)
+        self.progressBarHeight.setValue(0)
+        self.progressBarHeight.setTextVisible(False)
+        self.progressBarHeight.setObjectName("progressBarHeight")
+
         self.labelmm = QtWidgets.QLabel(self.headHeightFrame)
         self.labelmm.setGeometry(QtCore.QRect(170, 210, 41, 34))
         self.labelmm.setStyleSheet("QLabel{\n"
@@ -1010,7 +1034,7 @@ class Ui_MainWindow(object):
         self.labelValue.setText(_translate("MainWindow", "108"))
         self.labelmm.setText(_translate("MainWindow", "mm"))
         self.labelBandDeviation.setText(_translate("MainWindow", "Şerit Sapması"))
-        self.labelMaxBandDeviation.setText(_translate("MainWindow", "Maksimum Şerit Sapması"))
+        self.labelMaxBandDeviation.setText(_translate("MainWindow", "Şerit Sapması"))
         self.labelMaxBandDeviationValue.setText(_translate("MainWindow", "16.35"))
         self.labelSystemStatus.setText(_translate("MainWindow", "Sistem Durumu"))
         self.labelBandCuttingSpeed.setText(_translate("MainWindow", "Şerit Kesme Hızı"))
