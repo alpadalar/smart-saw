@@ -37,6 +37,7 @@ from gui.controller import SimpleGUI
 from control import ControllerFactory
 from core.constants import TestereState
 from api import create_app, router
+from core.camera import CameraModule
 
 class SmartSaw:
     def __init__(self):
@@ -47,6 +48,14 @@ class SmartSaw:
         # Logger'ı başlat
         setup_logger(self.config.logging)
         logger.info("Smart Saw başlatılıyor...")
+        
+        # Kesim takibi için değişkenler
+        self.current_kesim_id = -1  # Başlangıçta kesim yok
+        self.previous_testere_durumu = None
+        self.is_recording_upward = False  # Yukarı çıkış kaydı durumu
+        
+        # Kamera modülü
+        self.camera = CameraModule()
         
         # Web sunucusu
         self.web_server = None
@@ -138,7 +147,7 @@ class SmartSaw:
             # Eğer script yoksa, oluştur
             if not os.path.exists(server_script):
                 with open(server_script, 'w', encoding='utf-8') as f:
-                    f.write("""
+                    f.write('''
 import os
 import sys
 import uvicorn
@@ -169,14 +178,15 @@ if __name__ == "__main__":
     print(f"Web arayuzu dosyalari: {webui_dir}")
     print("Web sunucusu baslatiliyor. http://localhost:8080 adresinden erisebilirsiniz...")
     uvicorn.run(app, host="0.0.0.0", port=8080)
-""")
+''')
             
             # Web sunucusunu ayrı bir süreç olarak başlat
+            # Linux için uygun şekilde başlat
             self.web_server = subprocess.Popen(
                 [python_exe, server_script],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NEW_CONSOLE  # Windows'ta yeni konsol penceresi aç
+                start_new_session=True  # Linux'ta yeni oturum başlat
             )
             
             logger.info("Web sunucusu başlatıldı. http://localhost:8080 adresinden erişebilirsiniz...")
@@ -233,6 +243,35 @@ if __name__ == "__main__":
                     # Ham modbus verisini direkt olarak kullan
                     base_data = raw_data.copy()
                     
+                    # Aktif kontrolcüyü geçici değişkende tut
+                    current_controller = self.controller_factory.active_controller.value if self.controller_factory.active_controller else None
+                    
+                    # Kesim durumunu kontrol et ve kesim ID'sini güncelle
+                    current_testere_durumu = base_data.get('testere_durumu', 0)
+                    
+                    # Kesim başlangıcını kontrol et (3: KESIM_YAPILIYOR)
+                    if current_testere_durumu == 3 and self.previous_testere_durumu != 3:
+                        # Yeni kesim başladı
+                        self.current_kesim_id += 1
+                        logger.info(f"Yeni kesim başladı. Kesim ID: {self.current_kesim_id}")
+                    
+                    # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR)
+                    if current_testere_durumu == 5 and self.previous_testere_durumu != 5:
+                        # Yukarı çıkış başladı, kaydı başlat
+                        if not self.is_recording_upward:
+                            logger.info("Şerit yukarı çıkıyor, kamera kaydı başlatılıyor...")
+                            self.camera.start_recording()
+                            self.is_recording_upward = True
+                    elif current_testere_durumu != 5 and self.previous_testere_durumu == 5:
+                        # Yukarı çıkış bitti, kaydı durdur
+                        if self.is_recording_upward:
+                            logger.info("Şerit yukarı çıkış tamamlandı, kamera kaydı durduruluyor...")
+                            self.camera.stop_recording()
+                            self.is_recording_upward = False
+                    
+                    # Önceki durumu güncelle
+                    self.previous_testere_durumu = current_testere_durumu
+                    
                     # Ek alanları ekle
                     base_data.update({
                         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
@@ -247,7 +286,9 @@ if __name__ == "__main__":
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.11.186'
+                        'modbus_ip': '192.168.11.186',
+                        'kesim_turu': current_controller if current_testere_durumu == 3 else None,
+                        'kesim_id': self.current_kesim_id if current_testere_durumu == 3 else None
                     })
                     
                     # Veriyi işle
@@ -405,6 +446,11 @@ if __name__ == "__main__":
         self.is_running = False
         
         try:
+            # Kamera kaydını durdur
+            if self.is_recording_upward:
+                self.camera.stop_recording()
+            self.camera.close()
+            
             # Kontrol istatistiklerini logla
             stats = self.controller_factory.get_stats()
             logger.info("Kontrol sistemi istatistikleri:")

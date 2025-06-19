@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
 import webbrowser
-from tkwebview2.tkwebview2 import WebView2
+import webview  # Platform bağımsız webview kütüphanesi
 import sqlite3
 import pandas as pd
 
@@ -88,9 +88,9 @@ class SimpleGUI:
         self.root = tk.Tk()
         self.root.title("Smart Saw Control Panel")
         self.root.geometry("1920x1080")
-        # screen_width = self.root.winfo_screenwidth()
-        # screen_height = self.root.winfo_screenheight()
-        # self.root.geometry(f"{screen_width}x{screen_height}")
+
+        # WebView penceresi
+        self.webview_window = None
         
         # Değişkenler
         self.current_values = {
@@ -198,7 +198,7 @@ class SimpleGUI:
         
         # Üst kısım - Kontrol ve Modbus Durumu
         top_frame = ttk.Frame(left_panel)
-        top_frame.pack(fill=tk.X, pady=(0, 5))
+        top_frame.pack(fill=tk.X, pady=5)
         
         # Testere Durum Göstergesi
         testere_frame = ttk.LabelFrame(top_frame, text="Testere Durumu", padding=(5, 5))
@@ -431,6 +431,14 @@ class SimpleGUI:
             text="Uygulamayı Kapat",
             command=self._quit
         ).pack(side=tk.RIGHT)
+
+        # Web görünümü için buton
+        web_view_button = ttk.Button(
+            top_frame,
+            text="Web Arayüzünü Aç",
+            command=lambda: self.show_web_view("http://localhost:8080")
+        )
+        web_view_button.pack(side=tk.LEFT, padx=5)
 
     def _create_value_grid(self, parent, fields):
         """Değer grid'ini oluşturur"""
@@ -1379,10 +1387,10 @@ class SimpleGUI:
                         self.add_log("Bugünün verisi bulunamadı", "WARNING")
                         return
 
-                    # DataFrame’e çevir
+                    # DataFrame'e çevir
                     df = pd.DataFrame(all_data)
 
-                    # Kesim ID’lerine göre filtrele
+                    # Kesim ID'lerine göre filtrele
                     df_filtered = self.get_data_by_kesim_ids(df, kesim_ids)
 
                     # Grafiği çiz
@@ -1929,4 +1937,20 @@ class SimpleGUI:
         except Exception as e:
             logger.error(f"Tablo gösterimi hatası: {e}")
             logger.exception("Detaylı hata:")
+
+    def show_web_view(self, url):
+        """Platform bağımsız web görünümü gösterir"""
+        try:
+            if self.webview_window is None:
+                # WebView penceresini oluştur
+                self.webview_window = webview.create_window('Smart Saw Web View', url)
+                # Linux için GTK4 backend'i kullan
+                webview.start(gui='gtk', debug=True)
+            else:
+                # Mevcut pencereyi güncelle
+                self.webview_window.load_url(url)
+        except Exception as e:
+            logger.error(f"Web görünümü açma hatası: {e}")
+            # Fallback olarak varsayılan tarayıcıda aç
+            webbrowser.open(url)
 
