@@ -21,6 +21,7 @@ from control.factory import get_controller_factory
 from models import ProcessedData
 from utils.helpers import reverse_calculate_value
 from core.camera import CameraModule
+from .monitoring_controller import MonitoringWindow
 
 from .qt_control_panel_interface import Ui_MainWindow
 
@@ -183,6 +184,9 @@ class SimpleGUI(QMainWindow):
         }
 
         self._force_update_cutting_speed = False
+
+        # Monitoring sayfasına geçiş için buton bağlantısı
+        self.ui.btnTracking.clicked.connect(self.open_monitoring_window)
 
     def setup_timers(self):
         """Timer'ları başlatır"""
@@ -1018,3 +1022,8 @@ class SimpleGUI(QMainWindow):
             logger.error(f"Hız gönderme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
             self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
+
+    def open_monitoring_window(self):
+        self.monitoring_window = MonitoringWindow()
+        self.monitoring_window.show()
+        self.close() 
