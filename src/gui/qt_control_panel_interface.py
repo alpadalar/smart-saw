@@ -7,7 +7,6 @@ class Ui_MainWindow(object):
         MainWindow.resize(1920, 1080)
         MainWindow.showFullScreen()
         MainWindow.setStyleSheet("")
-        
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("QWidget#centralwidget {\n"
 "    background-image: url(\"src/gui/images/background.png\");\n"
