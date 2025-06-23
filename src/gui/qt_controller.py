@@ -166,6 +166,7 @@ class SimpleGUI(QMainWindow):
         
         # Timer'ları başlat
         self.setup_timers()
+        self._update_datetime_labels()  # Timer başlatıldıktan hemen sonra saat/tarih güncelle
         
         # Sinyal bağlantılarını kur
         self.setup_connections()
@@ -1024,6 +1025,10 @@ class SimpleGUI(QMainWindow):
             self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
 
     def open_monitoring_window(self):
-        self.monitoring_window = MonitoringWindow()
+        self.monitoring_window = MonitoringWindow(get_data_callback=self.get_current_data)
         self.monitoring_window.show()
-        self.close() 
+        self.close()
+
+    def get_current_data(self):
+        """Anlık verileri döndürür."""
+        return self.current_values.copy() 
