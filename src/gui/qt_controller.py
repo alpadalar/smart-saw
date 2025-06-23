@@ -24,6 +24,8 @@ from core.camera import CameraModule
 
 from .qt_control_panel_interface import Ui_MainWindow
 
+last_meaningful_speed = None
+
 class WorkerSignals(QObject):
     """İşçi thread'leri için sinyal sınıfı"""
     finished = pyqtSignal()
@@ -180,6 +182,8 @@ class SimpleGUI(QMainWindow):
             "fast": {"cutting": 100, "descent": 65},
         }
 
+        self._force_update_cutting_speed = False
+
     def setup_timers(self):
         """Timer'ları başlatır"""
         # Güncelleme timer'ı
@@ -295,23 +299,28 @@ class SimpleGUI(QMainWindow):
                 self.ui.btnNormalSpeed,
                 self.ui.btnFastSpeed
             ]
-            
             # Tüm butonları kapat
             for button in speed_buttons:
                 button.setChecked(False)
-            
             # Tıklanan butonu seç
             clicked_button.setChecked(True)
-            
             # Seçilen butona göre hızı ayarla
             if clicked_button.isChecked():
+                speeds = None
                 if clicked_button == self.ui.btnSlowSpeed:
                     self._send_manual_speed("slow")
+                    speeds = self.speed_values["slow"]
                 elif clicked_button == self.ui.btnNormalSpeed:
                     self._send_manual_speed("normal")
+                    speeds = self.speed_values["normal"]
                 elif clicked_button == self.ui.btnFastSpeed:
                     self._send_manual_speed("fast")
-                
+                    speeds = self.speed_values["fast"]
+                # Hız butonuna basıldığında flag'i ayarla
+                self._force_update_cutting_speed = True
+                # Label'ı doğrudan gönderilen hız değeriyle güncelle
+                if speeds is not None:
+                    self.ui.labelBandCuttingSpeedValue.setText(f"{speeds['cutting']:.1f}")
         except Exception as e:
             logger.error(f"Kesim hızı buton yönetimi hatası: {e}")
             self.add_log(f"Kesim hızı değiştirme hatası: {str(e)}", "ERROR")
@@ -408,6 +417,8 @@ class SimpleGUI(QMainWindow):
 
     def _update_values(self, processed_data: Dict):
         """Gösterilen değerleri günceller"""
+        global last_meaningful_speed
+        ui_speed = None
         try:
             # Temel bilgiler
             # self.current_values['makine_id'] = str(processed_data.get('makine_id', '-'))
@@ -451,16 +462,25 @@ class SimpleGUI(QMainWindow):
             # self.current_values['ivme_olcer_z_hz'] = f"{processed_data.get('ivme_olcer_z_hz', 0):.1f} Hz"
             
             # Hız bilgileri
+            testere_durumu = processed_data.get('testere_durumu', 0)
+            if testere_durumu == TestereState.KESIM_YAPILIYOR.value:
+                # Kesim yapılıyor durumunda güncelle
+                cutting_speed = processed_data.get('serit_kesme_hizi')
+                if cutting_speed is not None:
+                    self.ui.labelBandCuttingSpeedValue.setText(f"{cutting_speed:.1f}")
+                else:
+                    self.ui.labelBandCuttingSpeedValue.setText("NULL")
+            elif getattr(self, '_force_update_cutting_speed', False):
+                # Hız butonuna basıldıysa, sadece makineden gelen hız 0'dan büyükse güncelle
+                cutting_speed = processed_data.get('serit_kesme_hizi')
+                if cutting_speed is not None and cutting_speed > 0:
+                    self.ui.labelBandCuttingSpeedValue.setText(f"{cutting_speed:.1f}")
+                # Eğer flag kullanıldıysa sıfırla
+                self._force_update_cutting_speed = False
+            # current_values güncellemesi her durumda devam etsin
             self.current_values['serit_kesme_hizi'] = f"{processed_data.get('serit_kesme_hizi', 0):.1f} mm/s"
             self.current_values['serit_inme_hizi'] = f"{processed_data.get('serit_inme_hizi', 0):.1f} mm/s"
             
-            # Şerit kesme hızı değerini güncelle
-            cutting_speed = processed_data.get('serit_kesme_hizi')
-            if cutting_speed is not None:
-                self.ui.labelBandCuttingSpeedValue.setText(f"{cutting_speed:.1f}")
-            else:
-                self.ui.labelBandCuttingSpeedValue.setText("NULL")
-                
             # Şerit inme hızı değerini güncelle
             descent_speed = processed_data.get('serit_inme_hizi')
             if descent_speed is not None:
@@ -641,6 +661,8 @@ class SimpleGUI(QMainWindow):
 
     def update_ui(self):
         """UI bileşenlerini günceller"""
+        global last_meaningful_speed
+        ui_speed = None
         try:
 
             print("kadir")
@@ -675,7 +697,11 @@ class SimpleGUI(QMainWindow):
             # self.ui.serit_motor_tork_label.setText(self.current_values['serit_motor_tork_percentage'])
             self.ui.labelBandDescentCurrentValue.setText(self.current_values['inme_motor_akim_a'])
             # self.ui.inme_motor_tork_label.setText(self.current_values['inme_motor_tork_percentage'])
-            self.ui.labelBandCuttingSpeedValue.setText(self.current_values['serit_kesme_hizi'])
+            
+            if last_meaningful_speed is None or self.current_values['serit_kesme_hizi'] >=1:
+                last_meaningful_speed = self.current_values['serit_kesme_hizi']
+                ui_speed = f"{self.current_values['serit_kesme_hizi']:.1f} mm/s"
+            self.ui.labelBandCuttingSpeedValue.setText(ui_speed)
             self.ui.labelBandDescentSpeedValue.setText(self.current_values['serit_inme_hizi'])
             
             # Basınç ve sıcaklık bilgileri
