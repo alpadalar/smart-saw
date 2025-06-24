@@ -5,10 +5,11 @@ from typing import Dict, Callable
 from datetime import datetime
 
 class MonitoringWindow(QMainWindow):
-    def __init__(self, get_data_callback: Callable[[], Dict] = None):
+    def __init__(self, parent=None, get_data_callback: Callable[[], Dict] = None):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.parent = parent
         # Kontrol Paneli butonuna tıklanınca kontrol paneline geç
         self.ui.btnControlPanel.clicked.connect(self.open_control_panel)
         self.get_data_callback = get_data_callback
@@ -31,16 +32,11 @@ class MonitoringWindow(QMainWindow):
                 self.update_ui(data)
 
     def open_control_panel(self):
-        from .qt_controller import SimpleGUI
-        self.control_panel = SimpleGUI()
-        self.control_panel.show()
-        self.close()
+        if self.parent:
+            self.parent.show()
+        self.hide()
 
     def _update_values(self, processed_data: Dict):
-        """
-        Monitoring arayüzündeki label...Value isimli tüm QLabel'ları,
-        processed_data'dan gelen uygun anahtar ile günceller.
-        """
         try:
             label_map = {
                 'labelMakineIDValue': 'makine_id',
