@@ -93,7 +93,7 @@ class SmartSaw:
         self._setup_modbus()
         self._setup_control_loop()
         self._setup_data_loop()
-        self._setup_web_server()
+        # self._setup_web_server()
         
         logger.info("Başlatma tamamlandı")
         
@@ -420,17 +420,17 @@ if __name__ == "__main__":
                 self.data_loop.join(timeout=2)
             
             # Web sunucusunu kapat
-            if hasattr(self, 'web_server') and self.web_server and self.web_server.poll() is None:
-                logger.info("Web sunucusu kapatılıyor...")
-                try:
-                    self.web_server.terminate()  # Güvenli bir şekilde sonlandır
-                    self.web_server.wait(timeout=3)  # En fazla 3 saniye bekle
-                except Exception as e:
-                    logger.error(f"Web sunucusu kapatma hatası: {str(e)}")
-                    try:
-                        self.web_server.kill()  # Son çare olarak zorla sonlandır
-                    except:
-                        pass
+            # if hasattr(self, 'web_server') and self.web_server and self.web_server.poll() is None:
+            #     logger.info("Web sunucusu kapatılıyor...")
+            #     try:
+            #         self.web_server.terminate()  # Güvenli bir şekilde sonlandır
+            #         self.web_server.wait(timeout=3)  # En fazla 3 saniye bekle
+            #     except Exception as e:
+            #         logger.error(f"Web sunucusu kapatma hatası: {str(e)}")
+            #         try:
+            #             self.web_server.kill()  # Son çare olarak zorla sonlandır
+            #         except:
+            #             pass
             
             # Modbus bağlantısını kapat
             if self.modbus_client:
