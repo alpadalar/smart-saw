@@ -497,6 +497,43 @@ class Ui_MainWindow(object):
         self.progressBarHeight.setTextVisible(False)
         self.progressBarHeight.setObjectName("progressBarHeight")
 
+        # Uzunluk labelları (en üst, orta, en alt)
+        self.labelHeightTop = QtWidgets.QLabel(self.headHeightFrame)
+        self.labelHeightTop.setGeometry(QtCore.QRect(75, 78, 50, 32))
+        self.labelHeightTop.setStyleSheet("QLabel{\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: 500;\n"
+"    font-size: 17px;\n"
+"}")
+        self.labelHeightTop.setText("350\nmm")
+        self.labelHeightTop.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
+        self.labelHeightMid = QtWidgets.QLabel(self.headHeightFrame)
+        self.labelHeightMid.setGeometry(QtCore.QRect(75, 187, 50, 32))
+        self.labelHeightMid.setStyleSheet("QLabel{\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: 500;\n"
+"    font-size: 17px;\n"
+"}")
+        self.labelHeightMid.setText("150\nmm")
+        self.labelHeightMid.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
+        self.labelHeightBottom = QtWidgets.QLabel(self.headHeightFrame)
+        self.labelHeightBottom.setGeometry(QtCore.QRect(75, 296, 50, 32))
+        self.labelHeightBottom.setStyleSheet("QLabel{\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: 500;\n"
+"    font-size: 17px;\n"
+"}")
+        self.labelHeightBottom.setText("0\nmm")
+        self.labelHeightBottom.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
         self.labelmm = QtWidgets.QLabel(self.headHeightFrame)
         self.labelmm.setGeometry(QtCore.QRect(170, 210, 41, 34))
         self.labelmm.setStyleSheet("QLabel{\n"
@@ -555,22 +592,22 @@ class Ui_MainWindow(object):
 "    font-size: 20px;\n"
 "}")
         self.labelMaxBandDeviation.setObjectName("labelMaxBandDeviation")
-        self.labelMaxBandDeviationValue = QtWidgets.QLabel(self.maxBandDeviationFrame)
-        self.labelMaxBandDeviationValue.setGeometry(QtCore.QRect(91, 46, 101, 50))
+        self.labelMaxBandDeviationValueA = QtWidgets.QLabel(self.maxBandDeviationFrame)
+        self.labelMaxBandDeviationValueA.setGeometry(QtCore.QRect(91, 46, 101, 50))
         font = QtGui.QFont()
         font.setFamily("Plus-Jakarta-Sans")
         font.setPointSize(-1)
         font.setBold(True)
         font.setWeight(75)
-        self.labelMaxBandDeviationValue.setFont(font)
-        self.labelMaxBandDeviationValue.setStyleSheet("QLabel{\n"
+        self.labelMaxBandDeviationValueA.setFont(font)
+        self.labelMaxBandDeviationValueA.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
 "    color: #F4F6FC;\n"
 "    font-family: \'Plus-Jakarta-Sans\';\n"
 "    font-weight: bold;\n"
 "    font-size: 36px;\n"
 "}")
-        self.labelMaxBandDeviationValue.setObjectName("labelMaxBandDeviationValue")
+        self.labelMaxBandDeviationValueA.setObjectName("labelMaxBandDeviationValue")
         self.systemStatusFrame = QtWidgets.QFrame(self.centralwidget)
         self.systemStatusFrame.setGeometry(QtCore.QRect(1576, 127, 313, 344))
         self.systemStatusFrame.setStyleSheet("QFrame {\n"
@@ -1034,7 +1071,7 @@ class Ui_MainWindow(object):
         self.labelmm.setText(_translate("MainWindow", "mm"))
         self.labelBandDeviation.setText(_translate("MainWindow", "Şerit Sapması"))
         self.labelMaxBandDeviation.setText(_translate("MainWindow", "Şerit Sapması"))
-        self.labelMaxBandDeviationValue.setText(_translate("MainWindow", "16.35"))
+        self.labelMaxBandDeviationValueA.setText(_translate("MainWindow", "55.55"))
         self.labelSystemStatus.setText(_translate("MainWindow", "Sistem Durumu"))
         self.labelBandCuttingSpeed.setText(_translate("MainWindow", "Şerit Kesme Hızı"))
         self.labelBandCuttingInfo.setText(_translate("MainWindow", "Başlangıç hızını\n"

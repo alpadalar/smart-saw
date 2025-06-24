@@ -164,6 +164,8 @@ class SimpleGUI(QMainWindow):
         self.last_update = time.time()
         self.update_interval = 0.1  # 100ms
         
+        self.monitoring_window = None
+        
         # Timer'ları başlat
         self.setup_timers()
         self._update_datetime_labels()  # Timer başlatıldıktan hemen sonra saat/tarih güncelle
@@ -426,45 +428,45 @@ class SimpleGUI(QMainWindow):
         ui_speed = None
         try:
             # Temel bilgiler
-            # self.current_values['makine_id'] = str(processed_data.get('makine_id', '-'))
-            # self.current_values['serit_id'] = str(processed_data.get('serit_id', '-'))
-            # self.current_values['serit_dis_mm'] = str(processed_data.get('serit_dis_mm', '-'))
-            # self.current_values['serit_tip'] = str(processed_data.get('serit_tip', '-'))
-            # self.current_values['serit_marka'] = str(processed_data.get('serit_marka', '-'))
-            # self.current_values['serit_malz'] = str(processed_data.get('serit_malz', '-'))
+            self.current_values['makine_id'] = str(processed_data.get('makine_id', '-'))
+            self.current_values['serit_id'] = str(processed_data.get('serit_id', '-'))
+            self.current_values['serit_dis_mm'] = str(processed_data.get('serit_dis_mm', '-'))
+            self.current_values['serit_tip'] = str(processed_data.get('serit_tip', '-'))
+            self.current_values['serit_marka'] = str(processed_data.get('serit_marka', '-'))
+            self.current_values['serit_malz'] = str(processed_data.get('serit_malz', '-'))
             
             # # Malzeme bilgileri
-            # self.current_values['malzeme_cinsi'] = str(processed_data.get('malzeme_cinsi', '-'))
-            # self.current_values['malzeme_sertlik'] = str(processed_data.get('malzeme_sertlik', '-'))
-            # self.current_values['kesit_yapisi'] = str(processed_data.get('kesit_yapisi', '-'))
-            # self.current_values['a_mm'] = str(processed_data.get('a_mm', '-'))
-            # self.current_values['b_mm'] = str(processed_data.get('b_mm', '-'))
-            # self.current_values['c_mm'] = str(processed_data.get('c_mm', '-'))
-            # self.current_values['d_mm'] = str(processed_data.get('d_mm', '-'))
+            self.current_values['malzeme_cinsi'] = str(processed_data.get('malzeme_cinsi', '-'))
+            self.current_values['malzeme_sertlik'] = str(processed_data.get('malzeme_sertlik', '-'))
+            self.current_values['kesit_yapisi'] = str(processed_data.get('kesit_yapisi', '-'))
+            self.current_values['a_mm'] = str(processed_data.get('a_mm', '-'))
+            self.current_values['b_mm'] = str(processed_data.get('b_mm', '-'))
+            self.current_values['c_mm'] = str(processed_data.get('c_mm', '-'))
+            self.current_values['d_mm'] = str(processed_data.get('d_mm', '-'))
             
             # Motor ve hareket bilgileri
-            self.current_values['kafa_yuksekligi_mm'] = f"{processed_data.get('kafa_yuksekligi_mm', 0):.1f} mm"
-            self.current_values['serit_motor_akim_a'] = f"{processed_data.get('serit_motor_akim_a', 0):.1f} A"
-            # self.current_values['serit_motor_tork_percentage'] = f"{processed_data.get('serit_motor_tork_percentage', 0):.1f} %"
-            self.current_values['inme_motor_akim_a'] = f"{processed_data.get('inme_motor_akim_a', 0):.1f} A"
-            # self.current_values['inme_motor_tork_percentage'] = f"{processed_data.get('inme_motor_tork_percentage', 0):.1f} %"
+            self.current_values['kafa_yuksekligi_mm'] = f"{processed_data.get('kafa_yuksekligi_mm', 0):.1f} "
+            self.current_values['serit_motor_akim_a'] = f"{processed_data.get('serit_motor_akim_a', 0):.1f} "
+            self.current_values['serit_motor_tork_percentage'] = f"{processed_data.get('serit_motor_tork_percentage', 0):.1f} "
+            self.current_values['inme_motor_akim_a'] = f"{processed_data.get('inme_motor_akim_a', 0):.1f} "
+            self.current_values['inme_motor_tork_percentage'] = f"{processed_data.get('inme_motor_tork_percentage', 0):.1f} "
             
             # Basınç ve sıcaklık bilgileri
-            # self.current_values['mengene_basinc_bar'] = f"{processed_data.get('mengene_basinc_bar', 0):.1f} bar"
-            # self.current_values['serit_gerginligi_bar'] = f"{processed_data.get('serit_gerginligi_bar', 0):.1f} bar"
-            self.current_values['serit_sapmasi'] = f"{processed_data.get('serit_sapmasi', 0):.2f} mm"
-            # self.current_values['ortam_sicakligi_c'] = f"{processed_data.get('ortam_sicakligi_c', 0):.1f} °C"
-            # self.current_values['ortam_nem_percentage'] = f"{processed_data.get('ortam_nem_percentage', 0):.1f} %"
-            # self.current_values['sogutma_sivi_sicakligi_c'] = f"{processed_data.get('sogutma_sivi_sicakligi_c', 0):.1f} °C"
-            # self.current_values['hidrolik_yag_sicakligi_c'] = f"{processed_data.get('hidrolik_yag_sicakligi_c', 0):.1f} °C"
+            self.current_values['mengene_basinc_bar'] = f"{processed_data.get('mengene_basinc_bar', 0):.1f} "
+            self.current_values['serit_gerginligi_bar'] = f"{processed_data.get('serit_gerginligi_bar', 0):.1f} "
+            self.current_values['serit_sapmasi'] = f"{processed_data.get('serit_sapmasi', 0):.2f} "
+            self.current_values['ortam_sicakligi_c'] = f"{processed_data.get('ortam_sicakligi_c', 0):.1f} "
+            self.current_values['ortam_nem_percentage'] = f"{processed_data.get('ortam_nem_percentage', 0):.1f} "
+            self.current_values['sogutma_sivi_sicakligi_c'] = f"{processed_data.get('sogutma_sivi_sicakligi_c', 0):.1f} "
+            self.current_values['hidrolik_yag_sicakligi_c'] = f"{processed_data.get('hidrolik_yag_sicakligi_c', 0):.1f} "
             
             # İvme ölçer bilgileri
-            # self.current_values['ivme_olcer_x'] = f"{processed_data.get('ivme_olcer_x', 0):.3f} g"
-            # self.current_values['ivme_olcer_y'] = f"{processed_data.get('ivme_olcer_y', 0):.3f} g"
-            # self.current_values['ivme_olcer_z'] = f"{processed_data.get('ivme_olcer_z', 0):.3f} g"
-            # self.current_values['ivme_olcer_x_hz'] = f"{processed_data.get('ivme_olcer_x_hz', 0):.1f} Hz"
-            # self.current_values['ivme_olcer_y_hz'] = f"{processed_data.get('ivme_olcer_y_hz', 0):.1f} Hz"
-            # self.current_values['ivme_olcer_z_hz'] = f"{processed_data.get('ivme_olcer_z_hz', 0):.1f} Hz"
+            self.current_values['ivme_olcer_x'] = f"{processed_data.get('ivme_olcer_x', 0):.3f} "
+            self.current_values['ivme_olcer_y'] = f"{processed_data.get('ivme_olcer_y', 0):.3f} "
+            self.current_values['ivme_olcer_z'] = f"{processed_data.get('ivme_olcer_z', 0):.3f} "
+            self.current_values['ivme_olcer_x_hz'] = f"{processed_data.get('ivme_olcer_x_hz', 0):.1f} "
+            self.current_values['ivme_olcer_y_hz'] = f"{processed_data.get('ivme_olcer_y_hz', 0):.1f} "
+            self.current_values['ivme_olcer_z_hz'] = f"{processed_data.get('ivme_olcer_z_hz', 0):.1f} "
             
             # Hız bilgileri
             testere_durumu = processed_data.get('testere_durumu', 0)
@@ -483,8 +485,8 @@ class SimpleGUI(QMainWindow):
                 # Eğer flag kullanıldıysa sıfırla
                 self._force_update_cutting_speed = False
             # current_values güncellemesi her durumda devam etsin
-            self.current_values['serit_kesme_hizi'] = f"{processed_data.get('serit_kesme_hizi', 0):.1f} mm/s"
-            self.current_values['serit_inme_hizi'] = f"{processed_data.get('serit_inme_hizi', 0):.1f} mm/s"
+            self.current_values['serit_kesme_hizi'] = f"{processed_data.get('serit_kesme_hizi', 0):.1f} "
+            self.current_values['serit_inme_hizi'] = f"{processed_data.get('serit_inme_hizi', 0):.1f} "
             
             # Şerit inme hızı değerini güncelle
             descent_speed = processed_data.get('serit_inme_hizi')
@@ -712,7 +714,7 @@ class SimpleGUI(QMainWindow):
             # Basınç ve sıcaklık bilgileri
             # self.ui.mengene_basinc_label.setText(self.current_values['mengene_basinc_bar'])
             # self.ui.serit_gerginlik_label.setText(self.current_values['serit_gerginligi_bar'])
-            self.ui.labelMaxBandDeviationValue.setText(self.current_values['serit_sapmasi'])
+            self.ui.labelMaxBandDeviationValueA.setText(self.current_values['serit_sapmasi'])
             # self.ui.ortam_sicaklik_label.setText(self.current_values['ortam_sicakligi_c'])
             # self.ui.ortam_nem_label.setText(self.current_values['ortam_nem_percentage'])
             # self.ui.sogutma_sivi_sicaklik_label.setText(self.current_values['sogutma_sivi_sicakligi_c'])
@@ -1025,9 +1027,10 @@ class SimpleGUI(QMainWindow):
             self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
 
     def open_monitoring_window(self):
-        self.monitoring_window = MonitoringWindow(get_data_callback=self.get_current_data)
+        if self.monitoring_window is None:
+            self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_current_data)
         self.monitoring_window.show()
-        self.close()
+        self.hide()
 
     def get_current_data(self):
         """Anlık verileri döndürür."""
