@@ -35,17 +35,18 @@ class MonitoringWindow(QMainWindow):
                 self.update_ui(data)
 
     def open_control_panel(self):
+        # Kamera veya başka bir pencereyi gizle, ana pencereyi göster
         if self.parent:
+            self.hide()
             self.parent.show()
-        self.hide()
 
     def open_camera_window(self):
-        # Lazy import to avoid circular dependency
-        if self.camera_window is None:
+        # CameraWindow instance'ı yoksa oluştur, varsa tekrar kullan
+        if self.camera_window is None or not self.camera_window.isVisible():
             from .camera_controller import CameraWindow
-            self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
-        self.camera_window.show()
+            self.camera_window = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
         self.hide()
+        self.camera_window.show()
 
     def _update_values(self, processed_data: Dict):
         try:
