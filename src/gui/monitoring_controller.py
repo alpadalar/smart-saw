@@ -12,7 +12,10 @@ class MonitoringWindow(QMainWindow):
         self.parent = parent
         # Kontrol Paneli butonuna tıklanınca kontrol paneline geç
         self.ui.btnControlPanel.clicked.connect(self.open_control_panel)
+        # Kamera butonuna tıklanınca kamera penceresine geç
+        self.ui.btnCamera.clicked.connect(self.open_camera_window)
         self.get_data_callback = get_data_callback
+        self.camera_window = None
 
         # Timer başlat
         self.timer = QTimer(self)
@@ -34,6 +37,14 @@ class MonitoringWindow(QMainWindow):
     def open_control_panel(self):
         if self.parent:
             self.parent.show()
+        self.hide()
+
+    def open_camera_window(self):
+        # Lazy import to avoid circular dependency
+        if self.camera_window is None:
+            from .camera_controller import CameraWindow
+            self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
+        self.camera_window.show()
         self.hide()
 
     def _update_values(self, processed_data: Dict):

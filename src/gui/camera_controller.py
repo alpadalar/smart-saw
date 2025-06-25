@@ -1,0 +1,72 @@
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import QTimer
+from .qt_camera_interface import Ui_MainWindow
+from typing import Dict, Callable
+from datetime import datetime
+
+class CameraWindow(QMainWindow):
+    def __init__(self, parent=None, get_data_callback: Callable[[], Dict] = None):
+        super().__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.parent = parent
+        # Kontrol Paneli butonuna tıklanınca kontrol paneline geç
+        self.ui.btnControlPanel.clicked.connect(self.open_control_panel)
+        # İzleme butonuna tıklanınca monitoring penceresine geç
+        self.ui.btnTracking.clicked.connect(self.open_monitoring_window)
+        self.get_data_callback = get_data_callback
+        self.monitoring_window = None
+
+        # Timer başlat
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.periodic_update)
+        self.timer.start(1000)  # Her saniye güncelle
+        self.periodic_update()  # İlk açılışta hemen güncelle
+
+    def periodic_update(self):
+        # Saat ve tarihi güncelle
+        now = datetime.now()
+        self.ui.labelDate.setText(now.strftime('%d.%m.%Y %A'))
+        self.ui.labelTime.setText(now.strftime('%H:%M'))
+        # Verileri güncelle
+        if self.get_data_callback:
+            data = self.get_data_callback()
+            if data:
+                self.update_ui(data)
+
+    def open_control_panel(self):
+        if self.parent:
+            self.parent.show()
+        self.hide()
+
+    def open_monitoring_window(self):
+        # Lazy import to avoid circular dependency
+        if self.monitoring_window is None:
+            from .monitoring_controller import MonitoringWindow
+            self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
+        self.monitoring_window.show()
+        self.hide()
+
+    def _update_values(self, processed_data: Dict):
+        try:
+            # Kamera penceresinde gösterilecek değerleri güncelle
+            # Bu değerler kamera ile ilgili olabilir veya genel sistem durumu
+            label_map = {
+                'labelTestereSagligiValue': 'testere_sagligi',  # Eğer varsa
+                'labelAsinmaYuzdesiValue': 'asinma_yuzdesi',    # Eğer varsa
+                'labelTestereDurumuValue': 'testere_durumu',
+                'labelTespitEdilenKirikValue': 'tespit_edilen_kirik',  # Eğer varsa
+                'labelTespitEdilenDisValue': 'tespit_edilen_dis',      # Eğer varsa
+            }
+            
+            for label_name, data_key in label_map.items():
+                value = processed_data.get(data_key, '-')
+                label_widget = getattr(self.ui, label_name, None)
+                if label_widget:
+                    label_widget.setText(str(value))
+                    
+        except Exception as e:
+            print(f"Camera _update_values hata: {e}")
+
+    def update_ui(self, processed_data: Dict):
+        self._update_values(processed_data) 

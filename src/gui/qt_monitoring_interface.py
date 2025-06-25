@@ -4,18 +4,20 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1920, 1080)
-        MainWindow.showFullScreen()
         MainWindow.setStyleSheet("")
+        MainWindow.showFullScreen()
         self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setStyleSheet("QWidget#centralwidget {\n"
-"    background-image: url(\"src/gui/images/background.png\");\n"
-"    background-repeat: no-repeat;\n"
-"    background-position: center;\n"
-"    background-attachment: fixed;\n"
-"}\n"
-"")
+        self.centralwidget.setStyleSheet("""
+QWidget#centralwidget {
+    background-image: url('src/gui/images/background.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+""")
         self.centralwidget.setObjectName("centralwidget")
+        self.centralwidget.setContentsMargins(0, 0, 0, 0)
+        self.centralwidget.setFixedSize(MainWindow.size())
         self.sidebarFrame = QtWidgets.QFrame(self.centralwidget)
         self.sidebarFrame.setGeometry(QtCore.QRect(0, 0, 392, 1080))
         self.sidebarFrame.setStyleSheet("QFrame {\n"
@@ -1526,13 +1528,6 @@ class Ui_MainWindow(object):
 "}")
         self.labelInmeMotorTorkValue.setObjectName("labelInmeMotorTorkValue")
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 21))
-        self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)

@@ -22,6 +22,7 @@ from models import ProcessedData
 from utils.helpers import reverse_calculate_value
 from core.camera import CameraModule
 from .monitoring_controller import MonitoringWindow
+from .camera_controller import CameraWindow
 
 from .qt_control_panel_interface import Ui_MainWindow
 
@@ -165,6 +166,7 @@ class SimpleGUI(QMainWindow):
         self.update_interval = 0.1  # 100ms
         
         self.monitoring_window = None
+        self.camera_window = None
         
         # Timer'ları başlat
         self.setup_timers()
@@ -190,6 +192,9 @@ class SimpleGUI(QMainWindow):
 
         # Monitoring sayfasına geçiş için buton bağlantısı
         self.ui.btnTracking.clicked.connect(self.open_monitoring_window)
+        
+        # Kamera sayfasına geçiş için buton bağlantısı
+        self.ui.btnCamera.clicked.connect(self.open_camera_window)
 
     def setup_timers(self):
         """Timer'ları başlatır"""
@@ -1030,6 +1035,12 @@ class SimpleGUI(QMainWindow):
         if self.monitoring_window is None:
             self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_current_data)
         self.monitoring_window.show()
+        self.hide()
+
+    def open_camera_window(self):
+        if self.camera_window is None:
+            self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_current_data)
+        self.camera_window.show()
         self.hide()
 
     def get_current_data(self):
