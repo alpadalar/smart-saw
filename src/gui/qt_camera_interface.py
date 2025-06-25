@@ -253,7 +253,10 @@ QWidget#centralwidget {
 "        x1:0, y1:0, x2:0, y2:1,\n"
 "        stop:0 rgba(6, 11, 38, 240),\n"
 "        stop:1 rgba(26, 31, 55, 0)\n"
-"    );\n"
+"    ), url('src/gui/camera_test/test-1.jpg');\n"
+"    background-repeat: no-repeat;\n"
+"    background-position: center top;\n"
+"    background-size: contain;\n"
 "    border-radius: 20px;\n"
 "}\n"
 "")
