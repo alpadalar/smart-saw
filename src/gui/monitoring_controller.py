@@ -14,8 +14,13 @@ class MonitoringWindow(QMainWindow):
         self.ui.btnControlPanel.clicked.connect(self.open_control_panel)
         # Kamera butonuna tıklanınca kamera penceresine geç
         self.ui.btnCamera.clicked.connect(self.open_camera_window)
+        # Sensör butonuna tıklanınca sensör penceresine geç
+        self.ui.btnSensor.clicked.connect(self.open_sensor_window)
+        # İzleme butonuna tıklanınca izleme penceresine geç (zaten açık)
+        self.ui.btnTracking.clicked.connect(self.open_monitoring_window)
         self.get_data_callback = get_data_callback
         self.camera_window = None
+        self.sensor_window = None
 
         # Timer başlat
         self.timer = QTimer(self)
@@ -47,6 +52,18 @@ class MonitoringWindow(QMainWindow):
             self.camera_window = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
         self.hide()
         self.camera_window.show()
+
+    def open_sensor_window(self):
+        # SensorWindow instance'ı yoksa oluştur, varsa tekrar kullan
+        if self.sensor_window is None or not self.sensor_window.isVisible():
+            from .sensor_controller import SensorWindow
+            self.sensor_window = SensorWindow(parent=self.parent, get_data_callback=self.get_data_callback)
+        self.hide()
+        self.sensor_window.show()
+
+    def open_monitoring_window(self):
+        # MonitoringWindow instance'ı zaten açık
+        pass
 
     def _update_values(self, processed_data: Dict):
         try:
