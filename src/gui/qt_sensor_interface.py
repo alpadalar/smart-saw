@@ -237,7 +237,7 @@ QWidget#centralwidget {
 "")
         self.labelDate.setObjectName("labelDate")
         self.labelTime = QtWidgets.QLabel(self.notificationFrame)
-        self.labelTime.setGeometry(QtCore.QRect(1348, 13, 62, 34))
+        self.labelTime.setGeometry(QtCore.QRect(1348, 13, 80, 34))
         self.labelTime.setStyleSheet("QLabel {\n"
 "    color: #F4F6FC;\n"
 "    font-family: \'Plus Jakarta Sans\';\n"
