@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTextEdit, QWidget, QVBoxLayout, QLabel, QApplication, QInputDialog, QFrame, QScrollArea
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, QTimer, Qt, QRect
-from PyQt5.QtGui import QTextCursor, QColor, QFont, QPalette, QTextCharFormat
+from PyQt5.QtGui import QTextCursor, QColor, QFont, QPalette, QTextCharFormat, QIcon
 import logging
 import time
 from datetime import datetime
@@ -200,6 +200,8 @@ class SimpleGUI(QMainWindow):
         
         # Sensör sayfasına geçiş için buton bağlantısı
         self.ui.btnSensor.clicked.connect(self.open_sensor_window)
+
+        self.set_active_nav("btnControlPanel")
 
     def setup_timers(self):
         """Timer'ları başlatır"""
@@ -1039,21 +1041,38 @@ class SimpleGUI(QMainWindow):
     def open_monitoring_window(self):
         if self.monitoring_window is None:
             self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_current_data)
+        self.monitoring_window.set_active_nav("btnTracking")
         self.monitoring_window.show()
         self.hide()
 
     def open_camera_window(self):
         if self.camera_window is None:
             self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_current_data)
+        self.camera_window.set_active_nav("btnCamera")
         self.camera_window.show()
         self.hide()
 
     def open_sensor_window(self):
         if self.sensor_window is None:
             self.sensor_window = SensorWindow(parent=self, get_data_callback=self.get_current_data)
+        self.sensor_window.set_active_nav("btnSensor")
         self.sensor_window.show()
         self.hide()
 
     def get_current_data(self):
         """Anlık verileri döndürür."""
         return self.current_values.copy() 
+
+    def set_active_nav(self, active_btn_name):
+        btns = [
+            (self.ui.btnControlPanel, QIcon("src/gui/images/control-panel-icon2.svg"), QIcon("src/gui/images/control-panel-icon2-active.svg")),
+            (self.ui.btnPositioning, QIcon("src/gui/images/positioning-icon2.svg"), QIcon("src/gui/images/positioning-icon2-active.svg")),
+            (self.ui.btnCamera, QIcon("src/gui/images/camera-icon2.svg"), QIcon("src/gui/images/camera-icon-active.svg")),
+            (self.ui.btnSensor, QIcon("src/gui/images/sensor-icon2.svg"), QIcon("src/gui/images/sensor-icon2-active.svg")),
+            (self.ui.btnTracking, QIcon("src/gui/images/tracking-icon2.svg"), QIcon("src/gui/images/tracking-icon2-active.svg")),
+        ]
+        for btn, icon_passive, icon_active in btns:
+            if btn.objectName() == active_btn_name:
+                btn.setIcon(icon_active)
+            else:
+                btn.setIcon(icon_passive) 

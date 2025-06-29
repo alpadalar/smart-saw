@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTextEdit, QWidget, QVBoxLayout, QLabel, QApplication, QInputDialog, QFrame, QScrollArea
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, QTimer, Qt, QRect
-from PyQt5.QtGui import QTextCursor, QColor, QFont, QPalette, QTextCharFormat
+from PyQt5.QtGui import QTextCursor, QColor, QFont, QPalette, QTextCharFormat, QIcon
 import logging
 import time
 from datetime import datetime
@@ -60,6 +60,8 @@ class SensorWindow(QMainWindow):
         
         # Başlangıç değerlerini ayarla
         self.update_ui()
+
+        self.set_active_nav("btnSensor")
 
     def setup_timers(self):
         """Timer'ları başlatır"""
@@ -491,81 +493,85 @@ class SensorWindow(QMainWindow):
         except Exception as e:
             logger.error(f"Sensör sayfası UI güncelleme hatası: {e}")
 
+    def set_active_nav(self, active_btn_name):
+        btns = [
+            (self.ui.btnControlPanel, QIcon("src/gui/images/control-panel-icon2.svg"), QIcon("src/gui/images/control-panel-icon2-active.svg")),
+            (self.ui.btnPositioning, QIcon("src/gui/images/positioning-icon2.svg"), QIcon("src/gui/images/positioning-icon2-active.svg")),
+            (self.ui.btnCamera, QIcon("src/gui/images/camera-icon2.svg"), QIcon("src/gui/images/camera-icon-active.svg")),
+            (self.ui.btnSensor, QIcon("src/gui/images/sensor-icon2.svg"), QIcon("src/gui/images/sensor-icon2-active.svg")),
+            (self.ui.btnTracking, QIcon("src/gui/images/tracking-icon2.svg"), QIcon("src/gui/images/tracking-icon2-active.svg")),
+        ]
+        for btn, icon_passive, icon_active in btns:
+            if btn.objectName() == active_btn_name:
+                btn.setIcon(icon_active)
+            else:
+                btn.setIcon(icon_passive)
+
     def open_control_panel(self):
         """Kontrol paneli sayfasını açar"""
-        try:
-            if self.parent:
-                self.parent.show()
-                self.hide()
-            else:
-                # Eğer parent yoksa yeni bir kontrol paneli oluştur
-                from .qt_controller import SimpleGUI
-                self.control_panel = SimpleGUI()
-                self.control_panel.show()
-                self.hide()
-        except Exception as e:
-            logger.error(f"Kontrol paneli açma hatası: {e}")
+        if self.parent:
+            self.parent.set_active_nav("btnControlPanel")
+            self.parent.show()
+            self.hide()
+        else:
+            from .qt_controller import SimpleGUI
+            self.control_panel = SimpleGUI()
+            self.control_panel.set_active_nav("btnControlPanel")
+            self.control_panel.show()
+            self.hide()
 
     def open_positioning(self):
         """Konumlandırma sayfasını açar"""
-        try:
-            # Konumlandırma sayfası henüz oluşturulmamış, şimdilik kontrol paneline yönlendir
-            self.open_control_panel()
-        except Exception as e:
-            logger.error(f"Konumlandırma sayfası açma hatası: {e}")
+        self.set_active_nav("btnPositioning")
+        self.open_control_panel()
 
     def open_camera_window(self):
         """Kamera sayfasını açar"""
-        try:
-            if self.parent:
-                # Parent'tan kamera penceresini al veya oluştur
-                if hasattr(self.parent, 'camera_window'):
-                    if self.parent.camera_window is None:
-                        from .camera_controller import CameraWindow
-                        self.parent.camera_window = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
-                    self.parent.camera_window.show()
-                    self.hide()
-                else:
+        if self.parent:
+            if hasattr(self.parent, 'camera_window'):
+                if self.parent.camera_window is None:
                     from .camera_controller import CameraWindow
-                    self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
-                    self.camera_window.show()
-                    self.hide()
+                    self.parent.camera_window = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
+                self.parent.camera_window.set_active_nav("btnCamera")
+                self.parent.camera_window.show()
+                self.hide()
             else:
                 from .camera_controller import CameraWindow
                 self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
+                self.camera_window.set_active_nav("btnCamera")
                 self.camera_window.show()
                 self.hide()
-        except Exception as e:
-            logger.error(f"Kamera sayfası açma hatası: {e}")
+        else:
+            from .camera_controller import CameraWindow
+            self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
+            self.camera_window.set_active_nav("btnCamera")
+            self.camera_window.show()
+            self.hide()
 
     def open_sensor_window(self):
         """Sensör sayfasını açar (zaten açık)"""
-        try:
-            # Zaten sensör sayfasındayız, hiçbir şey yapma
-            pass
-        except Exception as e:
-            logger.error(f"Sensör sayfası açma hatası: {e}")
+        self.set_active_nav("btnSensor")
+        pass
 
     def open_monitoring_window(self):
         """İzleme sayfasını açar"""
-        try:
-            if self.parent:
-                # Parent'tan monitoring penceresini al veya oluştur
-                if hasattr(self.parent, 'monitoring_window'):
-                    if self.parent.monitoring_window is None:
-                        from .monitoring_controller import MonitoringWindow
-                        self.parent.monitoring_window = MonitoringWindow(parent=self.parent, get_data_callback=self.get_data_callback)
-                    self.parent.monitoring_window.show()
-                    self.hide()
-                else:
+        if self.parent:
+            if hasattr(self.parent, 'monitoring_window'):
+                if self.parent.monitoring_window is None:
                     from .monitoring_controller import MonitoringWindow
-                    self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
-                    self.monitoring_window.show()
-                    self.hide()
+                    self.parent.monitoring_window = MonitoringWindow(parent=self.parent, get_data_callback=self.get_data_callback)
+                self.parent.monitoring_window.set_active_nav("btnTracking")
+                self.parent.monitoring_window.show()
+                self.hide()
             else:
                 from .monitoring_controller import MonitoringWindow
                 self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
+                self.monitoring_window.set_active_nav("btnTracking")
                 self.monitoring_window.show()
                 self.hide()
-        except Exception as e:
-            logger.error(f"İzleme sayfası açma hatası: {e}") 
+        else:
+            from .monitoring_controller import MonitoringWindow
+            self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
+            self.monitoring_window.set_active_nav("btnTracking")
+            self.monitoring_window.show()
+            self.hide() 
