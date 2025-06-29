@@ -91,14 +91,14 @@ class SensorWindow(QMainWindow):
             self.ui.btnTracking.clicked.connect(self.open_monitoring_window)
             
             # X ekseni butonları için bağlantılar
-            self.ui.btnKesmeHizi.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnKesmeHizi))
-            self.ui.btnIlerlemeHizi.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnIlerlemeHizi))
-            self.ui.btnSeritAkim.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnSeritAkim))
-            self.ui.btnSeritSapmasi.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnSeritSapmasi))
+            # self.ui.btnKesmeHizi.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnKesmeHizi))
+            # self.ui.btnIlerlemeHizi.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnIlerlemeHizi))
+            # self.ui.btnSeritAkim.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnSeritAkim))
+            # self.ui.btnSeritSapmasi.clicked.connect(lambda: self._handle_x_axis_buttons(self.ui.btnSeritSapmasi))
             
-            # Y ekseni butonları için bağlantılar
-            self.ui.btnZaman.clicked.connect(lambda: self._handle_y_axis_buttons(self.ui.btnZaman))
-            self.ui.btnYukseklik.clicked.connect(lambda: self._handle_y_axis_buttons(self.ui.btnYukseklik))
+            # # Y ekseni butonları için bağlantılar
+            # self.ui.btnZaman.clicked.connect(lambda: self._handle_y_axis_buttons(self.ui.btnZaman))
+            # self.ui.btnYukseklik.clicked.connect(lambda: self._handle_y_axis_buttons(self.ui.btnYukseklik))
             
             # Başlangıç değerlerini ayarla
             self._update_datetime_labels()
@@ -443,7 +443,10 @@ class SensorWindow(QMainWindow):
                 self.ui.labelTitresimZInfo.setText("Her şey yolunda.")
             
         except Exception as e:
-            logger.error(f"Anomali kontrol hatası: {e}")
+            # Sadece bir kere uyarı ver ve sonra sessizce devam et
+            if not hasattr(self, '_anomaly_error_logged'):
+                logger.warning(f"Anomali kontrol hatası (bir kere uyarı): {e}")
+                self._anomaly_error_logged = True
 
     def update_ui(self):
         """UI bileşenlerini günceller"""
