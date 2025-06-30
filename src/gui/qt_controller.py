@@ -24,6 +24,7 @@ from core.camera import CameraModule
 from .monitoring_controller import MonitoringWindow
 from .camera_controller import CameraWindow
 from .sensor_controller import SensorWindow
+from .numpad import NumpadDialog
 
 from .qt_control_panel_interface import Ui_MainWindow
 
@@ -621,13 +622,13 @@ class SimpleGUI(QMainWindow):
         try:
             if connected:
                 self.current_values['modbus_status'] = f"Bağlı ({ip})"
-                self.ui.modbus_status_label.setStyleSheet("color: green")
+                # self.ui.modbus_status_label.setStyleSheet("color: green")
                 # Bağlantı kurulduğunda sistem durumu etiketini temizle veya varsayılana döndür
                 # Veri geldiğinde _update_values metodu güncel durumu yazacaktır.
                 self.ui.labelSystemStatusInfo.setText("Veri bekleniyor...")
             else:
                 self.current_values['modbus_status'] = f"Bağlantı Yok ({ip})"
-                self.ui.modbus_status_label.setStyleSheet("color: red")
+                # self.ui.modbus_status_label.setStyleSheet("color: red")
                 self.ui.labelSystemStatusInfo.setText("Bağlantı Yok")
         except Exception as e:
             logger.error(f"Modbus durum güncelleme hatası: {e}")
@@ -939,28 +940,21 @@ class SimpleGUI(QMainWindow):
                 initial_value = float(current_value) if current_value != "NULL" else 0.0
             except ValueError:
                 initial_value = 0.0
-            
-            # QInputDialog ile kullanıcıdan değer al
-            value, ok = QInputDialog.getDouble(
-                self,
-                "Kesme Hızı Ayarı",
-                "Kesme hızını girin (mm/s):",
-                initial_value,
-                0,  # minimum değer
-                100,  # maximum değer
-                2  # ondalık basamak sayısı
-            )
-            
-            if ok and value > 0:  # Geçerli bir değer girildiyse
-                # Manuel hız gönderme fonksiyonunu çağır
-                self._send_manual_speed_value(value)
-                
-                # Label'ı güncelle
-                self.ui.labelBandCuttingSpeedValue.setText(f"{value:.2f}")
-                
-                # Log ekle
-                self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
-                
+            # NumpadDialog ile kullanıcıdan değer al
+            dialog = NumpadDialog(self)
+            dialog.value = str(int(initial_value)) if initial_value != 0.0 else ""
+            dialog.update_label()
+            if dialog.exec_() == dialog.Accepted:
+                value_str = dialog.get_value()
+                try:
+                    value = float(value_str.replace(",", "."))
+                except Exception:
+                    value = 0.0
+                if value > 0:
+                    self._send_manual_speed_value(value)
+                    self.current_values['serit_kesme_hizi'] = value
+                    self.ui.labelBandCuttingSpeedValue.setText(f"{value:.2f}")
+                    self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"Kesme hızı ayarlama hatası: {e}")
             self.add_log(f"Kesme hızı ayarlama hatası: {str(e)}", "ERROR")
@@ -994,28 +988,21 @@ class SimpleGUI(QMainWindow):
                 initial_value = float(current_value) if current_value != "NULL" else 0.0
             except ValueError:
                 initial_value = 0.0
-            
-            # QInputDialog ile kullanıcıdan değer al
-            value, ok = QInputDialog.getDouble(
-                self,
-                "İnme Hızı Ayarı",
-                "İnme hızını girin (mm/s):",
-                initial_value,
-                0,  # minimum değer
-                100,  # maximum değer
-                2  # ondalık basamak sayısı
-            )
-            
-            if ok and value > 0:  # Geçerli bir değer girildiyse
-                # Manuel hız gönderme fonksiyonunu çağır
-                self._send_manual_descent_speed_value(value)
-                
-                # Label'ı güncelle
-                self.ui.labelBandDescentSpeedValue.setText(f"{value:.2f}")
-                
-                # Log ekle
-                self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
-                
+            # NumpadDialog ile kullanıcıdan değer al
+            dialog = NumpadDialog(self)
+            dialog.value = str(int(initial_value)) if initial_value != 0.0 else ""
+            dialog.update_label()
+            if dialog.exec_() == dialog.Accepted:
+                value_str = dialog.get_value()
+                try:
+                    value = float(value_str.replace(",", "."))
+                except Exception:
+                    value = 0.0
+                if value > 0:
+                    self._send_manual_descent_speed_value(value)
+                    self.current_values['serit_inme_hizi'] = value
+                    self.ui.labelBandDescentSpeedValue.setText(f"{value:.2f}")
+                    self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"İnme hızı ayarlama hatası: {e}")
             self.add_log(f"İnme hızı ayarlama hatası: {str(e)}", "ERROR")
