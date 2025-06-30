@@ -1581,6 +1581,38 @@ Sapması</string>
       </widget>
      </widget>
     </widget>
+    <widget class="QToolButton" name="toolButton">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>10</y>
+       <width>60</width>
+       <height>60</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">    background: qlineargradient(
+    spread:pad, 
+    x1:0, y1:0, 
+    x2:0.5, y2:0.5, 
+    stop:0 rgba(0, 0, 0, 255), 
+    stop:1 rgba(124, 4, 66, 255));
+    border-radius: 20px;</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>images/icons8-cross-30.png</normaloff>images/icons8-cross-30.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>30</width>
+       <height>30</height>
+      </size>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="YEkseniFrame">
     <property name="geometry">

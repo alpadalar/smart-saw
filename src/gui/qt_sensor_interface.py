@@ -436,6 +436,23 @@ QWidget#centralwidget {
 "    font-size: 32px;\n"
 "}")
         self.labelAnomaliDurumu.setObjectName("labelAnomaliDurumu")
+        
+        # toolButton eklemesi
+        self.toolButton = QtWidgets.QToolButton(self.AnomaliDurumuFrame)
+        self.toolButton.setGeometry(QtCore.QRect(420, 10, 60, 60))
+        self.toolButton.setStyleSheet("    background: qlineargradient(\n"
+"    spread:pad, \n"
+"    x1:0, y1:0, \n"
+"    x2:0.5, y2:0.5, \n"
+"    stop:0 rgba(0, 0, 0, 255), \n"
+"    stop:1 rgba(124, 4, 66, 255));\n"
+"    border-radius: 20px;")
+        self.toolButton.setText("")
+        icon5 = QtGui.QIcon()
+        icon5.addPixmap(QtGui.QPixmap("src\\gui\\images/icons8-cross-30.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.toolButton.setIcon(icon5)
+        self.toolButton.setIconSize(QtCore.QSize(30, 30))
+        self.toolButton.setObjectName("toolButton")
         self.MotorVerileriFrame = QtWidgets.QFrame(self.AnomaliDurumuFrame)
         self.MotorVerileriFrame.setGeometry(QtCore.QRect(23, 77, 459, 297))
         self.MotorVerileriFrame.setStyleSheet("QFrame {\n"
