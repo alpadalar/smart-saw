@@ -701,6 +701,11 @@ class SimpleGUI(QMainWindow):
             # self.ui.b_mm_label.setText(self.current_values['b_mm'])
             # self.ui.c_mm_label.setText(self.current_values['c_mm'])
             # self.ui.d_mm_label.setText(self.current_values['d_mm'])
+
+            self.ui.labelMaxBandDeviationValueA.setText(self.current_values['serit_sapmasi'])
+
+            # Sistem durumu etiketi
+            self.ui.labelSystemStatusInfo.setText(self.current_values['testere_durumu'])
             
             # Motor ve hareket bilgileri
             self.ui.labelValue.setText(self.current_values['kafa_yuksekligi_mm'])
@@ -726,7 +731,6 @@ class SimpleGUI(QMainWindow):
             # Basınç ve sıcaklık bilgileri
             # self.ui.mengene_basinc_label.setText(self.current_values['mengene_basinc_bar'])
             # self.ui.serit_gerginlik_label.setText(self.current_values['serit_gerginligi_bar'])
-            self.ui.labelMaxBandDeviationValueA.setText(self.current_values['serit_sapmasi'])
             # self.ui.ortam_sicaklik_label.setText(self.current_values['ortam_sicakligi_c'])
             # self.ui.ortam_nem_label.setText(self.current_values['ortam_nem_percentage'])
             # self.ui.sogutma_sivi_sicaklik_label.setText(self.current_values['sogutma_sivi_sicakligi_c'])
@@ -750,8 +754,6 @@ class SimpleGUI(QMainWindow):
             # self.ui.cutting_time_label.setText(self.current_values['cutting_time'])
             # self.ui.modbus_status_label.setText(self.current_values['modbus_status'])
             
-            # Sistem durumu etiketi
-            self.ui.labelSystemStatusInfo.setText(self.current_values['testere_durumu'])
             
             # Kamera durumu
             # self.ui.camera_status_label.setText(self.current_values['camera_status'])
