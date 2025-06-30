@@ -494,7 +494,7 @@ QWidget#centralwidget {
             }
         """)
         self.progressBarHeight.setOrientation(QtCore.Qt.Vertical)
-        self.progressBarHeight.setRange(0, 420)
+        self.progressBarHeight.setRange(0, 350)
         self.progressBarHeight.setValue(0)
         self.progressBarHeight.setTextVisible(False)
         self.progressBarHeight.setObjectName("progressBarHeight")
@@ -635,7 +635,7 @@ QWidget#centralwidget {
 "}")
         self.labelSystemStatus.setObjectName("labelSystemStatus")
         self.labelSystemStatusInfo = QtWidgets.QLabel(self.systemStatusFrame)
-        self.labelSystemStatusInfo.setGeometry(QtCore.QRect(61, 132, 191, 60))
+        self.labelSystemStatusInfo.setGeometry(QtCore.QRect(61, 72, 191, 160))
         self.labelSystemStatusInfo.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
 "    color: rgba(244, 246, 252);\n"
@@ -643,6 +643,7 @@ QWidget#centralwidget {
 "    font-weight: medium;\n"
 "    font-size: 24px;\n"
 "}")
+        self.labelSystemStatusInfo.setAlignment(QtCore.Qt.AlignCenter)
         self.labelSystemStatusInfo.setWordWrap(True)
         self.labelSystemStatusInfo.setObjectName("labelSystemStatusInfo")
         self.iconStatus = QtWidgets.QLabel(self.systemStatusFrame)
