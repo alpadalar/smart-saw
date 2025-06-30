@@ -163,8 +163,8 @@ class SensorWindow(QMainWindow):
                             spread:pad, 
                             x1:0, y1:0, 
                             x2:1, y2:1, 
-                            stop:0 rgba(255, 0, 0, 255), 
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255), 
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -196,8 +196,8 @@ class SensorWindow(QMainWindow):
                             spread:pad, 
                             x1:0, y1:0, 
                             x2:1, y2:1, 
-                            stop:0 rgba(255, 0, 0, 255), 
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255), 
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -227,8 +227,8 @@ class SensorWindow(QMainWindow):
                             spread:pad, 
                             x1:0, y1:0, 
                             x2:1, y2:1, 
-                            stop:0 rgba(255, 0, 0, 255), 
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255), 
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -259,8 +259,8 @@ class SensorWindow(QMainWindow):
                             spread:pad, 
                             x1:0, y1:0, 
                             x2:1, y2:1, 
-                            stop:0 rgba(255, 0, 0, 255), 
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255), 
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -291,8 +291,8 @@ class SensorWindow(QMainWindow):
                             spread:pad, 
                             x1:0, y1:0, 
                             x2:1, y2:1, 
-                            stop:0 rgba(255, 0, 0, 255), 
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255), 
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -323,8 +323,8 @@ class SensorWindow(QMainWindow):
                             spread:pad, 
                             x1:0, y1:0, 
                             x2:1, y2:1, 
-                            stop:0 rgba(255, 0, 0, 255), 
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255), 
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -359,8 +359,8 @@ class SensorWindow(QMainWindow):
                             spread:pad,
                             x1:0, y1:0,
                             x2:1, y2:1,
-                            stop:0 rgba(255, 0, 0, 255),
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255),
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -390,8 +390,8 @@ class SensorWindow(QMainWindow):
                             spread:pad,
                             x1:0, y1:0,
                             x2:1, y2:1,
-                            stop:0 rgba(255, 0, 0, 255),
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255),
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
@@ -421,8 +421,8 @@ class SensorWindow(QMainWindow):
                             spread:pad,
                             x1:0, y1:0,
                             x2:1, y2:1,
-                            stop:0 rgba(255, 0, 0, 255),
-                            stop:1 rgba(255, 0, 0, 255)
+                            stop:0 rgba(0, 0, 0, 255),
+                            stop:1 rgba(124, 4, 66, 255)
                         );
                         border-radius: 20px;
                     }
