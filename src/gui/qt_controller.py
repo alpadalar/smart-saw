@@ -278,6 +278,22 @@ class SimpleGUI(QMainWindow):
             logger.error(f"GUI başlatma hatası: {e}")
             logger.exception("Detaylı hata:")
 
+    def _get_status_message(self, status_text):
+        """Sistem durumuna göre özel mesaj döndürür."""
+        status_messages = {
+            "BOŞTA": "Boşta.",
+            "HİDROLİK AKTİF": "Makine kesime hazır.",
+            "ŞERİT MOTOR ÇALIŞIYOR": "Şerit motor çalışıyor!",
+            "KESİM YAPILIYOR": "Kesim yapılıyor!",
+            "KESİM BİTTİ": "Kesim bitti!",
+            "ŞERİT YUKARI ÇIKIYOR": "Şerit yukarı çıkıyor.",
+            "MALZEME BESLEME": "Kesilecek malzeme konumlandırılıyor.",
+            "BİLİNMİYOR": "Bilinmiyor!",
+            "Bağlantı Yok": "Bağlantı bekleniyor...",
+            "Veri bekleniyor...": "Veri akışı bekleniyor..."
+        }
+        return status_messages.get(status_text, status_text)
+
     def _handle_cutting_mode_buttons(self, clicked_button):
         """Kesim modu butonlarını yönetir"""
         try:
@@ -306,6 +322,9 @@ class SimpleGUI(QMainWindow):
             elif clicked_button == self.ui.btnAiMode:
                 self._switch_controller(ControllerType.ML)
                 
+            # Sistem durumu etiketi
+            self.ui.labelSystemStatusInfo.setText(self._get_status_message(self.current_values['testere_durumu']))
+            
         except Exception as e:
             logger.error(f"Kesim modu buton yönetimi hatası: {e}")
             self.add_log(f"Kesim modu değiştirme hatası: {str(e)}", "ERROR")
@@ -706,7 +725,7 @@ class SimpleGUI(QMainWindow):
             self.ui.labelMaxBandDeviationValueA.setText(self.current_values['serit_sapmasi'])
 
             # Sistem durumu etiketi
-            self.ui.labelSystemStatusInfo.setText(self.current_values['testere_durumu'])
+            self.ui.labelSystemStatusInfo.setText(self._get_status_message(self.current_values['testere_durumu']))
             
             # Motor ve hareket bilgileri
             self.ui.labelValue.setText(self.current_values['kafa_yuksekligi_mm'])
@@ -793,6 +812,7 @@ class SimpleGUI(QMainWindow):
             }.get(testere_durumu, "BİLİNMİYOR")
             
             self.current_values['testere_durumu'] = durum_text
+            self.ui.labelSystemStatusInfo.setText(self._get_status_message(durum_text))
             
             # Duruma göre label rengini güncelle
             durum_renkleri = {
