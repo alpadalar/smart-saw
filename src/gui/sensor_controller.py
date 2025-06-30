@@ -63,6 +63,22 @@ class SensorWindow(QMainWindow):
 
         self.set_active_nav("btnSensor")
 
+        # Anomali durumlarını tutan sözlük
+        self.anomaly_states = {
+            'KesmeHizi': False,
+            'IlerlemeHizi': False,
+            'SeritAkim': False,
+            'Sicaklik': False,
+            'Nem': False,
+            'SeritSapmasi': False,
+            'TitresimX': False,
+            'TitresimY': False,
+            'TitresimZ': False,
+        }
+        # toolButton sinyalini bağla
+        if hasattr(self.ui, 'toolButton'):
+            self.ui.toolButton.clicked.connect(self.reset_anomaly_states)
+
     def setup_timers(self):
         """Timer'ları başlatır"""
         try:
@@ -138,10 +154,8 @@ class SensorWindow(QMainWindow):
         try:
             if not data or not isinstance(data, dict):
                 return
-                
-            # Anomali durumlarını kontrol et ve güncelle
+            # Sadece anomali olmayan frame'ler güncellenir
             self._check_anomalies(data)
-            
         except Exception as e:
             logger.error(f"Sensör değer güncelleme hatası: {e}")
 
@@ -150,13 +164,11 @@ class SensorWindow(QMainWindow):
         try:
             if not data or not isinstance(data, dict):
                 return
-                
             current_time = datetime.now().strftime('%d.%m.%Y')
-            
             # Şerit akım kontrolü
             serit_akim = float(data.get('serit_motor_akim_a', 0))
-            if serit_akim > 25:
-                # Yüksek akım durumunda kırmızı background ve anomali mesajı
+            if serit_akim > 25 or self.anomaly_states['KesmeHizi']:
+                self.anomaly_states['KesmeHizi'] = True
                 self.ui.KesmeHiziFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -171,7 +183,6 @@ class SensorWindow(QMainWindow):
                 """)
                 self.ui.labelKesmeHiziInfo.setText(f"{current_time} tarihinde anomali tespit edildi.")
             else:
-                # Normal durumda yeşil background ve normal mesaj
                 self.ui.KesmeHiziFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -186,10 +197,10 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelKesmeHiziInfo.setText("Her şey yolunda.")
-            
-            # İlerleme hızı kontrolü (örnek olarak düşük hız anomali)
+            # İlerleme hızı kontrolü
             ilerleme_hizi = float(data.get('serit_inme_hizi', 0))
-            if ilerleme_hizi < 10:  # 10 mm/s altında anomali
+            if ilerleme_hizi < 10 or self.anomaly_states['IlerlemeHizi']:
+                self.anomaly_states['IlerlemeHizi'] = True
                 self.ui.IlerlemeHiziFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -218,9 +229,9 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelIlerlemeHiziInfo.setText("Her şey yolunda.")
-            
-            # Şerit akım kontrolü (ayrı bir kontrol)
-            if serit_akim > 30:  # 30A üstünde kritik anomali
+            # Şerit akım kontrolü (kritik)
+            if serit_akim > 30 or self.anomaly_states['SeritAkim']:
+                self.anomaly_states['SeritAkim'] = True
                 self.ui.SeritAkimFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -249,10 +260,10 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelSeritAkimInfo.setText("Her şey yolunda.")
-            
             # Sıcaklık kontrolü
             sicaklik = float(data.get('ortam_sicakligi_c', 0))
-            if sicaklik > 40:  # 40°C üstünde anomali
+            if sicaklik > 40 or self.anomaly_states['Sicaklik']:
+                self.anomaly_states['Sicaklik'] = True
                 self.ui.SicaklikFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -281,10 +292,10 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelSicaklikInfo.setText("Her şey yolunda.")
-            
             # Nem kontrolü
             nem = float(data.get('ortam_nem_percentage', 0))
-            if nem > 80:  # %80 üstünde anomali
+            if nem > 80 or self.anomaly_states['Nem']:
+                self.anomaly_states['Nem'] = True
                 self.ui.NemFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -313,10 +324,10 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelNemInfo.setText("Her şey yolunda.")
-            
             # Şerit sapması kontrolü
             serit_sapmasi = float(data.get('serit_sapmasi', 0))
-            if abs(serit_sapmasi) > 0.5:  # 0.5mm üstünde anomali
+            if abs(serit_sapmasi) > 0.5 or self.anomaly_states['SeritSapmasi']:
+                self.anomaly_states['SeritSapmasi'] = True
                 self.ui.SeritSapmasiFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -345,14 +356,12 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelSeritSapmasiInfo.setText("Her şey yolunda.")
-            
             # Titreşim kontrolü
             vib_x = float(data.get('ivme_olcer_x_hz', 0))
             vib_y = float(data.get('ivme_olcer_y_hz', 0))
             vib_z = float(data.get('ivme_olcer_z_hz', 0))
-            
-            # X ekseni titreşim kontrolü
-            if vib_x > 200:
+            if vib_x > 200 or self.anomaly_states['TitresimX']:
+                self.anomaly_states['TitresimX'] = True
                 self.ui.TitresimXFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -381,9 +390,8 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelTitresimXInfo.setText("Her şey yolunda.")
-            
-            # Y ekseni titreşim kontrolü
-            if vib_y > 200:
+            if vib_y > 200 or self.anomaly_states['TitresimY']:
+                self.anomaly_states['TitresimY'] = True
                 self.ui.TitresimYFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -412,9 +420,8 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelTitresimYInfo.setText("Her şey yolunda.")
-            
-            # Z ekseni titreşim kontrolü
-            if vib_z > 200:
+            if vib_z > 200 or self.anomaly_states['TitresimZ']:
+                self.anomaly_states['TitresimZ'] = True
                 self.ui.TitresimZFrame.setStyleSheet("""
                     QFrame {
                         background: qlineargradient(
@@ -443,9 +450,7 @@ class SensorWindow(QMainWindow):
                     }
                 """)
                 self.ui.labelTitresimZInfo.setText("Her şey yolunda.")
-            
         except Exception as e:
-            # Sadece bir kere uyarı ver ve sonra sessizce devam et
             if not hasattr(self, '_anomaly_error_logged'):
                 logger.warning(f"Anomali kontrol hatası (bir kere uyarı): {e}")
                 self._anomaly_error_logged = True
@@ -574,4 +579,10 @@ class SensorWindow(QMainWindow):
             self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
             self.monitoring_window.set_active_nav("btnTracking")
             self.monitoring_window.show()
-            self.hide() 
+            self.hide()
+
+    def reset_anomaly_states(self):
+        """Tüm anomali durumlarını sıfırlar ve UI'yı günceller"""
+        for key in self.anomaly_states:
+            self.anomaly_states[key] = False
+        self.update_ui() 
