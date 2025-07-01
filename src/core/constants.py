@@ -5,7 +5,7 @@ KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
 # Model yolu
-ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\Bagging_20250425_dataset_16.pkl"
+ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\Bagging_dataset_v17_20250509.pkl"
 
 # Hız Limitleri
 MIN_SPEED = 5.0
@@ -43,7 +43,7 @@ BUFFER_DURATION = 0.5  # Tampon süresi (saniye)
 CAMERA_WIDTH = 1920
 CAMERA_HEIGHT = 1200
 CAMERA_FPS = 50
-CAMERA_DEVICE_ID = 0  # 0: dahili kamera, 1: harici kamera
+CAMERA_DEVICE_ID = 1  # 0: dahili kamera, 1: harici kamera
 CAMERA_JPEG_QUALITY = 92
 CAMERA_NUM_THREADS = 4
 CAMERA_RECORDINGS_DIR = "recordings"  # Kayıtların saklanacağı ana dizin

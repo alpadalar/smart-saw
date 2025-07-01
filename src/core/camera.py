@@ -63,7 +63,7 @@ class CameraModule:
                 self.cap.release()
             
             # Linux'ta V4L2 backend'i kullan
-            self.cap = cv2.VideoCapture(CAMERA_DEVICE_ID, cv2.CAP_V4L2)
+            self.cap = cv2.VideoCapture(CAMERA_DEVICE_ID)
             if not self.cap.isOpened():
                 logger.error("Kamera açılamadı! Lütfen bağlantıyı kontrol edin.")
                 return False
@@ -162,6 +162,12 @@ class CameraModule:
             frame_count, frame, output_dir = frame_data
             frame_filename = os.path.join(output_dir, f"frame_{frame_count:06d}.jpg")
             encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), CAMERA_JPEG_QUALITY]
+            
+            if len(frame.shape) == 3 and frame.shape[2] not in [1, 3, 4]:
+                try:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUYV)
+                except Exception as e:
+                    logger.error(f"Frame dönüştürme hatası: {str(e)}")
             
             try:
                 cv2.imwrite(frame_filename, frame, encode_params)
