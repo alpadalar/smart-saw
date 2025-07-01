@@ -79,4 +79,4 @@ recordings/
 frames/
 temp/ 
 vibration_data*.csv
-
+*.zip
