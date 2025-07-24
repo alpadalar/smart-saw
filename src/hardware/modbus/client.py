@@ -14,7 +14,7 @@ class ModbusClient:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def __init__(self, host='192.168.11.186', port=502):
+    def __init__(self, host='192.168.1.147', port=502):
         """ModbusClient başlatılır"""
         if not hasattr(self, 'initialized'):
             self.client = ModbusTcpClient(host=host, port=port)

@@ -63,7 +63,7 @@ class SmartSaw:
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
-            host='192.168.11.186',
+            host='192.168.1.147',
             port=502
         )
         
@@ -102,7 +102,7 @@ class SmartSaw:
         self._setup_modbus()
         self._setup_control_loop()
         self._setup_data_loop()
-        self._setup_web_server()
+        #self._setup_web_server()
         
         logger.info("Başlatma tamamlandı")
         
@@ -286,7 +286,7 @@ if __name__ == "__main__":
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.11.186',
+                        'modbus_ip': '192.168.1.147',
                         'kesim_turu': current_controller if current_testere_durumu == 3 else None,
                         'kesim_id': self.current_kesim_id if current_testere_durumu == 3 else None
                     })
