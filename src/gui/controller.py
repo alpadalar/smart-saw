@@ -733,6 +733,15 @@ class SimpleGUI:
                 self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
             elif abs(deviation) > 0.6:
                 self.add_log(f"Kritik şerit sapması: {deviation:.2f}mm", "ERROR")
+
+            # şerit Gerginliği Bar kontrolü
+            bar = float(data.get('serit_gerginligi_bar', 0))
+            if 18 <= bar <= 26:
+                pass  # Normal aralık
+            elif (15 <= bar < 18) or (26 < bar <= 30):
+                self.add_log(f"Şerit gerginliği uyarı seviyesinde: {bar:.2f} Bar", "WARNING")
+            elif bar < 18 or bar > 30:
+                self.add_log(f"Kritik şerit gerginliği: {bar:.2f} Bar", "ERROR")
             
         # Titreşim kontrolü - her durumda kontrol et
         vib_x = float(data.get('ivme_olcer_x_hz', 0))

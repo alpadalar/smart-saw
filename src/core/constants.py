@@ -24,7 +24,7 @@ SPEED_LIMITS = {
 
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
-MIN_SPEED_UPDATE_INTERVAL = 0.33  # 3 Hz
+MIN_SPEED_UPDATE_INTERVAL = 1.0 / 5.0  # 5 Hz
 KATSAYI = 1.0
 
 # Kontrol Sistemi Başlangıç Parametreleri
