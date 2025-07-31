@@ -16,20 +16,20 @@ REGISTER_ADDRESSES = {
     'serit_inme_hizi': INME_HIZI_REGISTER_ADDRESS,   # İnme hızı register adresi (2041)
 }
 
-def reverse_calculate_value(modbus_client, value: float, register_type: str, is_negative: bool = False) -> None:
+def reverse_calculate_value(modbus_client, value: int, register_type: str, is_negative: bool = False) -> None:
     """
-    Verilen değeri modbus için uygun formata çevirip yazar
+    Verilen int değeri direkt modbus register'ına yazar
     
     Args:
         modbus_client: Modbus bağlantı nesnesi
-        value: Yazılacak değer
+        value: Yazılacak int değer
         register_type: Register tipi ('serit_kesme_hizi' veya 'serit_inme_hizi')
         is_negative: Değer negatif mi (sadece inme hızı için)
     """
     try:
         if register_type == 'serit_kesme_hizi':
-            # Kesme hızı için dönüşüm (0.0754 katsayısı ile)
-            modbus_value = math.ceil(value / 0.0754)
+            # Kesme hızı için direkt int değer
+            modbus_value = int(value)
             logger.debug(f"Kesme hızı yazılmaya çalışılıyor:")
             logger.debug(f"  Değer: {value}")
             logger.debug(f"  Modbus değeri: {modbus_value}")
@@ -40,15 +40,8 @@ def reverse_calculate_value(modbus_client, value: float, register_type: str, is_
             time.sleep(0.110)  # 110ms bekle
             
         elif register_type == 'serit_inme_hizi':
-            # İnme hızı için dönüşüm
-            if value == 0:
-                modbus_value = 0
-            else:
-                if is_negative:
-                    modbus_value = math.ceil((value / -0.06) + 65535)
-                else:
-                    modbus_value = math.ceil(value / -0.06) + 65535
-            
+            # İnme hızı için direkt int değer
+            modbus_value = int(value)
             logger.debug(f"İnme hızı yazılmaya çalışılıyor:")
             logger.debug(f"  Değer: {value}")
             logger.debug(f"  Modbus değeri: {modbus_value}")

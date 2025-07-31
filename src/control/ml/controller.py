@@ -58,6 +58,8 @@ class MLController:
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
+        # İnme hızı değişim buffer'ı
+        self.inme_hizi_degisim_buffer = 0.0
         
         # Veri tamponları - constants.py'dan alınan boyut
         self.akim_buffer = deque(maxlen=BUFFER_SIZE)
@@ -274,6 +276,9 @@ class MLController:
             # İnme hızı değişim yüzdesini hesapla
             inme_degisim_yuzdesi = self._calculate_speed_change_percentage(new_inme_hizi - current_inme_hizi, 'inme')
             
+            # İnme hızı değişimini buffer'a ekle
+            self.inme_hizi_degisim_buffer += (new_inme_hizi - current_inme_hizi)
+            
             # Kesme hızı için değişimi hesapla
             if coefficient < 0:
                 # Negatif değişim: mevcut hız ile minimum hız arası
@@ -288,25 +293,33 @@ class MLController:
             self.kesme_hizi_degisim_buffer += kesme_hizi_degisim
             
             # Modbus'a yazma işlemleri
-            if new_inme_hizi != current_inme_hizi:
+            # İnme hızı için buffer kontrolü
+            if abs(self.inme_hizi_degisim_buffer) >= 1.0:
+                new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
+                new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
+                                   min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+                
                 # İnme hızını yaz
                 inme_hizi_is_negative = new_inme_hizi < 0
-                reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
+                reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
                 logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
                 
-                # Kesme hızı için buffer kontrolü
-                if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
-                    new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
-                    new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], 
-                                       min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
-                    
-                    # Kesme hızını yaz
-                    kesme_hizi_is_negative = new_kesme_hizi < 0
-                    reverse_calculate_value(modbus_client, new_kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
-                    logger.debug(f"Yeni kesme hızı: {new_kesme_hizi:.2f}")
-                    
-                    # Buffer'ı sıfırla
-                    self.kesme_hizi_degisim_buffer = 0.0
+                # Buffer'ı sıfırla
+                self.inme_hizi_degisim_buffer = 0.0
+            
+            # Kesme hızı için buffer kontrolü
+            if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
+                new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
+                new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], 
+                                   min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+                
+                # Kesme hızını yaz
+                kesme_hizi_is_negative = new_kesme_hizi < 0
+                reverse_calculate_value(modbus_client, int(new_kesme_hizi), 'serit_kesme_hizi', kesme_hizi_is_negative)
+                logger.debug(f"Yeni kesme hızı: {new_kesme_hizi:.2f}")
+                
+                # Buffer'ı sıfırla
+                self.kesme_hizi_degisim_buffer = 0.0
             
             # Son güncelleme zamanını kaydet
             self.last_update_time = time.time()
