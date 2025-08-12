@@ -22,6 +22,13 @@ SPEED_LIMITS = {
     }
 }
 
+# Tork -> Akım dönüşüm katsayıları
+# f(x) = A2*x^2 + A1*x + A0
+# x: serit_motor_tork_percentage (yüzde), çıktı: akım (A)
+TORQUE_TO_CURRENT_A2 = 0.015
+TORQUE_TO_CURRENT_A1 = -0.187
+TORQUE_TO_CURRENT_A0 = 15.000
+
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
 MIN_SPEED_UPDATE_INTERVAL = 1.0 / 5.0  # 5 Hz

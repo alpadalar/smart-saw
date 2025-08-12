@@ -18,7 +18,10 @@ from core.constants import (
     MIN_SPEED_UPDATE_INTERVAL,
     BUFFER_SIZE,
     BUFFER_DURATION,
-    KATSAYI
+    KATSAYI,
+    TORQUE_TO_CURRENT_A2,
+    TORQUE_TO_CURRENT_A1,
+    TORQUE_TO_CURRENT_A0
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -145,6 +148,27 @@ class MLController:
         
         return akim_avg, sapma_avg, kesme_hizi_avg, inme_hizi_avg
     
+    def _torque_to_current(self, torque_percentage: float) -> float:
+        """Makineden gelen tork yüzdesini akıma çevirir.
+        
+        f(x) = A2*x^2 + A1*x + A0
+        x: serit_motor_tork_percentage (yüzde), çıktı: akım (A)
+        
+        Args:
+            torque_percentage: serit_motor_tork_percentage (yüzde)
+            
+        Returns:
+            float: Akım (A)
+        """
+        try:
+            return (
+                TORQUE_TO_CURRENT_A2 * (torque_percentage ** 2)
+                + TORQUE_TO_CURRENT_A1 * torque_percentage
+                + TORQUE_TO_CURRENT_A0
+            )
+        except Exception:
+            return 0.0
+    
     def predict_coefficient(self, serit_motor_akim_a: float, serit_sapmasi: float, serit_kesme_hizi: float, serit_inme_hizi: float) -> float:
         """ML modeli ile katsayı tahmin eder (-1 ile 1 arası)"""
         try:
@@ -254,7 +278,9 @@ class MLController:
 
         try:
             # Mevcut değerleri al
-            current_akim = float(processed_data.get('serit_motor_akim_a', 0))
+            # Not: Akım doğrudan alınmıyor, tork yüzdesi f(x) ile akıma dönüştürülüyor.
+            torque_percentage = float(processed_data.get('serit_motor_tork_percentage', 0))
+            current_akim = float(self._torque_to_current(torque_percentage))
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
