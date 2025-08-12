@@ -719,15 +719,23 @@ class SimpleGUI:
         # Testere durumunu al
         testere_durumu = int(data.get('testere_durumu', 0))
         
-        # Akım kontrolü
+        # Testere durumu 'kesim yapılıyor' ise kontroller
         if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # Kesim yapılıyor
+            # Akım kontrolü
             current = float(data.get('serit_motor_akim_a', 0))
-            if current > 25:
+            if current > 13:
                 self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
-            elif current > 30:
+            elif current > 14:
                 self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
             
-            # Sapma kontrolü - sadece kesim durumunda
+            # Tork kontrolü
+            torque = float(data.get('serit_motor_tork_percentage', 0))
+            if current > 70:
+                self.add_log(f"Yüksek şerit motor torku: {torque:.2f}A", "WARNING")
+            elif current > 100:
+                self.add_log(f"Kritik şerit motor torku: {torque:.2f}A", "ERROR")
+
+            # Sapma kontrolü 
             deviation = float(data.get('serit_sapmasi', 0))
             if abs(deviation) > 0.4:
                 self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
@@ -736,11 +744,11 @@ class SimpleGUI:
 
             # şerit Gerginliği Bar kontrolü
             bar = float(data.get('serit_gerginligi_bar', 0))
-            if 18 <= bar <= 26:
+            if 145 <= bar <= 155:
                 pass  # Normal aralık
-            elif (15 <= bar < 18) or (26 < bar <= 30):
+            elif (140 <= bar < 145) or (155 < bar <= 160):
                 self.add_log(f"Şerit gerginliği uyarı seviyesinde: {bar:.2f} Bar", "WARNING")
-            elif bar < 18 or bar > 30:
+            elif bar < 140 or bar > 160:
                 self.add_log(f"Kritik şerit gerginliği: {bar:.2f} Bar", "ERROR")
             
         # Titreşim kontrolü - her durumda kontrol et
