@@ -14,11 +14,11 @@ MAX_SPEED = 100.0
 SPEED_LIMITS = {
     'kesme': {
         'min': 40.0,
-        'max': 140.0
+        'max': 90.0
     },
     'inme': {
         'min': 10.0,
-        'max': 100.0
+        'max': 60.0
     }
 }
 
@@ -38,7 +38,7 @@ KATSAYI = 1.0
 CONTROL_INITIAL_DELAY = {
     'MIN_DELAY_MS': 5000,  # Minimum bekleme süresi (5 saniye)
     'MAX_DELAY_MS': 60000,  # Maksimum bekleme süresi (60 saniye)
-    'TARGET_DISTANCE_MM': 14,  # Hedef inme mesafesi (mm)
+    'TARGET_DISTANCE_MM': 200,  # Hedef inme mesafesi (mm)
     'DEFAULT_DELAY_MS': 30000  # Varsayılan bekleme süresi (30 saniye)
 }
 
