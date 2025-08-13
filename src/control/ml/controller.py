@@ -195,6 +195,7 @@ class MLController:
             
             # Katsayıyı -1 ile 1 arasına sınırla
             coefficient = max(-1.0, min(coefficient, 1.0))
+            print("Katsayı: ", coefficient)
             
             # Yeni hızları hesapla
             new_inme_hizi = avg_inme_hizi + coefficient
@@ -218,6 +219,8 @@ class MLController:
             new_kesme_hizi = avg_kesme_hizi + kesme_hizi_degisim
             new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
             
+            print("Hızlar: ", new_kesme_hizi, new_inme_hizi)
+
             # Verileri kaydet
             self._save_control_data(
                 akim=avg_akim,
@@ -320,7 +323,7 @@ class MLController:
             
             # Modbus'a yazma işlemleri
             # İnme hızı için buffer kontrolü
-            if abs(self.inme_hizi_degisim_buffer) >= 1.0:
+            if abs(self.inme_hizi_degisim_buffer) >= 1.9:
                 new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
                 new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
                                    min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
