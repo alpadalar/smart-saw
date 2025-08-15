@@ -21,6 +21,7 @@ from utils.helpers import (
     format_time
 )
 from utils.speed.buffer import SpeedBuffer
+from utils.delay_calculator import calculate_control_delay
 from .membership import FuzzyMembership
 from .rules import FuzzyRules
 
@@ -147,28 +148,9 @@ class FuzzyController:
         
         return akim_avg, sapma_avg, titresim_avg
 
-    def _calculate_initial_delay(self, inme_hizi):
-        """İnme hızına göre 20mm'lik mesafeyi kaç saniyede ineceğini hesaplar"""
-        try:
-            # İnme hızı mm/dakika cinsinden
-            if inme_hizi <= 0:
-                return self.BASLANGIC_GECIKMESI  # Varsayılan değeri kullan
-            
-            # 20mm'yi inmek için gereken süreyi hesapla (milisaniye cinsinden)
-            # inme_hizi mm/dakika -> mm/saniye -> 20mm için gereken süre
-            delay_ms = (20 / (inme_hizi / 60)) * 1000
-            
-            # Minimum 5 saniye, maksimum 60 saniye olacak şekilde sınırla
-            delay_ms = max(5000, min(delay_ms, 60000))
-            
-            logger.info(f"İnme hızı: {inme_hizi:.2f} mm/dakika için hesaplanan bekleme süresi: {delay_ms/1000:.1f} saniye")
-            return delay_ms
-            
-        except Exception as e:
-            logger.error(f"Bekleme süresi hesaplama hatası: {str(e)}")
-            return self.BASLANGIC_GECIKMESI  # Hata durumunda varsayılan değeri kullan
 
-    def kesim_durumu_kontrol(self, testere_durumu):
+
+    def kesim_durumu_kontrol(self, testere_durumu, modbus_client=None):
         """Kesim durumunu kontrol eder ve loglama yapar"""
         try:
             current_time = time.time() * 1000
@@ -178,12 +160,27 @@ class FuzzyController:
                 if self.is_cutting:
                     self._log_kesim_bitis()
                     self.is_cutting = False
+                    self.cutting_start_time = None
                 return False
 
             # Kesim başlangıcını kontrol et
             if not self.is_cutting:
                 self._log_kesim_baslangic()
                 self.is_cutting = True
+                self.cutting_start_time = current_time
+                
+                # İnme hızını register'dan okuyarak dinamik bekleme süresini hesapla
+                # Fuzzy için 20mm hedef mesafe kullan
+                self.initial_delay = calculate_control_delay(modbus_client, target_distance_mm=20.0)
+                logger.info(f"Fuzzy - Register'dan hesaplanan bekleme süresi: {self.initial_delay/1000:.1f} saniye")
+
+            # Başlangıç gecikmesi kontrolü
+            if hasattr(self, 'initial_delay') and self.initial_delay > 0:
+                if current_time - self.cutting_start_time < self.initial_delay:
+                    kalan_sure = int((self.initial_delay - (current_time - self.cutting_start_time)) / 1000)
+                    if kalan_sure % 5 == 0:
+                        logger.info(f"Fuzzy kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
+                    return False
 
             return True
             
@@ -228,8 +225,8 @@ class FuzzyController:
         # Son işlenen veriyi güncelle
         self.last_processed_data = processed_data
         
-        if not self.kesim_durumu_kontrol(testere_durumu):
-            logger.debug("Kesim durumu uygun değil")
+        if not self.kesim_durumu_kontrol(testere_durumu, modbus_client):
+            logger.debug("Kesim durumu uygun değil veya başlangıç gecikmesi devam ediyor")
             return last_modbus_write_time, None
 
         # Güncelleme zamanı kontrolü

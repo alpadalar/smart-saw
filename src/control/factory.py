@@ -5,6 +5,7 @@ from typing import Optional, Callable, Dict, Any
 from core.logger import logger
 from core.exceptions import ControllerNotFoundError
 from core.constants import CONTROL_INITIAL_DELAY, SPEED_LIMITS, TestereState, ControllerType
+from utils.delay_calculator import calculate_control_delay
 
 # Kontrol sistemleri
 from .expert.controller import adjust_speeds as expert_adjust
@@ -40,29 +41,7 @@ class ControllerFactory:
         self.initial_delay = CONTROL_INITIAL_DELAY['DEFAULT_DELAY_MS']
         self.last_processed_data = None
 
-    def _calculate_initial_delay(self, inme_hizi: float) -> int:
-        """İnme hızına göre hedef mesafeyi inecek süreyi hesaplar"""
-        try:
-            # İnme hızı mm/dakika cinsinden
-            if inme_hizi <= 0:
-                return CONTROL_INITIAL_DELAY['DEFAULT_DELAY_MS']
-            
-            # Hedef mesafeyi inmek için gereken süreyi hesapla (milisaniye cinsinden)
-            # inme_hizi mm/dakika -> mm/saniye -> hedef_mesafe için gereken süre
-            delay_ms = (CONTROL_INITIAL_DELAY['TARGET_DISTANCE_MM'] / (inme_hizi / 60)) * 1000
-            
-            # Minimum ve maksimum sınırları uygula
-            delay_ms = max(
-                CONTROL_INITIAL_DELAY['MIN_DELAY_MS'],
-                min(delay_ms, CONTROL_INITIAL_DELAY['MAX_DELAY_MS'])
-            )
-            
-            logger.info(f"İnme hızı: {inme_hizi:.2f} mm/dakika için hesaplanan bekleme süresi: {delay_ms/1000:.1f} saniye")
-            return int(delay_ms)
-            
-        except Exception as e:
-            logger.error(f"Bekleme süresi hesaplama hatası: {str(e)}")
-            return CONTROL_INITIAL_DELAY['DEFAULT_DELAY_MS']
+
 
     def _check_cutting_state(self, testere_durumu: int) -> bool:
         """Kesim durumunu kontrol eder ve başlangıç gecikmesini yönetir"""
@@ -81,10 +60,9 @@ class ControllerFactory:
                 self.is_cutting = True
                 self.cutting_start_time = current_time
                 
-                # İnme hızını al ve dinamik bekleme süresini hesapla
-                inme_hizi = float(self.last_processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min'])) if self.last_processed_data else SPEED_LIMITS['inme']['min']
-                self.initial_delay = self._calculate_initial_delay(inme_hizi)
-                logger.info(f"Yeni bekleme süresi: {self.initial_delay/1000:.1f} saniye")
+                # İnme hızını register'dan okuyarak dinamik bekleme süresini hesapla
+                self.initial_delay = calculate_control_delay(self.modbus_client)
+                logger.info(f"Register'dan hesaplanan bekleme süresi: {self.initial_delay/1000:.1f} saniye")
 
             # Başlangıç gecikmesi kontrolü
             if current_time - self.cutting_start_time < self.initial_delay:

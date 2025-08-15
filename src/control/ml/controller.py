@@ -29,6 +29,7 @@ from utils.helpers import (
     calculate_elapsed_time_ms,
     format_time
 )
+from utils.delay_calculator import calculate_control_delay
 
 class MLController:
     def __init__(self):
@@ -251,17 +252,33 @@ class MLController:
         speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
         return (percentage / 100) * speed_range
 
-    def kesim_durumu_kontrol(self, testere_durumu: int) -> bool:
+    def kesim_durumu_kontrol(self, testere_durumu: int, modbus_client=None) -> bool:
         """Kesim durumunu kontrol eder"""
         current_time = time.time() * 1000
         
         if testere_durumu != TestereState.KESIM_YAPILIYOR.value:
             if self.is_cutting:
                 self._log_kesim_bitis()
+                self.is_cutting = False
+                self.cutting_start_time = None
             return False
 
         if not self.is_cutting:
             self._log_kesim_baslangic()
+            self.is_cutting = True
+            self.cutting_start_time = current_time
+            
+            # İnme hızını register'dan okuyarak dinamik bekleme süresini hesapla
+            self.initial_delay = calculate_control_delay(modbus_client)
+            logger.info(f"ML - Register'dan hesaplanan bekleme süresi: {self.initial_delay/1000:.1f} saniye")
+
+        # Başlangıç gecikmesi kontrolü
+        if hasattr(self, 'initial_delay') and self.initial_delay > 0:
+            if current_time - self.cutting_start_time < self.initial_delay:
+                kalan_sure = int((self.initial_delay - (current_time - self.cutting_start_time)) / 1000)
+                if kalan_sure % 5 == 0:
+                    logger.info(f"ML kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
+                return False
 
         return True
 
@@ -273,7 +290,7 @@ class MLController:
     def adjust_speeds(self, processed_data: dict, modbus_client, last_modbus_write_time: float,
                      speed_adjustment_interval: float, prev_current: float) -> Tuple[float, Optional[float]]:
         """Hızları ayarlar"""
-        if not self.kesim_durumu_kontrol(processed_data.get('testere_durumu')):
+        if not self.kesim_durumu_kontrol(processed_data.get('testere_durumu'), modbus_client):
             return last_modbus_write_time, None
 
         if not self.hiz_guncelleme_zamani_geldi_mi():
