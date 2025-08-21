@@ -102,7 +102,7 @@ class ModbusClient:
             if self.client.is_socket_open():
                 kwargs = {
                     'address': 1000,
-                    'count': 45
+                    'count': 42
                 }
                 response = self.client.read_holding_registers(**kwargs)
                 if not response.isError():
