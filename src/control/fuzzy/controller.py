@@ -319,7 +319,7 @@ class FuzzyController:
                 
                 # İnme hızını direkt yaz (buffer olmadan)
                 inme_hizi_is_negative = new_inme_hizi_rounded < 0
-                reverse_calculate_value(modbus_client, int(new_inme_hizi_rounded), 'serit_inme_hizi', inme_hizi_is_negative)
+                reverse_calculate_value(modbus_client, new_inme_hizi_rounded, 'serit_inme_hizi', inme_hizi_is_negative)
                 logger.debug(f"BUFFER BYPASS: İnme hızı direkt gönderildi: {new_inme_hizi_rounded:.2f}")
                 
                 # Buffer'ı sıfırla (artık kullanılmıyor ama temizlik için)
