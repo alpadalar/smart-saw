@@ -239,6 +239,7 @@ class SimpleGUI:
             'inme_motor_tork_percentage': tk.StringVar(value="-"),
             'serit_kesme_hizi': tk.StringVar(value="-"),
             'serit_inme_hizi': tk.StringVar(value="-"),
+            'malzeme_genisligi': tk.StringVar(value="-"),
             
             # Basınç ve sıcaklık bilgileri
             'mengene_basinc_bar': tk.StringVar(value="-"),
@@ -602,6 +603,7 @@ class SimpleGUI:
             ('serit_motor_tork_percentage', 'Motor Tork (%)'),
             ('serit_kesme_hizi', 'Kesme Hızı (mm/s)'),
             ('serit_inme_hizi', 'İnme Hızı (mm/s)'),
+            ('malzeme_genisligi', 'Malzeme Genişliği (mm)'),
             ('serit_sapmasi', 'Sapma (mm)'),
             ('kafa_yuksekligi_mm', 'Kafa Yüksekliği (mm)')
         ])

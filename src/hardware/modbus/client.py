@@ -102,7 +102,7 @@ class ModbusClient:
             if self.client.is_socket_open():
                 kwargs = {
                     'address': 1000,
-                    'count': 38
+                    'count': 39
                 }
                 response = self.client.read_holding_registers(**kwargs)
                 if not response.isError():
@@ -147,7 +147,8 @@ class ModbusClient:
                         'serit_inme_hizi': response.registers[34],  # 1034
                         'ivme_olcer_x_hz': response.registers[35],  # 1035
                         'ivme_olcer_y_hz': response.registers[36],  # 1036
-                        'ivme_olcer_z_hz': response.registers[37]  # 1037
+                        'ivme_olcer_z_hz': response.registers[37],  # 1037
+                        'malzeme_genisligi': response.registers[41]  # 1041
                     }
             return None
         except Exception as e:

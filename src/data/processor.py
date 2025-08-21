@@ -104,6 +104,9 @@ class DataProcessor:
                 # processed_data['serit_inme_hizi'] = (inme_hizi - 65535) * -0.06
                 processed_data['serit_inme_hizi'] = inme_hizi
             
+            # Malzeme genişliği (1/10 ölçekli)
+            processed_data['malzeme_genisligi'] = self._safe_float(row_data.get('malzeme_genisligi')) / 10.0
+            
             # Özel hesaplamalar
             if processed_data['inme_motor_akim_a'] > 15:
                 processed_data['inme_motor_akim_a'] = 655.35 - processed_data['inme_motor_akim_a']
