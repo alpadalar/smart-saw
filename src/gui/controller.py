@@ -240,6 +240,9 @@ class SimpleGUI:
             'serit_kesme_hizi': tk.StringVar(value="-"),
             'serit_inme_hizi': tk.StringVar(value="-"),
             'malzeme_genisligi': tk.StringVar(value="-"),
+            'fark_hz_x': tk.StringVar(value="-"),
+            'fark_hz_y': tk.StringVar(value="-"),
+            'fark_hz_z': tk.StringVar(value="-"),
             
             # Basınç ve sıcaklık bilgileri
             'mengene_basinc_bar': tk.StringVar(value="-"),
@@ -621,8 +624,8 @@ class SimpleGUI:
             ('hidrolik_yag_sicakligi_c', 'Hidrolik Yağ (°C)')
         ])
         
-        # Sağ grid (İvme Ölçer)
-        right_grid = ttk.LabelFrame(values_frame, text="İvme Ölçer", padding=(5, 5))
+        # Sağ grid (İvme Ölçer ve Fark Frekansları)
+        right_grid = ttk.LabelFrame(values_frame, text="İvme Ölçer ve Fark Frekansları", padding=(5, 5))
         right_grid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(2, 0))
         
         self._create_value_grid(right_grid, [
@@ -631,8 +634,13 @@ class SimpleGUI:
             ('ivme_olcer_z', 'Z İvme (g)'),
             ('ivme_olcer_x_hz', 'X Frekans (Hz)'),
             ('ivme_olcer_y_hz', 'Y Frekans (Hz)'),
-            ('ivme_olcer_z_hz', 'Z Frekans (Hz)')
+            ('ivme_olcer_z_hz', 'Z Frekans (Hz)'),
+            ('fark_hz_x', 'Fark X (Hz)'),
+            ('fark_hz_y', 'Fark Y (Hz)'),
+            ('fark_hz_z', 'Fark Z (Hz)')
         ])
+        
+
         
         # Kamera Kontrolleri
         camera_frame = ttk.LabelFrame(left_panel, text="Kamera Kontrolleri", padding=(5, 5))

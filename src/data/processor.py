@@ -107,6 +107,11 @@ class DataProcessor:
             # Malzeme genişliği (1/10 ölçekli)
             processed_data['malzeme_genisligi'] = self._safe_float(row_data.get('malzeme_genisligi')) / 10.0
             
+            # Fark frekansları (1/100 ölçekli)
+            processed_data['fark_hz_x'] = self._safe_float(row_data.get('fark_hz_x')) / 100.0
+            processed_data['fark_hz_y'] = self._safe_float(row_data.get('fark_hz_y')) / 100.0
+            processed_data['fark_hz_z'] = self._safe_float(row_data.get('fark_hz_z')) / 100.0
+            
             # Özel hesaplamalar
             if processed_data['inme_motor_akim_a'] > 15:
                 processed_data['inme_motor_akim_a'] = 655.35 - processed_data['inme_motor_akim_a']
