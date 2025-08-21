@@ -63,6 +63,10 @@ class MLController:
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
         
+        # İlk çıktı kontrolü için
+        self.first_output_sent = False
+        self.last_sent_inme_hizi = None
+        
         # Veri tamponları - constants.py'dan alınan boyut
         self.akim_buffer = deque(maxlen=BUFFER_SIZE)
         self.sapma_buffer = deque(maxlen=BUFFER_SIZE)
@@ -298,7 +302,14 @@ class MLController:
             current_akim = float(self._torque_to_current(torque_percentage))
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
-            current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
+            
+            # İnme hızı için: ilk çıktıdan sonra bir önceki gönderilen değeri kullan
+            if self.first_output_sent and self.last_sent_inme_hizi is not None:
+                current_inme_hizi = self.last_sent_inme_hizi
+                logger.debug(f"ML - Bir önceki gönderilen inme hızı kullanılıyor: {current_inme_hizi:.2f}")
+            else:
+                current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
+                logger.debug(f"ML - Makineden okunan inme hızı kullanılıyor: {current_inme_hizi:.2f}")
             
             # ML modelinden katsayı tahmin et
             coefficient = self.predict_coefficient(current_akim, current_sapma, current_kesme_hizi, current_inme_hizi)
@@ -336,6 +347,10 @@ class MLController:
                 inme_hizi_is_negative = new_inme_hizi < 0
                 reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
                 logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
+                
+                # İlk çıktı gönderildi olarak işaretle ve son gönderilen değeri kaydet
+                self.first_output_sent = True
+                self.last_sent_inme_hizi = new_inme_hizi
                 
                 # Kesme hızı için buffer kontrolü
                 if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
@@ -388,6 +403,10 @@ class MLController:
         
         self.is_cutting = False
         self.cutting_start_time = None
+        
+        # İlk çıktı kontrolünü sıfırla
+        self.first_output_sent = False
+        self.last_sent_inme_hizi = None
 
     def __del__(self):
         """Yıkıcı metod - tüm veritabanı bağlantılarını kapatır"""
