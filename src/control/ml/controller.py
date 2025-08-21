@@ -339,18 +339,33 @@ class MLController:
             self.kesme_hizi_degisim_buffer += kesme_hizi_degisim
             
             # Modbus'a yazma işlemleri
-            # İnme hızı için buffer kontrolü
-            if abs(self.inme_hizi_degisim_buffer) >= 1.9:
-                new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
-                new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
-                                   min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+            # İnme hızı için buffer kontrolü - BUFFER BYPASS EDİLDİ
+            # if abs(self.inme_hizi_degisim_buffer) >= 1.9:
+            #     new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
+            #     new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
+            #                        min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+            #     
+            #     # İnme hızını yaz
+            #     inme_hizi_is_negative = new_inme_hizi < 0
+            #     reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
+            #     logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
+            #     
+            #     # Buffer'ı sıfırla
+            #     self.inme_hizi_degisim_buffer = 0.0
+            
+            # BUFFER BYPASS: Direkt hesaplanan hızı gönder (xy.ab formatında)
+            if abs(inme_hizi_degisim) > 0.01:  # Minimum değişim kontrolü
+                # Hızı 2 ondalık basamağa yuvarla
+                new_inme_hizi_rounded = round(new_inme_hizi, 2)
+                new_inme_hizi_rounded = max(SPEED_LIMITS['inme']['min'], 
+                                           min(new_inme_hizi_rounded, SPEED_LIMITS['inme']['max']))
                 
-                # İnme hızını yaz
-                inme_hizi_is_negative = new_inme_hizi < 0
-                reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
-                logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
+                # İnme hızını direkt yaz (buffer olmadan)
+                inme_hizi_is_negative = new_inme_hizi_rounded < 0
+                reverse_calculate_value(modbus_client, int(new_inme_hizi_rounded), 'serit_inme_hizi', inme_hizi_is_negative)
+                logger.debug(f"BUFFER BYPASS: İnme hızı direkt gönderildi: {new_inme_hizi_rounded:.2f}")
                 
-                # Buffer'ı sıfırla
+                # Buffer'ı sıfırla (artık kullanılmıyor ama temizlik için)
                 self.inme_hizi_degisim_buffer = 0.0
             
             # Kesme hızı için buffer kontrolü

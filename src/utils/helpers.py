@@ -40,10 +40,19 @@ def reverse_calculate_value(modbus_client, value: int, register_type: str, is_ne
             time.sleep(0.110)  # 110ms bekle
             
         elif register_type == 'serit_inme_hizi':
-            # İnme hızı için direkt int değer
-            modbus_value = int(value)
+            # İnme hızı için float değeri 2 ondalık basamağa yuvarla ve int'e çevir
+            if isinstance(value, float):
+                # Float değeri 2 ondalık basamağa yuvarla (xy.ab formatı)
+                rounded_value = round(value, 2)
+                # 100 ile çarpıp int'e çevir (xy.ab -> xyab)
+                modbus_value = int(rounded_value * 100)
+            else:
+                # Int değer ise direkt kullan
+                modbus_value = int(value)
+            
             logger.debug(f"İnme hızı yazılmaya çalışılıyor:")
             logger.debug(f"  Değer: {value}")
+            logger.debug(f"  Yuvarlanmış değer: {rounded_value if isinstance(value, float) else 'N/A'}")
             logger.debug(f"  Modbus değeri: {modbus_value}")
             logger.debug(f"  Register: {REGISTER_ADDRESSES[register_type]}")
             
