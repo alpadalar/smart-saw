@@ -29,7 +29,6 @@ from utils.helpers import (
     calculate_elapsed_time_ms,
     format_time
 )
-from utils.delay_calculator import calculate_control_delay
 
 class MLController:
     def __init__(self):
@@ -64,10 +63,6 @@ class MLController:
         self.kesme_hizi_degisim_buffer = 0.0
         # İnme hızı değişim buffer'ı
         self.inme_hizi_degisim_buffer = 0.0
-        
-        # İlk çıktı kontrolü için
-        self.first_output_sent = False
-        self.last_sent_inme_hizi = None
         
         # Veri tamponları - constants.py'dan alınan boyut
         self.akim_buffer = deque(maxlen=BUFFER_SIZE)
@@ -200,6 +195,7 @@ class MLController:
             
             # Katsayıyı -1 ile 1 arasına sınırla
             coefficient = max(-1.0, min(coefficient, 1.0))
+            print("Katsayı: ", coefficient)
             
             # Yeni hızları hesapla
             new_inme_hizi = avg_inme_hizi + coefficient
@@ -223,6 +219,8 @@ class MLController:
             new_kesme_hizi = avg_kesme_hizi + kesme_hizi_degisim
             new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
             
+            print("Hızlar: ", new_kesme_hizi, new_inme_hizi)
+
             # Verileri kaydet
             self._save_control_data(
                 akim=avg_akim,
@@ -253,33 +251,17 @@ class MLController:
         speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
         return (percentage / 100) * speed_range
 
-    def kesim_durumu_kontrol(self, testere_durumu: int, modbus_client=None) -> bool:
+    def kesim_durumu_kontrol(self, testere_durumu: int) -> bool:
         """Kesim durumunu kontrol eder"""
         current_time = time.time() * 1000
         
         if testere_durumu != TestereState.KESIM_YAPILIYOR.value:
             if self.is_cutting:
                 self._log_kesim_bitis()
-                self.is_cutting = False
-                self.cutting_start_time = None
             return False
 
         if not self.is_cutting:
             self._log_kesim_baslangic()
-            self.is_cutting = True
-            self.cutting_start_time = current_time
-            
-            # İnme hızını register'dan okuyarak dinamik bekleme süresini hesapla
-            self.initial_delay = calculate_control_delay(modbus_client)
-            logger.info(f"ML - Register'dan hesaplanan bekleme süresi: {self.initial_delay/1000:.1f} saniye")
-
-        # Başlangıç gecikmesi kontrolü
-        if hasattr(self, 'initial_delay') and self.initial_delay > 0:
-            if current_time - self.cutting_start_time < self.initial_delay:
-                kalan_sure = int((self.initial_delay - (current_time - self.cutting_start_time)) / 1000)
-                if kalan_sure % 5 == 0:
-                    logger.info(f"ML kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
-                return False
 
         return True
 
@@ -291,7 +273,7 @@ class MLController:
     def adjust_speeds(self, processed_data: dict, modbus_client, last_modbus_write_time: float,
                      speed_adjustment_interval: float, prev_current: float) -> Tuple[float, Optional[float]]:
         """Hızları ayarlar"""
-        if not self.kesim_durumu_kontrol(processed_data.get('testere_durumu'), modbus_client):
+        if not self.kesim_durumu_kontrol(processed_data.get('testere_durumu')):
             return last_modbus_write_time, None
 
         if not self.hiz_guncelleme_zamani_geldi_mi():
@@ -304,14 +286,7 @@ class MLController:
             current_akim = float(self._torque_to_current(torque_percentage))
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
-            
-            # İnme hızı için: ilk çıktıdan sonra bir önceki gönderilen değeri kullan
-            if self.first_output_sent and self.last_sent_inme_hizi is not None:
-                current_inme_hizi = self.last_sent_inme_hizi
-                logger.debug(f"ML - Bir önceki gönderilen inme hızı kullanılıyor: {current_inme_hizi:.2f}")
-            else:
-                current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
-                logger.debug(f"ML - Makineden okunan inme hızı kullanılıyor: {current_inme_hizi:.2f}")
+            current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
             
             # ML modelinden katsayı tahmin et
             coefficient = self.predict_coefficient(current_akim, current_sapma, current_kesme_hizi, current_inme_hizi)
@@ -348,7 +323,7 @@ class MLController:
             
             # Modbus'a yazma işlemleri
             # İnme hızı için buffer kontrolü
-            if abs(self.inme_hizi_degisim_buffer) >= 1.0:
+            if abs(self.inme_hizi_degisim_buffer) >= 0.9:
                 new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
                 new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
                                    min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
@@ -357,10 +332,6 @@ class MLController:
                 inme_hizi_is_negative = new_inme_hizi < 0
                 reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
                 logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
-                
-                # İlk çıktı gönderildi olarak işaretle ve son gönderilen değeri kaydet
-                self.first_output_sent = True
-                self.last_sent_inme_hizi = new_inme_hizi
                 
                 # Buffer'ı sıfırla
                 self.inme_hizi_degisim_buffer = 0.0
@@ -416,10 +387,6 @@ class MLController:
         
         self.is_cutting = False
         self.cutting_start_time = None
-        
-        # İlk çıktı kontrolünü sıfırla
-        self.first_output_sent = False
-        self.last_sent_inme_hizi = None
 
     def __del__(self):
         """Yıkıcı metod - tüm veritabanı bağlantılarını kapatır"""

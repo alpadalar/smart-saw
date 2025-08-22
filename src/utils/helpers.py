@@ -40,8 +40,8 @@ def reverse_calculate_value(modbus_client, value: int, register_type: str, is_ne
             time.sleep(0.110)  # 110ms bekle
             
         elif register_type == 'serit_inme_hizi':
-            # İnme hızı için direkt int değer
-            modbus_value = int(value)
+            # İnme hızı için dönüşüm: 20 -> 2000 (100 kat büyüt)
+            modbus_value = int(value * 100)
             logger.debug(f"İnme hızı yazılmaya çalışılıyor:")
             logger.debug(f"  Değer: {value}")
             logger.debug(f"  Modbus değeri: {modbus_value}")
