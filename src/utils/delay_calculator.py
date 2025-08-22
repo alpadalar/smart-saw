@@ -43,7 +43,7 @@ class DelayCalculator:
                 target_distance_mm = CONTROL_INITIAL_DELAY['TARGET_DISTANCE_MM']
             
             # Gecikme hesapla: Hedef mesafe / İnme hızı * 60 (dakika->saniye) * 1000 (saniye->ms)
-            delay_ms = (target_distance_mm / (inme_hizi / 60.0)) * 1000
+            delay_ms = (target_distance_mm / inme_hizi) * 60 * 1000
             
             # Sınırları uygula
             delay_ms = max(
