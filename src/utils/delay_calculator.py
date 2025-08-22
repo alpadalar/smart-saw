@@ -97,6 +97,9 @@ class DelayCalculator:
             # Register değerini direkt inme hızı olarak al (zaten int değer)
             inme_hizi = registers[0]
             
+            # İnme hızını 100'e böl
+            inme_hizi = inme_hizi / 100.0
+            
             # Sıfır veya negatif değer kontrolü
             if inme_hizi <= 0:
                 logger.warning(f"Geçersiz inme hızı değeri: {inme_hizi}")
