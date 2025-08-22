@@ -195,7 +195,14 @@ class MLController:
             
             # Katsayıyı -1 ile 1 arasına sınırla
             coefficient = max(-1.0, min(coefficient, 1.0))
-            print("Katsayı: ", coefficient)
+            
+            # ML çıktısını logla
+            logger.info("="*80)
+            logger.info("🤖 ML MODEL ÇIKTISI")
+            logger.info("="*80)
+            logger.info(f"📊 ML Model Çıktısı (Ham): {coefficient:.6f}")
+            logger.info(f"🎯 Sınırlandırılmış Çıktı: {coefficient:.6f}")
+            logger.info("="*80)
             
             # Yeni hızları hesapla
             new_inme_hizi = avg_inme_hizi + coefficient
@@ -219,7 +226,19 @@ class MLController:
             new_kesme_hizi = avg_kesme_hizi + kesme_hizi_degisim
             new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
             
-            print("Hızlar: ", new_kesme_hizi, new_inme_hizi)
+            # Hesaplama formülünü ve sonuçları logla
+            logger.info("="*80)
+            logger.info("🧮 HIZ HESAPLAMA FORMÜLÜ")
+            logger.info("="*80)
+            logger.info(f"📈 Mevcut İnme Hızı: {avg_inme_hizi:.2f} mm/dak")
+            logger.info(f"📊 ML Katsayısı: {coefficient:.6f}")
+            logger.info(f"🔢 İnme Hızı Formülü: {avg_inme_hizi:.2f} + {coefficient:.6f} = {new_inme_hizi:.2f} mm/dak")
+            logger.info(f"📉 İnme Hızı Değişimi: {inme_hizi_degisim:+.2f} mm/dak (%{inme_degisim_yuzdesi:+.2f})")
+            logger.info("")
+            logger.info(f"📈 Mevcut Kesme Hızı: {avg_kesme_hizi:.2f} mm/dak")
+            logger.info(f"🔢 Kesme Hızı Değişimi: {kesme_hizi_degisim:+.2f} mm/dak")
+            logger.info(f"🔢 Kesme Hızı Formülü: {avg_kesme_hizi:.2f} + {kesme_hizi_degisim:+.2f} = {new_kesme_hizi:.2f} mm/dak")
+            logger.info("="*80)
 
             # Verileri kaydet
             self._save_control_data(
@@ -330,8 +349,18 @@ class MLController:
                 
                 # İnme hızını yaz
                 inme_hizi_is_negative = new_inme_hizi < 0
+                modbus_value = int(new_inme_hizi * 100)  # Makineye gönderilecek değer
                 reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
-                logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
+                
+                # Makineye gönderilen değeri logla
+                logger.info("="*80)
+                logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER")
+                logger.info("="*80)
+                logger.info(f"📤 İnme Hızı (Hesaplanan): {new_inme_hizi:.2f} mm/dak")
+                logger.info(f"📤 İnme Hızı (Register): {modbus_value} (int)")
+                logger.info(f"📤 İnme Hızı (Makine Formatı): {new_inme_hizi * 100:.0f}")
+                logger.info(f"📊 Buffer Değeri: {self.inme_hizi_degisim_buffer:+.2f}")
+                logger.info("="*80)
                 
                 # Buffer'ı sıfırla
                 self.inme_hizi_degisim_buffer = 0.0
@@ -344,8 +373,17 @@ class MLController:
                 
                 # Kesme hızını yaz
                 kesme_hizi_is_negative = new_kesme_hizi < 0
+                modbus_value_kesme = int(new_kesme_hizi)  # Makineye gönderilecek değer
                 reverse_calculate_value(modbus_client, int(new_kesme_hizi), 'serit_kesme_hizi', kesme_hizi_is_negative)
-                logger.debug(f"Yeni kesme hızı: {new_kesme_hizi:.2f}")
+                
+                # Makineye gönderilen değeri logla
+                logger.info("="*80)
+                logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER (KESME)")
+                logger.info("="*80)
+                logger.info(f"📤 Kesme Hızı (Hesaplanan): {new_kesme_hizi:.2f} mm/dak")
+                logger.info(f"📤 Kesme Hızı (Register): {modbus_value_kesme} (int)")
+                logger.info(f"📊 Buffer Değeri: {self.kesme_hizi_degisim_buffer:+.2f}")
+                logger.info("="*80)
                 
                 # Buffer'ı sıfırla
                 self.kesme_hizi_degisim_buffer = 0.0
