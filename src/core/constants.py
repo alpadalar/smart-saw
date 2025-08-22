@@ -38,7 +38,7 @@ KATSAYI = 1.0
 CONTROL_INITIAL_DELAY = {
     'MIN_DELAY_MS': 5000,      # Minimum bekleme süresi (5 saniye)
     'MAX_DELAY_MS': 60000,     # Maksimum bekleme süresi (60 saniye)
-    'TARGET_DISTANCE_MM': 200, # Hedef inme mesafesi (mm)
+    'TARGET_DISTANCE_MM': 4, # Hedef inme mesafesi (mm)
     'DEFAULT_DELAY_MS': 30000, # Varsayılan bekleme süresi (30 saniye)
     'REGISTER_READ_TIMEOUT': 2.0  # Register okuma timeout (saniye)
 }
