@@ -878,7 +878,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
-        self.labelXEkseni.setText(QCoreApplication.translate("Form", u"X Ekseni", None))
+        self.labelXEkseni.setText(QCoreApplication.translate("Form", u"Y Ekseni", None))
         self.btnKesmeHizi.setText(QCoreApplication.translate("Form", u"Kesme\n"
 "H\u0131z\u0131", None))
         self.btnIlerlemeHizi.setText(QCoreApplication.translate("Form", u"\u0130lerleme\n"
@@ -911,7 +911,7 @@ class Ui_Form(object):
         self.toolButton.setText(QCoreApplication.translate("Form", "Anomali tespitlerini temizlemek için tıklayın."))
         self.labelKesimGrafigi.setText(QCoreApplication.translate("Form", u"Kesim Grafi\u011fi", None))
         self.labelKesimGrafigiInfo.setText(QCoreApplication.translate("Form", u"G\u00f6r\u00fcnt\u00fclemek istedi\u011finiz grafi\u011fin X ve Y eksenini se\u00e7in.", None))
-        self.labelYEkseni.setText(QCoreApplication.translate("Form", u"Y Ekseni", None))
+        self.labelYEkseni.setText(QCoreApplication.translate("Form", u"X Ekseni", None))
         self.btnZaman.setText(QCoreApplication.translate("Form", u"Zaman", None))
         self.btnYukseklik.setText(QCoreApplication.translate("Form", u"Y\u00fckseklik", None))
         self.labelSmart.setText(QCoreApplication.translate("Form", u"SMART", None))

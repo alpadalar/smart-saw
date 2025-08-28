@@ -94,13 +94,17 @@ class DataProcessor:
             processed_data['ivme_olcer_z_hz'] = self._safe_float(row_data.get('ivme_olcer_z_hz'))
             
             # Hız hesaplamaları
-            processed_data['serit_kesme_hizi'] = self._safe_float(row_data.get('serit_kesme_hizi')) * 0.0754
+            # processed_data['serit_kesme_hizi'] = self._safe_float(row_data.get('serit_kesme_hizi')) * 0.0754
+            processed_data['serit_kesme_hizi'] = self._safe_float(row_data.get('serit_kesme_hizi')) /10
             
             inme_hizi = self._safe_float(row_data.get('serit_inme_hizi'))
             if inme_hizi == 0:
                 processed_data['serit_inme_hizi'] = 0.0
+            elif inme_hizi > 500:
+                processed_data['serit_inme_hizi'] = inme_hizi - 65536
             else:
-                processed_data['serit_inme_hizi'] = (inme_hizi - 65535) * -0.06
+                # processed_data['serit_inme_hizi'] = (inme_hizi - 65535) * -0.06
+                processed_data['serit_inme_hizi'] = inme_hizi
             
             # Özel hesaplamalar
             if processed_data['inme_motor_akim_a'] > 15:

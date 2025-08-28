@@ -1078,7 +1078,7 @@ class Ui_MainWindow(object):
         self.labelCuttingMode.setText(QCoreApplication.translate("MainWindow", u"Kesim Modu", None))
         self.btnManualMode.setText(QCoreApplication.translate("MainWindow", u"Manuel", None))
         self.btnAiMode.setText(QCoreApplication.translate("MainWindow", u"Yapay Zeka", None))
-        self.btnFuzzyMode.setText(QCoreApplication.translate("MainWindow", u"Fuzzy", None))
+        self.btnFuzzyMode.setText(QCoreApplication.translate("MainWindow", u"Veri", None))
         self.btnExpertSystemMode.setText(QCoreApplication.translate("MainWindow", u"Uzman Sistem", None))
         self.labelCuttingSpeed.setText(QCoreApplication.translate("MainWindow", u"Kesim H\u0131z\u0131", None))
         self.btnSlowSpeed.setText(QCoreApplication.translate("MainWindow", u"Yava\u015f", None))

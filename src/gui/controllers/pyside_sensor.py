@@ -32,8 +32,8 @@ class CuttingGraphWidget(QWidget):
         self.fill_color = QColor(149, 9, 82, 30)  # Dolgu rengi
         
         # Eksen bilgileri
-        self.x_axis_type = "kafa_yuksekligi_mm"  # Varsayılan
-        self.y_axis_type = "serit_motor_akim_a"  # Varsayılan
+        self.x_axis_type = "timestamp"  # Varsayılan
+        self.y_axis_type = "serit_kesme_hizi"  # Varsayılan
         
         # Thread-safe veri erişimi için lock
         self._data_lock = threading.Lock()
@@ -452,8 +452,8 @@ class SensorPage(QWidget):
                 self.cutting_graph.setGeometry(72, 87, 860, 450)  # 37 + 5 = 42 (5px sağa kaydırıldı)
                 self.cutting_graph.show()
                 
-                # Default eksen tiplerini ayarla (Kesme Hızı - Zaman)
-                self.cutting_graph.set_axis_types("serit_kesme_hizi", "timestamp")
+                # Default eksen tiplerini ayarla (Zaman - Kesme Hızı)
+                self.cutting_graph.set_axis_types("timestamp", "serit_kesme_hizi")
                 
                 # Eski kesim verilerini yükle
                 self._load_last_cut_data()
@@ -470,6 +470,19 @@ class SensorPage(QWidget):
     def _get_selected_x_axis(self) -> str:
         """Seçili X eksenini döndürür"""
         try:
+            if hasattr(self.ui, 'btnZaman') and self.ui.btnZaman.isChecked():
+                return "timestamp"
+            elif hasattr(self.ui, 'btnYukseklik') and self.ui.btnYukseklik.isChecked():
+                return "kafa_yuksekligi_mm"
+            else:
+                return "timestamp"  # Varsayılan
+        except Exception as e:
+            logger.error(f"X ekseni seçimi hatası: {e}")
+            return "timestamp"
+
+    def _get_selected_y_axis(self) -> str:
+        """Seçili Y eksenini döndürür"""
+        try:
             if hasattr(self.ui, 'btnKesmeHizi') and self.ui.btnKesmeHizi.isChecked():
                 return "serit_kesme_hizi"
             elif hasattr(self.ui, 'btnIlerlemeHizi') and self.ui.btnIlerlemeHizi.isChecked():
@@ -479,23 +492,10 @@ class SensorPage(QWidget):
             elif hasattr(self.ui, 'btnSeritSapmasi') and self.ui.btnSeritSapmasi.isChecked():
                 return "serit_sapmasi"
             else:
-                return "kafa_yuksekligi_mm"  # Varsayılan
-        except Exception as e:
-            logger.error(f"X ekseni seçimi hatası: {e}")
-            return "kafa_yuksekligi_mm"
-
-    def _get_selected_y_axis(self) -> str:
-        """Seçili Y eksenini döndürür"""
-        try:
-            if hasattr(self.ui, 'btnZaman') and self.ui.btnZaman.isChecked():
-                return "timestamp"
-            elif hasattr(self.ui, 'btnYukseklik') and self.ui.btnYukseklik.isChecked():
-                return "kafa_yuksekligi_mm"
-            else:
-                return "serit_motor_akim_a"  # Varsayılan
+                return "serit_kesme_hizi"  # Varsayılan
         except Exception as e:
             logger.error(f"Y ekseni seçimi hatası: {e}")
-            return "serit_motor_akim_a"
+            return "serit_kesme_hizi"
 
     def _on_x_axis_changed(self, button):
         """X ekseni değiştiğinde çağrılır"""
