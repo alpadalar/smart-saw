@@ -22,6 +22,7 @@ tkhtmlview==0.2.0
 tkwebview2==3.5.0
 Pillow==9.5.0
 bottle==0.13.2
+pyside6==6.9.2
 
 # Loglama ve veri işleme
 python-dateutil==2.8.2
