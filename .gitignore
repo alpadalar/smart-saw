@@ -77,3 +77,4 @@ src/.env
 # Kayıt ve geçici dosyalar
 recordings/
 temp/ 
+frames/
