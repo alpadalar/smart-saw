@@ -1,0 +1,1797 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1920</width>
+    <height>1080</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">QWidget#centralwidget {
+    background-image: url(&quot;../images/background.png&quot;);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+</string>
+   </property>
+   <widget class="QFrame" name="sidebarFrame">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>392</width>
+      <height>1080</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelSmart">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>32</y>
+       <width>330</width>
+       <height>73</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel {
+    background-color: transparent;
+    color: #F4F6FC;
+    font-size: 58px;
+    font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>SMART</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelSaw">
+     <property name="geometry">
+      <rect>
+       <x>230</x>
+       <y>32</y>
+       <width>150</width>
+       <height>73</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel {
+    background-color: transparent;
+    color: #F4F6FC;
+    font-size: 58px;
+    font-family: 'Plus Jakarta Sans';
+    font-weight: 100
+;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>SAW</string>
+     </property>
+    </widget>
+    <widget class="Line" name="lineSmartSaw">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>110</y>
+       <width>332</width>
+       <height>3</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 0,
+        stop: 0 rgba(255, 255, 255, 0),
+        stop: 0.5 rgba(255, 255, 255, 100),
+        stop: 1 rgba(255, 255, 255, 0)
+    );
+    border: none;
+}
+</string>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnControlPanel">
+     <property name="geometry">
+      <rect>
+       <x>26</x>
+       <y>165</y>
+       <width>355</width>
+       <height>110</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Plus Jakarta Sans</family>
+       <pointsize>-1</pointsize>
+       <weight>50</weight>
+       <italic>false</italic>
+       <bold>false</bold>
+       <underline>false</underline>
+       <strikeout>false</strikeout>
+      </font>
+     </property>
+     <property name="mouseTracking">
+      <bool>true</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: transparent;
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: semibold;
+    font-size: 32px;
+    text-align: left;
+    padding: 12px 10px 12px 25px;  /* simge için boşluk */
+    border: none;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QPushButton:checked {
+    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */
+}</string>
+     </property>
+     <property name="text">
+      <string> Kontrol Paneli</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normalon>../images/control-panel-icon2.svg</normalon>
+       <activeon>../images/control-panel-icon2-active.svg</activeon>
+      </iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>70</width>
+       <height>70</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnPositioning">
+     <property name="geometry">
+      <rect>
+       <x>26</x>
+       <y>286</y>
+       <width>355</width>
+       <height>110</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: transparent;
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: semibold;
+    font-size: 32px;
+    text-align: left;
+    padding: 12px 10px 12px 20px;  /* simge için boşluk */
+    border: none;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QPushButton:checked {
+    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */
+}</string>
+     </property>
+     <property name="text">
+      <string>Konumlandırma</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/positioning-icon2.svg</normaloff>
+       <activeon>../images/positioning-icon2-active.svg</activeon>../images/positioning-icon2.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>80</width>
+       <height>80</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnCamera">
+     <property name="geometry">
+      <rect>
+       <x>26</x>
+       <y>407</y>
+       <width>355</width>
+       <height>110</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: transparent;
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: semibold;
+    font-size: 32px;
+    text-align: left;
+    padding: 12px 10px 12px 20px;  /* simge için boşluk */
+    border: none;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QPushButton:checked {
+    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Kamera Verileri</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/camera-icon2.svg</normaloff>
+       <activeon>../images/camera-icon-active.svg</activeon>../images/camera-icon2.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>80</width>
+       <height>80</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnSensor">
+     <property name="geometry">
+      <rect>
+       <x>26</x>
+       <y>528</y>
+       <width>355</width>
+       <height>110</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: transparent;
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: semibold;
+    font-size: 32px;
+    text-align: left;
+    padding: 12px 10px 12px 20px;  /* simge için boşluk */
+    border: none;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QPushButton:checked {
+    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */
+}</string>
+     </property>
+     <property name="text">
+      <string>Sensör Verileri</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/sensor-icon2.svg</normaloff>
+       <activeon>../images/sensor-icon2-active.svg</activeon>../images/sensor-icon2.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>80</width>
+       <height>80</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnTracking">
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>649</y>
+       <width>355</width>
+       <height>110</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: transparent;
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: semibold;
+    font-size: 32px;
+    text-align: left;
+    padding: 12px 10px 12px 20px;  /* simge için boşluk */
+    border: none;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QPushButton:checked {
+    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */
+}</string>
+     </property>
+     <property name="text">
+      <string>İzleme</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/tracking-icon2.svg</normaloff>
+       <activeon>../images/tracking-icon2-active.svg</activeon>../images/tracking-icon2.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>80</width>
+       <height>80</height>
+      </size>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="notificationFrame">
+    <property name="geometry">
+     <rect>
+      <x>425</x>
+      <y>38</y>
+      <width>1465</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame#notificationFrame {
+    background-color: rgba(26, 31, 55, 77);
+    border-radius: 30px;
+}</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelDate">
+     <property name="geometry">
+      <rect>
+       <x>55</x>
+       <y>13</y>
+       <width>300</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel {
+    color: #F4F6FC;
+    font-family: 'Plus Jakarta Sans';
+    font-size: 24px;
+    font-weight: light;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>14.12.2025 Çarşamba</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelTime">
+     <property name="geometry">
+      <rect>
+       <x>1348</x>
+       <y>13</y>
+       <width>62</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel {
+    color: #F4F6FC;
+    font-family: 'Plus Jakarta Sans';
+    font-size: 24px;
+    font-weight: light;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>12.30</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="cuttingFrame">
+    <property name="geometry">
+     <rect>
+      <x>425</x>
+      <y>127</y>
+      <width>440</width>
+      <height>344</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelCuttingMode">
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>26</y>
+       <width>381</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Kesim Modu</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnManualMode">
+     <property name="geometry">
+      <rect>
+       <x>18</x>
+       <y>87</y>
+       <width>180</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 52px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}
+
+</string>
+     </property>
+     <property name="text">
+      <string>Manuel</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnAiMode">
+     <property name="geometry">
+      <rect>
+       <x>241</x>
+       <y>87</y>
+       <width>180</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 32px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Yapay Zeka</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnFuzzyMode">
+     <property name="geometry">
+      <rect>
+       <x>18</x>
+       <y>150</y>
+       <width>180</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 60px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Fuzzy</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnExpertSystemMode">
+     <property name="geometry">
+      <rect>
+       <x>241</x>
+       <y>150</y>
+       <width>180</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 22px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Uzman Sistem</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelCuttingSpeed">
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>222</y>
+       <width>371</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Kesim Hızı</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnSlowSpeed">
+     <property name="geometry">
+      <rect>
+       <x>19</x>
+       <y>274</y>
+       <width>120</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 30px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Yavaş</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnNormalSpeed">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>274</y>
+       <width>120</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 16px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Standart</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnFastSpeed">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>274</y>
+       <width>120</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color:  rgba(26, 31, 55, 200);
+    color: #F4F6FC;
+	font-family: 'Plus Jakarta Sans';
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    border-radius: 20px;
+	border: 2px solid #F4F6FC;
+	padding-left: 38px;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+QPushButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Hızlı</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="headHeightFrame">
+    <property name="geometry">
+     <rect>
+      <x>880</x>
+      <y>127</y>
+      <width>251</width>
+      <height>344</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelHeadHeight">
+     <property name="geometry">
+      <rect>
+       <x>25</x>
+       <y>26</y>
+       <width>211</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Kafa Yüksekliği</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelValue">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>140</y>
+       <width>101</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 32px;
+}</string>
+     </property>
+     <property name="text">
+      <string>108</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="bandDeviationFrame">
+    <property name="geometry">
+     <rect>
+      <x>1148</x>
+      <y>127</y>
+      <width>401</width>
+      <height>344</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelBandDeviation">
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>26</y>
+       <width>271</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Şerit Sapması</string>
+     </property>
+    </widget>
+    <widget class="QFrame" name="maxBandDeviationFrame">
+     <property name="geometry">
+      <rect>
+       <x>59</x>
+       <y>199</y>
+       <width>285</width>
+       <height>109</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="QLabel" name="labelMaxBandDeviation">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>261</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: medium;
+	font-size: 20px;
+}</string>
+      </property>
+      <property name="text">
+       <string>Maksimum Şerit Sapması</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QLabel" name="labelMaxBandDeviationValue">
+      <property name="geometry">
+       <rect>
+        <x>31</x>
+        <y>46</y>
+        <width>221</width>
+        <height>50</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Plus-Jakarta-Sans</family>
+        <pointsize>-1</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 36px;
+}</string>
+      </property>
+      <property name="text">
+       <string>16.35</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="systemStatusFrame">
+    <property name="geometry">
+     <rect>
+      <x>1568</x>
+      <y>127</y>
+      <width>321</width>
+      <height>344</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelSystemStatus">
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>26</y>
+       <width>271</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Sistem Durumu</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelSystemStatusInfo">
+     <property name="geometry">
+      <rect>
+       <x>41</x>
+       <y>102</y>
+       <width>241</width>
+       <height>141</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: rgba(244, 246, 252);
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: medium;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Her Şey Yolunda !</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLabel" name="iconStatus">
+     <property name="geometry">
+      <rect>
+       <x>121</x>
+       <y>230</y>
+       <width>71</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel {
+    border: none;
+    background: transparent;
+}
+</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="pixmap">
+      <pixmap>../images/okey-icon.svg</pixmap>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="bandCuttingSpeedFrame">
+    <property name="geometry">
+     <rect>
+      <x>425</x>
+      <y>486</y>
+      <width>551</width>
+      <height>344</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelBandCuttingSpeed">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>27</y>
+       <width>491</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 32px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Şerit Kesme Hızı</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelBandCuttingInfo">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>106</y>
+       <width>255</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: medium;
+	font-size: 22px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Başlangıç hızını
+belirlemek için tıklayın.</string>
+     </property>
+    </widget>
+    <widget class="QFrame" name="BandCuttingCurrentFrame">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>200</y>
+       <width>217</width>
+       <height>109</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="QLabel" name="labelBandCuttingCurrent">
+      <property name="geometry">
+       <rect>
+        <x>23</x>
+        <y>20</y>
+        <width>181</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: medium;
+	font-size: 20px;
+}</string>
+      </property>
+      <property name="text">
+       <string>Şerit Motor Akım</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="labelBandCuttingCurrentValue">
+      <property name="geometry">
+       <rect>
+        <x>21</x>
+        <y>43</y>
+        <width>171</width>
+        <height>50</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Plus-Jakarta-Sans</family>
+        <pointsize>-1</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 36px;
+}</string>
+      </property>
+      <property name="text">
+       <string>16.35</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QLabel" name="labelBandCuttingSpeedValue">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>117</y>
+       <width>241</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Plus-Jakarta-Sans</family>
+       <pointsize>-1</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 80px;
+}</string>
+     </property>
+     <property name="text">
+      <string>16</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="bandDescentSpeedFrame">
+    <property name="geometry">
+     <rect>
+      <x>998</x>
+      <y>486</y>
+      <width>551</width>
+      <height>344</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelBandDescentSpeed">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>27</y>
+       <width>491</width>
+       <height>45</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 32px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Şerit İnme Hızı</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelBandDescentInfo">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>106</y>
+       <width>255</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: medium;
+	font-size: 22px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Başlangıç hızını
+belirlemek için tıklayın.</string>
+     </property>
+    </widget>
+    <widget class="QFrame" name="BandDescentCurrentFrame">
+     <property name="geometry">
+      <rect>
+       <x>31</x>
+       <y>200</y>
+       <width>217</width>
+       <height>109</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="QLabel" name="labelBandDescentCurrent">
+      <property name="geometry">
+       <rect>
+        <x>23</x>
+        <y>20</y>
+        <width>181</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: medium;
+	font-size: 20px;
+}</string>
+      </property>
+      <property name="text">
+       <string>Şerit Motor Akım</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="labelBandDescentCurrentValue">
+      <property name="geometry">
+       <rect>
+        <x>21</x>
+        <y>43</y>
+        <width>171</width>
+        <height>50</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Plus-Jakarta-Sans</family>
+        <pointsize>-1</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 36px;
+}</string>
+      </property>
+      <property name="text">
+       <string>16.35</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QLabel" name="labelBandDescentSpeedValue">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>117</y>
+       <width>241</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Plus-Jakarta-Sans</family>
+       <pointsize>-1</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 80px;
+}</string>
+     </property>
+     <property name="text">
+      <string>16</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="logViewerFrame">
+    <property name="geometry">
+     <rect>
+      <x>1568</x>
+      <y>486</y>
+      <width>321</width>
+      <height>580</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QLabel" name="labelLogViewer">
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>26</y>
+       <width>271</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel{
+	background-color: transparent;
+	color: #F4F6FC;
+	font-family: 'Plus-Jakarta-Sans';
+	font-weight: bold;
+	font-size: 24px;
+}</string>
+     </property>
+     <property name="text">
+      <string>Çalışma Günlüğü</string>
+     </property>
+    </widget>
+    <widget class="QScrollArea" name="logViewerScroll">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>90</y>
+       <width>261</width>
+       <height>461</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#scrollAreaWidgetContents {
+    background-color: transparent;
+}
+</string>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>261</width>
+        <height>461</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout"/>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="cuttingControlFrame">
+    <property name="geometry">
+     <rect>
+      <x>425</x>
+      <y>845</y>
+      <width>1127</width>
+      <height>221</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QFrame {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 11, 38, 240),
+        stop:1 rgba(26, 31, 55, 0)
+    );
+    border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QToolButton" name="toolBtnCuttingStart">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>27</x>
+       <y>27</y>
+       <width>220</width>
+       <height>170</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QToolButton {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 12, 41, 255),
+        stop:1 rgba(4, 12, 48, 127)
+    );
+    border-radius: 50px;
+	border: 2px solid #F4F6FC;
+    color: #F4F6FC;
+    font-family: 'Plus Jakarta Sans';
+    font-size: 20pt;
+    font-weight: 500;
+    icon-size: 115px;
+	padding-top: 7px;
+    padding-bottom: 15px;
+}
+
+QToolButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QToolButton:checked {
+    background-color: #950952;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Kesim Başlat</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/cutting-start-icon.svg</normaloff>../images/cutting-start-icon.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>105</width>
+       <height>105</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextUnderIcon</enum>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="toolBtnCuttingStop">
+     <property name="geometry">
+      <rect>
+       <x>312</x>
+       <y>27</y>
+       <width>220</width>
+       <height>170</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QToolButton {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 12, 41, 255),
+        stop:1 rgba(4, 12, 48, 127)
+    );
+    border-radius: 50px;
+	border: 2px solid #F4F6FC;
+    color: #F4F6FC;
+    font-family: 'Plus Jakarta Sans';
+    font-size: 20pt;
+    font-weight: 500;
+    icon-size: 115px;
+	padding-top: 7px;
+    padding-bottom: 15px;
+}
+
+QToolButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+QToolButton:checked {
+    background-color: #950952;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Kesim Durdur</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/cutting-stop-icon.svg</normaloff>../images/cutting-stop-icon.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>105</width>
+       <height>105</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextUnderIcon</enum>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="toolBtnCoolant">
+     <property name="geometry">
+      <rect>
+       <x>596</x>
+       <y>27</y>
+       <width>220</width>
+       <height>170</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QToolButton {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 12, 41, 255),
+        stop:1 rgba(4, 12, 48, 127)
+    );
+    border-radius: 50px;
+	border: 2px solid #F4F6FC;
+    color: #F4F6FC;
+    font-family: 'Plus Jakarta Sans';
+    font-size: 20pt;
+    font-weight: 500;
+    icon-size: 115px;
+	padding-top: 7px;
+    padding-bottom: 15px;
+}
+
+QToolButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QToolButton:checked {
+    background-color: #950952;
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Soğutma Sıvısı</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/coolant-liquid-icon.svg</normaloff>../images/coolant-liquid-icon.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>105</width>
+       <height>105</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextUnderIcon</enum>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="toolBtnSawdustCleaning">
+     <property name="geometry">
+      <rect>
+       <x>881</x>
+       <y>24</y>
+       <width>220</width>
+       <height>170</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QToolButton {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(6, 12, 41, 255),
+        stop:1 rgba(4, 12, 48, 127)
+    );
+    border-radius: 50px;
+	border: 2px solid #F4F6FC;
+    color: #F4F6FC;
+    font-family: 'Plus Jakarta Sans';
+    font-size: 20pt;
+    font-weight: 500;
+    icon-size: 115px;
+	padding-top: 7px;
+    padding-bottom: 15px;
+}
+
+QToolButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+QToolButton:checked {
+    background-color: #950952;
+}</string>
+     </property>
+     <property name="text">
+      <string>Talaş Temizlik</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/sawdust-cleaning-icon.svg</normaloff>../images/sawdust-cleaning-icon.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>105</width>
+       <height>105</height>
+      </size>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextUnderIcon</enum>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

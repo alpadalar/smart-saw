@@ -1,13 +1,27 @@
 # src/main.py
 import sys
 import os
+# Ensure '/src' is on sys.path for absolute imports like `from core ...`
+_src_dir = os.path.dirname(os.path.abspath(__file__))
+if _src_dir not in sys.path:
+    sys.path.insert(0, _src_dir)
 import time
 import signal
 import threading
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+import shutil
+import glob
+try:
+    import uvicorn
+    UVICORN_AVAILABLE = True
+except ImportError:
+    UVICORN_AVAILABLE = False
+try:
+    from fastapi import FastAPI
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import RedirectResponse
+    FASTAPI_AVAILABLE = True
+except ImportError:
+    FASTAPI_AVAILABLE = False
 from queue import Queue
 from typing import Optional, Dict
 from datetime import datetime
@@ -33,7 +47,7 @@ from data import (
 )
 from data.cutting_tracker import get_cutting_tracker
 from models import ProcessedData, SystemState
-from gui.qt_controller import SimpleGUI
+from gui.pyside_app import SimpleGUI
 from control import ControllerFactory
 from core.constants import TestereState
 from api import create_app, router
@@ -48,13 +62,16 @@ class SmartSaw:
         setup_logger(self.config.logging)
         logger.info("Smart Saw başlatılıyor...")
         
+        # Recordings klasörünü temizle (thread-safe)
+        self._cleanup_old_recordings()
+        
         # Web sunucusu
         self.web_server = None
         self.api_app = None
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
-            host='192.168.11.186',
+            host='192.168.1.147',
             port=502
         )
         
@@ -94,8 +111,109 @@ class SmartSaw:
         self._setup_control_loop()
         self._setup_data_loop()
         # self._setup_web_server()
-        
+
+        # Kamera kaydı ve detection + vision servisi başlat
+        try:
+            from core.camera import CameraModule
+            self.camera_module = CameraModule()
+            self.camera_module.start_recording()
+            self.camera_module.start_detection()
+            
+            # Vision service: recordings klasörünü izleyip LDC + wear çalıştırır
+            from vision.service import VisionService
+            self.vision_service = VisionService(
+                recordings_root=os.path.join(os.getcwd(), "recordings"),
+                real_ldc_root=os.path.join(os.getcwd(), "real_ldc"),
+                watchdog_interval_s=0.2,
+            )
+            self.vision_service.start()
+            
+            # Wear calculator: CSV'lerden real-time ortalama hesaplar
+            from core.wear_calculator import WearCalculator
+            self.wear_calculator = WearCalculator(
+                recordings_root=os.path.join(os.getcwd(), "recordings"),
+                update_callback=self._on_wear_update
+            )
+            self.wear_calculator.start()
+            
+            # GUI'ye wear calculator referansını ver
+            if hasattr(self, 'gui') and self.gui:
+                self.gui.wear_calculator = self.wear_calculator
+            
+            logger.info("Kamera kaydı, detection, vision servisi ve wear calculator başlatıldı.")
+        except Exception as e:
+            logger.error(f"Kamera kaydı/detection/vision başlatılamadı: {e}")
+
         logger.info("Başlatma tamamlandı")
+    
+    def _cleanup_old_recordings(self, max_recordings: int = 4):
+        """
+        Recordings klasöründeki eski kayıtları temizler.
+        En yeni max_recordings kadar klasör kalır, gerisi silinir.
+        Thread-safe olarak çalışır.
+        """
+        try:
+            recordings_dir = os.path.join(os.getcwd(), "recordings")
+            
+            # Recordings klasörü yoksa oluştur
+            if not os.path.exists(recordings_dir):
+                os.makedirs(recordings_dir)
+                logger.info("Recordings klasörü oluşturuldu.")
+                return
+            
+            # Tüm recording klasörlerini listele
+            recording_folders = []
+            for item in os.listdir(recordings_dir):
+                item_path = os.path.join(recordings_dir, item)
+                if os.path.isdir(item_path):
+                    # Klasör adının tarih formatında olup olmadığını kontrol et (YYYYMMDD-HHMMSS)
+                    if len(item) == 15 and item[8] == '-':
+                        try:
+                            # Tarih formatını kontrol et
+                            datetime.strptime(item, '%Y%m%d-%H%M%S')
+                            recording_folders.append(item)
+                        except ValueError:
+                            # Geçersiz tarih formatı, bu klasörü atla
+                            continue
+            
+            # Klasörleri tarihe göre sırala (en yeni önce)
+            recording_folders.sort(reverse=True)
+            
+            logger.info(f"Recordings klasöründe {len(recording_folders)} kayıt bulundu.")
+            
+            # Eğer max_recordings'den fazla klasör varsa, eski olanları sil
+            if len(recording_folders) > max_recordings:
+                folders_to_delete = recording_folders[max_recordings:]
+                deleted_count = 0
+                
+                for folder in folders_to_delete:
+                    folder_path = os.path.join(recordings_dir, folder)
+                    try:
+                        # Klasörü ve içindeki tüm dosyaları sil
+                        shutil.rmtree(folder_path)
+                        deleted_count += 1
+                        logger.info(f"Eski recording klasörü silindi: {folder}")
+                    except Exception as e:
+                        logger.error(f"Klasör silme hatası ({folder}): {e}")
+                
+                logger.info(f"Toplam {deleted_count} eski recording klasörü silindi. {max_recordings} yeni klasör korundu.")
+            else:
+                logger.info(f"Recordings klasörü temizliği gerekmiyor. {len(recording_folders)} klasör mevcut (limit: {max_recordings}).")
+                
+        except Exception as e:
+            logger.error(f"Recordings temizleme hatası: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+        
+    def _on_wear_update(self, wear_percentage: float):
+        """Callback for wear percentage updates - sends to GUI."""
+        try:
+            if hasattr(self, 'gui') and self.gui:
+                # Update the wear percentage label in the camera page
+                if hasattr(self.gui, '_camera_page') and self.gui._camera_page:
+                    self.gui._camera_page.update_wear_percentage(wear_percentage)
+        except Exception as e:
+            logger.error(f"Wear update callback hatası: {e}")
         
     def _setup_database(self):
         """Veritabanı başlatma"""
@@ -116,6 +234,9 @@ class SmartSaw:
     
     def _setup_web_server(self):
         """Web sunucusu başlatma"""
+        if not (UVICORN_AVAILABLE and FASTAPI_AVAILABLE):
+            logger.warning("FastAPI/uvicorn yok, web sunucusu başlatılmayacak.")
+            return
         try:
             import os
             import subprocess
@@ -141,22 +262,31 @@ class SmartSaw:
                     f.write("""
 import os
 import sys
+try:
 import uvicorn
+    UVICORN_AVAILABLE = True
+except ImportError:
+    UVICORN_AVAILABLE = False
+try:
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+    FASTAPI_AVAILABLE = True
+except ImportError:
+    FASTAPI_AVAILABLE = False
 
 # API modülünü import et
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from api import create_app
 
 # FastAPI uygulamasi olustur
-app = create_app()
+app = create_app() if FASTAPI_AVAILABLE else None
 
 # Webui dizinini bul
 current_dir = os.path.dirname(os.path.abspath(__file__))
 webui_dir = os.path.join(current_dir, "webui")
 
+if FASTAPI_AVAILABLE:
 # Statik dosyalari monte et
 app.mount("/", StaticFiles(directory=webui_dir, html=True), name="webui")
 
@@ -168,6 +298,9 @@ async def redirect_to_index():
 if __name__ == "__main__":
     print(f"Web arayuzu dosyalari: {webui_dir}")
     print("Web sunucusu baslatiliyor. http://localhost:8080 adresinden erisebilirsiniz...")
+    if not (UVICORN_AVAILABLE and FASTAPI_AVAILABLE):
+        print("uvicorn/fastapi yok, web sunucusu atlandi")
+    else:
     uvicorn.run(app, host="0.0.0.0", port=8080)
 """)
             
@@ -176,7 +309,6 @@ if __name__ == "__main__":
                 [python_exe, server_script],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NEW_CONSOLE  # Windows'ta yeni konsol penceresi aç
             )
             
             logger.info("Web sunucusu başlatıldı. http://localhost:8080 adresinden erişebilirsiniz...")
@@ -247,7 +379,7 @@ if __name__ == "__main__":
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.11.186'
+                        'modbus_ip': '192.168.1.147'
                     })
                     
                     # Veriyi işle
@@ -288,8 +420,6 @@ if __name__ == "__main__":
                                 # Fuzzy değerlerini güncelle
                                 self.last_processed_data['fuzzy_output'] = output
                                 self.last_processed_data['kesme_hizi_degisim'] = output
-                                logger.debug(f"Kontrol çıktısı: {output}")
-                                logger.debug(f"Fuzzy değerleri güncellendi - Output: {output}, Kesme Hızı Değişim: {output}")
                             else:
                                 logger.debug("Kontrol çıktısı: None")
                             
@@ -334,13 +464,16 @@ if __name__ == "__main__":
     def start(self):
         """Uygulamayı başlatır"""
         try:
-            # GUI'yi başlat
+            # SIGINT (Ctrl+C) yakala: Qt loop sonlandırılsın, sonra shutdown
+            signal.signal(signal.SIGINT, self.handle_shutdown)
+
+            # GUI'yi başlat (pencereyi gösterir)
             self.gui.start()
             
             # GUI'nin hazır olmasını bekle
             self.gui.gui_ready.wait()
             
-            # Modbus bağlantısını kur
+            # Modbus bağlantısını kur (ayrı thread'ler de bağlanmaya çalışıyor, burada ilk deneme)
             while True:
                 try:
                     logger.info("Modbus bağlantısı kuruluyor...")
@@ -356,15 +489,19 @@ if __name__ == "__main__":
             # Çalışma bayrağını ayarla
             self.is_running = True
             
-            # Thread'leri başlat
+            # Thread'leri başlat (kontrol ve veri döngüleri)
             self._setup_control_loop()
             self._setup_data_loop()
             
-            # Web sunucusunu başlat
+            # Web sunucusunu başlat (opsiyonel)
             self._setup_web_server()
             
             # Thread'lerin başladığını bildir
             self.gui.threads_ready.set()
+            
+            # Qt event loop'u ANA THREAD'de çalıştır
+            exit_code = self.gui.exec()
+            logger.info(f"Qt event loop kapandı, kod: {exit_code}")
             
         except Exception as e:
             logger.error(f"Başlatma hatası: {str(e)}")
@@ -398,6 +535,14 @@ if __name__ == "__main__":
     def handle_shutdown(self, signum, frame):
         """Kapatma sinyallerini yakalar"""
         logger.info("Kapatma sinyali alındı. Sistem kapatılıyor...")
+        try:
+            # Qt loop'u sonlandır
+            from PySide6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app is not None:
+                app.quit()
+        except Exception:
+            pass
         self.shutdown()
 
     def shutdown(self):

@@ -42,7 +42,7 @@ class MLController:
         
         # Model ve özellikler
         try:
-            self.model = joblib.load(ML_MODEL_PATH)
+            self.model = joblib.load(ML_MODEL_PATH) if ML_MODEL_PATH else None
             logger.info("ML modeli başarıyla yüklendi")
         except Exception as e:
             logger.error(f"ML modeli yüklenemedi: {str(e)}")

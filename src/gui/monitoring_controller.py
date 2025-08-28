@@ -60,15 +60,20 @@ class MonitoringWindow(QMainWindow):
         if self.parent:
             self.hide()
             self.parent.set_active_nav("btnControlPanel")
-            self.parent.show()
+            self.parent.showFullScreen()
 
     def open_camera_window(self):
-        if self.camera_window is None or not self.camera_window.isVisible():
+        # CameraWindow singleton örneğini parent üzerinden paylaş
+        if hasattr(self.parent, 'camera_window') and self.parent.camera_window is not None:
+            cam_win = self.parent.camera_window
+        else:
             from .camera_controller import CameraWindow
-            self.camera_window = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
+            cam_win = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
+            if hasattr(self.parent, 'camera_window'):
+                self.parent.camera_window = cam_win
         self.hide()
-        self.camera_window.set_active_nav("btnCamera")
-        self.camera_window.show()
+        cam_win.set_active_nav("btnCamera")
+        cam_win.showFullScreen()
 
     def open_sensor_window(self):
         if self.sensor_window is None or not self.sensor_window.isVisible():
@@ -76,7 +81,7 @@ class MonitoringWindow(QMainWindow):
             self.sensor_window = SensorWindow(parent=self.parent, get_data_callback=self.get_data_callback)
         self.hide()
         self.sensor_window.set_active_nav("btnSensor")
-        self.sensor_window.show()
+        self.sensor_window.showFullScreen()
 
     def open_monitoring_window(self):
         self.set_active_nav("btnTracking")

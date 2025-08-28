@@ -6,10 +6,11 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setStyleSheet("")
         MainWindow.showFullScreen()
+        #MainWindow.resize(1280, 720)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("""
 QWidget#centralwidget {
-    background-image: url('src/gui/images/background.png');
+background-image: url('src/gui/images/background.png');
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
@@ -17,7 +18,7 @@ QWidget#centralwidget {
 """)
         self.centralwidget.setObjectName("centralwidget")
         self.centralwidget.setContentsMargins(0, 0, 0, 0)
-        self.centralwidget.setFixedSize(MainWindow.size())
+        #self.centralwidget.setFixedSize(MainWindow.size())
         self.sidebarFrame = QtWidgets.QFrame(self.centralwidget)
         self.sidebarFrame.setGeometry(QtCore.QRect(0, 0, 392, 1080))
         self.sidebarFrame.setStyleSheet("QFrame {\n"
@@ -561,7 +562,7 @@ QWidget#centralwidget {
         self.bandDeviationFrame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.bandDeviationFrame.setObjectName("bandDeviationFrame")
         self.labelBandDeviation = QtWidgets.QLabel(self.bandDeviationFrame)
-        self.labelBandDeviation.setGeometry(QtCore.QRect(27, 26, 170, 34))
+        self.labelBandDeviation.setGeometry(QtCore.QRect(27, 26, 200, 34))
         self.labelBandDeviation.setStyleSheet("QLabel{\n"
 "    background-color: transparent;\n"
 "    color: #F4F6FC;\n"

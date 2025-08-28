@@ -744,7 +744,7 @@ class SimpleGUI(QMainWindow):
             
             if last_meaningful_speed is None or self.current_values['serit_kesme_hizi'] >=1:
                 last_meaningful_speed = self.current_values['serit_kesme_hizi']
-                ui_speed = f"{self.current_values['serit_kesme_hizi']:.1f} mm/s"
+                ui_speed = f"{self.current_values['serit_kesme_hizi']:.1f}"
             self.ui.labelBandCuttingSpeedValue.setText(ui_speed)
             self.ui.labelBandDescentSpeedValue.setText(self.current_values['serit_inme_hizi'])
             
@@ -796,7 +796,7 @@ class SimpleGUI(QMainWindow):
             if 'modbus_connected' in processed_data:
                 self.update_modbus_status(
                     processed_data['modbus_connected'],
-                    processed_data.get('modbus_ip', '192.168.11.186')
+                    processed_data.get('modbus_ip', '192.168.1.147')
                 )
             
             # Testere durumunu güncelle
@@ -1051,21 +1051,21 @@ class SimpleGUI(QMainWindow):
         if self.monitoring_window is None:
             self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_current_data)
         self.monitoring_window.set_active_nav("btnTracking")
-        self.monitoring_window.show()
+        self.monitoring_window.showFullScreen()
         self.hide()
 
     def open_camera_window(self):
         if self.camera_window is None:
             self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_current_data)
         self.camera_window.set_active_nav("btnCamera")
-        self.camera_window.show()
+        self.camera_window.showFullScreen()
         self.hide()
 
     def open_sensor_window(self):
         if self.sensor_window is None:
             self.sensor_window = SensorWindow(parent=self, get_data_callback=self.get_current_data)
         self.sensor_window.set_active_nav("btnSensor")
-        self.sensor_window.show()
+        self.sensor_window.showFullScreen()
         self.hide()
 
     def get_current_data(self):

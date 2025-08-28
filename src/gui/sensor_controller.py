@@ -516,13 +516,13 @@ class SensorWindow(QMainWindow):
         """Kontrol paneli sayfasını açar"""
         if self.parent:
             self.parent.set_active_nav("btnControlPanel")
-            self.parent.show()
+            self.parent.showFullScreen()
             self.hide()
         else:
             from .qt_controller import SimpleGUI
             self.control_panel = SimpleGUI()
             self.control_panel.set_active_nav("btnControlPanel")
-            self.control_panel.show()
+            self.control_panel.showFullScreen()
             self.hide()
 
     def open_positioning(self):
@@ -538,19 +538,19 @@ class SensorWindow(QMainWindow):
                     from .camera_controller import CameraWindow
                     self.parent.camera_window = CameraWindow(parent=self.parent, get_data_callback=self.get_data_callback)
                 self.parent.camera_window.set_active_nav("btnCamera")
-                self.parent.camera_window.show()
+                self.parent.camera_window.showFullScreen()
                 self.hide()
             else:
                 from .camera_controller import CameraWindow
                 self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
                 self.camera_window.set_active_nav("btnCamera")
-                self.camera_window.show()
+                self.camera_window.showFullScreen()
                 self.hide()
         else:
             from .camera_controller import CameraWindow
             self.camera_window = CameraWindow(parent=self, get_data_callback=self.get_data_callback)
             self.camera_window.set_active_nav("btnCamera")
-            self.camera_window.show()
+            self.camera_window.showFullScreen()
             self.hide()
 
     def open_sensor_window(self):
@@ -566,19 +566,19 @@ class SensorWindow(QMainWindow):
                     from .monitoring_controller import MonitoringWindow
                     self.parent.monitoring_window = MonitoringWindow(parent=self.parent, get_data_callback=self.get_data_callback)
                 self.parent.monitoring_window.set_active_nav("btnTracking")
-                self.parent.monitoring_window.show()
+                self.parent.monitoring_window.showFullScreen()
                 self.hide()
             else:
                 from .monitoring_controller import MonitoringWindow
                 self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
                 self.monitoring_window.set_active_nav("btnTracking")
-                self.monitoring_window.show()
+                self.monitoring_window.showFullScreen()
                 self.hide()
         else:
             from .monitoring_controller import MonitoringWindow
             self.monitoring_window = MonitoringWindow(parent=self, get_data_callback=self.get_data_callback)
             self.monitoring_window.set_active_nav("btnTracking")
-            self.monitoring_window.show()
+            self.monitoring_window.showFullScreen()
             self.hide()
 
     def reset_anomaly_states(self):
