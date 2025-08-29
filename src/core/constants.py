@@ -26,8 +26,8 @@ SPEED_LIMITS = {
 # f(x) = A2*x^2 + A1*x + A0
 # x: serit_motor_tork_percentage (yüzde), çıktı: akım (A)
 TORQUE_TO_CURRENT_A2 = 0.015
-TORQUE_TO_CURRENT_A1 = -0.187
-TORQUE_TO_CURRENT_A0 = 15.000
+TORQUE_TO_CURRENT_A1 = -0.278
+TORQUE_TO_CURRENT_A0 = 15.656
 
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
@@ -38,7 +38,7 @@ KATSAYI = 1.0
 CONTROL_INITIAL_DELAY = {
     'MIN_DELAY_MS': 5000,      # Minimum bekleme süresi (5 saniye)
     'MAX_DELAY_MS': 60000,     # Maksimum bekleme süresi (60 saniye)
-    'TARGET_DISTANCE_MM': 200, # Hedef inme mesafesi (mm)
+    'TARGET_DISTANCE_MM': 4, # Hedef inme mesafesi (mm)
     'DEFAULT_DELAY_MS': 30000, # Varsayılan bekleme süresi (30 saniye)
     'REGISTER_READ_TIMEOUT': 2.0  # Register okuma timeout (saniye)
 }
