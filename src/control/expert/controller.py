@@ -146,6 +146,11 @@ class AkimKontrol:
         
         self.is_cutting = False
         self.cutting_start_time = None
+        
+        # Delay calculator cache'ini sıfırla - bir sonraki kesim için hazırlık
+        from utils.delay_calculator import reset_delay_cache
+        reset_delay_cache()
+        logger.info("🔄 Delay calculator cache'i sıfırlandı - bir sonraki kesim için hazırlık")
 
 
 # Global controller nesnesi
