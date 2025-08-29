@@ -69,6 +69,8 @@ class MLController:
         self.sapma_buffer = deque(maxlen=BUFFER_SIZE)
         self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
+        # Tork verisi için bağımsız buffer
+        self.torque_buffer = deque(maxlen=BUFFER_SIZE)
         self.last_buffer_update = time.time()
     
     def _get_db(self):
@@ -135,7 +137,23 @@ class MLController:
         self.sapma_buffer.append((current_time, sapma))
         self.kesme_hizi_buffer.append((current_time, kesme_hizi))
         self.inme_hizi_buffer.append((current_time, inme_hizi))
+    
+    def _update_torque_buffer(self, torque_percentage: float):
+        """Tork verisi tamponunu günceller"""
+        current_time = time.time()
+        self.torque_buffer.append((current_time, torque_percentage))
             
+    def _get_average_torque(self) -> float:
+        """Tork buffer'ındaki verilerin ortalamasını alır"""
+        if not self.torque_buffer:
+            return 0.0
+        
+        # Tork değerlerinin ortalamasını al
+        torque_values = [torque for _, torque in self.torque_buffer]
+        avg_torque = sum(torque_values) / len(torque_values)
+        
+        return avg_torque
+    
     def _get_buffer_averages(self):
         """Tamponlardaki verilerin ortalamasını alır"""
         if not self.akim_buffer or not self.sapma_buffer or not self.kesme_hizi_buffer or not self.inme_hizi_buffer:
@@ -300,9 +318,11 @@ class MLController:
 
         try:
             # Mevcut değerleri al
-            # Not: Akım doğrudan alınmıyor, tork yüzdesi f(x) ile akıma dönüştürülüyor.
+            # Tork verisini buffer'a ekle ve ortalama değeri al
             torque_percentage = float(processed_data.get('serit_motor_tork_percentage', 0))
-            current_akim = float(self._torque_to_current(torque_percentage))
+            self._update_torque_buffer(torque_percentage)
+            avg_torque = self._get_average_torque()
+            current_akim = float(self._torque_to_current(avg_torque))
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
