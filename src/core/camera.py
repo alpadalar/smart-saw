@@ -250,9 +250,14 @@ class CameraModule:
         """Nesne tespiti döngüsü"""
         try:
             while not self.detection_stop_event.is_set():
-                # Sırayla kırık ve çatlak tespiti yap
-                detect_broken_objects()
-                detect_crack_objects()
+                # Sadece aktif recording klasöründe detection yap
+                if self.is_recording and self.output_dir:
+                    try:
+                        # Thread-safe detection işlemleri
+                        self._run_detection_on_current_recording()
+                    except Exception as e:
+                        logger.error(f"Detection işlemi hatası: {str(e)}")
+                
                 # Tespit işlemleri tamamlandıktan sonra kısa bekleme
                 time.sleep(1)  # Örnek olarak 1 saniye bekle
         except Exception as e:
@@ -265,6 +270,26 @@ class CameraModule:
                     self._detection_finish_callback()
                 except Exception as e:
                     logger.error(f"Detection finish callback hatası: {str(e)}")
+
+    def _run_detection_on_current_recording(self):
+        """Aktif recording klasöründe detection işlemlerini çalıştırır"""
+        try:
+            # Thread-safe olarak output_dir'yi al
+            with self.data_lock:
+                current_output_dir = self.output_dir
+                if not current_output_dir or not os.path.exists(current_output_dir):
+                    return
+            
+            # Detection işlemlerini çalıştır
+            from core.broken_detect import detect_broken_objects
+            from core.crack_detect import detect_crack_objects
+            
+            # Detection fonksiyonlarını çağır (bunlar zaten en son klasörü işliyor)
+            detect_broken_objects()
+            detect_crack_objects()
+            
+        except Exception as e:
+            logger.error(f"Detection işlemi hatası: {str(e)}")
 
     def start_viewing(self):
         """Kamera görüntüsünü göstermeye başlar (sadece GUI için)"""

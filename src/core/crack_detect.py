@@ -2,6 +2,7 @@ import cv2
 import os
 import time
 import json
+import re
 from ultralytics import RTDETR
 import torch
 import threading
@@ -11,6 +12,7 @@ from core.logger import logger
 _crack_model = None
 _crack_model_lock = threading.Lock()
 _crack_model_loaded = False
+_stats_lock = threading.Lock()  # JSON dosyası için thread-safe lock
 
 
 def _load_crack_model():
@@ -24,6 +26,48 @@ def _load_crack_model():
             _crack_model_loaded = True
             logger.info(f"Crack modeli yüklendi - Kullanılan cihaz: {device}")
     return _crack_model
+
+
+def _update_stats_file(stats_file: str, new_stats: dict):
+    """Thread-safe olarak detection_stats.json dosyasını günceller"""
+    with _stats_lock:
+        existing_stats = {}
+        if os.path.exists(stats_file):
+            try:
+                with open(stats_file, 'r', encoding='utf-8') as f:
+                    existing_stats = json.load(f)
+            except Exception as e:
+                logger.error(f"Stats dosyası okuma hatası: {e}")
+                existing_stats = {}
+        
+        # Mevcut değerleri koru, yeni değerleri ekle/güncelle
+        existing_stats.update(new_stats)
+        
+        try:
+            with open(stats_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_stats, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Stats dosyası yazma hatası: {e}")
+
+
+def _calculate_crack_stats_from_detected_files(detected_crack_dir: str) -> dict:
+    """Crack detection dosyalarının isimlerinden istatistikleri hesaplar"""
+    total_crack = 0
+    
+    if not os.path.exists(detected_crack_dir):
+        return {"total_crack": 0}
+    
+    # Detection dosyalarını tara
+    for filename in os.listdir(detected_crack_dir):
+        if filename.endswith('.jpg'):
+            # Dosya isminden crack sayısını çıkar
+            # Örnek: frame_000001_crack2.jpg
+            crack_match = re.search(r'_crack(\d+)', filename)
+            
+            if crack_match:
+                total_crack += int(crack_match.group(1))
+    
+    return {"total_crack": total_crack}
 
 
 def detect_crack_objects():
@@ -62,6 +106,7 @@ def detect_crack_objects():
     logger.info(f"Toplam {len(frames)} kare incelenecek (crack tespiti)...")
 
     total_crack = 0
+    stats_file = os.path.join(input_dir, "detection_stats.json")
 
     for i, frame_name in enumerate(frames):
         frame_path = os.path.join(input_dir, frame_name)
@@ -96,29 +141,62 @@ def detect_crack_objects():
             output_path = os.path.join(output_dir, output_name)
             cv2.imwrite(output_path, frame)
 
+        # Real-time stats güncelleme (her frame işlendikten sonra)
+        new_stats = {
+            "total_crack": total_crack,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "crack_processed_frames": i + 1
+        }
+        _update_stats_file(stats_file, new_stats)
+
         if (i + 1) % 100 == 0:
-            logger.info(f"İşlenen kare: {i + 1}/{len(frames)}")
+            logger.info(f"İşlenen kare: {i + 1}/{len(frames)} - Crack: {total_crack}")
 
-    # detection_stats.json güncelle
-    stats_file = os.path.join(input_dir, "detection_stats.json")
-    existing_stats = {}
-    if os.path.exists(stats_file):
-        try:
-            with open(stats_file, 'r', encoding='utf-8') as f:
-                existing_stats = json.load(f)
-        except Exception:
-            existing_stats = {}
-
-    existing_stats["total_crack"] = total_crack
-    existing_stats["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    existing_stats["total_frames"] = len(frames)
-
-    with open(stats_file, 'w', encoding='utf-8') as f:
-        json.dump(existing_stats, f, indent=4, ensure_ascii=False)
+    # Final stats güncelleme
+    final_stats = {
+        "total_crack": total_crack,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "crack_processed_frames": len(frames),
+        "crack_status": "completed"
+    }
+    _update_stats_file(stats_file, final_stats)
 
     logger.info("CRACK tespiti tamamlandı!")
     logger.info(f"Crack içeren kareler {output_dir} klasöründe kaydedildi.")
     logger.info(f"Toplam Crack Sayısı: {total_crack}")
+    logger.info(f"İstatistikler {stats_file} dosyasına kaydedildi.")
+
+
+def update_crack_stats_from_detected_files(recording_dir: str = None):
+    """Crack detection dosyalarının isimlerinden istatistikleri hesaplar ve günceller"""
+    if recording_dir is None:
+        # En son recording klasörünü bul
+        base_dir = os.path.join(os.getcwd(), "recordings")
+        if not os.path.exists(base_dir):
+            logger.error(f"Hata: {base_dir} klasörü bulunamadı!")
+            return
+        
+        folders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
+        if not folders:
+            logger.warning("İşlenecek kayıt bulunamadı!")
+            return
+        
+        recording_dir = os.path.join(base_dir, max(folders))
+    
+    detected_crack_dir = os.path.join(recording_dir, "detected-crack")
+    stats_file = os.path.join(recording_dir, "detection_stats.json")
+    
+    # Dosya isimlerinden istatistikleri hesapla
+    stats = _calculate_crack_stats_from_detected_files(detected_crack_dir)
+    
+    # Timestamp ekle
+    stats["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Thread-safe olarak güncelle
+    _update_stats_file(stats_file, stats)
+    
+    logger.info(f"Crack detection dosyalarından hesaplanan istatistikler:")
+    logger.info(f"Toplam Crack Sayısı: {stats['total_crack']}")
     logger.info(f"İstatistikler {stats_file} dosyasına kaydedildi.")
 
 

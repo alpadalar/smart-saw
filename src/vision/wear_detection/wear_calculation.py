@@ -4,8 +4,8 @@ import os
 import re
 
 # ---- Sabit çizgi konumları ----
-TOP_LINE_Y = 115     # Üst kırmızı çizgi
-BOTTOM_LINE_Y = 171    # Alt kırmızı çizgi (sabit)
+TOP_LINE_Y = 88    # Üst kırmızı çizgi
+BOTTOM_LINE_Y = 154    # Alt kırmızı çizgi (sabit)
 
 # Ardışık frameler arası izin verilen max yüzde değişimi (ör. 0.5 => %0.5)
 MAX_STEP_PERCENT = 0.5

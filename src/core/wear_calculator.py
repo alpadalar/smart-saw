@@ -12,6 +12,7 @@ class WearCalculator:
     """
     Real-time wear percentage calculator that reads from CSV files
     and calculates running averages for each recording session.
+    Only processes the most recent active recording folder.
     """
     
     def __init__(self, recordings_root: str, update_callback: Optional[Callable[[float], None]] = None):
@@ -23,6 +24,7 @@ class WearCalculator:
         self._current_counts: Dict[str, int] = {}      # recording_dir -> count
         self._lock = threading.Lock()
         self._last_processed_files = set()
+        self._current_recording_dir: Optional[str] = None  # Sadece aktif recording klasörü
         
     def start(self):
         """Start the wear calculator watcher thread."""
@@ -60,6 +62,33 @@ class WearCalculator:
             latest_dir = max(self._current_averages.keys(), key=lambda x: os.path.getctime(x))
             return self._current_averages.get(latest_dir, 0.0)
     
+    def _find_current_recording(self) -> Optional[str]:
+        """En son oluşturulan recording klasörünü bulur"""
+        try:
+            if not os.path.isdir(self.recordings_root):
+                return None
+                
+            folders = []
+            for name in os.listdir(self.recordings_root):
+                rec_dir = os.path.join(self.recordings_root, name)
+                if os.path.isdir(rec_dir):
+                    # Check if it's a valid timestamp format (YYYYMMDD-HHMMSS)
+                    if len(name) == 15 and name[8] == '-':
+                        try:
+                            datetime.strptime(name, '%Y%m%d-%H%M%S')
+                            folders.append(rec_dir)
+                        except ValueError:
+                            continue
+            
+            if not folders:
+                return None
+                
+            # Return the most recent folder
+            return max(folders)
+        except Exception as e:
+            logger.error(f"Current recording bulma hatası: {e}")
+            return None
+    
     def _watch_csv_files(self):
         """Watch for new CSV files and update averages in real-time."""
         logger.info(f"Wear calculator CSV izleme başladı: {self.recordings_root}")
@@ -69,33 +98,33 @@ class WearCalculator:
                     logger.warning(f"Recordings klasörü bulunamadı: {self.recordings_root}")
                     time.sleep(1.0)
                     continue
-                    
-                # Scan all recording directories
-                recording_dirs = [f for f in os.listdir(self.recordings_root) 
-                                if os.path.isdir(os.path.join(self.recordings_root, f))]
-                logger.debug(f"Bulunan kayıt klasörleri: {recording_dirs}")
                 
-                for recording_name in recording_dirs:
-                    recording_dir = os.path.join(self.recordings_root, recording_name)
-                    csv_path = os.path.join(recording_dir, "wear.csv")
+                # Find current recording directory
+                current_recording = self._find_current_recording()
+                
+                with self._lock:
+                    # Update current recording if changed
+                    if current_recording != self._current_recording_dir:
+                        if self._current_recording_dir is not None:
+                            logger.info(f"Wear calculator recording klasörü değişti: {self._current_recording_dir} -> {current_recording}")
+                        self._current_recording_dir = current_recording
+                
+                # Process only current recording directory
+                if current_recording:
+                    csv_path = os.path.join(current_recording, "wear.csv")
                     
-                    if not os.path.exists(csv_path):
-                        logger.debug(f"CSV dosyası bulunamadı: {csv_path}")
-                        continue
-                        
-                    # Check if we've already processed this file
-                    file_key = f"{csv_path}_{os.path.getmtime(csv_path)}"
-                    if file_key in self._last_processed_files:
-                        continue
-                        
-                    logger.info(f"Yeni CSV dosyası işleniyor: {csv_path}")
-                    # Process the CSV file
-                    self._process_csv_file(csv_path, recording_dir)
-                    self._last_processed_files.add(file_key)
-                    
-                    # Keep only recent file keys to prevent memory growth
-                    if len(self._last_processed_files) > 100:
-                        self._last_processed_files.clear()
+                    if os.path.exists(csv_path):
+                        # Check if we've already processed this file
+                        file_key = f"{csv_path}_{os.path.getmtime(csv_path)}"
+                        if file_key not in self._last_processed_files:
+                            logger.info(f"Yeni CSV dosyası işleniyor: {csv_path}")
+                            # Process the CSV file
+                            self._process_csv_file(csv_path, current_recording)
+                            self._last_processed_files.add(file_key)
+                            
+                            # Keep only recent file keys to prevent memory growth
+                            if len(self._last_processed_files) > 100:
+                                self._last_processed_files.clear()
                         
                 time.sleep(0.5)  # Check every 500ms
                 

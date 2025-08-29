@@ -550,6 +550,20 @@ if __name__ == "__main__":
         self.is_running = False
         
         try:
+            # Vision service ve wear calculator'ı kapat
+            if hasattr(self, 'vision_service') and self.vision_service:
+                logger.info("Vision service kapatılıyor...")
+                self.vision_service.stop()
+            
+            if hasattr(self, 'wear_calculator') and self.wear_calculator:
+                logger.info("Wear calculator kapatılıyor...")
+                self.wear_calculator.stop()
+            
+            # Kamera modülünü kapat
+            if hasattr(self, 'camera_module') and self.camera_module:
+                logger.info("Kamera modülü kapatılıyor...")
+                self.camera_module.close()
+            
             # Kontrol istatistiklerini logla
             stats = self.controller_factory.get_stats()
             logger.info("Kontrol sistemi istatistikleri:")

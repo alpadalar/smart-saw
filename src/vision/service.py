@@ -31,6 +31,7 @@ class VisionService:
     - Runs LDC model per-frame (using real_ldc code) and saves edge map with original size
     - Runs wear calculation over the LDC-processed frame and appends percentage to one CSV per recording
     - Starts processing immediately without waiting recording to finish
+    - Only processes the most recent active recording folder
     """
 
     def __init__(self,
@@ -45,11 +46,13 @@ class VisionService:
         self._watcher_thread: Optional[threading.Thread] = None
         self._ldc_thread: Optional[threading.Thread] = None
         self._wear_thread: Optional[threading.Thread] = None
-        self._seen_files = set()
-        self._active_recordings = set()
+        
+        # Thread-safe state management
+        self._lock = threading.Lock()
+        self._current_recording_dir: Optional[str] = None  # Sadece aktif recording klasörü
+        self._seen_files_per_recording = {}  # Her recording için ayrı seen files set'i
         self._ldc_queue: "queue.Queue[Tuple[str, str]]" = queue.Queue(maxsize=max_queue_size)  # (frame_path, recording_dir)
         self._wear_queue: "queue.Queue[Tuple[str, str, str]]" = queue.Queue(maxsize=max_queue_size)  # (ldc_image_path, csv_path, recording_dir)
-        self._lock = threading.Lock()
 
         # Model / real_ldc components
         self._ldc_device = None
@@ -63,7 +66,7 @@ class VisionService:
             "frames_enqueued": 0,
             "ldc_processed": 0,
             "wear_processed": 0,
-            "active_recordings": 0,
+            "current_recording": None,
         }
 
     # ------ Public API ------
@@ -92,7 +95,7 @@ class VisionService:
     def get_stats(self) -> dict:
         with self._lock:
             st = dict(self.stats)
-            st["active_recordings"] = len(self._active_recordings)
+            st["current_recording"] = self._current_recording_dir
             st["ldc_queue_size"] = self._ldc_queue.qsize()
             st["wear_queue_size"] = self._wear_queue.qsize()
             return st
@@ -136,38 +139,95 @@ class VisionService:
     def _watch_recordings_loop(self) -> None:
         while not self._stop_event.is_set():
             try:
-                # Scan recording folders
-                if os.path.isdir(self.recordings_root):
-                    for name in os.listdir(self.recordings_root):
-                        rec_dir = os.path.join(self.recordings_root, name)
-                        if not os.path.isdir(rec_dir):
-                            continue
-                        # Track active
-                        self._active_recordings.add(rec_dir)
-                        # Ensure CSV path exists per recording
-                        csv_path = os.path.join(rec_dir, "wear.csv")
-                        # Enqueue new frames
-                        for fname in os.listdir(rec_dir):
-                            if not fname.lower().endswith(('.jpg', '.jpeg', '.png')):
-                                continue
-                            fpath = os.path.join(rec_dir, fname)
-                            if fpath in self._seen_files:
-                                continue
-                            # Consider file stable when size stops changing briefly
-                            if not self._is_file_ready(fpath):
-                                continue
-                            self._seen_files.add(fpath)
-                            try:
-                                self._ldc_queue.put_nowait((fpath, rec_dir))
-                                with self._lock:
-                                    self.stats["frames_enqueued"] += 1
-                            except queue.Full:
-                                pass
+                # Scan recording folders and find the most recent one
+                current_recording = self._find_current_recording()
+                
                 with self._lock:
-                    self.stats["frames_seen"] = len(self._seen_files)
+                    # Update current recording if changed
+                    if current_recording != self._current_recording_dir:
+                        if self._current_recording_dir is not None:
+                            logger.info(f"Recording klasörü değişti: {self._current_recording_dir} -> {current_recording}")
+                        self._current_recording_dir = current_recording
+                        self.stats["current_recording"] = current_recording
+                        
+                        # Initialize seen files set for new recording
+                        if current_recording and current_recording not in self._seen_files_per_recording:
+                            self._seen_files_per_recording[current_recording] = set()
+                
+                # Process frames only in current recording
+                if current_recording and os.path.isdir(current_recording):
+                    self._process_recording_frames(current_recording)
+                
                 time.sleep(self.watchdog_interval_s)
-            except Exception:
+            except Exception as e:
+                logger.error(f"Watch recordings loop hatası: {e}")
                 time.sleep(self.watchdog_interval_s)
+
+    def _find_current_recording(self) -> Optional[str]:
+        """En son oluşturulan recording klasörünü bulur"""
+        try:
+            if not os.path.isdir(self.recordings_root):
+                return None
+                
+            folders = []
+            for name in os.listdir(self.recordings_root):
+                rec_dir = os.path.join(self.recordings_root, name)
+                if os.path.isdir(rec_dir):
+                    # Check if it's a valid timestamp format (YYYYMMDD-HHMMSS)
+                    if len(name) == 15 and name[8] == '-':
+                        try:
+                            datetime.strptime(name, '%Y%m%d-%H%M%S')
+                            folders.append(rec_dir)
+                        except ValueError:
+                            continue
+            
+            if not folders:
+                return None
+                
+            # Return the most recent folder
+            return max(folders)
+        except Exception as e:
+            logger.error(f"Current recording bulma hatası: {e}")
+            return None
+
+    def _process_recording_frames(self, recording_dir: str) -> None:
+        """Belirli bir recording klasöründeki frame'leri işler"""
+        try:
+            with self._lock:
+                seen_files = self._seen_files_per_recording.get(recording_dir, set())
+            
+            # Ensure CSV path exists
+            csv_path = os.path.join(recording_dir, "wear.csv")
+            
+            # Process new frames
+            for fname in os.listdir(recording_dir):
+                if not fname.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    continue
+                    
+                fpath = os.path.join(recording_dir, fname)
+                
+                with self._lock:
+                    if fpath in seen_files:
+                        continue
+                    seen_files.add(fpath)
+                    self._seen_files_per_recording[recording_dir] = seen_files
+                
+                # Consider file stable when size stops changing briefly
+                if not self._is_file_ready(fpath):
+                    continue
+                
+                try:
+                    self._ldc_queue.put_nowait((fpath, recording_dir))
+                    with self._lock:
+                        self.stats["frames_enqueued"] += 1
+                except queue.Full:
+                    pass
+            
+            with self._lock:
+                self.stats["frames_seen"] = sum(len(files) for files in self._seen_files_per_recording.values())
+                
+        except Exception as e:
+            logger.error(f"Recording frames işleme hatası ({recording_dir}): {e}")
 
     @staticmethod
     def _is_file_ready(path: str, wait_s: float = 0.05) -> bool:
@@ -289,8 +349,8 @@ class VisionService:
 
     # Adapted from real_ldc/wear_calculation.py
     def _compute_wear(self, image_path: str) -> Tuple[Optional[float], Optional[np.ndarray]]:
-        TOP_LINE_Y = 154
-        BOTTOM_LINE_Y = 228
+        TOP_LINE_Y = 88
+        BOTTOM_LINE_Y = 154
         image = cv2.imread(image_path)
         if image is None:
             return None, None
