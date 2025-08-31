@@ -297,5 +297,5 @@ if __name__ == "__main__":
     from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     dialog = NumpadDialog()
-    if dialog.exec_() == QDialog.Accepted:
+    if dialog.exec() == QDialog.Accepted:
         print("Girilen değer:", dialog.get_value())

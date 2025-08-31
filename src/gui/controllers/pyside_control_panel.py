@@ -38,23 +38,100 @@ def reverse_calculate_value(client, value, param, reverse=False):
 
 # NumpadDialog'u import et
 try:
+    # Absolute import deneyelim
     from src.gui.numpad import NumpadDialog
 except ImportError:
-    # Eğer import edilemezse geçici sınıf kullan
-    class NumpadDialog:
-        def __init__(self, parent):
-            self.parent = parent
-            self.value = ""
-            self.Accepted = 1
-        
-        def exec_(self):
-            return self.Accepted
-        
-        def get_value(self):
-            return self.value
-        
-        def update_label(self):
-            pass
+    try:
+        # Relative import deneyelim
+        import sys
+        import os
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+        from numpad import NumpadDialog
+    except ImportError:
+        try:
+            # Current directory'den deneyelim
+            from numpad import NumpadDialog
+        except ImportError as e:
+            logger.error(f"NumpadDialog import hatası: {e}")
+            # Gerçek dialog sınıfı oluşturalım
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+            
+            class NumpadDialog(QDialog):
+                def __init__(self, parent=None):
+                    super().__init__(parent)
+                    self.setWindowTitle("Sayı Girişi")
+                    self.setModal(True)
+                    self.setFixedSize(400, 300)
+                    self.value = ""
+                    self.Accepted = QDialog.Accepted
+                    self.setup_ui()
+                    self.center_on_screen()
+                
+                def setup_ui(self):
+                    layout = QVBoxLayout(self)
+                    
+                    # Display label
+                    self.display_label = QLabel("0")
+                    self.display_label.setStyleSheet("font-size: 24px; padding: 10px; border: 1px solid gray;")
+                    self.display_label.setAlignment(Qt.AlignCenter)
+                    layout.addWidget(self.display_label)
+                    
+                    # Number buttons
+                    for row in range(3):
+                        row_layout = QHBoxLayout()
+                        for col in range(3):
+                            number = row * 3 + col + 1
+                            btn = QPushButton(str(number))
+                            btn.setFixedSize(80, 60)
+                            btn.clicked.connect(lambda checked, n=number: self.add_digit(str(n)))
+                            row_layout.addWidget(btn)
+                        layout.addLayout(row_layout)
+                    
+                    # Bottom row
+                    bottom_layout = QHBoxLayout()
+                    
+                    # Clear button
+                    clear_btn = QPushButton("Temizle")
+                    clear_btn.setFixedSize(80, 60)
+                    clear_btn.clicked.connect(self.clear_value)
+                    bottom_layout.addWidget(clear_btn)
+                    
+                    # Zero button
+                    zero_btn = QPushButton("0")
+                    zero_btn.setFixedSize(80, 60)
+                    zero_btn.clicked.connect(lambda: self.add_digit("0"))
+                    bottom_layout.addWidget(zero_btn)
+                    
+                    # OK button
+                    ok_btn = QPushButton("Tamam")
+                    ok_btn.setFixedSize(80, 60)
+                    ok_btn.clicked.connect(self.accept)
+                    bottom_layout.addWidget(ok_btn)
+                    
+                    layout.addLayout(bottom_layout)
+                
+                def add_digit(self, digit):
+                    if len(self.value) < 10:
+                        self.value += digit
+                        self.update_label()
+                
+                def clear_value(self):
+                    self.value = ""
+                    self.update_label()
+                
+                def update_label(self):
+                    self.display_label.setText(self.value if self.value else "0")
+                
+                def get_value(self):
+                    return self.value
+                
+                def center_on_screen(self):
+                    screen = self.screen()
+                    screen_geometry = screen.geometry()
+                    dialog_geometry = self.geometry()
+                    x = (screen_geometry.width() - dialog_geometry.width()) // 2
+                    y = (screen_geometry.height() - dialog_geometry.height()) // 2
+                    self.move(x, y)
 
 # Global değişkenler
 last_meaningful_speed = None
@@ -325,6 +402,9 @@ class ControlPanelWindow(QMainWindow):
         # Hız güncelleme flag'i
         self._force_update_cutting_speed = False
         
+        # Frame tıklama kontrolü için flag
+        self._frame_click_enabled = True
+        
         # Başlangıç değerlerini ayarla
         self._initialize_current_values()
         
@@ -491,8 +571,15 @@ class ControlPanelWindow(QMainWindow):
             
             # Frame'leri tıklanabilir yap - eğer varsa
             if hasattr(self.ui, 'bandCuttingSpeedFrame'):
+                # Frame'i tıklanabilir yap
+                self.ui.bandCuttingSpeedFrame.setCursor(Qt.PointingHandCursor)
+                # Frame'e doğrudan mousePressEvent ekle
                 self.ui.bandCuttingSpeedFrame.mousePressEvent = self._handle_cutting_speed_frame_click
+                
             if hasattr(self.ui, 'bandDescentSpeedFrame'):
+                # Frame'i tıklanabilir yap
+                self.ui.bandDescentSpeedFrame.setCursor(Qt.PointingHandCursor)
+                # Frame'e doğrudan mousePressEvent ekle
                 self.ui.bandDescentSpeedFrame.mousePressEvent = self._handle_descent_speed_frame_click
             
             # Şerit sapması grafik widget'ını oluştur
@@ -592,6 +679,9 @@ class ControlPanelWindow(QMainWindow):
                     speeds = self.speed_values["fast"]
                 # Hız butonuna basıldığında flag'i ayarla
                 self._force_update_cutting_speed = True
+                # Frame tıklamalarını geçici olarak devre dışı bırak
+                self._frame_click_enabled = False
+                QTimer.singleShot(2000, lambda: setattr(self, '_frame_click_enabled', True))
                 # Label'ları doğrudan gönderilen hız değerleriyle güncelle
                 if speeds is not None:
                     if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
@@ -1003,9 +1093,16 @@ class ControlPanelWindow(QMainWindow):
             logger.exception("Detaylı hata:")
             self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
 
-    def _handle_cutting_speed_frame_click(self, event):
+    def _handle_cutting_speed_frame_click(self, event=None):
         """BandCuttingSpeedFrame tıklama olayını yönetir"""
         try:
+            # Frame tıklama kontrolü
+            if not self._frame_click_enabled:
+                return
+            
+            if event is not None:
+                event.accept()
+            
             # Mevcut değeri al ve float'a çevir
             if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
                 current_value = self.ui.labelBandCuttingSpeedValue.text()
@@ -1019,7 +1116,9 @@ class ControlPanelWindow(QMainWindow):
                 dialog.value = str(int(initial_value)) if initial_value != 0.0 else ""
                 dialog.update_label()
                 
-                if dialog.exec_() == dialog.Accepted:
+                result = dialog.exec()
+                
+                if result == dialog.Accepted:
                     value_str = dialog.get_value()
                     try:
                         value = float(value_str.replace(",", "."))
@@ -1033,6 +1132,7 @@ class ControlPanelWindow(QMainWindow):
                         self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"Kesme hızı ayarlama hatası: {e}")
+            logger.exception("Detaylı hata:")
             self.add_log(f"Kesme hızı ayarlama hatası: {str(e)}", "ERROR")
 
     def _send_manual_speed_value(self, speed_value: float):
@@ -1055,9 +1155,16 @@ class ControlPanelWindow(QMainWindow):
             logger.exception("Detaylı hata:")
             self.add_log(f"Hız ayarlama hatası: {str(e)}", "ERROR") 
 
-    def _handle_descent_speed_frame_click(self, event):
+    def _handle_descent_speed_frame_click(self, event=None):
         """BandDescentSpeedFrame tıklama olayını yönetir"""
         try:
+            # Frame tıklama kontrolü
+            if not self._frame_click_enabled:
+                return
+            
+            if event is not None:
+                event.accept()
+            
             # Mevcut değeri al ve float'a çevir
             if hasattr(self.ui, 'labelBandDescentSpeedValue'):
                 current_value = self.ui.labelBandDescentSpeedValue.text()
@@ -1071,7 +1178,9 @@ class ControlPanelWindow(QMainWindow):
                 dialog.value = str(int(initial_value)) if initial_value != 0.0 else ""
                 dialog.update_label()
                 
-                if dialog.exec_() == dialog.Accepted:
+                result = dialog.exec()
+                
+                if result == dialog.Accepted:
                     value_str = dialog.get_value()
                     try:
                         value = float(value_str.replace(",", "."))
@@ -1085,6 +1194,7 @@ class ControlPanelWindow(QMainWindow):
                         self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"İnme hızı ayarlama hatası: {e}")
+            logger.exception("Detaylı hata:")
             self.add_log(f"İnme hızı ayarlama hatası: {str(e)}", "ERROR")
 
     def _send_manual_descent_speed_value(self, speed_value: float):
