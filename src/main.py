@@ -23,7 +23,8 @@ from core import (
 )
 from control import (
     ControllerType,
-    get_controller_factory
+    get_controller_factory,
+    ControllerFactory
 )
 from hardware import ModbusClient
 from data import (
@@ -33,10 +34,17 @@ from data import (
 )
 from data.cutting_tracker import get_cutting_tracker
 from models import ProcessedData, SystemState
+<<<<<<< HEAD
 from gui.controller import SimpleGUI
 from control import ControllerFactory
+=======
+from gui.pyside_app import SimpleGUI
+>>>>>>> 7d4dea3 (Add ThingsBoard integration for data sending and error handling in SmartSaw class)
 from core.constants import TestereState
 from api import create_app, router
+from thingsboard.sender import create_sender_from_env
+
+
 
 class SmartSaw:
     def __init__(self):
@@ -73,6 +81,27 @@ class SmartSaw:
         
         # GUI - controller factory'yi aktarıyoruz
         self.gui = SimpleGUI(controller_factory=self.controller_factory)
+
+        # --- ThingsBoard entegrasyonu (HTTP) ---
+        self.tb = None
+        self.tb_enabled = False
+        self._tb_last_sent_ms = 0
+        self._tb_period_ms = 1000  # ms; 1000=1 saniye. Gerekirse 200-500 ms yap.
+        self._tb_field_map = None  
+        self._tb_prefix = None  
+
+        try:
+            # ThingsBoard sender'ı oluştur
+            self.tb = create_sender_from_env()
+            if self.tb and self.tb.access_token:
+                self.tb_enabled = True
+                logger.info(f"ThingsBoard sender aktif: {self.tb.base_url}")
+            else:
+                logger.warning("ThingsBoard sender pasif: TB_TOKEN boş veya geçersiz.")
+        except Exception as e:
+            logger.error(f"ThingsBoard sender başlatılamadı: {e}")
+            self.tb = None
+            self.tb_enabled = False
         
         # Kontrol ve veri döngüleri
         self.control_loop = None
@@ -311,8 +340,11 @@ if __name__ == "__main__":
         """Veri kayıt ve GUI güncelleme döngüsünü başlatır"""
         logger.info("Veri döngüsü başlatılıyor...")
         
+        
         while self.is_running:
             try:
+                snapshot_to_send = None # ThingsBoard için hazırlanan gönderilecek veri
+
                 with self.lock:
                     if self.last_processed_data:
                         try:
@@ -322,8 +354,22 @@ if __name__ == "__main__":
                             
                             # GUI'yi güncelle
                             self.gui.update_data(self.last_processed_data)
+                            if self.tb_enabled:
+                                now_ms = int(time.time() * 1000)
+                                if (now_ms - self._tb_last_sent_ms) >= self._tb_period_ms:
+                                    snapshot_to_send = dict(self.last_processed_data)  # kopya
+                                    self._tb_last_sent_ms = now_ms
                         except Exception as e:
                             logger.error(f"Veri kaydetme/güncelleme hatası: {str(e)}")
+
+                if snapshot_to_send is not None and self.tb_enabled and self.tb is not None:
+                    try:
+                        # 'timestamp' string ise sender.send_processed_row ms'e çevirir ve ts/values ile yollar
+                        ok = self.tb.send_processed_row(snapshot_to_send, field_map=self._tb_field_map)
+                        if not ok:
+                            logger.warning("ThingsBoard gönderimi başarısız (HTTP 2xx değil).")
+                    except Exception as e:
+                        logger.error(f"ThingsBoard gönderim hatası: {e}")                
                 
                 # Döngü gecikmesi
                 time.sleep(0.1)  # 100ms güncelleme aralığı
@@ -435,6 +481,12 @@ if __name__ == "__main__":
             # Modbus bağlantısını kapat
             if self.modbus_client:
                 self.modbus_client.disconnect()
+
+            if getattr(self, "tb", None):
+                try:
+                    self.tb.close()
+                except Exception:
+                    pass
             
             # Veri depolama sistemini kapat
             self.data_storage.close()
