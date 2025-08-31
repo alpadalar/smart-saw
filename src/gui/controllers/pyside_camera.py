@@ -53,6 +53,10 @@ class CameraPage(QWidget):
         self._crack_info_frames = []
         self._crack_info_labels = []
         
+        # Okey icon'ları için container'lar
+        self._kirik_okey_icon = None
+        self._crack_okey_icon = None
+        
         # Sıralı görüntü sistemi için container
         self._siralı_goruntu_labels = []
         self._max_images = 4  # Tam olarak 4 adet görüntü
@@ -627,6 +631,9 @@ class CameraPage(QWidget):
             self._kirik_info_frames.clear()
             self._kirik_info_labels.clear()
             
+            # Okey icon'ını da gizle
+            self._hide_kirik_okey_icon()
+            
         except Exception as e:
             print(f"Frame temizleme hatası: {e}")
     
@@ -678,6 +685,9 @@ class CameraPage(QWidget):
             
             info_frame.show()
             
+            # Kırık tespit edildiğinde okey icon'ını gizle
+            self._hide_kirik_okey_icon()
+            
         except Exception as e:
             print(f"Kırmızı frame oluşturma hatası: {e}")
     
@@ -728,8 +738,90 @@ class CameraPage(QWidget):
             
             info_frame.show()
             
+            # Eğer "Kırık diş tespit edilmedi" mesajı varsa okey icon'ını göster
+            if "Kırık diş tespit edilmedi" in message:
+                self._show_kirik_okey_icon()
+            else:
+                self._hide_kirik_okey_icon()
+            
         except Exception as e:
             print(f"Yeşil frame oluşturma hatası: {e}") 
+
+    def _create_okey_icon(self, parent_frame, icon_type: str) -> QLabel:
+        """Okey icon'ı oluşturur"""
+        try:
+            # Icon path'ini belirle
+            icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images", "okey-icon.svg")
+            
+            if not os.path.exists(icon_path):
+                print(f"Okey icon dosyası bulunamadı: {icon_path}")
+                return None
+            
+            # QLabel oluştur
+            icon_label = QLabel(parent_frame)
+            icon_label.setPixmap(QPixmap(icon_path))
+            icon_label.setFixedSize(71, 71)
+            icon_label.setScaledContents(True)
+            icon_label.setStyleSheet("background: transparent;")
+            
+            # Pozisyonu ayarla (x217, y271)
+            icon_label.move(217, 271)
+            
+            return icon_label
+            
+        except Exception as e:
+            print(f"Okey icon oluşturma hatası ({icon_type}): {e}")
+            return None
+    
+    def _show_kirik_okey_icon(self) -> None:
+        """Kırık tespiti için okey icon'ını gösterir"""
+        try:
+            # Eğer icon zaten varsa gösterme
+            if self._kirik_okey_icon and self._kirik_okey_icon.isVisible():
+                return
+            
+            # Eğer icon yoksa oluştur
+            if not self._kirik_okey_icon:
+                self._kirik_okey_icon = self._create_okey_icon(self.ui.KirikTespitiFrame, "kirik")
+            
+            if self._kirik_okey_icon:
+                self._kirik_okey_icon.show()
+                
+        except Exception as e:
+            print(f"Kırık okey icon gösterme hatası: {e}")
+    
+    def _hide_kirik_okey_icon(self) -> None:
+        """Kırık tespiti için okey icon'ını gizler"""
+        try:
+            if self._kirik_okey_icon:
+                self._kirik_okey_icon.hide()
+        except Exception as e:
+            print(f"Kırık okey icon gizleme hatası: {e}")
+    
+    def _show_crack_okey_icon(self) -> None:
+        """Çatlak tespiti için okey icon'ını gösterir"""
+        try:
+            # Eğer icon zaten varsa gösterme
+            if self._crack_okey_icon and self._crack_okey_icon.isVisible():
+                return
+            
+            # Eğer icon yoksa oluştur
+            if not self._crack_okey_icon:
+                self._crack_okey_icon = self._create_okey_icon(self.ui.CatlakTespitiFrame, "crack")
+            
+            if self._crack_okey_icon:
+                self._crack_okey_icon.show()
+                
+        except Exception as e:
+            print(f"Çatlak okey icon gösterme hatası: {e}")
+    
+    def _hide_crack_okey_icon(self) -> None:
+        """Çatlak tespiti için okey icon'ını gizler"""
+        try:
+            if self._crack_okey_icon:
+                self._crack_okey_icon.hide()
+        except Exception as e:
+            print(f"Çatlak okey icon gizleme hatası: {e}")
 
     def _check_and_update_siralı_goruntu(self) -> None:
         """Sıralı görüntü güncellemesini kontrol eder ve gerekirse günceller"""
@@ -1024,6 +1116,9 @@ class CameraPage(QWidget):
             self._crack_info_frames.clear()
             self._crack_info_labels.clear()
             
+            # Okey icon'ını da gizle
+            self._hide_crack_okey_icon()
+            
         except Exception as e:
             print(f"Crack frame temizleme hatası: {e}")
     
@@ -1074,6 +1169,9 @@ class CameraPage(QWidget):
             self._crack_info_labels.append(info_label)
             
             info_frame.show()
+            
+            # Çatlak tespit edildiğinde okey icon'ını gizle
+            self._hide_crack_okey_icon()
             
         except Exception as e:
             print(f"Bordo crack frame oluşturma hatası: {e}")
@@ -1126,6 +1224,12 @@ class CameraPage(QWidget):
             self._crack_info_labels.append(info_label)
             
             info_frame.show()
+            
+            # Eğer "Çatlak tespit edilmedi" mesajı varsa okey icon'ını göster
+            if "Çatlak tespit edilmedi" in message:
+                self._show_crack_okey_icon()
+            else:
+                self._hide_crack_okey_icon()
             
         except Exception as e:
             print(f"Yeşil crack frame oluşturma hatası: {e}")
