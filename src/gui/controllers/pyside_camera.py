@@ -53,12 +53,13 @@ class CameraPage(QWidget):
         self._crack_info_frames = []
         self._crack_info_labels = []
         
-        # Sıralı görüntü sistemi için container (basitleştirilmiş)
+        # Sıralı görüntü sistemi için container
         self._siralı_goruntu_labels = []
-        self._max_images = 4  # Maksimum gösterilecek görüntü sayısı
-        self._image_width = 240  # Her görüntünün genişliği
-        self._image_height = 150  # Her görüntünün yüksekliği
+        self._max_images = 4  # Tam olarak 4 adet görüntü
+        self._image_width = 240  # Her görüntünün genişliği (1920/8)
+        self._image_height = 150  # Her görüntünün yüksekliği (1200/8)
         self._siralı_goruntu_loaded = False  # İlk yükleme kontrolü
+        self._last_siralı_goruntu_update = 0  # Son güncelleme zamanı
 
         # Replace sidebar icons
         self._apply_local_icons()
@@ -96,10 +97,10 @@ class CameraPage(QWidget):
         # Wear calculator referansı (main'den gelecek)
         self.wear_calculator = None
         
-        # Sıralı görüntü güncelleme timer'ı - sadece ilk yüklemede çalışsın
-        # self._siralı_goruntu_timer = QTimer(self)
-        # self._siralı_goruntu_timer.timeout.connect(self._update_siralı_goruntu)
-        # self._siralı_goruntu_timer.start(10000)  # 10 saniyede bir güncelle (daha uzun süre)
+        # Sıralı görüntü güncelleme timer'ı - her 30 saniyede bir güncelle
+        self._siralı_goruntu_timer = QTimer(self)
+        self._siralı_goruntu_timer.timeout.connect(self._check_and_update_siralı_goruntu)
+        self._siralı_goruntu_timer.start(30000)  # 30 saniyede bir kontrol et
 
         # Optional toggle button wiring (safe if not present)
         if hasattr(self.ui, 'kameraOnOffButton'):
@@ -110,7 +111,7 @@ class CameraPage(QWidget):
         self._check_recordings_and_create_crack_frames()
         
         # İlk yüklemede sıralı görüntüleri kontrol et
-        # self._update_siralı_goruntu()  # Geçici olarak devre dışı
+        self._check_and_update_siralı_goruntu()  # İlk yüklemede çalıştır
         
         # Set camera page as active initially
         self.set_active_nav('btnCamera')
@@ -484,18 +485,21 @@ class CameraPage(QWidget):
 
             # Detection end info banner - yeni sistem kullanılıyor
             if self.camera_module.is_detecting:
+                if not self._detection_was_running:
+                    # Detection başladığında sıralı görüntüleri güncelle
+                    self._check_and_update_siralı_goruntu()
                 self._detection_was_running = True
             elif self._detection_was_running:
                 # Detection bittiğinde recordings klasörünü yeniden kontrol et
                 self._check_recordings_and_create_frames()
                 self._check_recordings_and_create_crack_frames()
                 # Sıralı görüntüleri güncelle
-                self._update_siralı_goruntu()
+                self._check_and_update_siralı_goruntu()
                 self._detection_was_running = False
             else:
                 # Detection çalışmıyorsa sadece ilk yüklemede sıralı görüntüleri göster
                 if not self._siralı_goruntu_loaded:
-                    self._update_siralı_goruntu()
+                    self._check_and_update_siralı_goruntu()
                     self._siralı_goruntu_loaded = True
         except Exception as e:
             print(f"Camera _update_values hata: {e}")
@@ -727,33 +731,82 @@ class CameraPage(QWidget):
         except Exception as e:
             print(f"Yeşil frame oluşturma hatası: {e}") 
 
-    def _update_siralı_goruntu(self) -> None:
-        """Sıralı görüntü frame'ini günceller (basitleştirilmiş)"""
+    def _check_and_update_siralı_goruntu(self) -> None:
+        """Sıralı görüntü güncellemesini kontrol eder ve gerekirse günceller"""
         try:
-            # En son detection klasöründen görüntüleri al
+            # En son recordings klasöründen görüntüleri al
             latest_folder = self._get_latest_folder()
             if not latest_folder:
                 return
             
-            detected_dir = os.path.join(self._recordings_dir, latest_folder, 'detected')
-            if not os.path.exists(detected_dir):
+            # Recordings klasörünün kendisinden görüntüleri al
+            recordings_dir = os.path.join(self._recordings_dir, latest_folder)
+            if not os.path.exists(recordings_dir):
                 return
             
-            # Detection görüntülerini listele
-            image_files = [f for f in os.listdir(detected_dir) 
-                          if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
+            # Tüm görüntü dosyalarını listele
+            image_files = []
+            for f in os.listdir(recordings_dir):
+                if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')) and f.startswith('frame_'):
+                    image_files.append(f)
             
             if not image_files:
                 return
             
-            # Rastgele görüntüleri seç (maksimum 4 tane)
-            selected_images = random.sample(image_files, min(len(image_files), self._max_images))
+            # Dosyaları sırala (en yeni önce)
+            image_files.sort(reverse=True)
+            
+            # Eğer yeterli görüntü varsa güncelle
+            if len(image_files) >= 1:  # En az 1 görüntü varsa güncelle
+                self._update_siralı_goruntu()
+            
+        except Exception as e:
+            print(f"Sıralı görüntü kontrol hatası: {e}")
+    
+    def _update_siralı_goruntu(self) -> None:
+        """Sıralı görüntü frame'ini günceller - recordings klasöründen 4 adet frame alır"""
+        try:
+            # En son recordings klasöründen görüntüleri al
+            latest_folder = self._get_latest_folder()
+            if not latest_folder:
+                print("Sıralı görüntü: En son klasör bulunamadı")
+                return
+            
+            # Recordings klasörünün kendisinden görüntüleri al (detected değil)
+            recordings_dir = os.path.join(self._recordings_dir, latest_folder)
+            if not os.path.exists(recordings_dir):
+                print(f"Sıralı görüntü: Klasör bulunamadı: {recordings_dir}")
+                return
+            
+            # Tüm görüntü dosyalarını listele (frame_*.png, frame_*.jpg vb.)
+            image_files = []
+            for f in os.listdir(recordings_dir):
+                if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')) and f.startswith('frame_'):
+                    image_files.append(f)
+            
+            if not image_files:
+                print(f"Sıralı görüntü: {recordings_dir} klasöründe görüntü dosyası bulunamadı")
+                return
+            
+            # Dosyaları sırala (en yeni önce)
+            image_files.sort(reverse=True)
+            
+            # Tam olarak 4 adet görüntü seç (eğer 4'ten az varsa hepsini al, 4'ten fazla varsa rastgele 4 tane)
+            if len(image_files) >= 4:
+                selected_images = random.sample(image_files, 4)
+            else:
+                selected_images = image_files  # 4'ten az varsa hepsini al
+            
+            print(f"Sıralı görüntü: {len(selected_images)} adet görüntü seçildi")
             
             # Mevcut görüntü label'larını temizle
             self._clear_siralı_goruntu_labels()
             
             # Sıralı görüntü frame'ini oluştur
-            self._create_siralı_goruntu_frame(selected_images, detected_dir)
+            self._create_siralı_goruntu_frame(selected_images, recordings_dir)
+            
+            # Son güncelleme zamanını kaydet
+            self._last_siralı_goruntu_update = datetime.now().timestamp()
             
         except Exception as e:
             print(f"Sıralı görüntü güncelleme hatası: {e}")
@@ -775,12 +828,24 @@ class CameraPage(QWidget):
         except Exception as e:
             print(f"Sıralı görüntü temizleme hatası: {e}")
     
-    def _create_siralı_goruntu_frame(self, image_files: List[str], detected_dir: str) -> None:
-        """Sıralı görüntü frame'ini oluşturur"""
+    def _create_siralı_goruntu_frame(self, image_files: List[str], recordings_dir: str) -> None:
+        """Sıralı görüntü frame'ini oluşturur - 4 adet görüntüyü yan yana dizerek"""
         try:
-            # Container widget oluştur (scroll area için)
-            container_widget = QWidget()
+            # SiraliGoruntuFrame'i kontrol et
+            if not hasattr(self.ui, 'SiraliGoruntuFrame'):
+                print("SiraliGoruntuFrame bulunamadı")
+                return
+            
+            # Mevcut widget'ları temizle
+            for child in self.ui.SiraliGoruntuFrame.children():
+                if isinstance(child, QWidget):
+                    child.setParent(None)
+                    child.deleteLater()
+            
+            # Container widget oluştur
+            container_widget = QWidget(self.ui.SiraliGoruntuFrame)
             container_widget.setFixedHeight(self._image_height)
+            container_widget.setFixedWidth(self._image_width * len(image_files))  # Tam genişlik
             
             # Horizontal layout oluştur (boşluksuz)
             layout = QHBoxLayout(container_widget)
@@ -789,12 +854,12 @@ class CameraPage(QWidget):
             
             # Her görüntü için label oluştur
             for image_file in image_files:
-                image_path = os.path.join(detected_dir, image_file)
+                image_path = os.path.join(recordings_dir, image_file)
                 if os.path.exists(image_path):
                     # Görüntüyü yükle ve boyutlandır
                     image = cv2.imread(image_path)
                     if image is not None:
-                        # Görüntüyü 240x150 boyutuna getir
+                        # Görüntüyü 240x150 boyutuna getir (1920x1200'den /8)
                         resized_image = cv2.resize(image, (self._image_width, self._image_height))
                         
                         # BGR'den RGB'ye çevir
@@ -809,7 +874,7 @@ class CameraPage(QWidget):
                         pixmap = QPixmap.fromImage(qt_image)
                         
                         # Label oluştur
-                        image_label = QLabel()
+                        image_label = QLabel(container_widget)
                         image_label.setPixmap(pixmap)
                         image_label.setFixedSize(self._image_width, self._image_height)
                         image_label.setStyleSheet("""
@@ -822,26 +887,24 @@ class CameraPage(QWidget):
                         # Layout'a ekle
                         layout.addWidget(image_label)
                         self._siralı_goruntu_labels.append(image_label)
+                        
+                        print(f"Görüntü eklendi: {image_file}")
+                    else:
+                        print(f"Görüntü yüklenemedi: {image_path}")
+                else:
+                    print(f"Görüntü dosyası bulunamadı: {image_path}")
             
-            # SiraliGoruntuFrame'e container'ı uygula
-            if hasattr(self.ui, 'SiraliGoruntuFrame'):
-                # Mevcut widget'ları temizle
-                for child in self.ui.SiraliGoruntuFrame.children():
-                    if isinstance(child, QWidget):
-                        child.setParent(None)
-                        child.deleteLater()
-                
-                # Container'ı frame'e ekle
-                container_layout = QHBoxLayout(self.ui.SiraliGoruntuFrame)
-                container_layout.setContentsMargins(0, 0, 0, 0)
-                container_layout.setSpacing(0)
-                container_layout.addWidget(container_widget)
-                
-                # Görüntülerin yüklendiğini işaretle
-                print(f"Sıralı görüntü frame oluşturuldu: {len(self._siralı_goruntu_labels)} görüntü")
+            # Container'ı SiraliGoruntuFrame'e yerleştir (sola yaslanmış)
+            container_widget.move(0, 0)
+            container_widget.show()
+            
+            # Görüntülerin yüklendiğini işaretle
+            print(f"Sıralı görüntü frame oluşturuldu: {len(self._siralı_goruntu_labels)} görüntü")
             
         except Exception as e:
             print(f"Sıralı görüntü frame oluşturma hatası: {e}")
+            import traceback
+            traceback.print_exc()
     
     def resizeEvent(self, event):
         super().resizeEvent(event)
