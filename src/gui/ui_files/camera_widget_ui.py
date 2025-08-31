@@ -430,7 +430,7 @@ class Ui_Form(object):
 "	font-weight: medium;\n"
 "	font-size: 28px;\n"
 "}")
-        self.labelTestereDegisimTarih.setText(u"77.77.7777")
+        self.labelTestereDegisimTarih.setText(u"28.07.2025")
         self.labelTestereDegisimTarih.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
         self.KirikTespitiFrame = QFrame(Form)
         self.KirikTespitiFrame.setObjectName(u"KirikTespitiFrame")
