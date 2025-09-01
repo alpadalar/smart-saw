@@ -1,7 +1,12 @@
 # src/data/storage.py
 from typing import Dict, Any
 import sqlite3
-import psycopg2
+try:
+    import psycopg2  # optional, only needed if RemoteStorage.enabled
+    _PSYCOPG2_AVAILABLE = True
+except ImportError:
+    psycopg2 = None
+    _PSYCOPG2_AVAILABLE = False
 import os
 from datetime import datetime
 from core.logger import logger
@@ -254,7 +259,7 @@ class RemoteStorage:
     
     def _initialize_table(self):
         """PostgreSQL tablosunu oluşturur (Devre dışı)"""
-        if not self.enabled:
+        if not self.enabled or not _PSYCOPG2_AVAILABLE:
             return
             
         try:
@@ -324,8 +329,11 @@ class RemoteStorage:
             raise
             
         finally:
-            if 'conn' in locals():
+            try:
+                cursor.close()
                 conn.close()
+            except Exception:
+                pass
 
     def save_data(self, data: Dict[str, Any]) -> bool:
         """Veriyi PostgreSQL'e kaydeder (Devre dışı)"""

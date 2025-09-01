@@ -1,0 +1,75 @@
+<svg width="92" height="91" viewBox="0 0 92 91" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_d_182_1178)">
+<rect x="6" y="2" width="80" height="80" rx="20" fill="#1A1F37"/>
+<mask id="mask0_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="40" y="9" width="13" height="62">
+<path d="M40.511 9H52.4366V70.0322H40.511V9Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_182_1178)">
+<mask id="mask1_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="40" y="9" width="13" height="62">
+<path d="M43.3057 9H49.6418C51.1853 9 52.4366 10.2903 52.4366 11.8821V67.1501C52.4366 68.7418 51.1853 70.0322 49.6418 70.0322H43.3057C41.7622 70.0322 40.511 68.7418 40.511 67.1501V11.8821C40.511 10.2903 41.7622 9 43.3057 9Z" fill="white"/>
+</mask>
+<g mask="url(#mask1_182_1178)">
+<path d="M40.511 9H52.4366V70.0118H40.511V9Z" fill="#F4F6FC"/>
+</g>
+</g>
+<mask id="mask2_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="34" y="17" width="6" height="20">
+<path d="M34.3567 17.701H39.7923V36.0651H34.3567V17.701Z" fill="white"/>
+</mask>
+<g mask="url(#mask2_182_1178)">
+<path d="M34.3567 17.701H39.7923V36.0719H34.3567V17.701Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask3_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="30" y="21" width="7" height="12">
+<path d="M30.8422 21.3089H36.2775V32.4569H30.8422V21.3089Z" fill="white"/>
+</mask>
+<g mask="url(#mask3_182_1178)">
+<path d="M30.8422 21.3089H36.2775V32.4539H30.8422V21.3089Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask4_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="53" y="17" width="6" height="20">
+<path d="M53.1475 17.7004H58.5831V36.0645H53.1475V17.7004Z" fill="white"/>
+</mask>
+<g mask="url(#mask4_182_1178)">
+<path d="M58.5831 36.0643H53.1475V17.6935H58.5831V36.0643Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask5_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="56" y="21" width="7" height="12">
+<path d="M56.6622 21.3085H62.0979V32.4566H56.6622V21.3085Z" fill="white"/>
+</mask>
+<g mask="url(#mask5_182_1178)">
+<path d="M62.0979 32.4565H56.6622V21.3114H62.0979V32.4565Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask6_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="34" y="44" width="6" height="20">
+<path d="M34.3567 44.8946H39.7923V63.2584H34.3567V44.8946Z" fill="white"/>
+</mask>
+<g mask="url(#mask6_182_1178)">
+<path d="M34.3567 44.8946H39.7923V63.2655H34.3567V44.8946Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask7_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="30" y="48" width="7" height="12">
+<path d="M30.8422 48.5025H36.2775V59.6505H30.8422V48.5025Z" fill="white"/>
+</mask>
+<g mask="url(#mask7_182_1178)">
+<path d="M30.8422 48.5025H36.2775V59.6476H30.8422V48.5025Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask8_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="53" y="44" width="6" height="20">
+<path d="M53.1475 44.8941H58.5831V63.2582H53.1475V44.8941Z" fill="white"/>
+</mask>
+<g mask="url(#mask8_182_1178)">
+<path d="M58.5831 63.258H53.1475V44.8869H58.5831V63.258Z" fill="#F4F6FC"/>
+</g>
+<mask id="mask9_182_1178" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="56" y="48" width="7" height="12">
+<path d="M56.6622 48.5023H62.0979V59.6503H56.6622V48.5023Z" fill="white"/>
+</mask>
+<g mask="url(#mask9_182_1178)">
+<path d="M62.0979 59.6502H56.6622V48.5051H62.0979V59.6502Z" fill="#F4F6FC"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_182_1178" x="0.5" y="-2.38419e-07" width="91" height="91" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="3.5"/>
+<feGaussianBlur stdDeviation="2.75"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.02 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_182_1178"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_182_1178" result="shape"/>
+</filter>
+</defs>
+</svg>
