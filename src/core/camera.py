@@ -1,39 +1,44 @@
-import cv2
-import time
-import os
-import threading
-from queue import Queue
-from datetime import datetime
-import logging
-from core.constants import (
+import cv2  # OpenCV kütüphanesi - görüntü işleme için
+import time  # Zaman işlemleri için
+import os  # Dosya sistemi işlemleri için
+import threading  # Çoklu iş parçacığı desteği için
+from queue import Queue  # Thread'ler arası veri paylaşımı için
+from datetime import datetime  # Tarih/saat işlemleri için
+import logging  # Loglama işlemleri için
+from core.constants import (  # Sabit değerler için
     CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FPS,
     CAMERA_DEVICE_ID, CAMERA_JPEG_QUALITY, CAMERA_NUM_THREADS,
     CAMERA_RECORDINGS_DIR
 )
-from core.logger import logger
+from core.logger import logger  # Loglama fonksiyonları için
+from core.broken_detect import detect_broken_objects  # Nesne tespiti fonksiyonu için
 
 class CameraModule:
     def __init__(self):
-        self.cap = None
-        self.is_recording = False
-        self.is_viewing = False
-        self.frame_queue = Queue(maxsize=100)
-        self.frame_count = 0
-        self.start_time = None
-        self.output_dir = None
-        self.base_output_dir = os.path.join(os.getcwd(), CAMERA_RECORDINGS_DIR)
-        os.makedirs(self.base_output_dir, exist_ok=True)
-        self.threads = []
-        self.view_window = None
-        self.is_initialized = False
-        self.initialization_lock = threading.Lock()
-        self.view_thread = None
-        self.stop_event = threading.Event()
-        self.current_frame = None
-        self.frame_ready = threading.Event()
-        self.capture_thread = None
+        self.cap = None  # Kamera nesnesi
+        self.is_recording = False  # Kayıt durumu
+        self.is_viewing = False  # Görüntüleme durumu
+        self.frame_queue = Queue(maxsize=100)  # Frame kuyruğu
+        self.frame_count = 0  # Frame sayacı
+        self.start_time = None  # Başlangıç zamanı
+        self.output_dir = None  # Çıkış klasörü
+        self.base_output_dir = os.path.join(os.getcwd(), CAMERA_RECORDINGS_DIR)  # Ana çıkış klasörü
+        os.makedirs(self.base_output_dir, exist_ok=True)  # Çıkış klasörünü oluştur
+        self.threads = []  # Thread listesi
+        self.view_window = None  # Görüntüleme penceresi
+        self.is_initialized = False  # Başlatma durumu
+        self.initialization_lock = threading.Lock()  # Başlatma kilidi
+        self.view_thread = None  # Görüntüleme thread'i
+        self.stop_event = threading.Event()  # Durdurma olayı
+        self.current_frame = None  # Mevcut frame
+        self.frame_ready = threading.Event()  # Frame hazır olayı
+        self.capture_thread = None  # Yakalama thread'i
         self.recording_thread = None  # Kayıt thread'i
         self.frame_count_callback = None  # Frame sayısı güncelleme callback'i
+        self.detection_thread = None  # Nesne tespiti thread'i
+        self.is_detecting = False  # Tespit durumu
+        self.detection_lock = threading.Lock()  # Tespit kilidi
+        self.detection_stop_event = threading.Event()  # Tespit durdurma olayı
         
     def set_frame_count_callback(self, callback):
         """Frame sayısı güncellemesi için callback fonksiyonu ayarlar"""
@@ -233,6 +238,51 @@ class CameraModule:
                 return False
         return False
 
+    def start_detection(self):
+        """Nesne tespiti işlemini başlatır"""
+        with self.detection_lock:  # Thread-safe kontrol
+            if not self.is_detecting:
+                try:
+                    self.is_detecting = True
+                    self.detection_stop_event.clear()  # Durdurma olayını sıfırla
+                    self.detection_thread = threading.Thread(target=self._detection_loop, daemon=True)
+                    self.detection_thread.start()
+                    logger.info("Nesne tespiti başlatıldı")
+                    return True
+                except Exception as e:
+                    logger.error(f"Nesne tespiti başlatma hatası: {str(e)}")
+                    self.is_detecting = False
+                    return False
+        return False
+
+    def stop_detection(self):
+        """Nesne tespiti işlemini durdurur"""
+        with self.detection_lock:  # Thread-safe kontrol
+            if self.is_detecting:
+                try:
+                    self.detection_stop_event.set()  # Durdurma sinyali gönder
+                    if self.detection_thread and self.detection_thread.is_alive():
+                        self.detection_thread.join(timeout=1.0)  # Thread'in kapanmasını bekle
+                    self.is_detecting = False
+                    logger.info("Nesne tespiti durduruldu")
+                    return True
+                except Exception as e:
+                    logger.error(f"Nesne tespiti durdurma hatası: {str(e)}")
+        return False
+
+    def _detection_loop(self):
+        """Nesne tespiti döngüsü"""
+        try:
+            while not self.detection_stop_event.is_set():
+                detect_broken_objects()
+                # Tespit işlemi tamamlandıktan sonra bekle
+                time.sleep(1)  # Örnek olarak 1 saniye bekle
+        except Exception as e:
+            logger.error(f"Nesne tespiti döngüsü hatası: {str(e)}")
+        finally:
+            with self.detection_lock:
+                self.is_detecting = False
+
     def start_viewing(self):
         """Kamera görüntüsünü göstermeye başlar"""
         if not self._lazy_initialize():
@@ -307,6 +357,8 @@ class CameraModule:
                 self.stop_recording()
             if self.is_viewing:
                 self.stop_viewing()
+            if self.is_detecting:
+                self.stop_detection()
             
             # Frame kuyruğunu temizle
             try:
