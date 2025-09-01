@@ -39,6 +39,46 @@ class LocalStorage:
             logger.error(f"Dizin oluşturma hatası: {str(e)}")
             raise
         
+    def _add_kesim_turu_column(self, db_path: str):
+        """Kesim türü sütununu ekler"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Sütunun var olup olmadığını kontrol et
+            cursor.execute("PRAGMA table_info(testere_data)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'kesim_turu' not in columns:
+                cursor.execute("ALTER TABLE testere_data ADD COLUMN kesim_turu VARCHAR(20)")
+                logger.info(f"Kesim türü sütunu eklendi: {db_path}")
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Kesim türü sütunu ekleme hatası: {str(e)}")
+            raise
+
+    def _add_kesim_id_column(self, db_path: str):
+        """Kesim ID sütununu ekler"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Sütunun var olup olmadığını kontrol et
+            cursor.execute("PRAGMA table_info(testere_data)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'kesim_id' not in columns:
+                cursor.execute("ALTER TABLE testere_data ADD COLUMN kesim_id INTEGER")
+                logger.info(f"Kesim ID sütunu eklendi: {db_path}")
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Kesim ID sütunu ekleme hatası: {str(e)}")
+            raise
+        
     def _initialize_databases(self):
         """Veritabanlarını ve tabloları oluşturur"""
         try:
@@ -86,10 +126,16 @@ class LocalStorage:
                 alarm_bilgisi VARCHAR(10),
                 serit_kesme_hizi REAL,
                 serit_inme_hizi REAL,
+                malzeme_genisligi REAL,
+                fark_hz_x REAL,
+                fark_hz_y REAL,
+                fark_hz_z REAL,
                 fuzzy_output REAL,
                 kesme_hizi_degisim REAL,
                 modbus_connected INTEGER,
-                modbus_ip VARCHAR(50)
+                modbus_ip VARCHAR(50),
+                kesim_turu VARCHAR(20),
+                kesim_id INTEGER
             )
             """
             
@@ -101,6 +147,9 @@ class LocalStorage:
                 conn.commit()
                 conn.close()
                 logger.info(f"Ana veritabanı oluşturuldu: {self.db_path.format(1)}")
+            else:
+                self._add_kesim_turu_column(self.db_path.format(1))
+                self._add_kesim_id_column(self.db_path.format(1))
             
             # Total veritabanı için
             if not os.path.exists(self.total_db):
@@ -110,6 +159,9 @@ class LocalStorage:
                 conn.commit()
                 conn.close()
                 logger.info(f"Total veritabanı oluşturuldu: {self.total_db}")
+            else:
+                self._add_kesim_turu_column(self.total_db)
+                self._add_kesim_id_column(self.total_db)
             
             # Raw veritabanı için
             if not os.path.exists(self.raw_db):
@@ -119,6 +171,9 @@ class LocalStorage:
                 conn.commit()
                 conn.close()
                 logger.info(f"Raw veritabanı oluşturuldu: {self.raw_db}")
+            else:
+                self._add_kesim_turu_column(self.raw_db)
+                self._add_kesim_id_column(self.raw_db)
             
             logger.info("SQLite veritabanları kontrol edildi")
             
@@ -142,6 +197,14 @@ class LocalStorage:
             data.pop('fuzzy_hiz_degisimi', None)
             data.pop('controller_output', None)
             data.pop('fuzzy_akim_degisim', None)
+            
+            # Kesim türünü belirle
+            testere_durumu = data.get('testere_durumu', 0)
+            if testere_durumu == 3:  # KESIM_YAPILIYOR durumu
+                active_controller = data.get('active_controller', '')
+                data['kesim_turu'] = active_controller if active_controller else 'manual'
+            else:
+                data['kesim_turu'] = None
             
             # Ana veritabanına kaydet
             conn = sqlite3.connect(self.db_path.format(data['makine_id']))
@@ -246,6 +309,10 @@ class RemoteStorage:
                 alarm_bilgisi VARCHAR(10),
                 serit_kesme_hizi REAL,
                 serit_inme_hizi REAL,
+                malzeme_genisligi REAL,
+                fark_hz_x REAL,
+                fark_hz_y REAL,
+                fark_hz_z REAL,
                 fuzzy_output REAL,
                 kesme_hizi_degisim REAL,
                 modbus_connected INTEGER,

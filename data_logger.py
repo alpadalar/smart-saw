@@ -9,7 +9,7 @@ import csv
 from datetime import datetime
 
 class DataLogger:
-    def __init__(self, port='COM7', baudrate=230400):
+    def __init__(self, port='COM6', baudrate=230400):
         self.port = port
         self.baudrate = baudrate
         self.serial = None

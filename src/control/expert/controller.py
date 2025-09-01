@@ -10,12 +10,12 @@ from utils.helpers import (
     calculate_elapsed_time_ms,
     format_time
 )
+from utils.delay_calculator import calculate_control_delay
 
 # Sabitler
 IDEAL_AKIM = 17.0
 SAPMA_ESIK = 0.4
 MIN_SPEED_UPDATE_INTERVAL = 1.0  # 1 Hz güncelleme hızı
-BASLANGIC_GECIKMESI = 15000.0  # 30 saniye başlangıç gecikmesi (ms)
 BUFFER_SURESI = 1.0  # 1 saniyelik veri tamponu
 
 class VeriBuffer:
@@ -55,22 +55,32 @@ class AkimKontrol:
         self.last_update_time = 0
         self.veri_buffer = VeriBuffer()
 
-    def kesim_durumu_kontrol(self, testere_durumu):
+    def kesim_durumu_kontrol(self, testere_durumu, modbus_client=None):
         current_time = time.time() * 1000  # milisaniye cinsinden
         
         if testere_durumu != 3:
             if self.is_cutting:
                 self._log_kesim_bitis()
+                self.is_cutting = False
+                self.cutting_start_time = None
             return False
 
         if not self.is_cutting:
             self._log_kesim_baslangic()
+            self.is_cutting = True
+            self.cutting_start_time = current_time
+            
+            # İnme hızını register'dan okuyarak dinamik bekleme süresini hesapla
+            self.initial_delay = calculate_control_delay(modbus_client)
+            logger.info(f"Expert - Register'dan hesaplanan bekleme süresi: {self.initial_delay/1000:.1f} saniye")
 
-        if current_time - self.cutting_start_time < BASLANGIC_GECIKMESI:
-            kalan_sure = int((BASLANGIC_GECIKMESI - (current_time - self.cutting_start_time)) / 1000)
-            if kalan_sure % 5 == 0:  # Her 5 saniyede bir bilgi ver
-                logger.info(f"Kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
-            return False
+        # Başlangıç gecikmesi kontrolü
+        if hasattr(self, 'initial_delay') and self.initial_delay > 0:
+            if current_time - self.cutting_start_time < self.initial_delay:
+                kalan_sure = int((self.initial_delay - (current_time - self.cutting_start_time)) / 1000)
+                if kalan_sure % 5 == 0:  # Her 5 saniyede bir bilgi ver
+                    logger.info(f"Expert kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
+                return False
 
         return True
 
@@ -114,14 +124,12 @@ class AkimKontrol:
         return new_inme_hizi
 
     def _log_kesim_baslangic(self):
-        self.cutting_start_time = time.time() * 1000
-        self.is_cutting = True
         start_time_str = get_current_time_ms()
         logger.info("\n" + "="*60)
-        logger.info("YENİ KESİM BAŞLADI")
+        logger.info("YENİ KESİM BAŞLADI (Expert Kontrol)")
         logger.info("-"*60)
         logger.info(f"Başlangıç Zamanı : {start_time_str}")
-        logger.info(f"Kontrol sistemi {BASLANGIC_GECIKMESI/1000} saniye sonra devreye girecek...")
+        logger.info("Kontrol sistemi dinamik gecikme sonrası devreye girecek...")
         logger.info("="*60 + "\n")
 
     def _log_kesim_bitis(self):
@@ -138,6 +146,11 @@ class AkimKontrol:
         
         self.is_cutting = False
         self.cutting_start_time = None
+        
+        # Delay calculator cache'ini sıfırla - bir sonraki kesim için hazırlık
+        from utils.delay_calculator import reset_delay_cache
+        reset_delay_cache()
+        logger.info("🔄 Delay calculator cache'i sıfırlandı - bir sonraki kesim için hazırlık")
 
 
 # Global controller nesnesi
@@ -145,7 +158,7 @@ akim_kontrol = AkimKontrol()
 
 def adjust_speeds(processed_data, modbus_client, last_modbus_write_time, speed_adjustment_interval, prev_current):
     """Expert kontrol için hız ayarlama fonksiyonu"""
-    if not akim_kontrol.kesim_durumu_kontrol(processed_data.get('testere_durumu')):
+    if not akim_kontrol.kesim_durumu_kontrol(processed_data.get('testere_durumu'), modbus_client):
         return last_modbus_write_time, None
 
     if not akim_kontrol.hiz_guncelleme_zamani_geldi_mi():

@@ -17,8 +17,7 @@ import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
-import webbrowser
-from tkwebview2.tkwebview2 import WebView2
+
 import sqlite3
 import pandas as pd
 
@@ -28,6 +27,112 @@ from control import ControllerType, get_controller_factory
 from models import ProcessedData
 from utils.helpers import reverse_calculate_value
 from core.camera import CameraModule
+import tkinter.font as tkFont
+
+
+# Linux için güvenli font yönetimi
+class SafeFontManager:
+    """Linux'ta tutarlı font rendering için font yöneticisi"""
+    
+    def __init__(self):
+        self._fonts = {}
+        self._initialized = False
+    
+    def _init_fonts(self):
+        """Güvenli fontları başlatır (lazy initialization)"""
+        if self._initialized:
+            return
+            
+        try:
+            # Önce root window var mı kontrol et
+            try:
+                root = tk._get_default_root()
+                has_root = True
+            except:
+                has_root = False
+            
+            if not has_root:
+                # Root window yoksa basit tuple fontlar kullan
+                self._fonts = {
+                    'small': ('Liberation Sans', 8, 'normal'),
+                    'small_bold': ('Liberation Sans', 8, 'bold'),
+                    'normal': ('Liberation Sans', 10, 'normal'),
+                    'normal_bold': ('Liberation Sans', 10, 'bold'),
+                    'medium': ('Liberation Sans', 12, 'normal'),
+                    'medium_bold': ('Liberation Sans', 12, 'bold'),
+                    'large': ('Liberation Sans', 16, 'normal'),
+                    'large_bold': ('Liberation Sans', 16, 'bold'),
+                    'xlarge': ('Liberation Sans', 18, 'normal'),
+                    'xlarge_bold': ('Liberation Sans', 18, 'bold'),
+                }
+            else:
+                # Root window varsa Font nesneleri oluştur ve ttk style'ları ayarla
+                base_family = "Liberation Sans"
+                self._fonts = {
+                    'small': tkFont.Font(family=base_family, size=8, weight='normal'),
+                    'small_bold': tkFont.Font(family=base_family, size=8, weight='bold'),
+                    'normal': tkFont.Font(family=base_family, size=10, weight='normal'),
+                    'normal_bold': tkFont.Font(family=base_family, size=10, weight='bold'),
+                    'medium': tkFont.Font(family=base_family, size=12, weight='normal'),
+                    'medium_bold': tkFont.Font(family=base_family, size=12, weight='bold'),
+                    'large': tkFont.Font(family=base_family, size=16, weight='normal'),
+                    'large_bold': tkFont.Font(family=base_family, size=16, weight='bold'),
+                    'xlarge': tkFont.Font(family=base_family, size=18, weight='normal'),
+                    'xlarge_bold': tkFont.Font(family=base_family, size=18, weight='bold'),
+                }
+                
+                # ttk widget'ları için global style ayarları
+                try:
+                    style = ttk.Style()
+                    
+                    # Tüm ttk widget'lar için Liberation Sans fontunu ayarla
+                    style.configure('.', font=(base_family, 10, 'normal'))
+                    style.configure('TLabel', font=(base_family, 10, 'normal'))
+                    style.configure('TButton', font=(base_family, 10, 'normal'))
+                    style.configure('TEntry', font=(base_family, 10, 'normal'))
+                    style.configure('TFrame', font=(base_family, 10, 'normal'))
+                    style.configure('TLabelFrame', font=(base_family, 10, 'bold'))
+                    style.configure('TLabelFrame.Label', font=(base_family, 10, 'bold'))
+                    
+                    # tk widget'lar için default font'u değiştir
+                    root.option_add('*Font', (base_family, 10, 'normal'))
+                    root.option_add('*Label.Font', (base_family, 10, 'normal'))
+                    root.option_add('*Button.Font', (base_family, 10, 'normal'))
+                    root.option_add('*Entry.Font', (base_family, 10, 'normal'))
+                    
+                except Exception as style_error:
+                    print(f"Style ayarlama hatası: {style_error}")
+                    
+        except:
+            # Her durumda fallback
+            self._fonts = {
+                'small': ('Liberation Sans', 8, 'normal'),
+                'small_bold': ('Liberation Sans', 8, 'bold'),
+                'normal': ('Liberation Sans', 10, 'normal'),
+                'normal_bold': ('Liberation Sans', 10, 'bold'),
+                'medium': ('Liberation Sans', 12, 'normal'),
+                'medium_bold': ('Liberation Sans', 12, 'bold'),
+                'large': ('Liberation Sans', 16, 'normal'),
+                'large_bold': ('Liberation Sans', 16, 'bold'),
+                'xlarge': ('Liberation Sans', 18, 'normal'),
+                'xlarge_bold': ('Liberation Sans', 18, 'bold'),
+            }
+        
+        self._initialized = True
+    
+    def get(self, font_key):
+        """Font nesnesini döndürür"""
+        self._init_fonts()  # Lazy initialization
+        return self._fonts.get(font_key, self._fonts['normal'])
+
+
+# Global font manager - GUI başladığında hazırlanacak
+font_manager = None
+
+
+
+
+
 
 class GUILogHandler(logging.Handler):
     """GUI için özel log handler"""
@@ -69,6 +174,10 @@ class SimpleGUI:
     def __init__(self, controller_factory=None):
         self.controller_factory = controller_factory or get_controller_factory()
         
+        # Global font manager'ı başlat (lazy initialization ile güvenli)
+        global font_manager
+        font_manager = SafeFontManager()
+        
         # Thread senkronizasyonu için event'ler
         self.threads_ready = threading.Event()
         self.gui_ready = threading.Event()
@@ -87,10 +196,21 @@ class SimpleGUI:
         # Ana pencere
         self.root = tk.Tk()
         self.root.title("Smart Saw Control Panel")
-        self.root.geometry("1920x1080")
-        # screen_width = self.root.winfo_screenwidth()
-        # screen_height = self.root.winfo_screenheight()
-        # self.root.geometry(f"{screen_width}x{screen_height}")
+        
+        # Tam ekran ayarları
+        self.root.geometry("1920x1080")  # Fallback boyut
+        try:
+            # Linux için tam ekran (maximize)
+            self.root.attributes('-zoomed', True)
+        except tk.TclError:
+            try:
+                # Windows için tam ekran (maximize)
+                self.root.state('zoomed')
+            except tk.TclError:
+                # Fallback: Manuel tam ekran boyutu
+                screen_width = self.root.winfo_screenwidth()
+                screen_height = self.root.winfo_screenheight()
+                self.root.geometry(f"{screen_width}x{screen_height}+0+0")
         
         # Değişkenler
         self.current_values = {
@@ -119,6 +239,10 @@ class SimpleGUI:
             'inme_motor_tork_percentage': tk.StringVar(value="-"),
             'serit_kesme_hizi': tk.StringVar(value="-"),
             'serit_inme_hizi': tk.StringVar(value="-"),
+            'malzeme_genisligi': tk.StringVar(value="-"),
+            'fark_hz_x': tk.StringVar(value="-"),
+            'fark_hz_y': tk.StringVar(value="-"),
+            'fark_hz_z': tk.StringVar(value="-"),
             
             # Basınç ve sıcaklık bilgileri
             'mengene_basinc_bar': tk.StringVar(value="-"),
@@ -170,6 +294,9 @@ class SimpleGUI:
         logger.addHandler(self.log_handler)
         self._process_logs()
         
+        # Placeholder güncelleme zamanlaması
+        self.last_placeholder_update = 0
+        
         # GUI hazır olduğunu bildir
         self.gui_ready.set()
 
@@ -198,7 +325,7 @@ class SimpleGUI:
         
         # Üst kısım - Kontrol ve Modbus Durumu
         top_frame = ttk.Frame(left_panel)
-        top_frame.pack(fill=tk.X, pady=(0, 5))
+        top_frame.pack(fill=tk.X, pady=5)
         
         # Testere Durum Göstergesi
         testere_frame = ttk.LabelFrame(top_frame, text="Testere Durumu", padding=(5, 5))
@@ -211,7 +338,7 @@ class SimpleGUI:
         self.testere_status_label = ttk.Label(
             testere_status_frame,
             textvariable=self.current_values['testere_durumu'],
-            font=('TkDefaultFont', 10, 'bold')
+            font=font_manager.get('normal_bold')
         )
         self.testere_status_label.pack(side=tk.LEFT, padx=5)
         
@@ -277,6 +404,8 @@ class SimpleGUI:
         self.coefficient_var = tk.StringVar(value="1.0")
         self.coefficient_entry = ttk.Entry(coefficient_frame, textvariable=self.coefficient_var, width=8)
         self.coefficient_entry.pack(side=tk.LEFT, padx=5)
+        # Enter tuşu ile uygulama
+        self.coefficient_entry.bind('<Return>', lambda e: self._on_coefficient_change(self.coefficient_var.get()))
         
         # Uygula butonu
         ttk.Button(
@@ -284,6 +413,150 @@ class SimpleGUI:
             text="Uygula",
             command=lambda: self._on_coefficient_change(self.coefficient_var.get())
         ).pack(side=tk.LEFT, padx=5)
+
+        # Manuel Hız Kontrolü ve Ana Metrikler için ortak container
+        controls_container = ttk.Frame(left_panel)
+        controls_container.pack(fill=tk.X, pady=5)
+        
+        # İki sütun için grid ayarları
+        controls_container.grid_columnconfigure(0, weight=1)  # Sol sütun (manuel kontrol)
+        controls_container.grid_columnconfigure(1, weight=1)  # Sağ sütun (ana metrikler)
+        
+        # Manuel Hız Kontrolü Frame'i (Sol sütun)
+        manual_speed_frame = ttk.LabelFrame(controls_container, text="Manuel Hız Kontrolü", padding=(5, 5))
+        manual_speed_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        
+        # Manuel kontrol bilgisi (grid ile)
+        ttk.Label(manual_speed_frame, 
+                 text="Manuel Kontrol: Sınır kontrolü yok, istediğiniz değeri girin", 
+                 font=font_manager.get('small'), foreground='red').grid(row=0, column=0, columnspan=4, sticky="ew", pady=2)
+        
+        # Grid Layout ile Hız Kontrolleri (2 satır x 4 sütun) - Artık satır 1'den başlıyor
+        manual_speed_frame.grid_columnconfigure(0, weight=0)  # Hız girişi sütunu sabit boyut
+        manual_speed_frame.grid_columnconfigure(1, weight=0)  # Gönder butonları
+        manual_speed_frame.grid_columnconfigure(2, weight=0)  # Tüm hızları gönder
+        manual_speed_frame.grid_columnconfigure(3, weight=1)  # ACİL DURDUR genişleyebilir
+        
+        # Satır 1: Kesme Hızı
+        kesme_container = ttk.Frame(manual_speed_frame)
+        kesme_container.grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        
+        ttk.Label(kesme_container, text="Kesme Hızı:").pack(side=tk.LEFT, padx=(0,5))
+        self.kesme_hizi_var = tk.StringVar(value="")
+        self.kesme_hizi_entry = ttk.Entry(kesme_container, textvariable=self.kesme_hizi_var, width=12)
+        self.kesme_hizi_entry.pack(side=tk.LEFT, padx=(0,5))
+        # Enter tuşu ile gönderme
+        self.kesme_hizi_entry.bind('<Return>', lambda e: self._send_manual_speed('kesme'))
+        # Focus eventi ile placeholder temizleme
+        self.kesme_hizi_entry.bind('<FocusIn>', lambda e: self._on_focus_in(e, 'kesme'))
+        self.kesme_hizi_entry.bind('<FocusOut>', lambda e: self._on_focus_out(e, 'kesme'))
+        ttk.Label(kesme_container, text="mm/dakika").pack(side=tk.LEFT)
+        
+        # Kesme hızı gönder butonu
+        ttk.Button(
+            manual_speed_frame,
+            text="Gönder",
+            command=lambda: self._send_manual_speed('kesme')
+        ).grid(row=1, column=1, sticky="w", padx=5, pady=2)
+        
+        # Satır 2: İnme Hızı
+        inme_container = ttk.Frame(manual_speed_frame)
+        inme_container.grid(row=2, column=0, sticky="w", padx=5, pady=2)
+        
+        ttk.Label(inme_container, text="İnme Hızı:").pack(side=tk.LEFT, padx=(0,5))
+        self.inme_hizi_var = tk.StringVar(value="")
+        self.inme_hizi_entry = ttk.Entry(inme_container, textvariable=self.inme_hizi_var, width=12)
+        self.inme_hizi_entry.pack(side=tk.LEFT, padx=(0,5))
+        # Enter tuşu ile gönderme
+        self.inme_hizi_entry.bind('<Return>', lambda e: self._send_manual_speed('inme'))
+        # Focus eventi ile placeholder temizleme
+        self.inme_hizi_entry.bind('<FocusIn>', lambda e: self._on_focus_in(e, 'inme'))
+        self.inme_hizi_entry.bind('<FocusOut>', lambda e: self._on_focus_out(e, 'inme'))
+        ttk.Label(inme_container, text="mm/dakika").pack(side=tk.LEFT)
+        
+        # İnme hızı gönder butonu
+        ttk.Button(
+            manual_speed_frame,
+            text="Gönder",
+            command=lambda: self._send_manual_speed('inme')
+        ).grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        
+        # Tüm hızları gönder butonu (2 satır boyutunda)
+        ttk.Button(
+            manual_speed_frame,
+            text="Tüm Hızları\nGönder",
+            command=self._send_all_speeds
+        ).grid(row=1, column=2, rowspan=2, sticky="w", padx=5, pady=2)
+        
+        # ACİL DURDUR butonu (2 satır boyutunda, kırmızı)
+        self.emergency_stop_button = tk.Button(
+            manual_speed_frame,
+            text="ACİL\nDURDUR",
+            command=self._emergency_stop,
+            bg='red',
+            fg='white',
+            font=font_manager.get('medium_bold'),
+            relief='raised',
+            borderwidth=4,
+            activebackground='darkred',
+            activeforeground='white'
+        )
+        self.emergency_stop_button.grid(row=1, column=3, rowspan=2, sticky="nsew", padx=5, pady=2)
+        
+        # Dinamik placeholder textleri ayarla
+        self._update_speed_placeholders()
+        
+        # Ana Metrikler (Büyük Gösterim) - Sağ sütun
+        main_metrics_frame = ttk.LabelFrame(controls_container, text="Ana Metrikler", padding=(10, 10))
+        main_metrics_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+        
+        # 2x2 grid layout için ana metrikler
+        main_metrics_frame.grid_columnconfigure(0, weight=1)
+        main_metrics_frame.grid_columnconfigure(1, weight=1)
+        main_metrics_frame.grid_rowconfigure(0, weight=1)
+        main_metrics_frame.grid_rowconfigure(1, weight=1)
+        
+        # Akım ve Tork (Sol üst ve sağ üst)
+        current_frame = ttk.Frame(main_metrics_frame)
+        current_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        
+        ttk.Label(current_frame, text="Motor Akım:", font=font_manager.get('medium_bold')).pack(side=tk.LEFT)
+        self.main_current_label = ttk.Label(current_frame, textvariable=self.current_values['serit_motor_akim_a'], 
+                                           font=font_manager.get('xlarge_bold'), foreground='blue')
+        self.main_current_label.pack(side=tk.LEFT, padx=(10,5))
+        ttk.Label(current_frame, text="A", font=font_manager.get('medium_bold')).pack(side=tk.LEFT)
+        
+        torque_frame = ttk.Frame(main_metrics_frame)
+        torque_frame.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        
+        ttk.Label(torque_frame, text="Motor Tork:", font=font_manager.get('medium_bold')).pack(side=tk.LEFT)
+        self.main_torque_label = ttk.Label(torque_frame, textvariable=self.current_values['serit_motor_tork_percentage'], 
+                                          font=font_manager.get('xlarge_bold'), foreground='green')
+        self.main_torque_label.pack(side=tk.LEFT, padx=(10,5))
+        ttk.Label(torque_frame, text="%", font=font_manager.get('medium_bold')).pack(side=tk.LEFT)
+        
+        # Hızlar ve Sapma (Sol alt ve sağ alt)
+        speeds_frame = ttk.Frame(main_metrics_frame)
+        speeds_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        
+        ttk.Label(speeds_frame, text="Kesme:", font=font_manager.get('normal_bold')).pack(side=tk.LEFT)
+        self.main_cut_speed_label = ttk.Label(speeds_frame, textvariable=self.current_values['serit_kesme_hizi'], 
+                                             font=font_manager.get('large_bold'), foreground='red')
+        self.main_cut_speed_label.pack(side=tk.LEFT, padx=(5,3))
+        ttk.Label(speeds_frame, text="İnme:", font=font_manager.get('normal_bold')).pack(side=tk.LEFT, padx=(10,5))
+        self.main_feed_speed_label = ttk.Label(speeds_frame, textvariable=self.current_values['serit_inme_hizi'], 
+                                              font=font_manager.get('large_bold'), foreground='orange')
+        self.main_feed_speed_label.pack(side=tk.LEFT, padx=(0,3))
+        ttk.Label(speeds_frame, text="mm/s", font=font_manager.get('normal_bold')).pack(side=tk.LEFT)
+        
+        deviation_frame = ttk.Frame(main_metrics_frame)
+        deviation_frame.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+        
+        ttk.Label(deviation_frame, text="Şerit Sapması:", font=font_manager.get('medium_bold')).pack(side=tk.LEFT)
+        self.main_deviation_label = ttk.Label(deviation_frame, textvariable=self.current_values['serit_sapmasi'], 
+                                             font=font_manager.get('xlarge_bold'), foreground='purple')
+        self.main_deviation_label.pack(side=tk.LEFT, padx=(10,5))
+        ttk.Label(deviation_frame, text="mm", font=font_manager.get('medium_bold')).pack(side=tk.LEFT)
         
         # Kesim Bilgileri
         cut_frame = ttk.LabelFrame(left_panel, text="Kesim Bilgileri", padding=(5, 5))
@@ -333,6 +606,7 @@ class SimpleGUI:
             ('serit_motor_tork_percentage', 'Motor Tork (%)'),
             ('serit_kesme_hizi', 'Kesme Hızı (mm/s)'),
             ('serit_inme_hizi', 'İnme Hızı (mm/s)'),
+            ('malzeme_genisligi', 'Malzeme Genişliği (mm)'),
             ('serit_sapmasi', 'Sapma (mm)'),
             ('kafa_yuksekligi_mm', 'Kafa Yüksekliği (mm)')
         ])
@@ -350,8 +624,8 @@ class SimpleGUI:
             ('hidrolik_yag_sicakligi_c', 'Hidrolik Yağ (°C)')
         ])
         
-        # Sağ grid (İvme Ölçer)
-        right_grid = ttk.LabelFrame(values_frame, text="İvme Ölçer", padding=(5, 5))
+        # Sağ grid (İvme Ölçer ve Fark Frekansları)
+        right_grid = ttk.LabelFrame(values_frame, text="İvme Ölçer ve Fark Frekansları", padding=(5, 5))
         right_grid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(2, 0))
         
         self._create_value_grid(right_grid, [
@@ -360,8 +634,13 @@ class SimpleGUI:
             ('ivme_olcer_z', 'Z İvme (g)'),
             ('ivme_olcer_x_hz', 'X Frekans (Hz)'),
             ('ivme_olcer_y_hz', 'Y Frekans (Hz)'),
-            ('ivme_olcer_z_hz', 'Z Frekans (Hz)')
+            ('ivme_olcer_z_hz', 'Z Frekans (Hz)'),
+            ('fark_hz_x', 'Fark X (Hz)'),
+            ('fark_hz_y', 'Fark Y (Hz)'),
+            ('fark_hz_z', 'Fark Z (Hz)')
         ])
+        
+
         
         # Kamera Kontrolleri
         camera_frame = ttk.LabelFrame(left_panel, text="Kamera Kontrolleri", padding=(5, 5))
@@ -431,6 +710,8 @@ class SimpleGUI:
             text="Uygulamayı Kapat",
             command=self._quit
         ).pack(side=tk.RIGHT)
+
+
 
     def _create_value_grid(self, parent, fields):
         """Değer grid'ini oluşturur"""
@@ -631,6 +912,12 @@ class SimpleGUI:
     def update_data(self, processed_data: Dict):
         """Arayüz verilerini günceller"""
         try:
+            # Placeholder'ları güncelle (5 saniyede bir)
+            current_time = time.time()
+            if current_time - self.last_placeholder_update > 5.0:
+                self._update_speed_placeholders()
+                self.last_placeholder_update = current_time
+            
             # Modbus durumunu güncelle
             if 'modbus_connected' in processed_data:
                 self.update_modbus_status(
@@ -711,20 +998,37 @@ class SimpleGUI:
         # Testere durumunu al
         testere_durumu = int(data.get('testere_durumu', 0))
         
-        # Akım kontrolü
+        # Testere durumu 'kesim yapılıyor' ise kontroller
         if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # Kesim yapılıyor
+            # Akım kontrolü
             current = float(data.get('serit_motor_akim_a', 0))
-            if current > 25:
+            if current > 13:
                 self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
-            elif current > 30:
+            elif current > 14:
                 self.add_log(f"Kritik motor akımı: {current:.2f}A", "ERROR")
             
-            # Sapma kontrolü - sadece kesim durumunda
+            # Tork kontrolü
+            torque = float(data.get('serit_motor_tork_percentage', 0))
+            if current > 70:
+                self.add_log(f"Yüksek şerit motor torku: {torque:.2f}A", "WARNING")
+            elif current > 100:
+                self.add_log(f"Kritik şerit motor torku: {torque:.2f}A", "ERROR")
+
+            # Sapma kontrolü 
             deviation = float(data.get('serit_sapmasi', 0))
             if abs(deviation) > 0.4:
                 self.add_log(f"Yüksek şerit sapması: {deviation:.2f}mm", "WARNING")
             elif abs(deviation) > 0.6:
                 self.add_log(f"Kritik şerit sapması: {deviation:.2f}mm", "ERROR")
+
+            # şerit Gerginliği Bar kontrolü
+            bar = float(data.get('serit_gerginligi_bar', 0))
+            if 145 <= bar <= 155:
+                pass  # Normal aralık
+            elif (140 <= bar < 145) or (155 < bar <= 160):
+                self.add_log(f"Şerit gerginliği uyarı seviyesinde: {bar:.2f} Bar", "WARNING")
+            elif bar < 140 or bar > 160:
+                self.add_log(f"Kritik şerit gerginliği: {bar:.2f} Bar", "ERROR")
             
         # Titreşim kontrolü - her durumda kontrol et
         vib_x = float(data.get('ivme_olcer_x_hz', 0))
@@ -749,47 +1053,160 @@ class SimpleGUI:
             
             if speed_type == 'inme':
                 # İnme hızını gönder
-                inme_hizi_str = self.inme_hizi_entry.get().strip()
+                inme_hizi_str = self.inme_hizi_var.get().strip()
+                # Placeholder kontrolü
+                if hasattr(self.inme_hizi_entry, 'placeholder') and inme_hizi_str == self.inme_hizi_entry.placeholder:
+                    self.add_log("İnme hızı değeri giriniz", "WARNING")
+                    return
                 if inme_hizi_str:
                     try:
                         inme_hizi = float(inme_hizi_str)
+                        # Sınır kontrolü kaldırıldı - manuel kontrol
                         inme_hizi_is_negative = inme_hizi < 0
                         reverse_calculate_value(modbus_client, inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
-                        logger.info(f"İnme hızı gönderildi: {inme_hizi:.2f} mm/s")
+                        self.add_log(f"İnme hızı gönderildi: {inme_hizi:.2f} mm/dakika", "INFO")
+                        # Entry'yi temizle ve placeholder'ı geri koy
+                        self.inme_hizi_var.set("")
+                        self._set_placeholder(self.inme_hizi_entry, "mm/dakika")
                     except ValueError:
-                        logger.error("Geçersiz inme hızı değeri")
+                        self.add_log("Geçersiz inme hızı değeri", "ERROR")
+                else:
+                    self.add_log("İnme hızı değeri boş", "WARNING")
                 
             elif speed_type == 'kesme':
                 # Kesme hızını gönder
-                kesme_hizi_str = self.kesme_hizi_entry.get().strip()
+                kesme_hizi_str = self.kesme_hizi_var.get().strip()
+                # Placeholder kontrolü
+                if hasattr(self.kesme_hizi_entry, 'placeholder') and kesme_hizi_str == self.kesme_hizi_entry.placeholder:
+                    self.add_log("Kesme hızı değeri giriniz", "WARNING")
+                    return
                 if kesme_hizi_str:
                     try:
                         kesme_hizi = float(kesme_hizi_str)
+                        # Sınır kontrolü kaldırıldı - manuel kontrol
                         kesme_hizi_is_negative = kesme_hizi < 0
                         reverse_calculate_value(modbus_client, kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
-                        logger.info(f"Kesme hızı gönderildi: {kesme_hizi:.2f} mm/s")
+                        self.add_log(f"Kesme hızı gönderildi: {kesme_hizi:.2f} mm/dakika", "INFO")
+                        # Entry'yi temizle ve placeholder'ı geri koy
+                        self.kesme_hizi_var.set("")
+                        self._set_placeholder(self.kesme_hizi_entry, "mm/dakika")
                     except ValueError:
-                        logger.error("Geçersiz kesme hızı değeri")
+                        self.add_log("Geçersiz kesme hızı değeri", "ERROR")
+                else:
+                    self.add_log("Kesme hızı değeri boş", "WARNING")
             
         except Exception as e:
             logger.error(f"Hız gönderme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
 
     def _send_all_speeds(self):
-        """Tüm hızları gönderir"""
+        """Tüm hızları gönderir (aralarında 110ms senkron gecikme ile)"""
         try:
             # Önce kesme hızını gönder
             self._send_manual_speed('kesme')
             
-            # Modbus yazma işlemleri arasında biraz bekle
-            self.root.after(110)  # 110ms bekle
+            # Modbus yazma işlemleri arasında senkron bekleme (110ms)
+            # İkinci hızın doğru gitmesi için kritik!
+            time.sleep(0.11)  
             
             # Sonra inme hızını gönder
             self._send_manual_speed('inme')
             
+            self.add_log("İki hız başarıyla gönderildi (110ms gecikme ile)", "INFO")
+            
         except Exception as e:
             logger.error(f"Toplu hız gönderme hatası: {str(e)}")
             logger.exception("Detaylı hata:")
+            self.add_log(f"Toplu hız gönderme hatası: {str(e)}", "ERROR")
+
+    def _set_placeholder(self, entry_widget, placeholder_text):
+        """Entry widget'ına placeholder text ekler"""
+        entry_widget.placeholder = placeholder_text
+        entry_widget.insert(0, placeholder_text)
+        entry_widget.config(foreground='gray')
+
+    def _on_focus_in(self, event, speed_type):
+        """Entry'ye focus geldiğinde placeholder'ı temizler"""
+        entry_widget = event.widget
+        if hasattr(entry_widget, 'placeholder') and entry_widget.get() == entry_widget.placeholder:
+            entry_widget.delete(0, tk.END)
+            entry_widget.config(foreground='black')
+
+    def _on_focus_out(self, event, speed_type):
+        """Entry'den focus çıktığında boşsa placeholder'ı geri koyar"""
+        entry_widget = event.widget
+        if hasattr(entry_widget, 'placeholder') and entry_widget.get() == '':
+            entry_widget.insert(0, entry_widget.placeholder)
+            entry_widget.config(foreground='gray')
+
+    def _update_speed_placeholders(self):
+        """Register'lardan okunan değerleri placeholder olarak ayarlar"""
+        try:
+            if not self.controller_factory or not self.controller_factory.modbus_client:
+                # Modbus bağlantısı yoksa varsayılan değerler
+                self._set_placeholder(self.kesme_hizi_entry, "Reg:2066")
+                self._set_placeholder(self.inme_hizi_entry, "Reg:2041")
+                return
+            
+            modbus_client = self.controller_factory.modbus_client
+            
+            try:
+                # Kesme hızı register'ını oku (2066) ve /10 yap
+                kesme_registers = modbus_client.read_holding_registers(2066, 1)
+                if kesme_registers and not kesme_registers.isError():
+                    kesme_hizi = kesme_registers.registers[0] / 10.0
+                    self._set_placeholder(self.kesme_hizi_entry, f"{kesme_hizi:.1f}")
+                else:
+                    self._set_placeholder(self.kesme_hizi_entry, "Reg:2066")
+            except Exception as e:
+                logger.debug(f"Kesme hızı placeholder okuma hatası: {e}")
+                self._set_placeholder(self.kesme_hizi_entry, "Reg:2066")
+            
+            try:
+                # İnme hızı register'ını oku (2041)
+                inme_registers = modbus_client.read_holding_registers(2041, 1)
+                if inme_registers and not inme_registers.isError():
+                    inme_hizi = inme_registers.registers[0]
+                    self._set_placeholder(self.inme_hizi_entry, f"{inme_hizi}")
+                else:
+                    self._set_placeholder(self.inme_hizi_entry, "Reg:2041")
+            except Exception as e:
+                logger.debug(f"İnme hızı placeholder okuma hatası: {e}")
+                self._set_placeholder(self.inme_hizi_entry, "Reg:2041")
+                
+        except Exception as e:
+            logger.error(f"Placeholder güncelleme hatası: {e}")
+            # Hata durumunda varsayılan değerler
+            self._set_placeholder(self.kesme_hizi_entry, "Reg:2066")
+            self._set_placeholder(self.inme_hizi_entry, "Reg:2041")
+
+    def _emergency_stop(self):
+        """ACİL DURDUR - İki hıza da sıfır gönderir"""
+        try:
+            if not self.controller_factory or not self.controller_factory.modbus_client:
+                self.add_log("Modbus bağlantısı bulunamadı - ACİL DURDUR başarısız!", "ERROR")
+                return
+            
+            modbus_client = self.controller_factory.modbus_client
+            
+            # Kesme hızını sıfıra ayarla
+            reverse_calculate_value(modbus_client, 0.0, 'serit_kesme_hizi', False)
+            time.sleep(0.11)  # 110ms gecikme
+            
+            # İnme hızını sıfıra ayarla  
+            reverse_calculate_value(modbus_client, 0.0, 'serit_inme_hizi', False)
+            
+            self.add_log("⚠️ ACİL DURDUR AKTİF - Tüm hızlar sıfırlandı!", "WARNING")
+            logger.warning("ACİL DURDUR - Kesme ve İnme hızları sıfırlandı")
+            
+            # Entry'leri temizle
+            self.kesme_hizi_var.set("")
+            self.inme_hizi_var.set("")
+            self._update_speed_placeholders()
+            
+        except Exception as e:
+            logger.error(f"ACİL DURDUR hatası: {str(e)}")
+            self.add_log(f"ACİL DURDUR HATASI: {str(e)}", "ERROR")
 
     def update_modbus_status(self, is_connected: bool, ip_address: str = None):
         """Modbus bağlantı durumunu günceller"""
@@ -1379,10 +1796,10 @@ class SimpleGUI:
                         self.add_log("Bugünün verisi bulunamadı", "WARNING")
                         return
 
-                    # DataFrame’e çevir
+                    # DataFrame'e çevir
                     df = pd.DataFrame(all_data)
 
-                    # Kesim ID’lerine göre filtrele
+                    # Kesim ID'lerine göre filtrele
                     df_filtered = self.get_data_by_kesim_ids(df, kesim_ids)
 
                     # Grafiği çiz
@@ -1895,7 +2312,7 @@ class SimpleGUI:
                 widget.destroy()
                 
             # Başlık etiketi
-            title_label = ttk.Label(parent_frame, text=title, font=('Arial', 12, 'bold'))
+            title_label = ttk.Label(parent_frame, text=title, font=font_manager.get('medium_bold'))
             title_label.pack(pady=5)
             
             # Tablo oluştur
@@ -1929,4 +2346,3 @@ class SimpleGUI:
         except Exception as e:
             logger.error(f"Tablo gösterimi hatası: {e}")
             logger.exception("Detaylı hata:")
-

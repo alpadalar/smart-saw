@@ -12,7 +12,9 @@ from core.logger import logger
 _model = None
 _model_lock = threading.Lock()
 _model_loaded = False
+
 _stats_lock = threading.Lock()  # JSON dosyası için thread-safe lock
+
 
 def _load_model():
     global _model, _model_loaded
@@ -24,6 +26,7 @@ def _load_model():
             _model_loaded = True
             logger.info(f"Model yüklendi - Kullanılan cihaz: {device}")
     return _model
+
 
 def _update_stats_file(stats_file: str, new_stats: dict):
     """Thread-safe olarak detection_stats.json dosyasını günceller"""
@@ -80,6 +83,7 @@ def detect_broken_objects():
     
     # Ana klasör yolunu 'recordings' olarak değiştir
     base_dir = os.path.join(os.getcwd(), "recordings")
+
     
     # En son oluşturulan klasörü bul
     if not os.path.exists(base_dir):
@@ -114,7 +118,9 @@ def detect_broken_objects():
     # İstatistik değişkenleri
     total_tooth = 0
     total_broken = 0
+
     stats_file = os.path.join(input_dir, "detection_stats.json")
+
     
     # Her frame için nesne tespiti yap
     for i, frame_name in enumerate(frames):
@@ -127,10 +133,12 @@ def detect_broken_objects():
         
         # Model ile tahmin yap
         with _model_lock:
+
             results = model.predict(source=frame, device=model.device, conf=0.5, imgsz=960, verbose=False)
         
         # Sınıf sayacı
         class_counts = {0: 0, 1: 0}  # 0: tooth, 1: broken
+
         # Tespit edilen nesneler için bounding box çiz
         for result in results:
             boxes = result.boxes
@@ -139,6 +147,7 @@ def detect_broken_objects():
                 conf = box.conf[0].item()
                 class_id = int(box.cls[0].item())
                 label = f"{class_id:.2f} ({conf:.2f})"
+
                 # Sınıfa göre istatistikleri güncelle
                 if class_id == 0:  # tooth sınıfı
                     total_tooth += 1
@@ -182,11 +191,13 @@ def detect_broken_objects():
         "total_broken": total_broken,
         "broken_ratio": broken_ratio,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+
         "total_frames": len(frames),
         "processed_frames": len(frames),
         "status": "completed"
     }
     _update_stats_file(stats_file, final_stats)
+
     
     # İstatistikleri loglara yaz
     logger.info("Nesne tespiti tamamlandi!")

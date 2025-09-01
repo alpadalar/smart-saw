@@ -21,6 +21,7 @@ from utils.helpers import (
     format_time
 )
 from utils.speed.buffer import SpeedBuffer
+from utils.delay_calculator import calculate_control_delay
 from .membership import FuzzyMembership
 from .rules import FuzzyRules
 
@@ -55,6 +56,8 @@ class FuzzyController:
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
+        # İnme hızı değişim buffer'ı
+        self.inme_hizi_degisim_buffer = 0.0
     
     def _get_db(self):
         """Thread-safe veritabanı bağlantısı döndürür"""
@@ -145,28 +148,9 @@ class FuzzyController:
         
         return akim_avg, sapma_avg, titresim_avg
 
-    def _calculate_initial_delay(self, inme_hizi):
-        """İnme hızına göre 20mm'lik mesafeyi kaç saniyede ineceğini hesaplar"""
-        try:
-            # İnme hızı mm/dakika cinsinden
-            if inme_hizi <= 0:
-                return self.BASLANGIC_GECIKMESI  # Varsayılan değeri kullan
-            
-            # 20mm'yi inmek için gereken süreyi hesapla (milisaniye cinsinden)
-            # inme_hizi mm/dakika -> mm/saniye -> 20mm için gereken süre
-            delay_ms = (20 / (inme_hizi / 60)) * 1000
-            
-            # Minimum 5 saniye, maksimum 60 saniye olacak şekilde sınırla
-            delay_ms = max(5000, min(delay_ms, 60000))
-            
-            logger.info(f"İnme hızı: {inme_hizi:.2f} mm/dakika için hesaplanan bekleme süresi: {delay_ms/1000:.1f} saniye")
-            return delay_ms
-            
-        except Exception as e:
-            logger.error(f"Bekleme süresi hesaplama hatası: {str(e)}")
-            return self.BASLANGIC_GECIKMESI  # Hata durumunda varsayılan değeri kullan
 
-    def kesim_durumu_kontrol(self, testere_durumu):
+
+    def kesim_durumu_kontrol(self, testere_durumu, modbus_client=None):
         """Kesim durumunu kontrol eder ve loglama yapar"""
         try:
             current_time = time.time() * 1000
@@ -176,12 +160,27 @@ class FuzzyController:
                 if self.is_cutting:
                     self._log_kesim_bitis()
                     self.is_cutting = False
+                    self.cutting_start_time = None
                 return False
 
             # Kesim başlangıcını kontrol et
             if not self.is_cutting:
                 self._log_kesim_baslangic()
                 self.is_cutting = True
+                self.cutting_start_time = current_time
+                
+                # İnme hızını register'dan okuyarak dinamik bekleme süresini hesapla
+                # Fuzzy için 20mm hedef mesafe kullan
+                self.initial_delay = calculate_control_delay(modbus_client, target_distance_mm=20.0)
+                logger.info(f"Fuzzy - Register'dan hesaplanan bekleme süresi: {self.initial_delay/1000:.1f} saniye")
+
+            # Başlangıç gecikmesi kontrolü
+            if hasattr(self, 'initial_delay') and self.initial_delay > 0:
+                if current_time - self.cutting_start_time < self.initial_delay:
+                    kalan_sure = int((self.initial_delay - (current_time - self.cutting_start_time)) / 1000)
+                    if kalan_sure % 5 == 0:
+                        logger.info(f"Fuzzy kontrol sisteminin devreye girmesine {kalan_sure} saniye kaldı...")
+                    return False
 
             return True
             
@@ -226,8 +225,8 @@ class FuzzyController:
         # Son işlenen veriyi güncelle
         self.last_processed_data = processed_data
         
-        if not self.kesim_durumu_kontrol(testere_durumu):
-            logger.debug("Kesim durumu uygun değil")
+        if not self.kesim_durumu_kontrol(testere_durumu, modbus_client):
+            logger.debug("Kesim durumu uygun değil veya başlangıç gecikmesi devam ediyor")
             return last_modbus_write_time, None
 
         # Güncelleme zamanı kontrolü
@@ -273,6 +272,10 @@ class FuzzyController:
             inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
             logger.debug(f"İnme hızı değişim yüzdesi: %{inme_degisim_yuzdesi:.2f}")
             
+            # İnme hızı değişimini buffer'a ekle
+            self.inme_hizi_degisim_buffer += inme_hizi_degisim
+            logger.debug(f"İnme hızı değişim buffer'ı: {self.inme_hizi_degisim_buffer:.2f}")
+            
             # Kesme hızı için değişimi hesapla
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             
@@ -293,26 +296,49 @@ class FuzzyController:
             logger.debug(f"Kesme hızı değişim buffer'ı: {self.kesme_hizi_degisim_buffer:.2f}")
             
             # Modbus'a yazma işlemleri
-            if new_inme_hizi != current_inme_hizi:
-                # İnme hızını yaz
-                inme_hizi_is_negative = new_inme_hizi < 0
-                reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
-                logger.debug("Yeni inme hızı değeri Modbus'a yazıldı")
+            # İnme hızı için buffer kontrolü - BUFFER BYPASS EDİLDİ
+            # if abs(self.inme_hizi_degisim_buffer) >= 1.0:
+            #     new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
+            #     new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
+            #                        min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+            #     
+            #     # İnme hızını yaz
+            #     inme_hizi_is_negative = new_inme_hizi < 0
+            #     reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
+            #     logger.debug(f"Yeni inme hızı değeri Modbus'a yazıldı: {new_inme_hizi:.2f}")
+            #     
+            #     # Buffer'ı sıfırla
+            #     self.inme_hizi_degisim_buffer = 0.0
+            
+            # BUFFER BYPASS: Direkt hesaplanan hızı gönder (xy.ab formatında)
+            if abs(inme_hizi_degisim) > 0.01:  # Minimum değişim kontrolü
+                # Hızı 2 ondalık basamağa yuvarla
+                new_inme_hizi_rounded = round(new_inme_hizi, 2)
+                new_inme_hizi_rounded = max(SPEED_LIMITS['inme']['min'], 
+                                           min(new_inme_hizi_rounded, SPEED_LIMITS['inme']['max']))
                 
-                # Kesme hızı için buffer kontrolü
-                if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
-                    new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
-                    
-                    # Sınırları uygula
-                    new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
-                    
-                    # Kesme hızını yaz
-                    kesme_hizi_is_negative = new_kesme_hizi < 0
-                    reverse_calculate_value(modbus_client, new_kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
-                    logger.debug(f"Yeni kesme hızı değeri Modbus'a yazıldı: {new_kesme_hizi:.2f} (Buffer: {self.kesme_hizi_degisim_buffer:+.2f})")
-                    
-                    # Buffer'ı sıfırla
-                    self.kesme_hizi_degisim_buffer = 0.0
+                # İnme hızını direkt yaz (buffer olmadan)
+                inme_hizi_is_negative = new_inme_hizi_rounded < 0
+                reverse_calculate_value(modbus_client, new_inme_hizi_rounded, 'serit_inme_hizi', inme_hizi_is_negative)
+                logger.debug(f"BUFFER BYPASS: İnme hızı direkt gönderildi: {new_inme_hizi_rounded:.2f}")
+                
+                # Buffer'ı sıfırla (artık kullanılmıyor ama temizlik için)
+                self.inme_hizi_degisim_buffer = 0.0
+            
+            # Kesme hızı için buffer kontrolü
+            if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
+                new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
+                
+                # Sınırları uygula
+                new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+                
+                # Kesme hızını yaz
+                kesme_hizi_is_negative = new_kesme_hizi < 0
+                reverse_calculate_value(modbus_client, int(new_kesme_hizi), 'serit_kesme_hizi', kesme_hizi_is_negative)
+                logger.debug(f"Yeni kesme hızı değeri Modbus'a yazıldı: {new_kesme_hizi:.2f} (Buffer: {self.kesme_hizi_degisim_buffer:+.2f})")
+                
+                # Buffer'ı sıfırla
+                self.kesme_hizi_degisim_buffer = 0.0
             
             # Son güncelleme zamanını kaydet
             self.last_update_time = time.time()
@@ -354,6 +380,11 @@ class FuzzyController:
         
         self.is_cutting = False
         self.cutting_start_time = None
+        
+        # Delay calculator cache'ini sıfırla - bir sonraki kesim için hazırlık
+        from utils.delay_calculator import reset_delay_cache
+        reset_delay_cache()
+        logger.info("🔄 Delay calculator cache'i sıfırlandı - bir sonraki kesim için hazırlık")
 
     def __del__(self):
         """Yıkıcı metod - tüm veritabanı bağlantılarını kapatır"""

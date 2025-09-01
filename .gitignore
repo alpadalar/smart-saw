@@ -76,5 +76,7 @@ src/.env
 
 # Kayıt ve geçici dosyalar
 recordings/
-temp/ 
 frames/
+temp/ 
+vibration_data*.csv
+*.zip

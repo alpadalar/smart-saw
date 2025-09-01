@@ -18,7 +18,10 @@ from core.constants import (
     MIN_SPEED_UPDATE_INTERVAL,
     BUFFER_SIZE,
     BUFFER_DURATION,
-    KATSAYI
+    KATSAYI,
+    TORQUE_TO_CURRENT_A2,
+    TORQUE_TO_CURRENT_A1,
+    TORQUE_TO_CURRENT_A0
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -58,12 +61,16 @@ class MLController:
         
         # Kesme hızı değişim buffer'ı
         self.kesme_hizi_degisim_buffer = 0.0
+        # İnme hızı değişim buffer'ı
+        self.inme_hizi_degisim_buffer = 0.0
         
         # Veri tamponları - constants.py'dan alınan boyut
         self.akim_buffer = deque(maxlen=BUFFER_SIZE)
         self.sapma_buffer = deque(maxlen=BUFFER_SIZE)
         self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
+        # Tork verisi için bağımsız buffer
+        self.torque_buffer = deque(maxlen=BUFFER_SIZE)
         self.last_buffer_update = time.time()
     
     def _get_db(self):
@@ -130,7 +137,23 @@ class MLController:
         self.sapma_buffer.append((current_time, sapma))
         self.kesme_hizi_buffer.append((current_time, kesme_hizi))
         self.inme_hizi_buffer.append((current_time, inme_hizi))
+    
+    def _update_torque_buffer(self, torque_percentage: float):
+        """Tork verisi tamponunu günceller"""
+        current_time = time.time()
+        self.torque_buffer.append((current_time, torque_percentage))
             
+    def _get_average_torque(self) -> float:
+        """Tork buffer'ındaki verilerin ortalamasını alır"""
+        if not self.torque_buffer:
+            return 0.0
+        
+        # Tork değerlerinin ortalamasını al
+        torque_values = [torque for _, torque in self.torque_buffer]
+        avg_torque = sum(torque_values) / len(torque_values)
+        
+        return avg_torque
+    
     def _get_buffer_averages(self):
         """Tamponlardaki verilerin ortalamasını alır"""
         if not self.akim_buffer or not self.sapma_buffer or not self.kesme_hizi_buffer or not self.inme_hizi_buffer:
@@ -142,6 +165,27 @@ class MLController:
         inme_hizi_avg = sum(hiz for _, hiz in self.inme_hizi_buffer) / len(self.inme_hizi_buffer)
         
         return akim_avg, sapma_avg, kesme_hizi_avg, inme_hizi_avg
+    
+    def _torque_to_current(self, torque_percentage: float) -> float:
+        """Makineden gelen tork yüzdesini akıma çevirir.
+        
+        f(x) = A2*x^2 + A1*x + A0
+        x: serit_motor_tork_percentage (yüzde), çıktı: akım (A)
+        
+        Args:
+            torque_percentage: serit_motor_tork_percentage (yüzde)
+            
+        Returns:
+            float: Akım (A)
+        """
+        try:
+            return (
+                TORQUE_TO_CURRENT_A2 * (torque_percentage ** 2)
+                + TORQUE_TO_CURRENT_A1 * torque_percentage
+                + TORQUE_TO_CURRENT_A0
+            )
+        except Exception:
+            return 0.0
     
     def predict_coefficient(self, serit_motor_akim_a: float, serit_sapmasi: float, serit_kesme_hizi: float, serit_inme_hizi: float) -> float:
         """ML modeli ile katsayı tahmin eder (-1 ile 1 arası)"""
@@ -170,6 +214,14 @@ class MLController:
             # Katsayıyı -1 ile 1 arasına sınırla
             coefficient = max(-1.0, min(coefficient, 1.0))
             
+            # ML çıktısını logla
+            logger.info("="*80)
+            logger.info("🤖 ML MODEL ÇIKTISI")
+            logger.info("="*80)
+            logger.info(f"📊 ML Model Çıktısı (Ham): {coefficient:.6f}")
+            logger.info(f"🎯 Sınırlandırılmış Çıktı: {coefficient:.6f}")
+            logger.info("="*80)
+            
             # Yeni hızları hesapla
             new_inme_hizi = avg_inme_hizi + coefficient
             new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
@@ -192,6 +244,20 @@ class MLController:
             new_kesme_hizi = avg_kesme_hizi + kesme_hizi_degisim
             new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
             
+            # Hesaplama formülünü ve sonuçları logla
+            logger.info("="*80)
+            logger.info("🧮 HIZ HESAPLAMA FORMÜLÜ")
+            logger.info("="*80)
+            logger.info(f"📈 Mevcut İnme Hızı: {avg_inme_hizi:.2f} mm/dak")
+            logger.info(f"📊 ML Katsayısı: {coefficient:.6f}")
+            logger.info(f"🔢 İnme Hızı Formülü: {avg_inme_hizi:.2f} + {coefficient:.6f} = {new_inme_hizi:.2f} mm/dak")
+            logger.info(f"📉 İnme Hızı Değişimi: {inme_hizi_degisim:+.2f} mm/dak (%{inme_degisim_yuzdesi:+.2f})")
+            logger.info("")
+            logger.info(f"📈 Mevcut Kesme Hızı: {avg_kesme_hizi:.2f} mm/dak")
+            logger.info(f"🔢 Kesme Hızı Değişimi: {kesme_hizi_degisim:+.2f} mm/dak")
+            logger.info(f"🔢 Kesme Hızı Formülü: {avg_kesme_hizi:.2f} + {kesme_hizi_degisim:+.2f} = {new_kesme_hizi:.2f} mm/dak")
+            logger.info("="*80)
+
             # Verileri kaydet
             self._save_control_data(
                 akim=avg_akim,
@@ -252,7 +318,11 @@ class MLController:
 
         try:
             # Mevcut değerleri al
-            current_akim = float(processed_data.get('serit_motor_akim_a', 0))
+            # Tork verisini buffer'a ekle ve ortalama değeri al
+            torque_percentage = float(processed_data.get('serit_motor_tork_percentage', 0))
+            self._update_torque_buffer(torque_percentage)
+            avg_torque = self._get_average_torque()
+            current_akim = float(self._torque_to_current(avg_torque))
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
@@ -274,6 +344,9 @@ class MLController:
             # İnme hızı değişim yüzdesini hesapla
             inme_degisim_yuzdesi = self._calculate_speed_change_percentage(new_inme_hizi - current_inme_hizi, 'inme')
             
+            # İnme hızı değişimini buffer'a ekle
+            self.inme_hizi_degisim_buffer += (new_inme_hizi - current_inme_hizi)
+            
             # Kesme hızı için değişimi hesapla
             if coefficient < 0:
                 # Negatif değişim: mevcut hız ile minimum hız arası
@@ -288,25 +361,52 @@ class MLController:
             self.kesme_hizi_degisim_buffer += kesme_hizi_degisim
             
             # Modbus'a yazma işlemleri
-            if new_inme_hizi != current_inme_hizi:
+            # İnme hızı için buffer kontrolü
+            if abs(self.inme_hizi_degisim_buffer) >= 1:
+                new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
+                new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
+                                   min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
+                
                 # İnme hızını yaz
                 inme_hizi_is_negative = new_inme_hizi < 0
-                reverse_calculate_value(modbus_client, new_inme_hizi, 'serit_inme_hizi', inme_hizi_is_negative)
-                logger.debug(f"Yeni inme hızı: {new_inme_hizi:.2f}")
+                modbus_value = int(new_inme_hizi * 100)  # Makineye gönderilecek değer
+                reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
                 
-                # Kesme hızı için buffer kontrolü
-                if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
-                    new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
-                    new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], 
-                                       min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
-                    
-                    # Kesme hızını yaz
-                    kesme_hizi_is_negative = new_kesme_hizi < 0
-                    reverse_calculate_value(modbus_client, new_kesme_hizi, 'serit_kesme_hizi', kesme_hizi_is_negative)
-                    logger.debug(f"Yeni kesme hızı: {new_kesme_hizi:.2f}")
-                    
-                    # Buffer'ı sıfırla
-                    self.kesme_hizi_degisim_buffer = 0.0
+                # Makineye gönderilen değeri logla
+                logger.info("="*80)
+                logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER")
+                logger.info("="*80)
+                logger.info(f"📤 İnme Hızı (Hesaplanan): {new_inme_hizi:.2f} mm/dak")
+                logger.info(f"📤 İnme Hızı (Register): {modbus_value} (int)")
+                logger.info(f"📤 İnme Hızı (Makine Formatı): {new_inme_hizi * 100:.0f}")
+                logger.info(f"📊 Buffer Değeri: {self.inme_hizi_degisim_buffer:+.2f}")
+                logger.info("="*80)
+                
+                # Buffer'ı sıfırla
+                self.inme_hizi_degisim_buffer = 0.0
+            
+            # Kesme hızı için buffer kontrolü
+            if abs(self.kesme_hizi_degisim_buffer) >= 0.9:
+                new_kesme_hizi = current_kesme_hizi + self.kesme_hizi_degisim_buffer
+                new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], 
+                                   min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+                
+                # Kesme hızını yaz
+                kesme_hizi_is_negative = new_kesme_hizi < 0
+                modbus_value_kesme = int(new_kesme_hizi)  # Makineye gönderilecek değer
+                reverse_calculate_value(modbus_client, int(new_kesme_hizi), 'serit_kesme_hizi', kesme_hizi_is_negative)
+                
+                # Makineye gönderilen değeri logla
+                logger.info("="*80)
+                logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER (KESME)")
+                logger.info("="*80)
+                logger.info(f"📤 Kesme Hızı (Hesaplanan): {new_kesme_hizi:.2f} mm/dak")
+                logger.info(f"📤 Kesme Hızı (Register): {modbus_value_kesme} (int)")
+                logger.info(f"📊 Buffer Değeri: {self.kesme_hizi_degisim_buffer:+.2f}")
+                logger.info("="*80)
+                
+                # Buffer'ı sıfırla
+                self.kesme_hizi_degisim_buffer = 0.0
             
             # Son güncelleme zamanını kaydet
             self.last_update_time = time.time()
@@ -345,6 +445,11 @@ class MLController:
         
         self.is_cutting = False
         self.cutting_start_time = None
+        
+        # Delay calculator cache'ini sıfırla - bir sonraki kesim için hazırlık
+        from utils.delay_calculator import reset_delay_cache
+        reset_delay_cache()
+        logger.info("🔄 Delay calculator cache'i sıfırlandı - bir sonraki kesim için hazırlık")
 
     def __del__(self):
         """Yıkıcı metod - tüm veritabanı bağlantılarını kapatır"""

@@ -16,6 +16,7 @@ from core.crack_detect import detect_crack_objects  # Crack tespiti fonksiyonu i
 import json
 import sys
 
+
 class CameraModule:
     def __init__(self):
         self.cap = None  # Kamera nesnesi
@@ -44,7 +45,7 @@ class CameraModule:
         self.detection_stop_event = threading.Event()  # Tespit durdurma olayı
         self.data_lock = threading.Lock()  # Paylaşılan veriler için ek lock
         self._detection_finish_callback = None
-        
+
     def set_frame_count_callback(self, callback):
         """Frame sayısı güncellemesi için callback fonksiyonu ayarlar"""
         self.frame_count_callback = callback
@@ -71,7 +72,7 @@ class CameraModule:
         return True
 
     def _initialize_camera(self):
-        """Kamera bağlantısını başlatır ve ayarları yapar"""
+        """Kamera bağlantısını başlatır ve ayarları yapar (GUI tarafı yeni)."""
         try:
             with self.data_lock:
                 if self.cap is not None:
@@ -81,19 +82,23 @@ class CameraModule:
                     self.cap = cv2.VideoCapture(CAMERA_DEVICE_ID, cv2.CAP_DSHOW)
                 else:
                     self.cap = cv2.VideoCapture(CAMERA_DEVICE_ID)
+
                 if not self.cap.isOpened():
                     logger.error("Kamera açılamadı! Lütfen bağlantıyı kontrol edin.")
                     print("Kamera açılamadı!")
                     return False
+
                 # Kamera ayarlarını yap
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
                 self.cap.set(cv2.CAP_PROP_FPS, CAMERA_FPS)
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Buffer boyutunu küçült
+
                 # Ayarların uygulanıp uygulanmadığını kontrol et
                 actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 actual_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+
             # Sürekli frame yakalama thread'ini başlat
             self._start_capture_thread()
             logger.info(f"Kamera başlatıldı - Çözünürlük: {actual_width}x{actual_height}, FPS: {actual_fps}")
@@ -145,16 +150,22 @@ class CameraModule:
             frame_data = self.frame_queue.get()
             if frame_data is None:
                 break
-                
+
             frame_count, frame, output_dir = frame_data
             frame_filename = os.path.join(output_dir, f"frame_{frame_count:06d}.jpg")
             encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), CAMERA_JPEG_QUALITY]
-            
+
+            if len(frame.shape) == 3 and frame.shape[2] not in [1, 3, 4]:
+                try:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUYV)
+                except Exception as e:
+                    logger.error(f"Frame dönüştürme hatası: {str(e)}")
+
             try:
                 cv2.imwrite(frame_filename, frame, encode_params)
             except Exception as e:
                 logger.error(f"Frame kaydetme hatası: {str(e)}")
-                
+
             self.frame_queue.task_done()
 
     def _start_save_threads(self):
@@ -177,11 +188,11 @@ class CameraModule:
                     self.is_recording = True
                     self.frame_count = 0
                     self.start_time = time.time()
-                    
+
                     # Frame sayacını sıfırla
                     if self.frame_count_callback:
                         self.frame_count_callback(0)
-                        
+
                     logger.info(f"Kayıt başladı: {self.output_dir}")
                     return True
                 except Exception as e:
@@ -198,17 +209,17 @@ class CameraModule:
                     self.is_recording = False
                     elapsed_time = time.time() - self.start_time
                     total_frames = self.frame_count
-                    
+
                     # Frame kuyruğunun boşalmasını bekle
                     self.frame_queue.join()
-                    
+
                     logger.info(f"Kayıt durduruldu - Toplam kare: {total_frames}, Süre: {elapsed_time:.2f} saniye")
-                    
+
                     # Frame sayacını sıfırla
                     self.frame_count = 0
                     if self.frame_count_callback:
                         self.frame_count_callback(0)
-                        
+
                     return True
                 except Exception as e:
                     logger.error(f"Kayıt durdurma hatası: {str(e)}")
@@ -216,7 +227,7 @@ class CameraModule:
         return False
 
     def start_detection(self, on_finish=None):
-        """Nesne tespiti işlemini başlatır"""
+        """Nesne tespiti işlemini başlatır (GUI tarafı yeni)."""
         with self.detection_lock:  # Thread-safe kontrol
             if not self.is_detecting:
                 try:
@@ -235,7 +246,7 @@ class CameraModule:
         return False
 
     def stop_detection(self):
-        """Nesne tespiti işlemini durdurur"""
+        """Nesne tespiti işlemini durdurur (GUI mantığı)."""
         with self.detection_lock:  # Thread-safe kontrol
             if self.is_detecting:
                 try:
@@ -257,7 +268,7 @@ class CameraModule:
                         self._run_detection_on_current_recording()
                     except Exception as e:
                         logger.error(f"Detection işlemi hatası: {str(e)}")
-                
+
                 # Tespit işlemleri tamamlandıktan sonra kısa bekleme
                 time.sleep(1)  # Örnek olarak 1 saniye bekle
         except Exception as e:
@@ -279,15 +290,15 @@ class CameraModule:
                 current_output_dir = self.output_dir
                 if not current_output_dir or not os.path.exists(current_output_dir):
                     return
-            
+
             # Detection işlemlerini çalıştır
             from core.broken_detect import detect_broken_objects
             from core.crack_detect import detect_crack_objects
-            
+
             # Detection fonksiyonlarını çağır (bunlar zaten en son klasörü işliyor)
             detect_broken_objects()
             detect_crack_objects()
-            
+
         except Exception as e:
             logger.error(f"Detection işlemi hatası: {str(e)}")
 
@@ -309,7 +320,7 @@ class CameraModule:
         """Kamera modülünü kapatır"""
         try:
             self.stop_event.set()  # Tüm thread'lere durma sinyali gönder
-            
+
             # Kayıt ve görüntülemeyi durdur
             if self.is_recording:
                 self.stop_recording()
@@ -317,41 +328,41 @@ class CameraModule:
                 self.stop_viewing()
             if self.is_detecting:
                 self.stop_detection()
-            
+
             # Frame kuyruğunu temizle
             try:
                 while not self.frame_queue.empty():
                     self.frame_queue.get_nowait()
                     self.frame_queue.task_done()
-                    
+
                 for _ in self.threads:
                     self.frame_queue.put(None)
                 for t in self.threads:
                     t.join(timeout=1.0)
-            except:
+            except Exception:
                 pass
-            
+
             # Capture thread'ini bekle
             if self.capture_thread:
                 self.capture_thread.join(timeout=1.0)
-            
+
             # Kamerayı kapat
             if self.cap is not None:
                 try:
                     self.cap.release()
                     self.cap = None
-                except:
+                except Exception:
                     pass
-            
+
             try:
                 cv2.destroyAllWindows()
-            except:
+            except Exception:
                 pass
-                
+
             logger.info("Kamera modülü kapatıldı")
-            
+
         except Exception as e:
-            logger.error(f"Kamera kapatma hatası: {str(e)}") 
+            logger.error(f"Kamera kapatma hatası: {str(e)}")
 
     def get_last_detection_stats(self):
         """Son analiz sonuçlarını döndürür (detection_stats.json)"""
@@ -378,10 +389,10 @@ class CameraModule:
                 broken_frames.append(os.path.join(detected_dir, fname))
         if broken_frames:
             return broken_frames[-1]  # Sonuncusu
-        return None 
+        return None
 
     def get_current_frame(self):
         """Mevcut frame'i (numpy array) döndürür."""
         with self.data_lock:
             print(f"get_current_frame çağrıldı, self.current_frame is None? {self.current_frame is None}")
-            return self.current_frame 
+            return self.current_frame

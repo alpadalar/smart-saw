@@ -8,6 +8,7 @@ if _src_dir not in sys.path:
 import time
 import signal
 import threading
+
 import shutil
 import glob
 try:
@@ -22,6 +23,7 @@ try:
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
+
 from queue import Queue
 from typing import Optional, Dict
 from datetime import datetime
@@ -37,7 +39,8 @@ from core import (
 )
 from control import (
     ControllerType,
-    get_controller_factory
+    get_controller_factory,
+    ControllerFactory
 )
 from hardware import ModbusClient
 from data import (
@@ -47,10 +50,17 @@ from data import (
 )
 from data.cutting_tracker import get_cutting_tracker
 from models import ProcessedData, SystemState
-from gui.pyside_app import SimpleGUI
+
 from control import ControllerFactory
+from gui.pyside_app import SimpleGUI
+
 from core.constants import TestereState
+
 from api import create_app, router
+from thingsboard.sender import create_sender_from_env
+
+from core.camera import CameraModule
+
 
 class SmartSaw:
     def __init__(self):
@@ -62,12 +72,25 @@ class SmartSaw:
         setup_logger(self.config.logging)
         logger.info("Smart Saw başlatılıyor...")
         
+
         # Recordings klasörünü temizle (thread-safe)
         self._cleanup_old_recordings()
         
         # Web sunucusu
         self.web_server = None
         self.api_app = None
+
+"""
+KAMERANIN YUKARI CIKARKEN DUZENLENECEK
+        # Kesim takibi için değişkenler
+        self.current_kesim_id = -1  # Başlangıçta kesim yok
+        self.previous_testere_durumu = None
+        self.is_recording_upward = False  # Yukarı çıkış kaydı durumu
+        
+        # Kamera modülü
+        self.camera = CameraModule()
+        """
+
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
@@ -90,11 +113,31 @@ class SmartSaw:
         
         # GUI - controller factory'yi aktarıyoruz
         self.gui = SimpleGUI(controller_factory=self.controller_factory)
+
+        # --- ThingsBoard entegrasyonu (HTTP) ---
+        self.tb = None
+        self.tb_enabled = False
+        self._tb_last_sent_ms = 0
+        self._tb_period_ms = 1000  # ms; 1000=1 saniye. Gerekirse 200-500 ms yap.
+        self._tb_field_map = None  
+        self._tb_prefix = None  
+
+        try:
+            # ThingsBoard sender'ı oluştur
+            self.tb = create_sender_from_env()
+            if self.tb and self.tb.access_token:
+                self.tb_enabled = True
+                logger.info(f"ThingsBoard sender aktif: {self.tb.base_url}")
+            else:
+                logger.warning("ThingsBoard sender pasif: TB_TOKEN boş veya geçersiz.")
+        except Exception as e:
+            logger.error(f"ThingsBoard sender başlatılamadı: {e}")
+            self.tb = None
+            self.tb_enabled = False
         
         # Kontrol ve veri döngüleri
         self.control_loop = None
         self.data_loop = None
-        self.web_server_thread = None
         
         # Thread güvenliği için lock
         self.lock = threading.Lock()
@@ -110,6 +153,7 @@ class SmartSaw:
         self._setup_modbus()
         self._setup_control_loop()
         self._setup_data_loop()
+
         # self._setup_web_server()
 
         # Kamera kaydı ve detection + vision servisi başlat
@@ -143,6 +187,7 @@ class SmartSaw:
             logger.info("Kamera kaydı, detection, vision servisi ve wear calculator başlatıldı.")
         except Exception as e:
             logger.error(f"Kamera kaydı/detection/vision başlatılamadı: {e}")
+
 
         logger.info("Başlatma tamamlandı")
     
@@ -231,7 +276,7 @@ class SmartSaw:
         except Exception as e:
             logger.error(f"Modbus başlatma hatası: {e}")
             raise
-    
+#WEB SERVER KODLARI
     def _setup_web_server(self):
         """Web sunucusu başlatma"""
         if not (UVICORN_AVAILABLE and FASTAPI_AVAILABLE):
@@ -323,7 +368,8 @@ if __name__ == "__main__":
         Web sunucusu ayrı bir process olarak çalıştığından, bu metot artık kullanılmıyor.
         """
         pass
-            
+#WEB SERVER KODLARI BURAYA KADAR
+
     def _setup_control_loop(self):
         """Kontrol döngüsü başlatma"""
         try:
@@ -365,6 +411,35 @@ if __name__ == "__main__":
                     # Ham modbus verisini direkt olarak kullan
                     base_data = raw_data.copy()
                     
+                    # Aktif kontrolcüyü geçici değişkende tut
+                    current_controller = self.controller_factory.active_controller.value if self.controller_factory.active_controller else None
+                    
+                    # Kesim durumunu kontrol et ve kesim ID'sini güncelle
+                    current_testere_durumu = base_data.get('testere_durumu', 0)
+                    
+                    # Kesim başlangıcını kontrol et (3: KESIM_YAPILIYOR)
+                    if current_testere_durumu == 3 and self.previous_testere_durumu != 3:
+                        # Yeni kesim başladı
+                        self.current_kesim_id += 1
+                        logger.info(f"Yeni kesim başladı. Kesim ID: {self.current_kesim_id}")
+                    
+                    # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR)
+                    if current_testere_durumu == 5 and self.previous_testere_durumu != 5:
+                        # Yukarı çıkış başladı, kaydı başlat
+                        if not self.is_recording_upward:
+                            logger.info("Şerit yukarı çıkıyor, kamera kaydı başlatılıyor...")
+                            self.camera.start_recording()
+                            self.is_recording_upward = True
+                    elif current_testere_durumu != 5 and self.previous_testere_durumu == 5:
+                        # Yukarı çıkış bitti, kaydı durdur
+                        if self.is_recording_upward:
+                            logger.info("Şerit yukarı çıkış tamamlandı, kamera kaydı durduruluyor...")
+                            self.camera.stop_recording()
+                            self.is_recording_upward = False
+                    
+                    # Önceki durumu güncelle
+                    self.previous_testere_durumu = current_testere_durumu
+                    
                     # Ek alanları ekle
                     base_data.update({
                         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
@@ -379,7 +454,10 @@ if __name__ == "__main__":
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.1.147'
+                        'modbus_ip': '192.168.1.147',
+                        'kesim_turu': current_controller if current_testere_durumu == 3 else None,
+                        'kesim_id': self.current_kesim_id if current_testere_durumu == 3 else None
+
                     })
                     
                     # Veriyi işle
@@ -441,8 +519,11 @@ if __name__ == "__main__":
         """Veri kayıt ve GUI güncelleme döngüsünü başlatır"""
         logger.info("Veri döngüsü başlatılıyor...")
         
+        
         while self.is_running:
             try:
+                snapshot_to_send = None # ThingsBoard için hazırlanan gönderilecek veri
+
                 with self.lock:
                     if self.last_processed_data:
                         try:
@@ -452,8 +533,22 @@ if __name__ == "__main__":
                             
                             # GUI'yi güncelle
                             self.gui.update_data(self.last_processed_data)
+                            if self.tb_enabled:
+                                now_ms = int(time.time() * 1000)
+                                if (now_ms - self._tb_last_sent_ms) >= self._tb_period_ms:
+                                    snapshot_to_send = dict(self.last_processed_data)  # kopya
+                                    self._tb_last_sent_ms = now_ms
                         except Exception as e:
                             logger.error(f"Veri kaydetme/güncelleme hatası: {str(e)}")
+
+                if snapshot_to_send is not None and self.tb_enabled and self.tb is not None:
+                    try:
+                        # 'timestamp' string ise sender.send_processed_row ms'e çevirir ve ts/values ile yollar
+                        ok = self.tb.send_processed_row(snapshot_to_send, field_map=self._tb_field_map)
+                        if not ok:
+                            logger.warning("ThingsBoard gönderimi başarısız (HTTP 2xx değil).")
+                    except Exception as e:
+                        logger.error(f"ThingsBoard gönderim hatası: {e}")                
                 
                 # Döngü gecikmesi
                 time.sleep(0.1)  # 100ms güncelleme aralığı
@@ -493,9 +588,10 @@ if __name__ == "__main__":
             self._setup_control_loop()
             self._setup_data_loop()
             
+
             # Web sunucusunu başlat (opsiyonel)
             self._setup_web_server()
-            
+
             # Thread'lerin başladığını bildir
             self.gui.threads_ready.set()
             
@@ -550,6 +646,7 @@ if __name__ == "__main__":
         self.is_running = False
         
         try:
+
             # Vision service ve wear calculator'ı kapat
             if hasattr(self, 'vision_service') and self.vision_service:
                 logger.info("Vision service kapatılıyor...")
@@ -563,6 +660,13 @@ if __name__ == "__main__":
             if hasattr(self, 'camera_module') and self.camera_module:
                 logger.info("Kamera modülü kapatılıyor...")
                 self.camera_module.close()
+"""
+KAMERA YUKARI CIKARKEN KODU
+            # Kamera kaydını durdur
+            if self.is_recording_upward:
+                self.camera.stop_recording()
+            self.camera.close()
+"""
             
             # Kontrol istatistiklerini logla
             stats = self.controller_factory.get_stats()
@@ -577,7 +681,7 @@ if __name__ == "__main__":
                 self.control_loop.join(timeout=2)
             if self.data_loop and self.data_loop.is_alive():
                 self.data_loop.join(timeout=2)
-            
+
             # Web sunucusunu kapat
             # if hasattr(self, 'web_server') and self.web_server and self.web_server.poll() is None:
             #     logger.info("Web sunucusu kapatılıyor...")
@@ -594,6 +698,12 @@ if __name__ == "__main__":
             # Modbus bağlantısını kapat
             if self.modbus_client:
                 self.modbus_client.disconnect()
+
+            if getattr(self, "tb", None):
+                try:
+                    self.tb.close()
+                except Exception:
+                    pass
             
             # Veri depolama sistemini kapat
             self.data_storage.close()
