@@ -362,7 +362,7 @@ class MLController:
             
             # Modbus'a yazma işlemleri
             # İnme hızı için buffer kontrolü
-            if abs(self.inme_hizi_degisim_buffer) >= 0.01:
+            if abs(self.inme_hizi_degisim_buffer) >= 1:
                 new_inme_hizi = current_inme_hizi + self.inme_hizi_degisim_buffer
                 new_inme_hizi = max(SPEED_LIMITS['inme']['min'], 
                                    min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
