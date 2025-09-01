@@ -56,7 +56,6 @@ from gui.pyside_app import SimpleGUI
 
 from core.constants import TestereState
 
-from api import create_app, router
 from thingsboard.sender import create_sender_from_env
 
 from core.camera import CameraModule
@@ -80,7 +79,7 @@ class SmartSaw:
         self.web_server = None
         self.api_app = None
 
-"""
+        """
 KAMERANIN YUKARI CIKARKEN DUZENLENECEK
         # Kesim takibi için değişkenler
         self.current_kesim_id = -1  # Başlangıçta kesim yok
@@ -158,7 +157,6 @@ KAMERANIN YUKARI CIKARKEN DUZENLENECEK
 
         # Kamera kaydı ve detection + vision servisi başlat
         try:
-            from core.camera import CameraModule
             self.camera_module = CameraModule()
             self.camera_module.start_recording()
             self.camera_module.start_detection()
@@ -660,13 +658,13 @@ if __name__ == "__main__":
             if hasattr(self, 'camera_module') and self.camera_module:
                 logger.info("Kamera modülü kapatılıyor...")
                 self.camera_module.close()
-"""
+            """
 KAMERA YUKARI CIKARKEN KODU
             # Kamera kaydını durdur
             if self.is_recording_upward:
                 self.camera.stop_recording()
             self.camera.close()
-"""
+            """
             
             # Kontrol istatistiklerini logla
             stats = self.controller_factory.get_stats()
