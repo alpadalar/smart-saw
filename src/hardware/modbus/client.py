@@ -14,7 +14,7 @@ class ModbusClient:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def __init__(self, host='192.168.11.186', port=502):
+    def __init__(self, host='192.168.1.147', port=502):
         """ModbusClient başlatılır"""
         if not hasattr(self, 'initialized'):
             self.client = ModbusTcpClient(host=host, port=port)
@@ -102,7 +102,7 @@ class ModbusClient:
             if self.client.is_socket_open():
                 kwargs = {
                     'address': 1000,
-                    'count': 38
+                    'count': 42
                 }
                 response = self.client.read_holding_registers(**kwargs)
                 if not response.isError():
@@ -147,7 +147,11 @@ class ModbusClient:
                         'serit_inme_hizi': response.registers[34],  # 1034
                         'ivme_olcer_x_hz': response.registers[35],  # 1035
                         'ivme_olcer_y_hz': response.registers[36],  # 1036
-                        'ivme_olcer_z_hz': response.registers[37]  # 1037
+                        'ivme_olcer_z_hz': response.registers[37],  # 1037
+                        'fark_hz_x': response.registers[38],  # 1038
+                        'fark_hz_y': response.registers[39],  # 1039
+                        'fark_hz_z': response.registers[40],  # 1040
+                        'malzeme_genisligi': response.registers[41]  # 1041
                     }
             return None
         except Exception as e:

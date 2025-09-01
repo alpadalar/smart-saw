@@ -4,10 +4,6 @@ import os
 import time
 import signal
 import threading
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
 from queue import Queue
 from typing import Optional, Dict
 from datetime import datetime
@@ -34,16 +30,16 @@ from data import (
 )
 from data.cutting_tracker import get_cutting_tracker
 from models import ProcessedData, SystemState
-<<<<<<< HEAD
-from gui.controller import SimpleGUI
+
 from control import ControllerFactory
-=======
 from gui.pyside_app import SimpleGUI
->>>>>>> 7d4dea3 (Add ThingsBoard integration for data sending and error handling in SmartSaw class)
+
 from core.constants import TestereState
+
 from api import create_app, router
 from thingsboard.sender import create_sender_from_env
 
+from core.camera import CameraModule
 
 
 class SmartSaw:
@@ -56,13 +52,17 @@ class SmartSaw:
         setup_logger(self.config.logging)
         logger.info("Smart Saw başlatılıyor...")
         
-        # Web sunucusu
-        self.web_server = None
-        self.api_app = None
+        # Kesim takibi için değişkenler
+        self.current_kesim_id = -1  # Başlangıçta kesim yok
+        self.previous_testere_durumu = None
+        self.is_recording_upward = False  # Yukarı çıkış kaydı durumu
+        
+        # Kamera modülü
+        self.camera = CameraModule()
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
-            host='192.168.11.186',
+            host='192.168.1.147',
             port=502
         )
         
@@ -106,7 +106,6 @@ class SmartSaw:
         # Kontrol ve veri döngüleri
         self.control_loop = None
         self.data_loop = None
-        self.web_server_thread = None
         
         # Thread güvenliği için lock
         self.lock = threading.Lock()
@@ -122,7 +121,6 @@ class SmartSaw:
         self._setup_modbus()
         self._setup_control_loop()
         self._setup_data_loop()
-        self._setup_web_server()
         
         logger.info("Başlatma tamamlandı")
         
@@ -142,84 +140,6 @@ class SmartSaw:
         except Exception as e:
             logger.error(f"Modbus başlatma hatası: {e}")
             raise
-    
-    def _setup_web_server(self):
-        """Web sunucusu başlatma"""
-        try:
-            import os
-            import subprocess
-            import sys
-            
-            # Mevcut çalışma dizinini ve Python yolunu al
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            
-            # Webui dizinini bul
-            webui_dir = os.path.join(current_dir, "webui")
-            if not os.path.exists(webui_dir):
-                logger.warning(f"Webui dizini bulunamadı: {webui_dir}")
-                
-            # Python yorumlayıcı yolu
-            python_exe = sys.executable
-            
-            # Bir komut dosyası oluştur
-            server_script = os.path.join(current_dir, "run_server.py")
-            
-            # Eğer script yoksa, oluştur
-            if not os.path.exists(server_script):
-                with open(server_script, 'w', encoding='utf-8') as f:
-                    f.write("""
-import os
-import sys
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
-
-# API modülünü import et
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from api import create_app
-
-# FastAPI uygulamasi olustur
-app = create_app()
-
-# Webui dizinini bul
-current_dir = os.path.dirname(os.path.abspath(__file__))
-webui_dir = os.path.join(current_dir, "webui")
-
-# Statik dosyalari monte et
-app.mount("/", StaticFiles(directory=webui_dir, html=True), name="webui")
-
-# Ana sayfaya yonlendirme
-@app.get("/")
-async def redirect_to_index():
-    return RedirectResponse(url="/index.html")
-
-if __name__ == "__main__":
-    print(f"Web arayuzu dosyalari: {webui_dir}")
-    print("Web sunucusu baslatiliyor. http://localhost:8080 adresinden erisebilirsiniz...")
-    uvicorn.run(app, host="0.0.0.0", port=8080)
-""")
-            
-            # Web sunucusunu ayrı bir süreç olarak başlat
-            self.web_server = subprocess.Popen(
-                [python_exe, server_script],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NEW_CONSOLE  # Windows'ta yeni konsol penceresi aç
-            )
-            
-            logger.info("Web sunucusu başlatıldı. http://localhost:8080 adresinden erişebilirsiniz...")
-            
-        except Exception as e:
-            logger.error(f"Web sunucusu başlatma hatası: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-    
-    def _setup_web_server_thread(self):
-        """
-        Web sunucusu ayrı bir process olarak çalıştığından, bu metot artık kullanılmıyor.
-        """
-        pass
             
     def _setup_control_loop(self):
         """Kontrol döngüsü başlatma"""
@@ -262,6 +182,35 @@ if __name__ == "__main__":
                     # Ham modbus verisini direkt olarak kullan
                     base_data = raw_data.copy()
                     
+                    # Aktif kontrolcüyü geçici değişkende tut
+                    current_controller = self.controller_factory.active_controller.value if self.controller_factory.active_controller else None
+                    
+                    # Kesim durumunu kontrol et ve kesim ID'sini güncelle
+                    current_testere_durumu = base_data.get('testere_durumu', 0)
+                    
+                    # Kesim başlangıcını kontrol et (3: KESIM_YAPILIYOR)
+                    if current_testere_durumu == 3 and self.previous_testere_durumu != 3:
+                        # Yeni kesim başladı
+                        self.current_kesim_id += 1
+                        logger.info(f"Yeni kesim başladı. Kesim ID: {self.current_kesim_id}")
+                    
+                    # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR)
+                    if current_testere_durumu == 5 and self.previous_testere_durumu != 5:
+                        # Yukarı çıkış başladı, kaydı başlat
+                        if not self.is_recording_upward:
+                            logger.info("Şerit yukarı çıkıyor, kamera kaydı başlatılıyor...")
+                            self.camera.start_recording()
+                            self.is_recording_upward = True
+                    elif current_testere_durumu != 5 and self.previous_testere_durumu == 5:
+                        # Yukarı çıkış bitti, kaydı durdur
+                        if self.is_recording_upward:
+                            logger.info("Şerit yukarı çıkış tamamlandı, kamera kaydı durduruluyor...")
+                            self.camera.stop_recording()
+                            self.is_recording_upward = False
+                    
+                    # Önceki durumu güncelle
+                    self.previous_testere_durumu = current_testere_durumu
+                    
                     # Ek alanları ekle
                     base_data.update({
                         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
@@ -276,7 +225,9 @@ if __name__ == "__main__":
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.11.186'
+                        'modbus_ip': '192.168.1.147',
+                        'kesim_turu': current_controller if current_testere_durumu == 3 else None,
+                        'kesim_id': self.current_kesim_id if current_testere_durumu == 3 else None
                     })
                     
                     # Veriyi işle
@@ -406,9 +357,6 @@ if __name__ == "__main__":
             self._setup_control_loop()
             self._setup_data_loop()
             
-            # Web sunucusunu başlat
-            self._setup_web_server()
-            
             # Thread'lerin başladığını bildir
             self.gui.threads_ready.set()
             
@@ -451,6 +399,11 @@ if __name__ == "__main__":
         self.is_running = False
         
         try:
+            # Kamera kaydını durdur
+            if self.is_recording_upward:
+                self.camera.stop_recording()
+            self.camera.close()
+            
             # Kontrol istatistiklerini logla
             stats = self.controller_factory.get_stats()
             logger.info("Kontrol sistemi istatistikleri:")
@@ -464,19 +417,6 @@ if __name__ == "__main__":
                 self.control_loop.join(timeout=2)
             if self.data_loop and self.data_loop.is_alive():
                 self.data_loop.join(timeout=2)
-            
-            # Web sunucusunu kapat
-            if hasattr(self, 'web_server') and self.web_server and self.web_server.poll() is None:
-                logger.info("Web sunucusu kapatılıyor...")
-                try:
-                    self.web_server.terminate()  # Güvenli bir şekilde sonlandır
-                    self.web_server.wait(timeout=3)  # En fazla 3 saniye bekle
-                except Exception as e:
-                    logger.error(f"Web sunucusu kapatma hatası: {str(e)}")
-                    try:
-                        self.web_server.kill()  # Son çare olarak zorla sonlandır
-                    except:
-                        pass
             
             # Modbus bağlantısını kapat
             if self.modbus_client:

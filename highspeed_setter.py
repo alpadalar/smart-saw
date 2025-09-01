@@ -50,7 +50,7 @@ def write_register(serial, reg_addr, value):
         print(f"Geçersiz yanıt uzunluğu: {len(response)}", [hex(x) for x in response])
     return False
 
-def set_highspeed_mode(port='COM7'):
+def set_highspeed_mode(port='COM6'):
     try:
         # Seri port bağlantısı
         ser = serial.Serial(
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     import sys
     
     # Port argümanı varsa kullan, yoksa COM7'yi kullan
-    port = sys.argv[1] if len(sys.argv) > 1 else 'COM7'
+    port = sys.argv[1] if len(sys.argv) > 1 else 'COM6'
     
     print("Yüksek hız modu ayarlanıyor...")
     if set_highspeed_mode(port):

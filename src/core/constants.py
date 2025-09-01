@@ -5,7 +5,7 @@ KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
 # Model yolu
-ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\Bagging_20250425_dataset_16.pkl"
+ML_MODEL_PATH = r"C:\Users\Busra\Desktop\smart-saw\src\control\ml\Bagging_dataset_v17_20250509.pkl"
 
 # Hız Limitleri
 MIN_SPEED = 5.0
@@ -14,25 +14,33 @@ MAX_SPEED = 100.0
 SPEED_LIMITS = {
     'kesme': {
         'min': 40.0,
-        'max': 140.0
+        'max': 90.0
     },
     'inme': {
         'min': 10.0,
-        'max': 100.0
+        'max': 60.0
     }
 }
 
+# Tork -> Akım dönüşüm katsayıları
+# f(x) = A2*x^2 + A1*x + A0
+# x: serit_motor_tork_percentage (yüzde), çıktı: akım (A)
+TORQUE_TO_CURRENT_A2 = 0.015
+TORQUE_TO_CURRENT_A1 = -0.338
+TORQUE_TO_CURRENT_A0 = 16.272
+
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
-MIN_SPEED_UPDATE_INTERVAL = 0.33  # 3 Hz
+MIN_SPEED_UPDATE_INTERVAL = 1.0 / 5.0  # 5 Hz
 KATSAYI = 1.0
 
 # Kontrol Sistemi Başlangıç Parametreleri
 CONTROL_INITIAL_DELAY = {
-    'MIN_DELAY_MS': 5000,  # Minimum bekleme süresi (5 saniye)
-    'MAX_DELAY_MS': 60000,  # Maksimum bekleme süresi (60 saniye)
-    'TARGET_DISTANCE_MM': 14,  # Hedef inme mesafesi (mm)
-    'DEFAULT_DELAY_MS': 30000  # Varsayılan bekleme süresi (30 saniye)
+    'MIN_DELAY_MS': 5000,      # Minimum bekleme süresi (5 saniye)
+    'MAX_DELAY_MS': 60000,     # Maksimum bekleme süresi (60 saniye)
+    'TARGET_DISTANCE_MM': 4, # Hedef inme mesafesi (mm)
+    'DEFAULT_DELAY_MS': 30000, # Varsayılan bekleme süresi (30 saniye)
+    'REGISTER_READ_TIMEOUT': 2.0  # Register okuma timeout (saniye)
 }
 
 # Buffer Parametreleri

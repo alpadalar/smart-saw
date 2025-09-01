@@ -10,7 +10,7 @@ from matplotlib.figure import Figure
 from collections import deque
 
 class HighSpeedReader:
-    def __init__(self, port='COM7', baudrate=230400):
+    def __init__(self, port='COM6', baudrate=230400):
         self.port = port
         self.baudrate = baudrate
         self.serial = None
@@ -170,8 +170,8 @@ class HighSpeedGUI:
         
         # Port seçimi
         ttk.Label(self.control_frame, text="Port:").grid(row=0, column=0, padx=5)
-        self.port_var = tk.StringVar(value="COM7")
-        self.port_combo = ttk.Combobox(self.control_frame, textvariable=self.port_var, values=["COM7", "COM8", "COM9"])
+        self.port_var = tk.StringVar(value="COM6")
+        self.port_combo = ttk.Combobox(self.control_frame, textvariable=self.port_var, values=["COM6", "COM7", "COM8", "COM9"])
         self.port_combo.grid(row=0, column=1, padx=5)
         
         # Bağlantı butonu
@@ -252,28 +252,37 @@ class HighSpeedGUI:
             self.vel_ax.set_title("Titreşim Hızı")
             self.vel_ax.set_ylabel("mm/s")
             self.vel_ax.grid(True)
+            has_vel_data = False
             for axis, data in self.reader.velocity_data.items():
                 if len(data) > 0:
                     self.vel_ax.plot(list(self.reader.time_data), list(data), label=axis)
-            self.vel_ax.legend()
+                    has_vel_data = True
+            if has_vel_data:
+                self.vel_ax.legend()
             
             # Yer değiştirme grafiği
             self.disp_ax.clear()
             self.disp_ax.set_title("Yer Değiştirme")
             self.disp_ax.set_ylabel("mm")
             self.disp_ax.grid(True)
+            has_disp_data = False
             for axis, data in self.reader.displacement_data.items():
                 if len(data) > 0:
                     self.disp_ax.plot(list(self.reader.time_data), list(data), label=axis)
-            self.disp_ax.legend()
+                    has_disp_data = True
+            if has_disp_data:
+                self.disp_ax.legend()
             
             # Sıcaklık grafiği
             self.temp_ax.clear()
             self.temp_ax.set_title("Sıcaklık")
             self.temp_ax.set_ylabel("°C")
             self.temp_ax.grid(True)
+            has_temp_data = False
             if len(self.reader.temperature_data) > 0:
                 self.temp_ax.plot(list(self.reader.time_data), list(self.reader.temperature_data), label="Sıcaklık")
+                has_temp_data = True
+            if has_temp_data:
                 self.temp_ax.legend()
             
             # Frekans grafiği
@@ -281,10 +290,13 @@ class HighSpeedGUI:
             self.freq_ax.set_title("Frekans")
             self.freq_ax.set_ylabel("Hz")
             self.freq_ax.grid(True)
+            has_freq_data = False
             for axis, data in self.reader.frequency_data.items():
                 if len(data) > 0:
                     self.freq_ax.plot(list(self.reader.time_data), list(data), label=axis)
-            self.freq_ax.legend()
+                    has_freq_data = True
+            if has_freq_data:
+                self.freq_ax.legend()
             
             self.fig.tight_layout()
             self.canvas.draw()

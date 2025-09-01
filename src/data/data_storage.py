@@ -73,6 +73,7 @@ class DataStorage:
                         kafa_yukseklik REAL,
                         kesme_hizi REAL,
                         inme_hizi REAL,
+                        malzeme_genisligi REAL,
                         testere_durum INTEGER,
                         parca_adet INTEGER
                     )
@@ -125,6 +126,7 @@ class DataStorage:
                 'kafa_yukseklik': data_dict.get('kafa_yuksekligi_mm'),
                 'kesme_hizi': data_dict.get('serit_kesme_hizi'),
                 'inme_hizi': data_dict.get('serit_inme_hizi'),
+                'malzeme_genisligi': data_dict.get('malzeme_genisligi'),
                 'testere_durum': data_dict.get('testere_durumu'),
                 'parca_adet': data_dict.get('kesilen_parca_adeti')
             })
@@ -178,8 +180,8 @@ class DataStorage:
                     INSERT INTO cut_data (
                         timestamp, serit_id, malzeme_cinsi, malzeme_sertlik,
                         kesit_yapisi, a_mm, b_mm, c_mm, d_mm, kafa_yukseklik,
-                        kesme_hizi, inme_hizi, testere_durum, parca_adet
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        kesme_hizi, inme_hizi, malzeme_genisligi, testere_durum, parca_adet
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     data.get('timestamp'),
                     data.get('serit_id'),
@@ -193,6 +195,7 @@ class DataStorage:
                     data.get('kafa_yukseklik'),
                     data.get('kesme_hizi'),
                     data.get('inme_hizi'),
+                    data.get('malzeme_genisligi'),
                     data.get('testere_durum'),
                     data.get('parca_adet')
                 ))

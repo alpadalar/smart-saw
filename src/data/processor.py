@@ -94,13 +94,23 @@ class DataProcessor:
             processed_data['ivme_olcer_z_hz'] = self._safe_float(row_data.get('ivme_olcer_z_hz'))
             
             # Hız hesaplamaları
-            processed_data['serit_kesme_hizi'] = self._safe_float(row_data.get('serit_kesme_hizi')) * 0.0754
+            # processed_data['serit_kesme_hizi'] = self._safe_float(row_data.get('serit_kesme_hizi')) * 0.0754
+            processed_data['serit_kesme_hizi'] = self._safe_float(row_data.get('serit_kesme_hizi')) / 10.0
             
             inme_hizi = self._safe_float(row_data.get('serit_inme_hizi'))
             if inme_hizi == 0:
                 processed_data['serit_inme_hizi'] = 0.0
             else:
-                processed_data['serit_inme_hizi'] = (inme_hizi - 65535) * -0.06
+                # processed_data['serit_inme_hizi'] = (inme_hizi - 65535) * -0.06
+                processed_data['serit_inme_hizi'] = inme_hizi
+            
+            # Malzeme genişliği (1/10 ölçekli)
+            processed_data['malzeme_genisligi'] = self._safe_float(row_data.get('malzeme_genisligi')) / 10.0
+            
+            # Fark frekansları (1/100 ölçekli)
+            processed_data['fark_hz_x'] = self._safe_float(row_data.get('fark_hz_x')) / 100.0
+            processed_data['fark_hz_y'] = self._safe_float(row_data.get('fark_hz_y')) / 100.0
+            processed_data['fark_hz_z'] = self._safe_float(row_data.get('fark_hz_z')) / 100.0
             
             # Özel hesaplamalar
             if processed_data['inme_motor_akim_a'] > 15:

@@ -67,16 +67,45 @@ class CameraModule:
             if self.cap is not None:
                 self.cap.release()
             
-            self.cap = cv2.VideoCapture(CAMERA_DEVICE_ID, cv2.CAP_DSHOW)  # DirectShow kullan
+            # Linux'ta V4L2 backend'i kullan
+            self.cap = cv2.VideoCapture(CAMERA_DEVICE_ID)
             if not self.cap.isOpened():
                 logger.error("Kamera açılamadı! Lütfen bağlantıyı kontrol edin.")
                 return False
+            
+            # YUYV formatını ayarla
+            self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
             
             # Kamera ayarlarını yap
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
             self.cap.set(cv2.CAP_PROP_FPS, CAMERA_FPS)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Buffer boyutunu küçült
+            
+            # Linux için v4l2 ayarları
+            try:
+                import subprocess
+                # Kamera ayarlarını varsayılan değerlere getir
+                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{CAMERA_DEVICE_ID}', 
+                              '-c', 'brightness=0',      # default=0, range=-64 to 64
+                              '-c', 'contrast=10',       # default=10, range=0 to 100
+                              '-c', 'saturation=10',     # default=10, range=0 to 100
+                              '-c', 'gain=100',          # default=100, range=100 to 1066
+                              '-c', 'white_balance_automatic=1',  # default=1 (on)
+                              '-c', 'auto_exposure=0'])  # 0=Auto Mode
+                logger.info("Kamera parametreleri varsayılan değerlere ayarlandı")
+            except Exception as e:
+                logger.warning(f"Kamera parametre ayarları yapılamadı: {e}")
+            
+            # Ayarların uygulanması için kısa bir bekleme
+            time.sleep(1)
+            
+            # Test frame'i al
+            for _ in range(5):  # İlk 5 frame'i at
+                ret, _ = self.cap.read()
+                if not ret:
+                    logger.warning("Test frame alınamadı")
+                    time.sleep(0.1)
             
             # Ayarların uygulanıp uygulanmadığını kontrol et
             actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -138,6 +167,12 @@ class CameraModule:
             frame_count, frame, output_dir = frame_data
             frame_filename = os.path.join(output_dir, f"frame_{frame_count:06d}.jpg")
             encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), CAMERA_JPEG_QUALITY]
+            
+            if len(frame.shape) == 3 and frame.shape[2] not in [1, 3, 4]:
+                try:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_YUYV)
+                except Exception as e:
+                    logger.error(f"Frame dönüştürme hatası: {str(e)}")
             
             try:
                 cv2.imwrite(frame_filename, frame, encode_params)
