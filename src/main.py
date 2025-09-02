@@ -422,6 +422,7 @@ if __name__ == "__main__":
                         logger.info(f"Yeni kesim başladı. Kesim ID: {self.current_kesim_id}")
                     
                     # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR)
+                    """
                     if current_testere_durumu == 5 and self.previous_testere_durumu != 5:
                         # Yukarı çıkış başladı, kaydı başlat
                         if not self.is_recording_upward:
@@ -434,7 +435,7 @@ if __name__ == "__main__":
                             logger.info("Şerit yukarı çıkış tamamlandı, kamera kaydı durduruluyor...")
                             self.camera.stop_recording()
                             self.is_recording_upward = False
-                    
+                    """
                     # Önceki durumu güncelle
                     self.previous_testere_durumu = current_testere_durumu
                     
