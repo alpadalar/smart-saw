@@ -111,27 +111,68 @@ class PositioningPage(QWidget):
     def _connect_positioning_buttons(self) -> None:
         """Konumlandırma kontrol butonlarını bağla"""
         try:
-            # Mengene kontrol butonları
+            # Mengene kontrol butonları (tıklayınca aktif, tekrar tıklayınca pasif)
             if hasattr(self.ui, 'btnArkaMengeneAc'):
-                self.ui.btnArkaMengeneAc.clicked.connect(self._on_arka_mengene_ac)
+                btn = self.ui.btnArkaMengeneAc
+                btn.setCheckable(True)
+                btn.clicked.connect(lambda checked, b=btn: self._on_toggle_button(b, "arka_mengene_ac", checked))
             if hasattr(self.ui, 'btnMengeneKapat'):
-                self.ui.btnMengeneKapat.clicked.connect(self._on_mengene_kapat)
+                btn = self.ui.btnMengeneKapat
+                btn.setCheckable(True)
+                btn.clicked.connect(lambda checked, b=btn: self._on_toggle_button(b, "mengene_kapat", checked))
             if hasattr(self.ui, 'btnOnMengeneAc'):
-                self.ui.btnOnMengeneAc.clicked.connect(self._on_on_mengene_ac)
-            
-            # Malzeme konumlandırma butonları
+                btn = self.ui.btnOnMengeneAc
+                btn.setCheckable(True)
+                btn.clicked.connect(lambda checked, b=btn: self._on_toggle_button(b, "on_mengene_ac", checked))
+
+            # Malzeme konumlandırma butonları (basılı tutarken aktif)
             if hasattr(self.ui, 'btnMalzemeGeri'):
-                self.ui.btnMalzemeGeri.clicked.connect(self._on_malzeme_geri)
+                btn = self.ui.btnMalzemeGeri
+                btn.setCheckable(True)
+                btn.pressed.connect(lambda b=btn: self._on_hold_button(b, "malzeme_geri", True))
+                btn.released.connect(lambda b=btn: self._on_hold_button(b, "malzeme_geri", False))
             if hasattr(self.ui, 'btnMalzemeIleri'):
-                self.ui.btnMalzemeIleri.clicked.connect(self._on_malzeme_ileri)
-            
-            # Testere konumlandırma butonları
+                btn = self.ui.btnMalzemeIleri
+                btn.setCheckable(True)
+                btn.pressed.connect(lambda b=btn: self._on_hold_button(b, "malzeme_ileri", True))
+                btn.released.connect(lambda b=btn: self._on_hold_button(b, "malzeme_ileri", False))
+
+            # Testere konumlandırma butonları (basılı tutarken aktif)
             if hasattr(self.ui, 'btnTestereYukari'):
-                self.ui.btnTestereYukari.clicked.connect(self._on_testere_yukari)
+                btn = self.ui.btnTestereYukari
+                btn.setCheckable(True)
+                btn.pressed.connect(lambda b=btn: self._on_hold_button(b, "testere_yukari", True))
+                btn.released.connect(lambda b=btn: self._on_hold_button(b, "testere_yukari", False))
             if hasattr(self.ui, 'btnTestereAsagi'):
-                self.ui.btnTestereAsagi.clicked.connect(self._on_testere_asagi)
+                btn = self.ui.btnTestereAsagi
+                btn.setCheckable(True)
+                btn.pressed.connect(lambda b=btn: self._on_hold_button(b, "testere_asagi", True))
+                btn.released.connect(lambda b=btn: self._on_hold_button(b, "testere_asagi", False))
         except Exception as e:
             print(f"Konumlandırma buton bağlantı hatası: {e}")
+
+    def _on_toggle_button(self, button, command: str, checked: bool) -> None:
+        """Toggle çalışan butonlar için tek noktadan handler"""
+        try:
+            state_text = "AKTIF" if checked else "PASIF"
+            print(f"{command} => {state_text}")
+            self.send_modbus_command(command, checked)
+        except Exception as e:
+            print(f"Toggle buton hata: {e}")
+
+    def _on_hold_button(self, button, command: str, is_pressed: bool) -> None:
+        """Basılı tutma ile çalışan butonlar için handler"""
+        try:
+            # Görsel geri bildirim için butonu checked göster (stil :checked kullanıyorsa)
+            if hasattr(button, 'setChecked'):
+                button.setChecked(is_pressed)
+            else:
+                button.setDown(is_pressed)
+            state_text = "BASILI" if is_pressed else "BOSALDI"
+            print(f"{command} => {state_text}")
+            self.send_modbus_command(command, is_pressed)
+        except Exception as e:
+            print(f"Hold buton hata: {e}")
 
     def _open_control_panel(self) -> None:
         if self.main_ref:
