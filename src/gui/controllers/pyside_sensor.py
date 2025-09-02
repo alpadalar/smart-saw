@@ -1,5 +1,5 @@
 from typing import Callable, Dict, Optional
-from PySide6.QtCore import QTimer, QDateTime, Qt
+from PySide6.QtCore import QTimer, QDateTime, Qt, QPoint
 from PySide6.QtWidgets import QWidget, QButtonGroup, QLabel
 from PySide6.QtGui import QIcon, QPainter, QPen, QColor, QBrush, QPolygon
 import os
@@ -28,12 +28,19 @@ class CuttingGraphWidget(QWidget):
         # Grafik ayarları
         self.padding = 20
         self.grid_color = QColor(255, 255, 255, 50)  # Şeffaf beyaz
-        self.line_color = QColor(149, 9, 82)  # Ana renk
+        self.line_color = QColor(0xF4, 0xF6, 0xFC)  # Çizgi rengi (F4F6FC)
         self.fill_color = QColor(149, 9, 82, 30)  # Dolgu rengi
         
         # Eksen bilgileri
         self.x_axis_type = "timestamp"  # Varsayılan
         self.y_axis_type = "serit_kesme_hizi"  # Varsayılan
+
+        # Zaman ekseni etiketleri için kesim başlangıcı ve son nokta zamanı
+        self.cut_start_time: Optional[datetime] = None
+        self.last_point_time: Optional[datetime] = None
+        # Yükseklik ekseni için başlangıç ve mevcut değerler
+        self.start_height_value: Optional[float] = None
+        self.current_height_value: Optional[float] = None
         
         # Thread-safe veri erişimi için lock
         self._data_lock = threading.Lock()
@@ -73,6 +80,9 @@ class CuttingGraphWidget(QWidget):
                 # Maksimum veri sayısını aşarsa eski verileri sil
                 if len(self.data_points) > self.max_points:
                     self.data_points.popleft()
+                # Zaman ekseni kullanılıyorsa son nokta zamanını güncelle
+                if self.x_axis_type == "timestamp":
+                    self.last_point_time = datetime.now()
         except Exception as e:
             logger.error(f"Veri noktası ekleme hatası: {e}")
     
@@ -81,6 +91,8 @@ class CuttingGraphWidget(QWidget):
         try:
             with self._data_lock:
                 self.data_points.clear()
+                # Zaman bilgilerini sıfırlama (kesim başlayınca yeniden ayarlanacak)
+                self.last_point_time = None
             # Label'ları sıfırla - zaman ekseni için özel format
             if self.x_axis_type == "timestamp" or self.y_axis_type == "timestamp":
                 self.update_label_values(0, 0, 0, 0)
@@ -161,7 +173,14 @@ class CuttingGraphWidget(QWidget):
                     y_max = mid_val + 0.05
                 
                 # Label değerlerini güncelle
-                self.update_label_values(x_min, x_max, y_min, y_max)
+                if self.x_axis_type == "timestamp" and self.cut_start_time and self.last_point_time:
+                    # Zaman ekseni için özel etiketler (başlangıç -> son)
+                    self._update_time_axis_labels(self.cut_start_time, self.last_point_time, y_min, y_max)
+                elif self.x_axis_type == "kafa_yuksekligi_mm" and self.start_height_value is not None and self.current_height_value is not None:
+                    # Yükseklik ekseni için özel etiketler (başlangıç -> mevcut)
+                    self._update_height_axis_labels(self.start_height_value, self.current_height_value, y_min, y_max)
+                else:
+                    self.update_label_values(x_min, x_max, y_min, y_max)
                 
                 # Çizgi rengi
                 painter.setPen(QPen(self.line_color, 2))
@@ -169,15 +188,15 @@ class CuttingGraphWidget(QWidget):
                 # Dolgu rengi
                 painter.setBrush(QBrush(self.fill_color))
                 
-                # Çizgi noktalarını hesapla
+                # Çizgi noktalarını hesapla (yeni veri sağdan görünecek şekilde index'e göre yerleştir)
                 points = []
-                for x_value, y_value in self.data_points:
-                    # X koordinatı
-                    if x_max != x_min:
-                        normalized_x = (x_value - x_min) / (x_max - x_min)
+                total_points = len(self.data_points)
+                for i, (_x_value, y_value) in enumerate(self.data_points):
+                    # X koordinatı: 0..N-1 arasında eşit aralıklı, en yeni sağda
+                    if total_points > 1:
+                        x = rect.left() + (rect.width() * i) // (total_points - 1)
                     else:
-                        normalized_x = 0.5
-                    x = rect.left() + (rect.width() * normalized_x)
+                        x = rect.left() + rect.width() // 2
                     
                     # Y koordinatı (ters çevrilmiş - Qt'de y aşağı doğru artar)
                     if y_max != y_min:
@@ -272,6 +291,48 @@ class CuttingGraphWidget(QWidget):
         
         # Label pozisyonlarını güncelle
         self._update_label_positions()
+
+    def _format_time_label(self, dt: datetime) -> str:
+        """Zaman etiketlerini HH.MM formatında döndürür"""
+        try:
+            return dt.strftime('%H.%M')
+        except Exception:
+            return "0.00"
+
+    def _update_time_axis_labels(self, start_dt: datetime, end_dt: datetime, y_min: float, y_max: float):
+        """Zaman ekseni seçili olduğunda X etiketlerini (başlangıç, orta, son) günceller"""
+        try:
+            # Y ekseni etiketleri
+            self.update_label_values(None, None, y_min, y_max)
+            # X ekseni etiketleri
+            if start_dt and end_dt:
+                mid_dt = start_dt + (end_dt - start_dt) / 2
+                if hasattr(self, 'xust'):
+                    self.xust.setText(self._format_time_label(start_dt))
+                if hasattr(self, 'xorta'):
+                    self.xorta.setText(self._format_time_label(mid_dt))
+                if hasattr(self, 'xalt'):
+                    self.xalt.setText(self._format_time_label(end_dt))
+        except Exception as e:
+            logger.error(f"Zaman etiketi güncelleme hatası: {e}")
+    
+    def _update_height_axis_labels(self, start_height: float, current_height: float, y_min: float, y_max: float):
+        """Yükseklik X ekseni seçili olduğunda X etiketlerini günceller: başlangıç | orta | mevcut"""
+        try:
+            # Y ekseni etiketlerini güncelle
+            self.update_label_values(None, None, y_min, y_max)
+            # X ekseni: solda başlangıç yüksekliği sabit, ortada ortalama, sağda mevcut yükseklik
+            start_val = float(start_height)
+            curr_val = float(current_height)
+            mid_val = (start_val + curr_val) / 2.0
+            if hasattr(self, 'xust'):
+                self.xust.setText(f"{start_val:.2f}")
+            if hasattr(self, 'xorta'):
+                self.xorta.setText(f"{mid_val:.2f}")
+            if hasattr(self, 'xalt'):
+                self.xalt.setText(f"{curr_val:.2f}")
+        except Exception as e:
+            logger.error(f"Yükseklik etiketi güncelleme hatası: {e}")
     
     def _update_label_positions(self):
         """Label pozisyonlarını günceller"""
@@ -405,6 +466,8 @@ class SensorPage(QWidget):
         self.last_cut_data = []
         self.is_cutting = False
         self.cut_start_time = None
+        # Buffer to store full current cut for all metrics
+        self.current_cut_buffer = []
         
         # Veritabanı bağlantısı
         try:
@@ -504,8 +567,12 @@ class SensorPage(QWidget):
                 x_axis = self._get_selected_x_axis()
                 y_axis = self._get_selected_y_axis()
                 self.cutting_graph.set_axis_types(x_axis, y_axis)
-                # Eski kesim verilerini yükle
-                self._load_last_cut_data()
+                # Kesim sürüyorsa veya buffer varsa buffer'dan yeniden çiz
+                if self.is_cutting or (self.current_cut_buffer and len(self.current_cut_buffer) > 0):
+                    self._rebuild_graph_from_buffer()
+                else:
+                    # Eski kesim verilerini yükle
+                    self._load_last_cut_data()
                 logger.info(f"X ekseni değiştirildi: {x_axis}")
         except Exception as e:
             logger.error(f"X ekseni değişiklik hatası: {e}")
@@ -517,8 +584,12 @@ class SensorPage(QWidget):
                 x_axis = self._get_selected_x_axis()
                 y_axis = self._get_selected_y_axis()
                 self.cutting_graph.set_axis_types(x_axis, y_axis)
-                # Eski kesim verilerini yükle
-                self._load_last_cut_data()
+                # Kesim sürüyorsa veya buffer varsa buffer'dan yeniden çiz
+                if self.is_cutting or (self.current_cut_buffer and len(self.current_cut_buffer) > 0):
+                    self._rebuild_graph_from_buffer()
+                else:
+                    # Eski kesim verilerini yükle
+                    self._load_last_cut_data()
                 logger.info(f"Y ekseni değiştirildi: {y_axis}")
         except Exception as e:
             logger.error(f"Y ekseni değişiklik hatası: {e}")
@@ -784,14 +855,14 @@ class SensorPage(QWidget):
                     label.setText(f"{current_time} tarihinde anomali tespit edildi.") if is_anom else label.setText(ok_text)
 
             # Rules (same as legacy)
-            upd('KesmeHiziFrame','labelKesmeHiziInfo', serit_akim > 25 or self.anomaly_states['KesmeHizi'])
-            self.anomaly_states['KesmeHizi'] |= (serit_akim > 25)
+            upd('KesmeHiziFrame','labelKesmeHiziInfo', serit_akim > 100 or self.anomaly_states['KesmeHizi'])
+            self.anomaly_states['KesmeHizi'] |= (serit_akim > 100)
 
-            upd('IlerlemeHiziFrame','labelIlerlemeHiziInfo', ilerleme_hizi < 10 or self.anomaly_states['IlerlemeHizi'])
-            self.anomaly_states['IlerlemeHizi'] |= (ilerleme_hizi < 10)
+            upd('IlerlemeHiziFrame','labelIlerlemeHiziInfo', ilerleme_hizi < 100 or self.anomaly_states['IlerlemeHizi'])
+            self.anomaly_states['IlerlemeHizi'] |= (ilerleme_hizi < 100)
 
-            upd('SeritAkimFrame','labelSeritAkimInfo', serit_akim > 30 or self.anomaly_states['SeritAkim'])
-            self.anomaly_states['SeritAkim'] |= (serit_akim > 30)
+            upd('SeritAkimFrame','labelSeritAkimInfo', serit_akim > 15 or self.anomaly_states['SeritAkim'])
+            self.anomaly_states['SeritAkim'] |= (serit_akim > 15)
 
             upd('SicaklikFrame','labelSicaklikInfo', sicaklik > 40 or self.anomaly_states['Sicaklik'])
             self.anomaly_states['Sicaklik'] |= (sicaklik > 40)
@@ -829,8 +900,21 @@ class SensorPage(QWidget):
                     # Kesim başladı
                     self.is_cutting = True
                     self.cut_start_time = datetime.now()
+                    # Zaman etiketleri için başlangıç saatini grafiğe aktar
+                    self.cutting_graph.cut_start_time = self.cut_start_time
+                    self.cutting_graph.last_point_time = self.cut_start_time
+                    # Yükseklik için başlangıç değeri, ilk paket geldiğinde set edilecek
+                    self.cutting_graph.start_height_value = None
+                    self.cutting_graph.current_height_value = None
                     self.last_cut_data = []
+                    self.current_cut_buffer = []
                     self.cutting_graph.clear_data()
+                    # Gerçek zamanlı grafiği yeniden başlat
+                    try:
+                        if self.cutting_graph and not self.cutting_graph.update_timer.isActive():
+                            self.cutting_graph.update_timer.start(100)
+                    except Exception:
+                        pass
                     logger.info("Kesim başladı - grafik verileri temizlendi")
                 
                 # Kesim sırasında veri topla
@@ -839,8 +923,14 @@ class SensorPage(QWidget):
             elif testere_durumu != 3 and self.is_cutting:
                 # Kesim bitti
                 self.is_cutting = False
-                self.cut_start_time = None
+                # Başlangıç saatini koru, son kesim görünsün
                 logger.info("Kesim bitti")
+                # Gerçek zamanlı grafiği durdur (son kesimi göster)
+                try:
+                    if self.cutting_graph and self.cutting_graph.update_timer.isActive():
+                        self.cutting_graph.update_timer.stop()
+                except Exception:
+                    pass
                 
         except Exception as e:
             logger.error(f"Kesim grafiği güncelleme hatası: {e}")
@@ -851,47 +941,40 @@ class SensorPage(QWidget):
             if not self.cutting_graph or not self.is_cutting:
                 return
             
-            # Seçili eksenlere göre değerleri al
+            # Buffer'a tüm metrikleri ekle
+            now_dt = datetime.now()
+            elapsed_s = (now_dt - self.cut_start_time).total_seconds() if self.cut_start_time else 0.0
+            buffer_row = {
+                'timestamp_dt': now_dt,
+                'elapsed_s': float(elapsed_s),
+                'serit_kesme_hizi': float(data.get('serit_kesme_hizi', 0.0)),
+                'serit_inme_hizi': float(data.get('serit_inme_hizi', 0.0)),
+                'serit_motor_akim_a': float(data.get('serit_motor_akim_a', 0.0)),
+                'serit_sapmasi': float(data.get('serit_sapmasi', 0.0)),
+                'kafa_yuksekligi_mm': float(data.get('kafa_yuksekligi_mm', 0.0)),
+                'ivme_olcer_x_hz': float(data.get('ivme_olcer_x_hz', 0.0)),
+                'ivme_olcer_y_hz': float(data.get('ivme_olcer_y_hz', 0.0)),
+                'ivme_olcer_z_hz': float(data.get('ivme_olcer_z_hz', 0.0)),
+            }
+            self.current_cut_buffer.append(buffer_row)
+
+            # Yükseklik ekseni etiketleri için başlangıç/mevcut değerleri güncelle
+            try:
+                h = buffer_row['kafa_yuksekligi_mm']
+                if self.cutting_graph.start_height_value is None:
+                    self.cutting_graph.start_height_value = h
+                self.cutting_graph.current_height_value = h
+            except Exception:
+                pass
+
+            # Seçili eksenlere göre son noktayı grafiğe ekle
             x_axis = self.cutting_graph.x_axis_type
             y_axis = self.cutting_graph.y_axis_type
-            
-            # X değerini al
-            if x_axis == "serit_kesme_hizi":
-                x_value = float(data.get('serit_kesme_hizi', 0))
-            elif x_axis == "serit_inme_hizi":
-                x_value = float(data.get('serit_inme_hizi', 0))
-            elif x_axis == "serit_motor_akim_a":
-                x_value = float(data.get('serit_motor_akim_a', 0))
-            elif x_axis == "serit_sapmasi":
-                x_value = float(data.get('serit_sapmasi', 0))
-            elif x_axis == "kafa_yuksekligi_mm":
-                x_value = float(data.get('kafa_yuksekligi_mm', 0))
-            else:
-                x_value = 0.0
-            
-            # Y değerini al
-            if y_axis == "timestamp":
-                # Zaman için geçen süreyi hesapla
-                if self.cut_start_time:
-                    elapsed = (datetime.now() - self.cut_start_time).total_seconds()
-                    y_value = elapsed
-                else:
-                    y_value = 0.0
-            elif y_axis == "kafa_yuksekligi_mm":
-                y_value = float(data.get('kafa_yuksekligi_mm', 0))
-            elif y_axis == "serit_motor_akim_a":
-                y_value = float(data.get('serit_motor_akim_a', 0))
-            elif y_axis == "serit_kesme_hizi":
-                y_value = float(data.get('serit_kesme_hizi', 0))
-            elif y_axis == "serit_inme_hizi":
-                y_value = float(data.get('serit_inme_hizi', 0))
-            elif y_axis == "serit_sapmasi":
-                y_value = float(data.get('serit_sapmasi', 0))
-            else:
-                y_value = 0.0
-            
-            # Grafiğe veri noktası ekle
-            self.cutting_graph.add_data_point(x_value, y_value)
+
+            x_value = self._get_value_for_axis_from_buffer(buffer_row, x_axis)
+            y_value = self._get_value_for_axis_from_buffer(buffer_row, y_axis)
+
+            self.cutting_graph.add_data_point(float(x_value), float(y_value))
             
             # Son kesim verilerini sakla
             self.last_cut_data.append({
@@ -904,6 +987,69 @@ class SensorPage(QWidget):
             
         except Exception as e:
             logger.error(f"Veri noktası ekleme hatası: {e}")
+
+    def _get_value_for_axis_from_buffer(self, row: Dict, axis_type: str) -> float:
+        """Buffer satırından eksen değerini döndürür"""
+        try:
+            if axis_type == "timestamp":
+                return float(row.get('elapsed_s', 0.0))
+            elif axis_type == "serit_kesme_hizi":
+                return float(row.get('serit_kesme_hizi', 0.0))
+            elif axis_type == "serit_inme_hizi":
+                return float(row.get('serit_inme_hizi', 0.0))
+            elif axis_type == "serit_motor_akim_a":
+                return float(row.get('serit_motor_akim_a', 0.0))
+            elif axis_type == "serit_sapmasi":
+                return float(row.get('serit_sapmasi', 0.0))
+            elif axis_type == "kafa_yuksekligi_mm":
+                return float(row.get('kafa_yuksekligi_mm', 0.0))
+            else:
+                return 0.0
+        except Exception:
+            return 0.0
+
+    def _rebuild_graph_from_buffer(self) -> None:
+        """Buffer'daki mevcut/son kesimi, seçili eksenlere göre yeniden çizer"""
+        try:
+            if not self.cutting_graph or not self.current_cut_buffer:
+                return
+            # Grafiği temizle
+            self.cutting_graph.clear_data()
+
+            x_axis = self.cutting_graph.x_axis_type
+            y_axis = self.cutting_graph.y_axis_type
+
+            # Zaman etiketleri için başlangıç/son
+            if self.cut_start_time:
+                self.cutting_graph.cut_start_time = self.cut_start_time
+            first_dt = self.current_cut_buffer[0].get('timestamp_dt', None)
+            last_dt = self.current_cut_buffer[-1].get('timestamp_dt', None)
+            if first_dt and last_dt:
+                self.cutting_graph.cut_start_time = first_dt
+                self.cutting_graph.last_point_time = last_dt
+            # Yükseklik için başlangıç/mevcut değerleri buffer'dan belirle
+            try:
+                first_h = self.current_cut_buffer[0].get('kafa_yuksekligi_mm', None)
+                last_h = self.current_cut_buffer[-1].get('kafa_yuksekligi_mm', None)
+                if first_h is not None and last_h is not None:
+                    self.cutting_graph.start_height_value = float(first_h)
+                    self.cutting_graph.current_height_value = float(last_h)
+            except Exception:
+                pass
+
+            for row in self.current_cut_buffer:
+                x_value = self._get_value_for_axis_from_buffer(row, x_axis)
+                y_value = self._get_value_for_axis_from_buffer(row, y_axis)
+                self.cutting_graph.add_data_point(float(x_value), float(y_value))
+            
+            logger.info("Grafik buffer'dan yeniden çizildi")
+            # Yeniden çiz
+            try:
+                self.cutting_graph.update()
+            except Exception:
+                pass
+        except Exception as e:
+            logger.error(f"Buffer'dan grafik çizim hatası: {e}")
 
     def _load_last_cut_data(self):
         """Son kesim verilerini veritabanından yükler"""
@@ -931,6 +1077,9 @@ class SensorPage(QWidget):
             logger.info(f"Seçili eksenler - X: {x_axis}, Y: {y_axis}")
             
             added_points = 0
+            # Zaman etiketleri için başlangıç/son zamanlarını hesapla (timestamp alanı mevcutsa)
+            start_dt = None
+            end_dt = None
             for i, row in enumerate(data):
                 x_value = self._get_value_for_axis(row, x_axis)
                 y_value = self._get_value_for_axis(row, y_axis)
@@ -940,8 +1089,23 @@ class SensorPage(QWidget):
                 if x_value is not None and y_value is not None:
                     self.cutting_graph.add_data_point(x_value, y_value)
                     added_points += 1
+                # Zaman alanını oku
+                try:
+                    ts = row.get('timestamp')
+                    if ts:
+                        dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                        if start_dt is None or dt < start_dt:
+                            start_dt = dt
+                        if end_dt is None or dt > end_dt:
+                            end_dt = dt
+                except Exception:
+                    pass
             
             logger.info(f"Son kesim verisi yüklendi: {added_points} nokta grafiğe eklendi")
+            # Zaman ekseni seçiliyse etiketler için süreleri ata
+            if self.cutting_graph.x_axis_type == "timestamp" and start_dt and end_dt:
+                self.cutting_graph.cut_start_time = start_dt
+                self.cutting_graph.last_point_time = end_dt
             
         except Exception as e:
             logger.error(f"Son kesim verisi yükleme hatası: {e}")

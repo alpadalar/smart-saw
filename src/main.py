@@ -79,8 +79,8 @@ class SmartSaw:
         self.web_server = None
         self.api_app = None
 
-        """
-KAMERANIN YUKARI CIKARKEN DUZENLENECEK
+        
+        # KAMERANIN YUKARI CIKARKEN DUZENLENECEK
         # Kesim takibi için değişkenler
         self.current_kesim_id = -1  # Başlangıçta kesim yok
         self.previous_testere_durumu = None
@@ -88,7 +88,7 @@ KAMERANIN YUKARI CIKARKEN DUZENLENECEK
         
         # Kamera modülü
         self.camera = CameraModule()
-        """
+        
 
         
         # Modbus istemcisi
