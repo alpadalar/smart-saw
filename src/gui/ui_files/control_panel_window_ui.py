@@ -758,9 +758,45 @@ class Ui_MainWindow(object):
 "	font-size: 36px;\n"
 "}")
         self.labelBandCuttingCurrentValue.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.BandCuttingTorqueFrame = QFrame(self.bandCuttingSpeedFrame)
+        self.BandCuttingTorqueFrame.setObjectName(u"BandCuttingTorqueFrame")
+        self.BandCuttingTorqueFrame.setGeometry(QRect(294, 200, 217, 109))
+        self.BandCuttingTorqueFrame.setStyleSheet(u"QFrame {\n"
+"    background: qlineargradient(\n"
+"        x1:0, y1:0, x2:0, y2:1,\n"
+"        stop:0 rgba(6, 11, 38, 240),\n"
+"        stop:1 rgba(26, 31, 55, 0)\n"
+"    );\n"
+"    border-radius: 20px;\n"
+"}\n"
+"")
+        self.BandCuttingTorqueFrame.setFrameShape(QFrame.StyledPanel)
+        self.BandCuttingTorqueFrame.setFrameShadow(QFrame.Raised)
+        self.labelBandCuttingTorque = QLabel(self.BandCuttingTorqueFrame)
+        self.labelBandCuttingTorque.setObjectName(u"labelBandCuttingTorque")
+        self.labelBandCuttingTorque.setGeometry(QRect(23, 20, 181, 20))
+        self.labelBandCuttingTorque.setStyleSheet(u"QLabel{\n"
+"	background-color: transparent;\n"
+"	color: #F4F6FC;\n"
+"	font-family: 'Plus-Jakarta-Sans';\n"
+"	font-weight: medium;\n"
+"	font-size: 20px;\n"
+"}")
+        self.labelBandCuttingTorqueValue = QLabel(self.BandCuttingTorqueFrame)
+        self.labelBandCuttingTorqueValue.setObjectName(u"labelBandCuttingTorqueValue")
+        self.labelBandCuttingTorqueValue.setGeometry(QRect(21, 43, 171, 50))
+        self.labelBandCuttingTorqueValue.setFont(font1)
+        self.labelBandCuttingTorqueValue.setStyleSheet(u"QLabel{\n"
+"	background-color: transparent;\n"
+"	color: #F4F6FC;\n"
+"	font-family: 'Plus-Jakarta-Sans';\n"
+"	font-weight: bold;\n"
+"	font-size: 36px;\n"
+"}")
+        self.labelBandCuttingTorqueValue.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
         self.labelBandCuttingSpeedValue = QLabel(self.bandCuttingSpeedFrame)
         self.labelBandCuttingSpeedValue.setObjectName(u"labelBandCuttingSpeedValue")
-        self.labelBandCuttingSpeedValue.setGeometry(QRect(300, 117, 241, 111))
+        self.labelBandCuttingSpeedValue.setGeometry(QRect(300, 70, 241, 111))
         self.labelBandCuttingSpeedValue.setFont(font1)
         self.labelBandCuttingSpeedValue.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
@@ -840,9 +876,45 @@ class Ui_MainWindow(object):
 "	font-size: 36px;\n"
 "}")
         self.labelBandDescentCurrentValue.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.BandDescentTorqueFrame = QFrame(self.bandDescentSpeedFrame)
+        self.BandDescentTorqueFrame.setObjectName(u"BandDescentTorqueFrame")
+        self.BandDescentTorqueFrame.setGeometry(QRect(294, 200, 217, 109))
+        self.BandDescentTorqueFrame.setStyleSheet(u"QFrame {\n"
+"    background: qlineargradient(\n"
+"        x1:0, y1:0, x2:0, y2:1,\n"
+"        stop:0 rgba(6, 11, 38, 240),\n"
+"        stop:1 rgba(26, 31, 55, 0)\n"
+"    );\n"
+"    border-radius: 20px;\n"
+"}\n"
+"")
+        self.BandDescentTorqueFrame.setFrameShape(QFrame.StyledPanel)
+        self.BandDescentTorqueFrame.setFrameShadow(QFrame.Raised)
+        self.labelBandDescentTorque = QLabel(self.BandDescentTorqueFrame)
+        self.labelBandDescentTorque.setObjectName(u"labelBandDescentTorque")
+        self.labelBandDescentTorque.setGeometry(QRect(23, 20, 181, 20))
+        self.labelBandDescentTorque.setStyleSheet(u"QLabel{\n"
+"	background-color: transparent;\n"
+"	color: #F4F6FC;\n"
+"	font-family: 'Plus-Jakarta-Sans';\n"
+"	font-weight: medium;\n"
+"	font-size: 20px;\n"
+"}")
+        self.labelBandDescentTorqueValue = QLabel(self.BandDescentTorqueFrame)
+        self.labelBandDescentTorqueValue.setObjectName(u"labelBandDescentTorqueValue")
+        self.labelBandDescentTorqueValue.setGeometry(QRect(21, 43, 171, 50))
+        self.labelBandDescentTorqueValue.setFont(font1)
+        self.labelBandDescentTorqueValue.setStyleSheet(u"QLabel{\n"
+"	background-color: transparent;\n"
+"	color: #F4F6FC;\n"
+"	font-family: 'Plus-Jakarta-Sans';\n"
+"	font-weight: bold;\n"
+"	font-size: 36px;\n"
+"}")
+        self.labelBandDescentTorqueValue.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
         self.labelBandDescentSpeedValue = QLabel(self.bandDescentSpeedFrame)
         self.labelBandDescentSpeedValue.setObjectName(u"labelBandDescentSpeedValue")
-        self.labelBandDescentSpeedValue.setGeometry(QRect(300, 117, 241, 111))
+        self.labelBandDescentSpeedValue.setGeometry(QRect(300, 70, 241, 111))
         self.labelBandDescentSpeedValue.setFont(font1)
         self.labelBandDescentSpeedValue.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
@@ -1087,12 +1159,16 @@ class Ui_MainWindow(object):
 "belirlemek i\u00e7in t\u0131klay\u0131n.", None))
         self.labelBandCuttingCurrent.setText(QCoreApplication.translate("MainWindow", u"\u015eerit Motor Ak\u0131m", None))
         self.labelBandCuttingCurrentValue.setText(QCoreApplication.translate("MainWindow", u"16.35", None))
+        self.labelBandCuttingTorque.setText(QCoreApplication.translate("MainWindow", u"\u015eerit Motor Tork", None))
+        self.labelBandCuttingTorqueValue.setText(QCoreApplication.translate("MainWindow", u"16.35", None))
         self.labelBandCuttingSpeedValue.setText(QCoreApplication.translate("MainWindow", u"16", None))
         self.labelBandDescentSpeed.setText(QCoreApplication.translate("MainWindow", u"\u015eerit \u0130nme H\u0131z\u0131", None))
         self.labelBandDescentInfo.setText(QCoreApplication.translate("MainWindow", u"Ba\u015flang\u0131\u00e7 h\u0131z\u0131n\u0131\n"
 "belirlemek i\u00e7in t\u0131klay\u0131n.", None))
-        self.labelBandDescentCurrent.setText(QCoreApplication.translate("MainWindow", u"\u015eerit Motor Ak\u0131m", None))
+        self.labelBandDescentCurrent.setText(QCoreApplication.translate("MainWindow", u"\u0130nme Motor Ak\u0131m", None))
         self.labelBandDescentCurrentValue.setText(QCoreApplication.translate("MainWindow", u"16.35", None))
+        self.labelBandDescentTorque.setText(QCoreApplication.translate("MainWindow", u"\u0130nme Motor Tork", None))
+        self.labelBandDescentTorqueValue.setText(QCoreApplication.translate("MainWindow", u"16.35", None))
         self.labelBandDescentSpeedValue.setText(QCoreApplication.translate("MainWindow", u"16", None))
         self.labelLogViewer.setText(QCoreApplication.translate("MainWindow", u"\u00c7al\u0131\u015fma G\u00fcnl\u00fc\u011f\u00fc", None))
         self.toolBtnCuttingStart.setText(QCoreApplication.translate("MainWindow", u"Kesim Ba\u015flat", None))

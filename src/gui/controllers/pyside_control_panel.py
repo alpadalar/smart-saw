@@ -759,6 +759,14 @@ class ControlPanelWindow(QMainWindow):
             if hasattr(self.ui, 'labelBandDescentCurrentValue'):
                 self.ui.labelBandDescentCurrentValue.setText(f"{inme_motor_akim:.1f}")
             
+            # Motor tork değerlerini UI'da güncelle
+            serit_motor_tork = processed_data.get('serit_motor_tork_percentage', 0)
+            inme_motor_tork = processed_data.get('inme_motor_tork_percentage', 0)
+            if hasattr(self.ui, 'labelBandCuttingTorqueValue'):
+                self.ui.labelBandCuttingTorqueValue.setText(f"{serit_motor_tork:.1f}")
+            if hasattr(self.ui, 'labelBandDescentTorqueValue'):
+                self.ui.labelBandDescentTorqueValue.setText(f"{inme_motor_tork:.1f}")
+            
             # Basınç ve sıcaklık bilgileri
             self.current_values['mengene_basinc_bar'] = f"{processed_data.get('mengene_basinc_bar', 0):.1f} "
             self.current_values['serit_gerginligi_bar'] = f"{processed_data.get('serit_gerginligi_bar', 0):.1f} "
