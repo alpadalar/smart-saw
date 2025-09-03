@@ -5,6 +5,7 @@ from PySide6.QtGui import QIcon
 import os
 
 from gui.ui_files.positioning_widget_ui import Ui_Form
+from hardware.machine_control import MachineControl
 
 
 class PositioningPage(QWidget):
@@ -14,6 +15,9 @@ class PositioningPage(QWidget):
         self.ui.setupUi(self)
         self.main_ref = main_ref
         self.get_data_callback = get_data_callback
+        
+        # MachineControl örneği oluştur
+        self.machine_control = MachineControl()
         
         # Apply same background image as control panel (efficient QLabel)
         self._apply_background()
@@ -156,7 +160,30 @@ class PositioningPage(QWidget):
         try:
             state_text = "AKTIF" if checked else "PASIF"
             print(f"{command} => {state_text}")
-            self.send_modbus_command(command, checked)
+            
+            # MachineControl fonksiyonlarını çağır
+            if command == "arka_mengene_ac":
+                if checked:
+                    self.machine_control.open_rear_vise()
+                    # Arayüzü hemen güncelle, makine okumasını bekleme
+                    button.setChecked(True)
+                else:
+                    self.machine_control.close_rear_vise()
+                    # Arayüzü hemen güncelle, makine okumasını bekleme
+                    button.setChecked(False)
+            elif command == "on_mengene_ac":
+                if checked:
+                    self.machine_control.open_front_vise()
+                    # Arayüzü hemen güncelle, makine okumasını bekleme
+                    button.setChecked(True)
+                else:
+                    self.machine_control.close_front_vise()
+                    # Arayüzü hemen güncelle, makine okumasını bekleme
+                    button.setChecked(False)
+            else:
+                # Diğer komutlar için eski yöntemi kullan
+                self.send_modbus_command(command, checked)
+                
         except Exception as e:
             print(f"Toggle buton hata: {e}")
 
@@ -170,7 +197,22 @@ class PositioningPage(QWidget):
                 button.setDown(is_pressed)
             state_text = "BASILI" if is_pressed else "BOSALDI"
             print(f"{command} => {state_text}")
-            self.send_modbus_command(command, is_pressed)
+            
+            # MachineControl fonksiyonlarını çağır
+            if command == "malzeme_geri":
+                if is_pressed:
+                    self.machine_control.move_material_backward()
+                else:
+                    self.machine_control.stop_material_backward()
+            elif command == "malzeme_ileri":
+                if is_pressed:
+                    self.machine_control.move_material_forward()
+                else:
+                    self.machine_control.stop_material_forward()
+            else:
+                # Diğer komutlar için eski yöntemi kullan
+                self.send_modbus_command(command, is_pressed)
+                
         except Exception as e:
             print(f"Hold buton hata: {e}")
 
@@ -230,8 +272,39 @@ class PositioningPage(QWidget):
                 self.update_ui({})
             else:
                 self.update_ui(data)
+            
+            # Buton durumlarını kontrol et ve güncelle
+            self._update_button_states()
         except Exception:
             pass
+
+    def _update_button_states(self) -> None:
+        """Buton durumlarını makineden okuyarak günceller"""
+        try:
+            # Mengene durumlarını kontrol et (sadece başlangıçta ve belirli aralıklarla)
+            if hasattr(self.ui, 'btnArkaMengeneAc'):
+                rear_vise_status = self.machine_control.is_rear_vise_open()
+                if rear_vise_status is not None:
+                    self.ui.btnArkaMengeneAc.setChecked(rear_vise_status)
+            
+            if hasattr(self.ui, 'btnOnMengeneAc'):
+                front_vise_status = self.machine_control.is_front_vise_open()
+                if front_vise_status is not None:
+                    self.ui.btnOnMengeneAc.setChecked(front_vise_status)
+            
+            # Malzeme hareket durumlarını kontrol et (basılı tutma butonları için)
+            if hasattr(self.ui, 'btnMalzemeGeri'):
+                material_backward_status = self.machine_control.is_material_moving_backward()
+                if material_backward_status is not None:
+                    self.ui.btnMalzemeGeri.setChecked(material_backward_status)
+            
+            if hasattr(self.ui, 'btnMalzemeIleri'):
+                material_forward_status = self.machine_control.is_material_moving_forward()
+                if material_forward_status is not None:
+                    self.ui.btnMalzemeIleri.setChecked(material_forward_status)
+                    
+        except Exception as e:
+            print(f"Buton durum güncelleme hatası: {e}")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -241,71 +314,7 @@ class PositioningPage(QWidget):
         except Exception:
             pass
 
-    # Mengene kontrol fonksiyonları
-    def _on_arka_mengene_ac(self) -> None:
-        """Arka mengene aç butonuna basıldığında"""
-        try:
-            print("Arka mengene açılıyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("arka_mengene_ac", True)
-        except Exception as e:
-            print(f"Arka mengene açma hatası: {e}")
-
-    def _on_mengene_kapat(self) -> None:
-        """Mengene kapat butonuna basıldığında"""
-        try:
-            print("Mengene kapatılıyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("mengene_kapat", True)
-        except Exception as e:
-            print(f"Mengene kapatma hatası: {e}")
-
-    def _on_on_mengene_ac(self) -> None:
-        """Ön mengene aç butonuna basıldığında"""
-        try:
-            print("Ön mengene açılıyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("on_mengene_ac", True)
-        except Exception as e:
-            print(f"Ön mengene açma hatası: {e}")
-
-    # Malzeme konumlandırma fonksiyonları
-    def _on_malzeme_geri(self) -> None:
-        """Malzeme geri butonuna basıldığında"""
-        try:
-            print("Malzeme geri hareket ettiriliyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("malzeme_geri", True)
-        except Exception as e:
-            print(f"Malzeme geri hareket hatası: {e}")
-
-    def _on_malzeme_ileri(self) -> None:
-        """Malzeme ileri butonuna basıldığında"""
-        try:
-            print("Malzeme ileri hareket ettiriliyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("malzeme_ileri", True)
-        except Exception as e:
-            print(f"Malzeme ileri hareket hatası: {e}")
-
-    # Testere konumlandırma fonksiyonları
-    def _on_testere_yukari(self) -> None:
-        """Testere yukarı butonuna basınunu bağlldığında"""
-        try:
-            print("Testere yukarı hareket ettiriliyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("testere_yukari", True)
-        except Exception as e:
-            print(f"Testere yukarı hareket hatası: {e}")
-
-    def _on_testere_asagi(self) -> None:
-        """Testere aşağı butonuna basıldığında"""
-        try:
-            print("Testere aşağı hareket ettiriliyor...")
-            # Burada Modbus komutu gönderilecek
-            # self.send_modbus_command("testere_asagi", True)
-        except Exception as e:
-            print(f"Testere aşağı hareket hatası: {e}")
+    # Eski fonksiyonlar kaldırıldı - artık MachineControl kullanılıyor
 
     def update_ui(self, processed_data: Dict):
         """UI'yi güncel verilerle güncelle"""
