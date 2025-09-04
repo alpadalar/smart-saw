@@ -616,6 +616,19 @@ class ControlPanelWindow(QMainWindow):
                     QTimer.singleShot(0, self._refresh_chip_cleaning_state)
                 except Exception as e:
                     logger.error(f"Talaş temizlik düğmesi bağlantı hatası: {e}")
+
+            # Cutting start/stop button wiring
+            if hasattr(self.ui, 'toolBtnCuttingStart'):
+                try:
+                    self.ui.toolBtnCuttingStart.clicked.connect(self._on_cutting_start_clicked)
+                except Exception as e:
+                    logger.error(f"Kesim başlat düğmesi bağlantı hatası: {e}")
+
+            if hasattr(self.ui, 'toolBtnCuttingStop'):
+                try:
+                    self.ui.toolBtnCuttingStop.clicked.connect(self._on_cutting_stop_clicked)
+                except Exception as e:
+                    logger.error(f"Kesim durdur düğmesi bağlantı hatası: {e}")
             
         except Exception as e:
             logger.error(f"GUI başlatma hatası: {e}")
@@ -1172,9 +1185,76 @@ class ControlPanelWindow(QMainWindow):
             if hasattr(self, 'camera') and self.camera.is_recording:
                 self.current_values['camera_frame_count'] = str(self.camera.frame_count)
             
+            # Cutting start/stop button states
+            self._update_cutting_button_states(testere_durumu)
+            
         except Exception as e:
             logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:") 
+
+    def _update_cutting_button_states(self, testere_durumu: int):
+        """Kesim butonlarının durumunu günceller."""
+        try:
+            if not hasattr(self.ui, 'toolBtnCuttingStart') or not hasattr(self.ui, 'toolBtnCuttingStop'):
+                return
+
+            if testere_durumu == 3: # KESIM_YAPILIYOR
+                self.ui.toolBtnCuttingStart.setEnabled(False)
+                self.ui.toolBtnCuttingStop.setEnabled(True)
+                self.ui.toolBtnCuttingStart.setChecked(False) # Kesim durumunda başlat butonu pasif
+                self.ui.toolBtnCuttingStop.setChecked(False) # Kesim durumunda durdur butonu pasif
+            elif testere_durumu == 4: # KESIM_BITTI
+                self.ui.toolBtnCuttingStart.setEnabled(True)
+                self.ui.toolBtnCuttingStop.setEnabled(False)
+                self.ui.toolBtnCuttingStart.setChecked(False)
+                self.ui.toolBtnCuttingStop.setChecked(False)
+            else: # Başta veya bağlantı yok
+                self.ui.toolBtnCuttingStart.setEnabled(True)
+                self.ui.toolBtnCuttingStop.setEnabled(False)
+                self.ui.toolBtnCuttingStart.setChecked(False)
+                self.ui.toolBtnCuttingStop.setChecked(False)
+        except Exception as e:
+            logger.error(f"Kesim buton durumu güncelleme hatası: {e}")
+
+    def _on_cutting_start_clicked(self):
+        """Kesim başlat butonuna tıklandığında çağrılır."""
+        try:
+            if not self.machine_control:
+                self.add_log("Kesim başlatılamadı: MachineControl yok.", "ERROR")
+                return
+
+            success = self.machine_control.start_cutting()
+            if success:
+                self.add_log("Kesim başlatıldı.", "INFO")
+                self._cutting_start_time = datetime.now()
+                self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
+                self.current_values['kesim_sure'] = "00:00"
+                self.update_ui()
+            else:
+                self.add_log("Kesim başlatılamadı!", "ERROR")
+        except Exception as e:
+            logger.error(f"Kesim başlatma hatası: {e}")
+            self.add_log(f"Kesim başlatma hatası: {str(e)}", "ERROR")
+
+    def _on_cutting_stop_clicked(self):
+        """Kesim durdur butonuna tıklandığında çağrılır."""
+        try:
+            if not self.machine_control:
+                self.add_log("Kesim durdurulamadı: MachineControl yok.", "ERROR")
+                return
+
+            success = self.machine_control.stop_cutting()
+            if success:
+                self.add_log("Kesim durduruldu.", "INFO")
+                self._cutting_start_time = None
+                self.current_values['kesim_baslama'] = "-"
+                self.current_values['kesim_sure'] = "-"
+                self.update_ui()
+            else:
+                self.add_log("Kesim durdurulamadı!", "ERROR")
+        except Exception as e:
+            logger.error(f"Kesim durdurma hatası: {e}")
+            self.add_log(f"Kesim durdurma hatası: {str(e)}", "ERROR")
 
     def _check_critical_values(self, data: Dict):
         """Kritik değerleri kontrol eder ve gerekirse log ekler"""
