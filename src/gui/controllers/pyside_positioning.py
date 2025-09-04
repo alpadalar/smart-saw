@@ -3,6 +3,7 @@ from PySide6.QtCore import QTimer, QDateTime, Qt
 from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtGui import QIcon
 import os
+import time
 
 from gui.ui_files.positioning_widget_ui import Ui_Form
 from hardware.machine_control import MachineControl
@@ -45,6 +46,9 @@ class PositioningPage(QWidget):
 
         # Connect positioning control buttons
         self._connect_positioning_buttons()
+
+        # UI güncellemelerinde geçici kapatma butonu otomatik işaretlemeyi bastırmak için zamanlayıcı
+        self._suppress_close_autocheck_until: float = 0.0
 
     def set_active_nav(self, active_btn_name: str):
         """Navigation butonlarının aktif/pasif durumunu ayarla"""
@@ -164,22 +168,111 @@ class PositioningPage(QWidget):
             # MachineControl fonksiyonlarını çağır
             if command == "arka_mengene_ac":
                 if checked:
-                    self.machine_control.open_rear_vise()
-                    # Arayüzü hemen güncelle, makine okumasını bekleme
-                    button.setChecked(True)
+                    # Geçici olarak kapat butonunun otomatik aktif olmasını bastır
+                    self._suppress_close_autocheck_until = time.monotonic() + 0.6
+                    # Atomik: arka aç, ön kapat
+                    self.machine_control.open_rear_vise_exclusive()
+                    try:
+                        button.blockSignals(True)
+                        button.setChecked(True)
+                    finally:
+                        button.blockSignals(False)
+                    # Sonra diğerini kapat (mutual exclusivity)
+                    if hasattr(self.ui, 'btnOnMengeneAc') and self.ui.btnOnMengeneAc.isChecked():
+                        try:
+                            self.machine_control.close_front_vise()
+                        except Exception:
+                            pass
+                        try:
+                            self.ui.btnOnMengeneAc.blockSignals(True)
+                            self.ui.btnOnMengeneAc.setChecked(False)
+                        finally:
+                            self.ui.btnOnMengeneAc.blockSignals(False)
+                    # Herhangi bir mengene açıldığında kapat butonu pasif olsun
+                    if hasattr(self.ui, 'btnMengeneKapat'):
+                        try:
+                            self.ui.btnMengeneKapat.blockSignals(True)
+                            self.ui.btnMengeneKapat.setChecked(False)
+                        finally:
+                            self.ui.btnMengeneKapat.blockSignals(False)
                 else:
                     self.machine_control.close_rear_vise()
                     # Arayüzü hemen güncelle, makine okumasını bekleme
-                    button.setChecked(False)
+                    try:
+                        button.blockSignals(True)
+                        button.setChecked(False)
+                    finally:
+                        button.blockSignals(False)
             elif command == "on_mengene_ac":
                 if checked:
-                    self.machine_control.open_front_vise()
-                    # Arayüzü hemen güncelle, makine okumasını bekleme
-                    button.setChecked(True)
+                    # Geçici olarak kapat butonunun otomatik aktif olmasını bastır
+                    self._suppress_close_autocheck_until = time.monotonic() + 0.6
+                    # Atomik: ön aç, arka kapat
+                    self.machine_control.open_front_vise_exclusive()
+                    try:
+                        button.blockSignals(True)
+                        button.setChecked(True)
+                    finally:
+                        button.blockSignals(False)
+                    # Sonra diğerini kapat (mutual exclusivity)
+                    if hasattr(self.ui, 'btnArkaMengeneAc') and self.ui.btnArkaMengeneAc.isChecked():
+                        try:
+                            self.machine_control.close_rear_vise()
+                        except Exception:
+                            pass
+                        try:
+                            self.ui.btnArkaMengeneAc.blockSignals(True)
+                            self.ui.btnArkaMengeneAc.setChecked(False)
+                        finally:
+                            self.ui.btnArkaMengeneAc.blockSignals(False)
+                    # Herhangi bir mengene açıldığında kapat butonu pasif olsun
+                    if hasattr(self.ui, 'btnMengeneKapat'):
+                        try:
+                            self.ui.btnMengeneKapat.blockSignals(True)
+                            self.ui.btnMengeneKapat.setChecked(False)
+                        finally:
+                            self.ui.btnMengeneKapat.blockSignals(False)
                 else:
                     self.machine_control.close_front_vise()
                     # Arayüzü hemen güncelle, makine okumasını bekleme
-                    button.setChecked(False)
+                    try:
+                        button.blockSignals(True)
+                        button.setChecked(False)
+                    finally:
+                        button.blockSignals(False)
+            elif command == "mengene_kapat":
+                # Kapat butonu basıldığında aktif olan mengene(ler)i kapat
+                if checked:
+                    # İkisini de tek yazımda kapat
+                    self.machine_control.close_both_vises()
+                    # UI'yi senkronize et
+                    try:
+                        if hasattr(self.ui, 'btnArkaMengeneAc'):
+                            self.ui.btnArkaMengeneAc.blockSignals(True)
+                            self.ui.btnArkaMengeneAc.setChecked(False)
+                    finally:
+                        if hasattr(self.ui, 'btnArkaMengeneAc'):
+                            self.ui.btnArkaMengeneAc.blockSignals(False)
+                    try:
+                        if hasattr(self.ui, 'btnOnMengeneAc'):
+                            self.ui.btnOnMengeneAc.blockSignals(True)
+                            self.ui.btnOnMengeneAc.setChecked(False)
+                    finally:
+                        if hasattr(self.ui, 'btnOnMengeneAc'):
+                            self.ui.btnOnMengeneAc.blockSignals(False)
+                    # Kapat butonunu aktif bırak
+                    try:
+                        button.blockSignals(True)
+                        button.setChecked(True)
+                    finally:
+                        button.blockSignals(False)
+                else:
+                    # Pasife alınırsa özel bir işlem yapma (UI güncellemesi tick ile senkron olur)
+                    try:
+                        button.blockSignals(True)
+                        button.setChecked(False)
+                    finally:
+                        button.blockSignals(False)
             else:
                 # Diğer komutlar için eski yöntemi kullan
                 self.send_modbus_command(command, checked)
@@ -291,6 +384,15 @@ class PositioningPage(QWidget):
                 front_vise_status = self.machine_control.is_front_vise_open()
                 if front_vise_status is not None:
                     self.ui.btnOnMengeneAc.setChecked(front_vise_status)
+            else:
+                front_vise_status = None
+            # Mengene kapat butonu senkronizasyonu: sadece kullanıcı tıklayınca aktif olur
+            # veya her iki mengene kapalıysa aktif olur. Geçişlerde yanlışlıkla aktif olmasın diye bastırma penceresi.
+            if hasattr(self.ui, 'btnMengeneKapat'):
+                if rear_vise_status is not None and front_vise_status is not None:
+                    should_close_active = (rear_vise_status is False) and (front_vise_status is False)
+                    if time.monotonic() >= getattr(self, '_suppress_close_autocheck_until', 0.0):
+                        self.ui.btnMengeneKapat.setChecked(should_close_active)
             
             # Malzeme hareket durumlarını kontrol et (basılı tutma butonları için)
             if hasattr(self.ui, 'btnMalzemeGeri'):

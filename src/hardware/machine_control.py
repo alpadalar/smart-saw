@@ -160,6 +160,67 @@ class MachineControl:
             self.logger.error(f"Bit okuma hatası: {e}")
             return None
 
+    def _write_register_atomic(self, register: int, set_bits: list[int], clear_bits: list[int]) -> bool:
+        """
+        Aynı register üzerinde bir veya daha fazla biti tek yazımda set/clear yapar.
+        Yazım sonrası doğrulama log'u üretir.
+        """
+        try:
+            current_value_list = self.client.read_registers(register, 1)
+            if current_value_list is None:
+                self.logger.error(f"Register {register} okunamadı (atomic write)")
+                return False
+            current_value = current_value_list[0]
+            new_value = current_value
+            for b in set_bits:
+                new_value |= (1 << b)
+            for b in clear_bits:
+                new_value &= ~(1 << b)
+            if new_value == current_value:
+                # Değişiklik yok ama yine de doğrulamayı loglayalım
+                self.logger.debug(f"Register {register} atomic değişiklik yok (0x{current_value:04X})")
+                return True
+            success = self.client.write_register(register, new_value)
+            if not success:
+                self.logger.error(f"Register {register} atomic yazım başarısız")
+                return False
+            # Doğrulama
+            verify = self.client.read_registers(register, 1)
+            if verify is not None:
+                read_back = verify[0]
+                self.logger.info(
+                    f"Register {register} atomic sonrası raw=0x{read_back:04X} ({read_back})"
+                )
+            return True
+        except Exception as e:
+            self.logger.error(f"Atomic yazım hatası: {e}")
+            return False
+
+    # Mengene için atomik yardımcılar (karşılıklı dışlayıcı)
+    def open_rear_vise_exclusive(self) -> bool:
+        """Arka mengeneyi açar ve ön mengeneyi kapatır (tek yazım)."""
+        return self._write_register_atomic(
+            self.CONTROL_REGISTER,
+            set_bits=[self.REAR_VISE_OPEN_BIT],
+            clear_bits=[self.FRONT_VISE_OPEN_BIT]
+        )
+
+    def open_front_vise_exclusive(self) -> bool:
+        """Ön mengeneyi açar ve arka mengeneyi kapatır (tek yazım)."""
+        return self._write_register_atomic(
+            self.CONTROL_REGISTER,
+            set_bits=[self.FRONT_VISE_OPEN_BIT],
+            clear_bits=[self.REAR_VISE_OPEN_BIT]
+        )
+
+    def close_both_vises(self) -> bool:
+        """Her iki mengene bitini kapatır (tek yazım)."""
+        return self._write_register_atomic(
+            self.CONTROL_REGISTER,
+            set_bits=[],
+            clear_bits=[self.REAR_VISE_OPEN_BIT, self.FRONT_VISE_OPEN_BIT]
+        )
+
     def log_default_states(self) -> None:
         """
         Tanımlı tüm register ve bitlerin mevcut (default) değerlerini okur ve loglar.
