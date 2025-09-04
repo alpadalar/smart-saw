@@ -49,9 +49,12 @@ class ModbusClient:
     def read_registers(self, address: int, count: int) -> Optional[List[int]]:
         """Modbus registerlarını okur"""
         try:
+            if not self.client.is_socket_open():
+                self.logger.debug("Modbus soketi kapalı, bağlanmayı deniyorum...")
+                self.connect()
             if self.client.is_socket_open():
                 kwargs = {
-                    'address': address + 1000,
+                    'address': address,
                     'count': count
                 }
                 response = self.client.read_holding_registers(**kwargs)
@@ -75,6 +78,9 @@ class ModbusClient:
             return False
             
         try:
+            if not self.client.is_socket_open():
+                self.logger.debug("Modbus soketi kapalı, bağlanmayı deniyorum...")
+                self.connect()
             if self.client.is_socket_open():
                 kwargs = {
                     'address': address,
@@ -164,7 +170,7 @@ class ModbusClient:
             if self.client.is_socket_open():
                 try:
                     kwargs = {
-                        'address': address + 1000,
+                        'address': address,
                         'count': count
                     }
                     response = self.client.read_holding_registers(**kwargs)
