@@ -21,7 +21,7 @@ class MachineControl:
     KONVEYOR_REGISTER = 102
     
     # Bit pozisyonları (0'dan başlar)
-    CHIP_CLEANING_BIT = 3        # 20.2: Talaş temizlik
+    CHIP_CLEANING_BIT = 3        # 102.3: Talaş temizlik
     CUTTING_START_BIT = 3        # 20.3: Kesim başlat
     CUTTING_STOP_BIT = 4         # 20.4: Kesim durdur
     REAR_VISE_OPEN_BIT = 5       # 20.5: Mengene kontrol arka mengeneyi aç

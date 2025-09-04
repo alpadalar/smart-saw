@@ -302,6 +302,16 @@ class PositioningPage(QWidget):
                     self.machine_control.move_material_forward()
                 else:
                     self.machine_control.stop_material_forward()
+            elif command == "testere_yukari":
+                if is_pressed:
+                    self.machine_control.move_saw_up()
+                else:
+                    self.machine_control.stop_saw_up()
+            elif command == "testere_asagi":
+                if is_pressed:
+                    self.machine_control.move_saw_down()
+                else:
+                    self.machine_control.stop_saw_down()
             else:
                 # Diğer komutlar için eski yöntemi kullan
                 self.send_modbus_command(command, is_pressed)
@@ -404,6 +414,17 @@ class PositioningPage(QWidget):
                 material_forward_status = self.machine_control.is_material_moving_forward()
                 if material_forward_status is not None:
                     self.ui.btnMalzemeIleri.setChecked(material_forward_status)
+
+            # Testere hareket durumlarını kontrol et (basılı tutma butonları için)
+            if hasattr(self.ui, 'btnTestereYukari'):
+                saw_up_status = self.machine_control.is_saw_moving_up()
+                if saw_up_status is not None:
+                    self.ui.btnTestereYukari.setChecked(saw_up_status)
+            
+            if hasattr(self.ui, 'btnTestereAsagi'):
+                saw_down_status = self.machine_control.is_saw_moving_down()
+                if saw_down_status is not None:
+                    self.ui.btnTestereAsagi.setChecked(saw_down_status)
                     
         except Exception as e:
             print(f"Buton durum güncelleme hatası: {e}")
