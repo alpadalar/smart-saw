@@ -13,31 +13,10 @@ from gui.ui_files.control_panel_window_ui import Ui_MainWindow
 from hardware.machine_control import MachineControl
 # Logger
 logger = logging.getLogger(__name__)
-# Import'ları geçici olarak comment'e alıyorum
-# from src.control.factory import ControllerType
-# from src.core.constants import TestereState
-# from src.hardware.modbus.writer import reverse_calculate_value
-# from src.gui.numpad import NumpadDialog
-
-# Geçici olarak enum değerlerini tanımlıyorum
-class ControllerType:
-    FUZZY = type('FUZZY', (), {'value': 'FUZZY'})()
-    EXPERT = type('EXPERT', (), {'value': 'EXPERT'})()
-    ML = type('ML', (), {'value': 'ML'})()
-
-class TestereState:
-    BOSTA = type('BOSTA', (), {'value': 0})()
-    HIDROLIK_AKTIF = type('HIDROLIK_AKTIF', (), {'value': 1})()
-    SERIT_MOTOR_CALISIYOR = type('SERIT_MOTOR_CALISIYOR', (), {'value': 2})()
-    KESIM_YAPILIYOR = type('KESIM_YAPILIYOR', (), {'value': 3})()
-    KESIM_BITTI = type('KESIM_BITTI', (), {'value': 4})()
-    SERIT_YUKARI_CIKIYOR = type('SERIT_YUKARI_CIKIYOR', (), {'value': 5})()
-    MALZEME_BESLEME = type('MALZEME_BESLEME', (), {'value': 6})()
-
-# Geçici olarak fonksiyonları tanımlıyorum
-def reverse_calculate_value(client, value, param, reverse=False):
-    logger.info(f"reverse_calculate_value çağrıldı: {value}, {param}, {reverse}")
-    return True
+# Import'ları ekle
+from control import ControllerType, get_controller_factory
+from core.constants import TestereState
+from utils.helpers import reverse_calculate_value
 
 # NumpadDialog'u import et
 try:
@@ -790,13 +769,13 @@ class ControlPanelWindow(QMainWindow):
                 self._switch_controller(None)
                 self.add_log("Kesim modu manuel olarak ayarlandı", "INFO")
             elif clicked_button == self.ui.btnFuzzyMode:
-                self._switch_controller("FUZZY")
+                self._switch_controller(ControllerType.FUZZY)
                 self.add_log("Kesim modu fuzzy olarak ayarlandı", "INFO")
             elif clicked_button == self.ui.btnExpertSystemMode:
-                self._switch_controller("EXPERT")
+                self._switch_controller(ControllerType.EXPERT)
                 self.add_log("Kesim modu expert system olarak ayarlandı", "INFO")
             elif clicked_button == self.ui.btnAiMode:
-                self._switch_controller("ML")
+                self._switch_controller(ControllerType.ML)
                 self.add_log("Kesim modu AI olarak ayarlandı", "INFO")
                 
             # Sistem durumu etiketi
@@ -848,7 +827,7 @@ class ControlPanelWindow(QMainWindow):
             logger.error(f"Kesim hızı buton yönetimi hatası: {e}")
             self.add_log(f"Kesim hızı değiştirme hatası: {str(e)}", "ERROR")
 
-    def _switch_controller(self, controller_type: Optional[str]):
+    def _switch_controller(self, controller_type: Optional[ControllerType]):
         """Kontrol sistemini değiştirir"""
         try:
             if controller_type is None:
@@ -1002,7 +981,7 @@ class ControlPanelWindow(QMainWindow):
             self.current_values['alarm_bilgisi'] = str(processed_data.get('alarm_bilgisi', '-'))
             
             # Kesim durumunu kontrol et
-            if testere_durumu == 3:  # KESIM_YAPILIYOR
+            if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
                 if not self.kesim_baslama_zamani:
                     # Kesim başladı
                     self.kesim_baslama_zamani = datetime.now()
@@ -1014,7 +993,7 @@ class ControlPanelWindow(QMainWindow):
                 if self.kesim_baslama_zamani:
                     sure = datetime.now() - self.kesim_baslama_zamani
                     self.current_values['kesim_sure'] = f"{int(sure.total_seconds())} saniye"
-            elif testere_durumu != 3 and self.kesim_baslama_zamani:
+            elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self.kesim_baslama_zamani:
                 # Kesim bitti, süreyi sıfırla
                 self.kesim_baslama_zamani = None
                 self.current_values['kesim_baslama'] = "-"
@@ -1150,7 +1129,7 @@ class ControlPanelWindow(QMainWindow):
                 self.ui.labelSystemStatusInfo.setText(self._get_status_message(durum_text))
             
             # Kesim durumunu kontrol et
-            if testere_durumu == 3:  # KESIM_YAPILIYOR
+            if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
                 if not self._cutting_start_time:
                     self._cutting_start_time = datetime.now()
                     self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
@@ -1162,7 +1141,7 @@ class ControlPanelWindow(QMainWindow):
                 milliseconds = int(elapsed.total_seconds() * 1000) % 1000
                 self.current_values['cutting_time'] = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
                 
-            elif testere_durumu != 3 and self._cutting_start_time:
+            elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self._cutting_start_time:
                 # Kesim bitti, süreleri kaydet
                 end_time = datetime.now()
                 elapsed = end_time - self._cutting_start_time
@@ -1198,12 +1177,12 @@ class ControlPanelWindow(QMainWindow):
             if not hasattr(self.ui, 'toolBtnCuttingStart') or not hasattr(self.ui, 'toolBtnCuttingStop'):
                 return
 
-            if testere_durumu == 3: # KESIM_YAPILIYOR
+            if testere_durumu == TestereState.KESIM_YAPILIYOR.value: # KESIM_YAPILIYOR
                 self.ui.toolBtnCuttingStart.setEnabled(False)
                 self.ui.toolBtnCuttingStop.setEnabled(True)
                 self.ui.toolBtnCuttingStart.setChecked(False) # Kesim durumunda başlat butonu pasif
                 self.ui.toolBtnCuttingStop.setChecked(False) # Kesim durumunda durdur butonu pasif
-            elif testere_durumu == 4: # KESIM_BITTI
+            elif testere_durumu == TestereState.KESIM_BITTI.value: # KESIM_BITTI
                 self.ui.toolBtnCuttingStart.setEnabled(True)
                 self.ui.toolBtnCuttingStop.setEnabled(False)
                 self.ui.toolBtnCuttingStart.setChecked(False)
@@ -1262,7 +1241,7 @@ class ControlPanelWindow(QMainWindow):
         testere_durumu = int(data.get('testere_durumu', 0))
         
         # Akım kontrolü
-        if testere_durumu == 3:  # KESIM_YAPILIYOR
+        if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
             current = float(data.get('serit_motor_akim_a', 0))
             if current > 25:
                 self.add_log(f"Yüksek motor akımı: {current:.2f}A", "WARNING")
