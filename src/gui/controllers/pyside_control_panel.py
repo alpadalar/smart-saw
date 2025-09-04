@@ -10,6 +10,9 @@ import logging
 import collections
 
 from gui.ui_files.control_panel_window_ui import Ui_MainWindow
+from hardware.machine_control import MachineControl
+# Logger
+logger = logging.getLogger(__name__)
 # Import'ları geçici olarak comment'e alıyorum
 # from src.control.factory import ControllerType
 # from src.core.constants import TestereState
@@ -136,8 +139,6 @@ except ImportError:
 # Global değişkenler
 last_meaningful_speed = None
 
-# Logger
-logger = logging.getLogger(__name__)
 
 
 class BandDeviationGraphWidget(QWidget):
@@ -374,6 +375,13 @@ class ControlPanelWindow(QMainWindow):
         self.controller_factory = controller_factory
         self.get_data_callback = get_data_callback
 
+        # Machine control instance (for coolant, etc.)
+        try:
+            self.machine_control = MachineControl()
+        except Exception as e:
+            self.machine_control = None
+            logger.error(f"MachineControl başlatılamadı: {e}")
+
         # Page instances (created on demand)
         self._monitoring_page = None
         self._camera_page = None
@@ -590,10 +598,145 @@ class ControlPanelWindow(QMainWindow):
             
             # Başlangıç değerlerini ayarla
             self.update_ui()
+
+            # Coolant button wiring
+            if hasattr(self.ui, 'toolBtnCoolant'):
+                try:
+                    # Toggled handler: gerçek checked durumunu verir
+                    self.ui.toolBtnCoolant.toggled.connect(self._on_coolant_toggled)
+                    # Initialize coolant button state from machine
+                    QTimer.singleShot(0, self._refresh_coolant_state)
+                except Exception as e:
+                    logger.error(f"Soğutma düğmesi bağlantı hatası: {e}")
+
+            # Sawdust cleaning button wiring
+            if hasattr(self.ui, 'toolBtnSawdustCleaning'):
+                try:
+                    self.ui.toolBtnSawdustCleaning.toggled.connect(self._on_chip_cleaning_toggled)
+                    QTimer.singleShot(0, self._refresh_chip_cleaning_state)
+                except Exception as e:
+                    logger.error(f"Talaş temizlik düğmesi bağlantı hatası: {e}")
             
         except Exception as e:
             logger.error(f"GUI başlatma hatası: {e}")
             logger.exception("Detaylı hata:")
+
+    def _refresh_coolant_state(self):
+        """Makineden soğutma durumunu okuyup butonu senkronize eder."""
+        try:
+            if not hasattr(self.ui, 'toolBtnCoolant'):
+                return
+            if not self.machine_control:
+                logger.error("MachineControl mevcut değil")
+                return
+            status = self.machine_control.is_coolant_active()
+            if status is None:
+                logger.error("Soğutma durumu okunamadı")
+                return
+            self.ui.toolBtnCoolant.blockSignals(True)
+            self.ui.toolBtnCoolant.setChecked(bool(status))
+            self.ui.toolBtnCoolant.blockSignals(False)
+        except Exception as e:
+            logger.error(f"Soğutma durumu senkronizasyon hatası: {e}")
+
+    def _on_coolant_toggled(self, checked: bool):
+        """Soğutma butonu durum değişince başlat/durdur."""
+        try:
+            if not self.machine_control:
+                self.add_log("Soğutma kontrol edilemedi: MachineControl yok.", "ERROR")
+                # Revert UI to unknown/off
+                if hasattr(self.ui, 'toolBtnCoolant'):
+                    self.ui.toolBtnCoolant.blockSignals(True)
+                    self.ui.toolBtnCoolant.setChecked(False)
+                    self.ui.toolBtnCoolant.blockSignals(False)
+                return
+
+            success = False
+            if checked:
+                # Enable coolant
+                success = self.machine_control.start_coolant()
+                if success:
+                    self.add_log("Soğutma sıvısı açıldı.", "INFO")
+                else:
+                    self.add_log("Soğutma sıvısı AÇILAMADI!", "ERROR")
+            else:
+                # Disable coolant
+                success = self.machine_control.stop_coolant()
+                if success:
+                    self.add_log("Soğutma sıvısı kapatıldı.", "INFO")
+                else:
+                    self.add_log("Soğutma sıvısı KAPATILAMADI!", "ERROR")
+
+            # Eğer işlem başarısızsa UI durumunu geri al
+            if not success and hasattr(self.ui, 'toolBtnCoolant'):
+                self.ui.toolBtnCoolant.blockSignals(True)
+                self.ui.toolBtnCoolant.setChecked(not checked)
+                self.ui.toolBtnCoolant.blockSignals(False)
+
+            # Başarılı işlemde UI mevcut durumu korusun; başarısızlıkta geri alındı
+
+        except Exception as e:
+            logger.error(f"Soğutma butonu işlem hatası: {e}")
+            # Hata durumunda UI'ı güvenli duruma çek
+            if hasattr(self.ui, 'toolBtnCoolant'):
+                self.ui.toolBtnCoolant.blockSignals(True)
+                self.ui.toolBtnCoolant.setChecked(False)
+                self.ui.toolBtnCoolant.blockSignals(False)
+
+    def _refresh_chip_cleaning_state(self):
+        """Makineden talaş temizlik durumunu okuyup butonu senkronize eder."""
+        try:
+            if not hasattr(self.ui, 'toolBtnSawdustCleaning'):
+                return
+            if not self.machine_control:
+                logger.error("MachineControl mevcut değil")
+                return
+            status = self.machine_control.is_chip_cleaning_active()
+            if status is None:
+                logger.error("Talaş temizlik durumu okunamadı")
+                return
+            self.ui.toolBtnSawdustCleaning.blockSignals(True)
+            self.ui.toolBtnSawdustCleaning.setChecked(bool(status))
+            self.ui.toolBtnSawdustCleaning.blockSignals(False)
+        except Exception as e:
+            logger.error(f"Talaş temizlik durumu senkronizasyon hatası: {e}")
+
+    def _on_chip_cleaning_toggled(self, checked: bool):
+        """Talaş temizlik butonu durum değişince başlat/durdur."""
+        try:
+            if not self.machine_control:
+                self.add_log("Talaş temizlik kontrol edilemedi: MachineControl yok.", "ERROR")
+                if hasattr(self.ui, 'toolBtnSawdustCleaning'):
+                    self.ui.toolBtnSawdustCleaning.blockSignals(True)
+                    self.ui.toolBtnSawdustCleaning.setChecked(False)
+                    self.ui.toolBtnSawdustCleaning.blockSignals(False)
+                return
+
+            success = False
+            if checked:
+                success = self.machine_control.start_chip_cleaning()
+                if success:
+                    self.add_log("Talaş temizliği açıldı.", "INFO")
+                else:
+                    self.add_log("Talaş temizliği AÇILAMADI!", "ERROR")
+            else:
+                success = self.machine_control.stop_chip_cleaning()
+                if success:
+                    self.add_log("Talaş temizliği kapatıldı.", "INFO")
+                else:
+                    self.add_log("Talaş temizliği KAPATILAMADI!", "ERROR")
+
+            if not success and hasattr(self.ui, 'toolBtnSawdustCleaning'):
+                self.ui.toolBtnSawdustCleaning.blockSignals(True)
+                self.ui.toolBtnSawdustCleaning.setChecked(not checked)
+                self.ui.toolBtnSawdustCleaning.blockSignals(False)
+
+        except Exception as e:
+            logger.error(f"Talaş temizlik butonu işlem hatası: {e}")
+            if hasattr(self.ui, 'toolBtnSawdustCleaning'):
+                self.ui.toolBtnSawdustCleaning.blockSignals(True)
+                self.ui.toolBtnSawdustCleaning.setChecked(False)
+                self.ui.toolBtnSawdustCleaning.blockSignals(False)
     
     def _get_status_message(self, status_text):
         """Sistem durumuna göre özel mesaj döndürür."""

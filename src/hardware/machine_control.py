@@ -18,9 +18,10 @@ class MachineControl:
     # Register adresleri
     CONTROL_REGISTER = 20
     COOLANT_REGISTER = 2000
+    KONVEYOR_REGISTER = 102
     
     # Bit pozisyonları (0'dan başlar)
-    CHIP_CLEANING_BIT = 2        # 20.2: Talaş temizlik
+    CHIP_CLEANING_BIT = 3        # 20.2: Talaş temizlik
     CUTTING_START_BIT = 3        # 20.3: Kesim başlat
     CUTTING_STOP_BIT = 4         # 20.4: Kesim durdur
     REAR_VISE_OPEN_BIT = 5       # 20.5: Mengene kontrol arka mengeneyi aç
@@ -35,6 +36,17 @@ class MachineControl:
         """MachineControl sınıfını başlatır"""
         self.client = ModbusClient()
         self.logger = logger
+        # Modbus bağlantısını garanti altına al
+        try:
+            if not self.client.is_connected:
+                self.client.connect()
+        except Exception as e:
+            self.logger.error(f"Modbus bağlantısı başlatılırken hata: {e}")
+        # Uygulama başlarken mevcut (default) register ve bit değerlerini sadece oku ve logla
+        try:
+            self.log_default_states()
+        except Exception as e:
+            self.logger.error(f"Başlangıç durumları loglanırken hata: {e}")
         
     def _set_bit(self, register: int, bit_position: int, value: bool) -> bool:
         """
@@ -71,6 +83,51 @@ class MachineControl:
             success = self.client.write_register(register, new_value)
             if success:
                 self.logger.debug(f"Register {register}, bit {bit_position} {value} olarak ayarlandı")
+                # Yazım sonrası doğrulama: register'ı geri oku ve bit durumlarını logla
+                try:
+                    verify = self.client.read_registers(register, 1)
+                    if verify is not None:
+                        read_back = verify[0]
+                        self.logger.info(
+                            f"Register {register} yazım sonrası raw=0x{read_back:04X} ({read_back}), hedef bit {bit_position}={(read_back >> bit_position) & 1}"
+                        )
+                        # Bilinen registerlar için ayrıntılı bit log'u
+                        if register == self.CONTROL_REGISTER:
+                            self.logger.info(
+                                " - chip_cleaning(20.2): %s" % bool((read_back >> self.CHIP_CLEANING_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - cutting_start(20.3): %s" % bool((read_back >> self.CUTTING_START_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - cutting_stop(20.4): %s" % bool((read_back >> self.CUTTING_STOP_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - rear_vise_open(20.5): %s" % bool((read_back >> self.REAR_VISE_OPEN_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - front_vise_open(20.6): %s" % bool((read_back >> self.FRONT_VISE_OPEN_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - material_forward(20.7): %s" % bool((read_back >> self.MATERIAL_FORWARD_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - material_backward(20.8): %s" % bool((read_back >> self.MATERIAL_BACKWARD_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - saw_up(20.9): %s" % bool((read_back >> self.SAW_UP_BIT) & 1)
+                            )
+                            self.logger.info(
+                                " - saw_down(20.10): %s" % bool((read_back >> self.SAW_DOWN_BIT) & 1)
+                            )
+                        elif register == self.COOLANT_REGISTER:
+                            self.logger.info(
+                                " - coolant(2000.1): %s" % bool((read_back >> self.COOLANT_BIT) & 1)
+                            )
+                    else:
+                        self.logger.warning(f"Register {register} doğrulama okuması başarısız")
+                except Exception as e:
+                    self.logger.error(f"Yazım sonrası doğrulama hatası: {e}")
             else:
                 self.logger.error(f"Register {register}, bit {bit_position} ayarlanamadı")
                 
@@ -102,19 +159,80 @@ class MachineControl:
         except Exception as e:
             self.logger.error(f"Bit okuma hatası: {e}")
             return None
+
+    def log_default_states(self) -> None:
+        """
+        Tanımlı tüm register ve bitlerin mevcut (default) değerlerini okur ve loglar.
+        Donanıma herhangi bir yazma işlemi yapılmaz.
+        """
+        # Kontrol register'ı
+        try:
+            control_value_list = self.client.read_registers(self.CONTROL_REGISTER, 1)
+            if control_value_list is None:
+                self.logger.warning(f"CONTROL_REGISTER ({self.CONTROL_REGISTER}) okunamadı")
+            else:
+                control_value = control_value_list[0]
+                self.logger.info(
+                    f"CONTROL_REGISTER {self.CONTROL_REGISTER} raw=0x{control_value:04X} ({control_value})"
+                )
+                self.logger.info(
+                    " - chip_cleaning(20.2): %s" % bool((control_value >> self.CHIP_CLEANING_BIT) & 1)
+                )
+                self.logger.info(
+                    " - cutting_start(20.3): %s" % bool((control_value >> self.CUTTING_START_BIT) & 1)
+                )
+                self.logger.info(
+                    " - cutting_stop(20.4): %s" % bool((control_value >> self.CUTTING_STOP_BIT) & 1)
+                )
+                self.logger.info(
+                    " - rear_vise_open(20.5): %s" % bool((control_value >> self.REAR_VISE_OPEN_BIT) & 1)
+                )
+                self.logger.info(
+                    " - front_vise_open(20.6): %s" % bool((control_value >> self.FRONT_VISE_OPEN_BIT) & 1)
+                )
+                self.logger.info(
+                    " - material_forward(20.7): %s" % bool((control_value >> self.MATERIAL_FORWARD_BIT) & 1)
+                )
+                self.logger.info(
+                    " - material_backward(20.8): %s" % bool((control_value >> self.MATERIAL_BACKWARD_BIT) & 1)
+                )
+                self.logger.info(
+                    " - saw_up(20.9): %s" % bool((control_value >> self.SAW_UP_BIT) & 1)
+                )
+                self.logger.info(
+                    " - saw_down(20.10): %s" % bool((control_value >> self.SAW_DOWN_BIT) & 1)
+                )
+        except Exception as e:
+            self.logger.error(f"CONTROL_REGISTER okunurken hata: {e}")
+
+        # Soğutma register'ı
+        try:
+            coolant_value_list = self.client.read_registers(self.COOLANT_REGISTER, 1)
+            if coolant_value_list is None:
+                self.logger.warning(f"COOLANT_REGISTER ({self.COOLANT_REGISTER}) okunamadı")
+            else:
+                coolant_value = coolant_value_list[0]
+                self.logger.info(
+                    f"COOLANT_REGISTER {self.COOLANT_REGISTER} raw=0x{coolant_value:04X} ({coolant_value})"
+                )
+                self.logger.info(
+                    " - coolant(2000.1): %s" % bool((coolant_value >> self.COOLANT_BIT) & 1)
+                )
+        except Exception as e:
+            self.logger.error(f"COOLANT_REGISTER okunurken hata: {e}")
     
     # Talaş temizlik fonksiyonları
     def start_chip_cleaning(self) -> bool:
         """Talaş temizliği başlatır"""
-        return self._set_bit(self.CONTROL_REGISTER, self.CHIP_CLEANING_BIT, True)
+        return self._set_bit(self.KONVEYOR_REGISTER, self.CHIP_CLEANING_BIT, True)
     
     def stop_chip_cleaning(self) -> bool:
         """Talaş temizliği durdurur"""
-        return self._set_bit(self.CONTROL_REGISTER, self.CHIP_CLEANING_BIT, False)
+        return self._set_bit(self.KONVEYOR_REGISTER, self.CHIP_CLEANING_BIT, False)
     
     def is_chip_cleaning_active(self) -> Optional[bool]:
         """Talaş temizliği aktif mi kontrol eder"""
-        return self._get_bit(self.CONTROL_REGISTER, self.CHIP_CLEANING_BIT)
+        return self._get_bit(self.KONVEYOR_REGISTER, self.CHIP_CLEANING_BIT)
     
     # Kesim kontrol fonksiyonları
     def start_cutting(self) -> bool:
