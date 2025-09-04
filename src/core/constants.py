@@ -6,7 +6,7 @@ KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
 # Model yolu
-ML_MODEL_PATH = os.getenv("ML_MODEL_PATH", "")
+ML_MODEL_PATH = os.getenv("ML_MODEL_PATH", "src/control/ml/Bagging_dataset_v17_20250509.pkl")
 
 # Hız Limitleri
 MIN_SPEED = 5.0
