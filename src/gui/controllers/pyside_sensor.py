@@ -347,13 +347,13 @@ class CuttingGraphWidget(QWidget):
             label_width = 80  # Genişliği artırdık
             label_height = 30
             
-            # Sol taraftaki label'lar (Y ekseni) - grafiğin solunda, 10px sola çekilmiş
+            # Sol taraftaki label'lar (Y ekseni) 
             # En üst
-            self.yust.setGeometry(graph_x - 10 - label_width, graph_y + 20, label_width, label_height)
+            self.yust.setGeometry(graph_x - label_width, graph_y + 20, label_width, label_height)
             # Orta
-            self.yorta.setGeometry(graph_x - 10 - label_width, graph_y + (graph_height // 2) - (label_height // 2), label_width, label_height)
+            self.yorta.setGeometry(graph_x - label_width, graph_y + (graph_height // 2) - (label_height // 2), label_width, label_height)
             # En alt
-            self.yalt.setGeometry(graph_x - 10 - label_width, graph_y + graph_height - label_height - 20, label_width, label_height)
+            self.yalt.setGeometry(graph_x - label_width, graph_y + graph_height - label_height - 20, label_width, label_height)
             
             # Alt taraftaki label'lar (X ekseni) - grafiğin altında
             # En sol
@@ -374,7 +374,7 @@ class CuttingGraphWidget(QWidget):
                 logger.info(f"ZAMAN DEBUG - X: {x_min} -> {x_max}, Y: {y_min} -> {y_max}")
                 logger.info(f"Eksen tipleri - X: {self.x_axis_type}, Y: {self.y_axis_type}")
             
-            # Y ekseni label'ları (sol taraftaki) - ondalık kısım olmadan
+            # Y ekseni label'ları (sol taraftaki) - ondalık kısım 2 hane ile
             if y_min is not None and y_max is not None:
                 # Zaman ekseni için özel format
                 if self.y_axis_type == "timestamp":
@@ -389,14 +389,14 @@ class CuttingGraphWidget(QWidget):
                     self.yorta.setText(f"{y_mid_val}s")
                     self.yalt.setText(f"{y_min_val}s")
                 else:
-                    # Diğer eksenler için normal format
-                    y_max_val = min(int(y_max), 9999)  # Maksimum 4 haneli
-                    y_min_val = max(int(y_min), -999)  # Minimum -999
-                    y_mid_val = int((y_min_val + y_max_val) / 2)
+                    # Diğer eksenler için iki ondalık basamak ile
+                    y_max_val = min(float(y_max), 9999.99)
+                    y_min_val = max(float(y_min), -999.99)
+                    y_mid_val = (y_min_val + y_max_val) / 2.0
                     
-                    self.yust.setText(f"{y_max_val}")
-                    self.yorta.setText(f"{y_mid_val}")
-                    self.yalt.setText(f"{y_min_val}")
+                    self.yust.setText(f"{y_max_val:.2f}")
+                    self.yorta.setText(f"{y_mid_val:.2f}")
+                    self.yalt.setText(f"{y_min_val:.2f}")
             
             # X ekseni label'ları (alt taraftaki) - ondalık kısım ile
             if x_min is not None and x_max is not None:
@@ -554,6 +554,8 @@ class SensorPage(QWidget):
                 return "serit_motor_akim_a"
             elif hasattr(self.ui, 'btnSeritSapmasi') and self.ui.btnSeritSapmasi.isChecked():
                 return "serit_sapmasi"
+            elif hasattr(self.ui, 'btnSeritTork') and self.ui.btnSeritTork.isChecked():
+                return "serit_motor_tork_percentage"
             else:
                 return "serit_kesme_hizi"  # Varsayılan
         except Exception as e:
@@ -664,7 +666,7 @@ class SensorPage(QWidget):
         # X-axis buttons
         self._x_group = QButtonGroup(self)
         self._x_group.setExclusive(True)
-        for name in ('btnKesmeHizi', 'btnIlerlemeHizi', 'btnSeritAkim', 'btnSeritSapmasi'):
+        for name in ('btnKesmeHizi', 'btnIlerlemeHizi', 'btnSeritAkim', 'btnSeritSapmasi', 'btnSeritTork'):
             btn = getattr(self.ui, name, None)
             if btn is not None:
                 btn.setCheckable(True)
@@ -951,6 +953,7 @@ class SensorPage(QWidget):
                 'serit_inme_hizi': float(data.get('serit_inme_hizi', 0.0)),
                 'serit_motor_akim_a': float(data.get('serit_motor_akim_a', 0.0)),
                 'serit_sapmasi': float(data.get('serit_sapmasi', 0.0)),
+                'serit_motor_tork_percentage': float(data.get('serit_motor_tork_percentage', 0.0)),
                 'kafa_yuksekligi_mm': float(data.get('kafa_yuksekligi_mm', 0.0)),
                 'ivme_olcer_x_hz': float(data.get('ivme_olcer_x_hz', 0.0)),
                 'ivme_olcer_y_hz': float(data.get('ivme_olcer_y_hz', 0.0)),
@@ -1001,6 +1004,8 @@ class SensorPage(QWidget):
                 return float(row.get('serit_motor_akim_a', 0.0))
             elif axis_type == "serit_sapmasi":
                 return float(row.get('serit_sapmasi', 0.0))
+            elif axis_type == "serit_motor_tork_percentage":
+                return float(row.get('serit_motor_tork_percentage', 0.0))
             elif axis_type == "kafa_yuksekligi_mm":
                 return float(row.get('kafa_yuksekligi_mm', 0.0))
             else:
@@ -1139,6 +1144,7 @@ class SensorPage(QWidget):
                     serit_kesme_hizi,
                     serit_inme_hizi,
                     serit_sapmasi,
+                    serit_motor_tork_percentage,
                     ivme_olcer_x_hz,
                     ivme_olcer_y_hz,
                     ivme_olcer_z_hz
@@ -1168,9 +1174,10 @@ class SensorPage(QWidget):
                     'serit_kesme_hizi': float(row[4]) if row[4] is not None else 0.0,
                     'serit_inme_hizi': float(row[5]) if row[5] is not None else 0.0,
                     'serit_sapmasi': float(row[6]) if row[6] is not None else 0.0,
-                    'ivme_olcer_x_hz': float(row[7]) if row[7] is not None else 0.0,
-                    'ivme_olcer_y_hz': float(row[8]) if row[8] is not None else 0.0,
-                    'ivme_olcer_z_hz': float(row[9]) if row[9] is not None else 0.0
+                    'serit_motor_tork_percentage': float(row[7]) if row[7] is not None else 0.0,
+                    'ivme_olcer_x_hz': float(row[8]) if row[8] is not None else 0.0,
+                    'ivme_olcer_y_hz': float(row[9]) if row[9] is not None else 0.0,
+                    'ivme_olcer_z_hz': float(row[10]) if row[10] is not None else 0.0
                 })
                 
                 # İlk birkaç kaydı log'la
@@ -1197,6 +1204,8 @@ class SensorPage(QWidget):
                 return data_row.get('serit_motor_akim_a', 0.0)
             elif axis_type == "serit_sapmasi":
                 return data_row.get('serit_sapmasi', 0.0)
+            elif axis_type == "serit_motor_tork_percentage":
+                return data_row.get('serit_motor_tork_percentage', 0.0)
             elif axis_type == "kafa_yuksekligi_mm":
                 return data_row.get('kafa_yuksekligi_mm', 0.0)
             elif axis_type == "timestamp":

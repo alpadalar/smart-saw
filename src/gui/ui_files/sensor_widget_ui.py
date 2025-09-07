@@ -53,14 +53,14 @@ class Ui_Form(object):
 "}")
         self.btnKesmeHizi = QPushButton(self.XEkseniFrame)
         self.btnKesmeHizi.setObjectName(u"btnKesmeHizi")
-        self.btnKesmeHizi.setGeometry(QRect(41, 82, 223, 90))
+        self.btnKesmeHizi.setGeometry(QRect(41, 82, 240, 69))
         self.btnKesmeHizi.setStyleSheet(u"QPushButton {\n"
 "    background-color:  rgba(26, 31, 55, 200);\n"
 "    color: #F4F6FC;\n"
 "	font-family: 'Plus Jakarta Sans';\n"
 "    font-weight: bold;\n"
-"    font-size: 30px;\n"
-"    border-radius: 45px;\n"
+"    font-size: 25px;\n"
+"    border-radius: 30px;\n"
 "	border: 2px solid #F4F6FC;\n"
 "}\n"
 "\n"
@@ -76,14 +76,14 @@ class Ui_Form(object):
         self.btnKesmeHizi.setCheckable(True)
         self.btnIlerlemeHizi = QPushButton(self.XEkseniFrame)
         self.btnIlerlemeHizi.setObjectName(u"btnIlerlemeHizi")
-        self.btnIlerlemeHizi.setGeometry(QRect(315, 82, 223, 90))
+        self.btnIlerlemeHizi.setGeometry(QRect(298, 82, 240, 69))
         self.btnIlerlemeHizi.setStyleSheet(u"QPushButton {\n"
 "    background-color:  rgba(26, 31, 55, 200);\n"
 "    color: #F4F6FC;\n"
 "	font-family: 'Plus Jakarta Sans';\n"
 "    font-weight: bold;\n"
-"    font-size: 30px;\n"
-"    border-radius: 45px;\n"
+"    font-size: 25px;\n"
+"    border-radius: 30px;\n"
 "	border: 2px solid #F4F6FC;\n"
 "}\n"
 "QPushButton:hover {\n"
@@ -96,14 +96,14 @@ class Ui_Form(object):
         self.btnIlerlemeHizi.setCheckable(True)
         self.btnSeritAkim = QPushButton(self.XEkseniFrame)
         self.btnSeritAkim.setObjectName(u"btnSeritAkim")
-        self.btnSeritAkim.setGeometry(QRect(41, 218, 223, 90))
+        self.btnSeritAkim.setGeometry(QRect(41, 162, 240, 69))
         self.btnSeritAkim.setStyleSheet(u"QPushButton {\n"
 "    background-color:  rgba(26, 31, 55, 200);\n"
 "    color: #F4F6FC;\n"
 "	font-family: 'Plus Jakarta Sans';\n"
 "    font-weight: bold;\n"
-"    font-size: 30px;\n"
-"    border-radius: 45px;\n"
+"    font-size: 25px;\n"
+"    border-radius: 30px;\n"
 "	border: 2px solid #F4F6FC;\n"
 "}\n"
 "\n"
@@ -113,18 +113,41 @@ class Ui_Form(object):
 "\n"
 "QPushButton:checked {\n"
 "    background-color: #950952;\n"
-"}")
+"}\n"
+"")
         self.btnSeritAkim.setCheckable(True)
         self.btnSeritSapmasi = QPushButton(self.XEkseniFrame)
         self.btnSeritSapmasi.setObjectName(u"btnSeritSapmasi")
-        self.btnSeritSapmasi.setGeometry(QRect(315, 218, 223, 90))
+        self.btnSeritSapmasi.setGeometry(QRect(298, 162, 240, 69))
         self.btnSeritSapmasi.setStyleSheet(u"QPushButton {\n"
 "    background-color:  rgba(26, 31, 55, 200);\n"
 "    color: #F4F6FC;\n"
 "	font-family: 'Plus Jakarta Sans';\n"
 "    font-weight: bold;\n"
-"    font-size: 30px;\n"
-"    border-radius: 45px;\n"
+"    font-size: 25px;\n"
+"    border-radius: 30px;\n"
+"	border: 2px solid #F4F6FC;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"    background-color: rgba(255, 255, 255, 0.1);\n"
+"}\n"
+"\n"
+"QPushButton:checked {\n"
+"    background-color: #950952;\n"
+"}\n"
+"")
+        self.btnSeritSapmasi.setCheckable(True)
+        self.btnSeritTork = QPushButton(self.XEkseniFrame)
+        self.btnSeritTork.setObjectName(u"btnSeritTork")
+        self.btnSeritTork.setGeometry(QRect(169, 239, 240, 69))
+        self.btnSeritTork.setStyleSheet(u"QPushButton {\n"
+"    background-color:  rgba(26, 31, 55, 200);\n"
+"    color: #F4F6FC;\n"
+"	font-family: 'Plus Jakarta Sans';\n"
+"    font-weight: bold;\n"
+"    font-size: 25px;\n"
+"    border-radius: 30px;\n"
 "	border: 2px solid #F4F6FC;\n"
 "}\n"
 "\n"
@@ -135,7 +158,7 @@ class Ui_Form(object):
 "QPushButton:checked {\n"
 "    background-color: #950952;\n"
 "}")
-        self.btnSeritSapmasi.setCheckable(True)
+        self.btnSeritTork.setCheckable(True)
         self.notificationFrame = QFrame(Form)
         self.notificationFrame.setObjectName(u"notificationFrame")
         self.notificationFrame.setGeometry(QRect(425, 38, 1465, 60))
@@ -224,7 +247,7 @@ class Ui_Form(object):
         self.labelKesmeHizi.setGeometry(QRect(28, 8, 393, 20))
         self.labelKesmeHizi.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -234,7 +257,7 @@ class Ui_Form(object):
         self.labelKesmeHiziInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelKesmeHiziInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -263,7 +286,7 @@ class Ui_Form(object):
         self.labelIlerlemeHiziInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelIlerlemeHiziInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -274,7 +297,7 @@ class Ui_Form(object):
         self.labelIlerlemeHizi.setGeometry(QRect(25, 8, 393, 20))
         self.labelIlerlemeHizi.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -302,7 +325,7 @@ class Ui_Form(object):
         self.labelSeritAkimInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelSeritAkimInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -313,7 +336,7 @@ class Ui_Form(object):
         self.labelSeritAkim.setGeometry(QRect(25, 8, 393, 20))
         self.labelSeritAkim.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -341,7 +364,7 @@ class Ui_Form(object):
         self.labelSicaklikInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelSicaklikInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -352,7 +375,7 @@ class Ui_Form(object):
         self.labelSicaklik.setGeometry(QRect(25, 8, 393, 20))
         self.labelSicaklik.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -380,7 +403,7 @@ class Ui_Form(object):
         self.labelNemInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelNemInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -391,7 +414,7 @@ class Ui_Form(object):
         self.labelNem.setGeometry(QRect(25, 8, 393, 20))
         self.labelNem.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -419,7 +442,7 @@ class Ui_Form(object):
         self.labelSeritSapmasiInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelSeritSapmasiInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -430,7 +453,7 @@ class Ui_Form(object):
         self.labelSeritSapmasi.setGeometry(QRect(25, 8, 393, 20))
         self.labelSeritSapmasi.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -458,7 +481,7 @@ class Ui_Form(object):
         self.labelTitresimXInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelTitresimXInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -469,7 +492,7 @@ class Ui_Form(object):
         self.labelTitresimX.setGeometry(QRect(25, 8, 393, 20))
         self.labelTitresimX.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -497,7 +520,7 @@ class Ui_Form(object):
         self.labelTitresimYInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelTitresimYInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -508,7 +531,7 @@ class Ui_Form(object):
         self.labelTitresimY.setGeometry(QRect(25, 8, 393, 20))
         self.labelTitresimY.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -536,7 +559,7 @@ class Ui_Form(object):
         self.labelTitresimZInfo.setGeometry(QRect(25, 33, 401, 20))
         self.labelTitresimZInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
@@ -547,7 +570,7 @@ class Ui_Form(object):
         self.labelTitresimZ.setGeometry(QRect(25, 8, 393, 20))
         self.labelTitresimZ.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
-"	color:	#F4F6FC;\n"
+"	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
@@ -561,7 +584,7 @@ class Ui_Form(object):
 "    border: 1px solid #F4F6FC;\n"
 "    border-radius: 20px;\n"
 "    color:    #F4F6FC;\n"
-"    font-family: \'Plus-Jakarta-Sans\';\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
 "    font-weight: medium;\n"
 "    font-size:19px;")
         self.kesimGrafigiFrame = QFrame(Form)
@@ -744,7 +767,7 @@ class Ui_Form(object):
 "    font-weight: semibold;\n"
 "    font-size: 32px;\n"
 "    text-align: left;\n"
-"    padding: 12px 10px 12px 25px;  /* simge i\u00e7in bo\u015fluk */\n"
+"    padding: 12px 10px 12px 25px;  /* simge için boşluk */\n"
 "    border: none;\n"
 "    border-radius: 10px;\n"
 "}\n"
@@ -754,7 +777,7 @@ class Ui_Form(object):
 "}\n"
 "\n"
 "QPushButton:checked {\n"
-"    background-color: rgba(26, 31, 55, 128); /* %50 opakl\u0131k */\n"
+"    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */\n"
 "}")
         icon1 = QIcon()
         icon1.addFile(u"src/gui/images/control-panel-icon2.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -771,7 +794,7 @@ class Ui_Form(object):
 "    font-weight: semibold;\n"
 "    font-size: 32px;\n"
 "    text-align: left;\n"
-"    padding: 12px 10px 12px 20px;  /* simge i\u00e7in bo\u015fluk */\n"
+"    padding: 12px 10px 12px 20px;  /* simge için boşluk */\n"
 "    border: none;\n"
 "    border-radius: 10px;\n"
 "}\n"
@@ -781,7 +804,7 @@ class Ui_Form(object):
 "}\n"
 "\n"
 "QPushButton:checked {\n"
-"    background-color: rgba(26, 31, 55, 128); /* %50 opakl\u0131k */\n"
+"    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */\n"
 "}")
         icon2 = QIcon()
         icon2.addFile(u"src/gui/images/positioning-icon2.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -798,7 +821,7 @@ class Ui_Form(object):
 "    font-weight: semibold;\n"
 "    font-size: 32px;\n"
 "    text-align: left;\n"
-"    padding: 12px 10px 12px 20px;  /* simge i\u00e7in bo\u015fluk */\n"
+"    padding: 12px 10px 12px 20px;  /* simge için boşluk */\n"
 "    border: none;\n"
 "    border-radius: 10px;\n"
 "}\n"
@@ -808,7 +831,7 @@ class Ui_Form(object):
 "}\n"
 "\n"
 "QPushButton:checked {\n"
-"    background-color: rgba(26, 31, 55, 128); /* %50 opakl\u0131k */\n"
+"    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */\n"
 "}\n"
 "")
         icon3 = QIcon()
@@ -826,7 +849,7 @@ class Ui_Form(object):
 "    font-weight: semibold;\n"
 "    font-size: 32px;\n"
 "    text-align: left;\n"
-"    padding: 12px 10px 12px 20px;  /* simge i\u00e7in bo\u015fluk */\n"
+"    padding: 12px 10px 12px 20px;  /* simge için boşluk */\n"
 "    border: none;\n"
 "    border-radius: 10px;\n"
 "}\n"
@@ -836,7 +859,7 @@ class Ui_Form(object):
 "}\n"
 "\n"
 "QPushButton:checked {\n"
-"    background-color: rgba(26, 31, 55, 128); /* %50 opakl\u0131k */\n"
+"    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */\n"
 "}")
         icon4 = QIcon()
         icon4.addFile(u"src/gui/images/sensor-icon2.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -853,7 +876,7 @@ class Ui_Form(object):
 "    font-weight: semibold;\n"
 "    font-size: 32px;\n"
 "    text-align: left;\n"
-"    padding: 12px 10px 12px 20px;  /* simge i\u00e7in bo\u015fluk */\n"
+"    padding: 12px 10px 12px 20px;  /* simge için boşluk */\n"
 "    border: none;\n"
 "    border-radius: 10px;\n"
 "}\n"
@@ -863,7 +886,7 @@ class Ui_Form(object):
 "}\n"
 "\n"
 "QPushButton:checked {\n"
-"    background-color: rgba(26, 31, 55, 128); /* %50 opakl\u0131k */\n"
+"    background-color: rgba(26, 31, 55, 128); /* %50 opaklık */\n"
 "}")
         icon5 = QIcon()
         icon5.addFile(u"src/gui/images/tracking-icon2.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -887,6 +910,8 @@ class Ui_Form(object):
 "Ak\u0131m", None))
         self.btnSeritSapmasi.setText(QCoreApplication.translate("Form", u"\u015eerit\n"
 "Sapmas\u0131", None))
+        self.btnSeritTork.setText(QCoreApplication.translate("Form", u"\u015eerit\n"
+"Tork", None))
         self.labelDate.setText(QCoreApplication.translate("Form", u"14.12.2025 \u00c7ar\u015famba", None))
         self.labelTime.setText(QCoreApplication.translate("Form", u"12.30", None))
         self.labelAnomaliDurumu.setText(QCoreApplication.translate("Form", u"Anomali Durumu", None))
