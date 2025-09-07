@@ -276,86 +276,38 @@ class SmartSaw:
             raise
 #WEB SERVER KODLARI
     def _setup_web_server(self):
-        """Web sunucusu başlatma"""
+        """Web sunucusunu doğrudan uvicorn ile (ayrı thread'de) başlatır.
+        Dosya yazmaz, 'run_server.py' oluşturmaz.
+        """
         if not (UVICORN_AVAILABLE and FASTAPI_AVAILABLE):
             logger.warning("FastAPI/uvicorn yok, web sunucusu başlatılmayacak.")
             return
         try:
-            import os
-            import subprocess
-            import sys
-            
-            # Mevcut çalışma dizinini ve Python yolunu al
+            # Webui dizini
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            
-            # Webui dizinini bul
             webui_dir = os.path.join(current_dir, "webui")
             if not os.path.exists(webui_dir):
                 logger.warning(f"Webui dizini bulunamadı: {webui_dir}")
-                
-            # Python yorumlayıcı yolu
-            python_exe = sys.executable
-            
-            # Bir komut dosyası oluştur
-            server_script = os.path.join(current_dir, "run_server.py")
-            
-            # Eğer script yoksa, oluştur
-            if not os.path.exists(server_script):
-                with open(server_script, 'w', encoding='utf-8') as f:
-                    f.write("""
-import os
-import sys
-try:
-import uvicorn
-    UVICORN_AVAILABLE = True
-except ImportError:
-    UVICORN_AVAILABLE = False
-try:
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
-    FASTAPI_AVAILABLE = True
-except ImportError:
-    FASTAPI_AVAILABLE = False
 
-# API modülünü import et
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from api import create_app
+            # Basit FastAPI uygulaması (statik webui servis eder)
+            app = FastAPI()
+            app.mount("/", StaticFiles(directory=webui_dir, html=True), name="webui")
 
-# FastAPI uygulamasi olustur
-app = create_app() if FASTAPI_AVAILABLE else None
+            @app.get("/")
+            async def _redirect_to_index():
+                return RedirectResponse(url="/index.html")
 
-# Webui dizinini bul
-current_dir = os.path.dirname(os.path.abspath(__file__))
-webui_dir = os.path.join(current_dir, "webui")
+            # Uvicorn'u ayrı bir thread'de başlat
+            def _start_server():
+                try:
+                    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
+                except Exception as e:
+                    logger.error(f"Uvicorn çalışma hatası: {e}")
 
-if FASTAPI_AVAILABLE:
-# Statik dosyalari monte et
-app.mount("/", StaticFiles(directory=webui_dir, html=True), name="webui")
-
-# Ana sayfaya yonlendirme
-@app.get("/")
-async def redirect_to_index():
-    return RedirectResponse(url="/index.html")
-
-if __name__ == "__main__":
-    print(f"Web arayuzu dosyalari: {webui_dir}")
-    print("Web sunucusu baslatiliyor. http://localhost:8080 adresinden erisebilirsiniz...")
-    if not (UVICORN_AVAILABLE and FASTAPI_AVAILABLE):
-        print("uvicorn/fastapi yok, web sunucusu atlandi")
-    else:
-    uvicorn.run(app, host="0.0.0.0", port=8080)
-""")
-            
-            # Web sunucusunu ayrı bir süreç olarak başlat
-            self.web_server = subprocess.Popen(
-                [python_exe, server_script],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            
+            self.web_server = threading.Thread(target=_start_server, daemon=True)
+            self.web_server.start()
             logger.info("Web sunucusu başlatıldı. http://localhost:8080 adresinden erişebilirsiniz...")
-            
+
         except Exception as e:
             logger.error(f"Web sunucusu başlatma hatası: {e}")
             import traceback
