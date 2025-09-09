@@ -213,7 +213,7 @@ class Ui_Form(object):
         self.btnTracking_2.setIconSize(QSize(80, 80))
         self.notificationFrame = QFrame(Form)
         self.notificationFrame.setObjectName(u"notificationFrame")
-        self.notificationFrame.setGeometry(QRect(420, 30, 1465, 60))
+        self.notificationFrame.setGeometry(QRect(425, 38, 1465, 60))
         self.notificationFrame.setStyleSheet(u"QFrame#notificationFrame {\n"
 "    background-color: rgba(26, 31, 55, 77);\n"
 "    border-radius: 30px;\n"
