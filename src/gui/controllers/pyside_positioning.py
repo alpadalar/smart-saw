@@ -17,8 +17,9 @@ class PositioningPage(QWidget):
         self.main_ref = main_ref
         self.get_data_callback = get_data_callback
         
-        # MachineControl örneği oluştur
-        self.machine_control = MachineControl()
+        # MachineControl örneği oluştur - bağlantı kontrolü ile
+        self.machine_control = None
+        self._initialize_machine_control()
         
         # Apply same background image as control panel (efficient QLabel)
         self._apply_background()
@@ -49,6 +50,23 @@ class PositioningPage(QWidget):
 
         # UI güncellemelerinde geçici kapatma butonu otomatik işaretlemeyi bastırmak için zamanlayıcı
         self._suppress_close_autocheck_until: float = 0.0
+
+    def _initialize_machine_control(self) -> None:
+        """MachineControl'ü güvenli bir şekilde başlatır"""
+        try:
+            # Önce bağlantı durumunu kontrol et
+            data = self.get_data_callback() if self.get_data_callback else None
+            if data and data.get('modbus_connected', False):
+                # Bağlantı varsa MachineControl'ü oluştur
+                self.machine_control = MachineControl()
+                print("MachineControl başarıyla başlatıldı")
+            else:
+                # Bağlantı yoksa None bırak, butonlar pasif olacak
+                self.machine_control = None
+                print("Makine bağlantısı yok, MachineControl başlatılmadı")
+        except Exception as e:
+            print(f"MachineControl başlatma hatası: {e}")
+            self.machine_control = None
 
     def set_active_nav(self, active_btn_name: str):
         """Navigation butonlarının aktif/pasif durumunu ayarla"""
@@ -162,6 +180,11 @@ class PositioningPage(QWidget):
     def _on_toggle_button(self, button, command: str, checked: bool) -> None:
         """Toggle çalışan butonlar için tek noktadan handler"""
         try:
+            # MachineControl yoksa işlem yapma
+            if self.machine_control is None:
+                print(f"Makine bağlantısı yok, {command} komutu atlandı")
+                return
+                
             state_text = "AKTIF" if checked else "PASIF"
             print(f"{command} => {state_text}")
             
@@ -283,6 +306,11 @@ class PositioningPage(QWidget):
     def _on_hold_button(self, button, command: str, is_pressed: bool) -> None:
         """Basılı tutma ile çalışan butonlar için handler"""
         try:
+            # MachineControl yoksa işlem yapma
+            if self.machine_control is None:
+                print(f"Makine bağlantısı yok, {command} komutu atlandı")
+                return
+                
             # Görsel geri bildirim için butonu checked göster (stil :checked kullanıyorsa)
             if hasattr(button, 'setChecked'):
                 button.setChecked(is_pressed)
@@ -373,8 +401,20 @@ class PositioningPage(QWidget):
             if not data or not bool(data.get('modbus_connected', False)):
                 # No data or not connected: show placeholders
                 self.update_ui({})
+                # Bağlantı yoksa MachineControl'ü temizle
+                if self.machine_control is not None:
+                    self.machine_control = None
+                    print("Makine bağlantısı kesildi, MachineControl temizlendi")
             else:
                 self.update_ui(data)
+                # Bağlantı varsa ve MachineControl yoksa oluştur
+                if self.machine_control is None:
+                    try:
+                        self.machine_control = MachineControl()
+                        print("Makine bağlantısı kuruldu, MachineControl başlatıldı")
+                    except Exception as e:
+                        print(f"MachineControl başlatma hatası: {e}")
+                        self.machine_control = None
             
             # Buton durumlarını kontrol et ve güncelle
             self._update_button_states()
@@ -384,6 +424,10 @@ class PositioningPage(QWidget):
     def _update_button_states(self) -> None:
         """Buton durumlarını makineden okuyarak günceller"""
         try:
+            # MachineControl yoksa buton durumlarını güncelleme
+            if self.machine_control is None:
+                return
+                
             # Mengene durumlarını kontrol et (sadece başlangıçta ve belirli aralıklarla)
             if hasattr(self.ui, 'btnArkaMengeneAc'):
                 rear_vise_status = self.machine_control.is_rear_vise_open()
