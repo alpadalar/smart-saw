@@ -693,40 +693,86 @@ class SensorPage(QWidget):
 
     def _open_control_panel(self) -> None:
         if self.main_ref:
-            # Timer'ları yeniden başlat ve control panel'e dön
-            self.hide()
+            # Control panel'i direkt göster
             self.main_ref.set_active_nav("btnControlPanel")
             self.main_ref.showFullScreen()
             self.main_ref.raise_()
             self.main_ref.activateWindow()
             self.main_ref.setFocus()
+            
+            # Sensor page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_positioning(self) -> None:
         if self.main_ref:
-            self.hide()
             if not hasattr(self.main_ref, '_positioning_page') or self.main_ref._positioning_page is None:
                 from .pyside_positioning import PositioningPage
                 self.main_ref._positioning_page = PositioningPage(main_ref=self.main_ref, get_data_callback=self.get_data_callback)
+            
+            # Positioning widget'ını direkt göster
             self.main_ref._positioning_page.set_active_nav("btnPositioning_2")
             self.main_ref._positioning_page.showFullScreen()
+            
+            # Sensor page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_monitoring(self) -> None:
         if self.main_ref:
-            self.hide()
             if not hasattr(self.main_ref, '_monitoring_page') or self.main_ref._monitoring_page is None:
                 from .pyside_monitoring import MonitoringPage
                 self.main_ref._monitoring_page = MonitoringPage(main_ref=self.main_ref, get_data_callback=self.get_data_callback)
+            
+            # Monitoring widget'ını direkt göster
             self.main_ref._monitoring_page.set_active_nav("btnTracking")
             self.main_ref._monitoring_page.showFullScreen()
+            
+            # Sensor page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_camera(self) -> None:
         if self.main_ref:
-            self.hide()
             if not hasattr(self.main_ref, '_camera_page') or self.main_ref._camera_page is None:
                 from .pyside_camera import CameraPage
                 self.main_ref._camera_page = CameraPage(main_ref=self.main_ref, get_data_callback=self.get_data_callback)
+            
+            # Camera widget'ını direkt göster
             self.main_ref._camera_page.set_active_nav("btnCamera")
             self.main_ref._camera_page.showFullScreen()
+            
+            # Sensor page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_sensor(self) -> None:
         # already here

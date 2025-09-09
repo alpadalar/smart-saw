@@ -105,22 +105,44 @@ class MonitoringPage(QWidget):
 
     def _open_control_panel(self) -> None:
         if self.main_ref:
-            # Timer'ları yeniden başlat ve control panel'e dön
-            self.hide()
+            # Control panel'i direkt göster
             self.main_ref.set_active_nav("btnControlPanel")
             self.main_ref.showFullScreen()
             self.main_ref.raise_()
             self.main_ref.activateWindow()
             self.main_ref.setFocus()
+            
+            # Monitoring page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_positioning(self) -> None:
         if self.main_ref:
-            self.hide()
             if not hasattr(self.main_ref, '_positioning_page') or self.main_ref._positioning_page is None:
                 from .pyside_positioning import PositioningPage
                 self.main_ref._positioning_page = PositioningPage(main_ref=self.main_ref, get_data_callback=self.get_data_callback)
+            
+            # Positioning widget'ını direkt göster
             self.main_ref._positioning_page.set_active_nav("btnPositioning_2")
             self.main_ref._positioning_page.showFullScreen()
+            
+            # Monitoring page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_monitoring(self) -> None:
         # already here
@@ -128,21 +150,45 @@ class MonitoringPage(QWidget):
 
     def _open_camera(self) -> None:
         if self.main_ref:
-            self.hide()
             if not hasattr(self.main_ref, '_camera_page') or self.main_ref._camera_page is None:
                 from .pyside_camera import CameraPage
                 self.main_ref._camera_page = CameraPage(main_ref=self.main_ref, get_data_callback=self.get_data_callback)
+            
+            # Camera widget'ını direkt göster
             self.main_ref._camera_page.set_active_nav("btnCamera")
             self.main_ref._camera_page.showFullScreen()
+            
+            # Monitoring page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _open_sensor(self) -> None:
         if self.main_ref:
-            self.hide()
             if not hasattr(self.main_ref, '_sensor_page') or self.main_ref._sensor_page is None:
                 from .pyside_sensor import SensorPage
                 self.main_ref._sensor_page = SensorPage(main_ref=self.main_ref, get_data_callback=self.get_data_callback)
+            
+            # Sensor widget'ını direkt göster
             self.main_ref._sensor_page.set_active_nav("btnSensor")
             self.main_ref._sensor_page.showFullScreen()
+            
+            # Monitoring page'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    print(f"Hide işlemi hatası: {e}")
+            
+            QTimer.singleShot(500, safe_hide)
 
     def _update_datetime_labels(self) -> None:
         now = QDateTime.currentDateTime()

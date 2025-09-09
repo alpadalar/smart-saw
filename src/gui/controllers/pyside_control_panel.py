@@ -392,6 +392,9 @@ class ControlPanelWindow(QMainWindow):
         # Frame tıklama kontrolü için flag
         self._frame_click_enabled = True
         
+        # Timer yönetimi için
+        self._hide_timer = None
+        
         # Başlangıç değerlerini ayarla
         self._initialize_current_values()
         
@@ -1469,34 +1472,64 @@ class ControlPanelWindow(QMainWindow):
             from .pyside_positioning import PositioningPage
             self._positioning_page = PositioningPage(main_ref=self, get_data_callback=self.get_data_callback)
         
-        # Control panel'i gizle
-        self.hide()
-            
-        # Positioning widget'ını göster ve aktif icon'u ayarla
+        # Positioning widget'ını direkt göster ve aktif icon'u ayarla
         self._positioning_page.set_active_nav("btnPositioning_2")
         self._positioning_page.showFullScreen()            
         self._positioning_page.raise_()
         self._positioning_page.activateWindow()
-            
-        # Focus'u positioning widget'ına ver
         self._positioning_page.setFocus()
+        
+        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+        # Önceki timer'ı iptal et
+        if self._hide_timer:
+            self._hide_timer.stop()
+        
+        # Timer'ı güvenli hale getir
+        def safe_hide():
+            try:
+                if self.isVisible():
+                    self.hide()
+            except Exception as e:
+                logger.error(f"Hide işlemi hatası: {e}")
+            finally:
+                self._hide_timer = None
+        
+        self._hide_timer = QTimer()
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(safe_hide)
+        self._hide_timer.start(500)
 
     def _open_monitoring(self) -> None:
         if self._monitoring_page is None:
             from .pyside_monitoring import MonitoringPage
             self._monitoring_page = MonitoringPage(main_ref=self, get_data_callback=self.get_data_callback)
         
-        # Control panel'i gizle
-        self.hide()
-        
-        # Monitoring widget'ını göster ve aktif icon'u ayarla
+        # Monitoring widget'ını direkt göster ve aktif icon'u ayarla
         self._monitoring_page.set_active_nav("btnTracking")
         self._monitoring_page.showFullScreen()
         self._monitoring_page.raise_()
         self._monitoring_page.activateWindow()
-        
-        # Focus'u monitoring widget'ına ver
         self._monitoring_page.setFocus()
+        
+        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+        # Önceki timer'ı iptal et
+        if self._hide_timer:
+            self._hide_timer.stop()
+        
+        # Timer'ı güvenli hale getir
+        def safe_hide():
+            try:
+                if self.isVisible():
+                    self.hide()
+            except Exception as e:
+                logger.error(f"Hide işlemi hatası: {e}")
+            finally:
+                self._hide_timer = None
+        
+        self._hide_timer = QTimer()
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(safe_hide)
+        self._hide_timer.start(500)
 
     def _open_camera(self) -> None:
         if self._camera_page is None:
@@ -1507,34 +1540,64 @@ class ControlPanelWindow(QMainWindow):
             if hasattr(self, 'wear_calculator') and self.wear_calculator:
                 self._camera_page.wear_calculator = self.wear_calculator
         
-        # Control panel'i gizle
-        self.hide()
-        
-        # Camera widget'ını göster ve aktif icon'u ayarla
+        # Camera widget'ını direkt göster ve aktif icon'u ayarla
         self._camera_page.set_active_nav("btnCamera")
         self._camera_page.showFullScreen()
         self._camera_page.raise_()
         self._camera_page.activateWindow()
-        
-        # Focus'u camera widget'ına ver
         self._camera_page.setFocus()
+        
+        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+        # Önceki timer'ı iptal et
+        if self._hide_timer:
+            self._hide_timer.stop()
+        
+        # Timer'ı güvenli hale getir
+        def safe_hide():
+            try:
+                if self.isVisible():
+                    self.hide()
+            except Exception as e:
+                logger.error(f"Hide işlemi hatası: {e}")
+            finally:
+                self._hide_timer = None
+        
+        self._hide_timer = QTimer()
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(safe_hide)
+        self._hide_timer.start(500)
 
     def _open_sensor(self) -> None:
         if self._sensor_page is None:
             from .pyside_sensor import SensorPage
             self._sensor_page = SensorPage(main_ref=self, get_data_callback=self.get_data_callback)
         
-        # Control panel'i gizle
-        self.hide()
-        
-        # Sensor widget'ını göster ve aktif icon'u ayarla
+        # Sensor widget'ını direkt göster ve aktif icon'u ayarla
         self._sensor_page.set_active_nav("btnSensor")
         self._sensor_page.showFullScreen()
         self._sensor_page.raise_()
         self._sensor_page.activateWindow()
-        
-        # Focus'u sensor widget'ına ver
         self._sensor_page.setFocus()
+        
+        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+        # Önceki timer'ı iptal et
+        if self._hide_timer:
+            self._hide_timer.stop()
+        
+        # Timer'ı güvenli hale getir
+        def safe_hide():
+            try:
+                if self.isVisible():
+                    self.hide()
+            except Exception as e:
+                logger.error(f"Hide işlemi hatası: {e}")
+            finally:
+                self._hide_timer = None
+        
+        self._hide_timer = QTimer()
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(safe_hide)
+        self._hide_timer.start(500)
 
     # ---- Date/Time
     def _update_datetime_labels(self) -> None:
