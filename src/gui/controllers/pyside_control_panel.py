@@ -401,6 +401,9 @@ class ControlPanelWindow(QMainWindow):
         # Başlangıçta bağlantı yok olarak ayarla
         self.current_values['testere_durumu'] = 'Bağlantı Yok'
         
+        # Başlangıç status icon'unu ayarla
+        self._update_status_icon('Bağlantı Yok')
+        
         # Replace sidebar icons from images/ folder
         self._apply_local_icons()
 
@@ -558,6 +561,8 @@ class ControlPanelWindow(QMainWindow):
             # Sistem durumu etiketi başlangıç metni
             if hasattr(self.ui, 'labelSystemStatusInfo'):
                 self.ui.labelSystemStatusInfo.setText("Bağlantı Kontrol Ediliyor...")
+                # Status icon'unu güncelle
+                self._update_status_icon("Bağlantı Kontrol Ediliyor...")
             
             # Frame'leri tıklanabilir yap - eğer varsa
             if hasattr(self.ui, 'bandCuttingSpeedFrame'):
@@ -734,7 +739,7 @@ class ControlPanelWindow(QMainWindow):
                 self.ui.toolBtnSawdustCleaning.blockSignals(False)
     
     def _get_status_message(self, status_text):
-        """Sistem durumuna göre özel mesaj döndürür."""
+        """Sistem durumuna göre özel mesaj döndürür ve icon'u günceller."""
         status_messages = {
             "BOŞTA": "Boşta.",
             "HİDROLİK AKTİF": "Makine kesime\nhazır.",
@@ -745,9 +750,49 @@ class ControlPanelWindow(QMainWindow):
             "MALZEME BESLEME": "Kesilecek malzeme\nkonumlandırılıyor.",
             "BİLİNMİYOR": "Bilinmiyor!",
             "Bağlantı Yok": "Bağlantı bekleniyor...",
-            "Veri bekleniyor...": "Veri akışı\nbekleniyor..."
+            "Veri bekleniyor...": "Veri akışı\nbekleniyor...",
+            "Bağlantı Kontrol Ediliyor...": "Bağlantı kontrol\nediliyor..."
         }
+        
+        # Status icon'unu güncelle
+        self._update_status_icon(status_text)
+        
         return status_messages.get(status_text, status_text)
+
+    def _get_status_icon_path(self, status_text):
+        """Sistem durumuna göre icon path'ini döndürür."""
+        status_icons = {
+            "BOŞTA": "bosta.png",
+            "HİDROLİK AKTİF": "okey-icon.svg",
+            "ŞERİT MOTOR ÇALIŞIYOR": "serit-motor-calisiyor.png",
+            "KESİM YAPILIYOR": "kesim-yapiliyor.png",
+            "KESİM BİTTİ": "okey-icon.svg",
+            "ŞERİT YUKARI ÇIKIYOR": "serit-motor-calisiyor.png",
+            "MALZEME BESLEME": "malzeme-besleme.png",
+            "BİLİNMİYOR": "okey-icon.svg",
+            "Bağlantı Yok": "baglanti-yok.png",
+            "Veri bekleniyor...": "baglanti-kontrol-ediliyor.png",
+            "Bağlantı Kontrol Ediliyor...": "baglanti-kontrol-ediliyor.png"
+        }
+        return status_icons.get(status_text, "baglanti-kontrol-ediliyor.png")  # Default fallback
+
+    def _update_status_icon(self, status_text):
+        """Status icon'unu günceller."""
+        try:
+            if hasattr(self.ui, 'iconStatus'):
+                icon_path = self._get_status_icon_path(status_text)
+                full_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images", icon_path)
+                
+                # QPixmap ile icon'u yükle
+                from PySide6.QtGui import QPixmap
+                pixmap = QPixmap(full_path)
+                
+                # Icon'u 71x71 boyutunda ölçekle
+                scaled_pixmap = pixmap.scaled(71, 71, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.ui.iconStatus.setPixmap(scaled_pixmap)
+                
+        except Exception as e:
+            logger.error(f"Status icon güncelleme hatası: {e}")
 
     def _handle_cutting_mode_buttons(self, clicked_button):
         """Kesim modu butonlarını yönetir"""
@@ -1086,11 +1131,15 @@ class ControlPanelWindow(QMainWindow):
                 self.current_values['testere_durumu'] = "Veri bekleniyor..."
                 if hasattr(self.ui, 'labelSystemStatusInfo'):
                     self.ui.labelSystemStatusInfo.setText("Veri bekleniyor...")
+                    # Status icon'unu güncelle
+                    self._update_status_icon("Veri bekleniyor...")
             else:
                 self.current_values['modbus_status'] = f"Bağlantı Yok ({ip})"
                 self.current_values['testere_durumu'] = "Bağlantı Yok"
                 if hasattr(self.ui, 'labelSystemStatusInfo'):
                     self.ui.labelSystemStatusInfo.setText("Bağlantı Yok")
+                    # Status icon'unu güncelle
+                    self._update_status_icon("Bağlantı Yok")
         except Exception as e:
             logger.error(f"Modbus durum güncelleme hatası: {e}")
     
