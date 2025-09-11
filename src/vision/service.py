@@ -349,8 +349,8 @@ class VisionService:
 
     # Adapted from real_ldc/wear_calculation.py
     def _compute_wear(self, image_path: str) -> Tuple[Optional[float], Optional[np.ndarray]]:
-        TOP_LINE_Y = 88
-        BOTTOM_LINE_Y = 154
+        TOP_LINE_Y = 170
+        BOTTOM_LINE_Y = 236
         image = cv2.imread(image_path)
         if image is None:
             return None, None
