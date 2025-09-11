@@ -1,6 +1,6 @@
 from typing import Callable, Dict, Optional
 from PySide6.QtCore import QTimer, Qt, QDateTime
-from PySide6.QtWidgets import QMainWindow, QTextEdit, QWidget, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QTextEdit, QWidget, QVBoxLayout, QApplication
 from PySide6.QtGui import QIcon, QTextCursor, QPainter, QPen, QColor, QBrush
 import os
 from datetime import datetime, timedelta
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 from control import ControllerType, get_controller_factory
 from core.constants import TestereState
 from utils.helpers import reverse_calculate_value
+from utils.speed_reader import read_band_speeds
 
 # NumpadDialog'u import et
 try:
@@ -427,6 +428,11 @@ class ControlPanelWindow(QMainWindow):
         # Timer'ı başlangıçta başlat
         self._data_timer.start(200)  # 200ms
 
+        # Hız görselleme timer'ı (registerlardan canlı okuma)
+        self._speed_timer = QTimer(self)
+        self._speed_timer.timeout.connect(self._update_band_speeds_live)
+        self._speed_timer.start(300)  # ~3-4 Hz yeterli
+
         # GUI'yi başlat
         self.setup_gui()
         
@@ -435,6 +441,12 @@ class ControlPanelWindow(QMainWindow):
         
         # Start fullscreen by default as requested
         self.showFullScreen()
+
+        # 'Q' tuşu basılı tutma ile uygulamayı kapatma için hazırlık
+        self._q_key_down = False
+        self._q_hold_timer = QTimer(self)
+        self._q_hold_timer.setSingleShot(True)
+        self._q_hold_timer.timeout.connect(self._on_q_hold_timeout)
 
     def set_active_nav(self, active_btn_name: str):
         """Navigation butonlarının aktif/pasif durumunu ayarla"""
@@ -545,6 +557,10 @@ class ControlPanelWindow(QMainWindow):
                 self.ui.log_text = None
             
             # Başlangıç değerlerini ayarla
+            if hasattr(self.ui, 'labelSentCuttingSpeed'):
+                self.ui.labelSentCuttingSpeed.setText("0.0")
+            if hasattr(self.ui, 'labelSentDescentSpeed'):
+                self.ui.labelSentDescentSpeed.setText("0.0")
             if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
                 self.ui.labelBandCuttingSpeedValue.setText("0.0")
             if hasattr(self.ui, 'labelBandDescentSpeedValue'):
@@ -867,10 +883,10 @@ class ControlPanelWindow(QMainWindow):
                 QTimer.singleShot(2000, lambda: setattr(self, '_frame_click_enabled', True))
                 # Label'ları doğrudan gönderilen hız değerleriyle güncelle
                 if speeds is not None:
-                    if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
-                        self.ui.labelBandCuttingSpeedValue.setText(f"{speeds['cutting']:.1f}")
-                    if hasattr(self.ui, 'labelBandDescentSpeedValue'):
-                        self.ui.labelBandDescentSpeedValue.setText(f"{speeds['descent']:.1f}")
+                    if hasattr(self.ui, 'labelSentCuttingSpeed'):
+                        self.ui.labelSentCuttingSpeed.setText(f"{speeds['cutting']:.1f}")
+                    if hasattr(self.ui, 'labelSentDescentSpeed'):
+                        self.ui.labelSentDescentSpeed.setText(f"{speeds['descent']:.1f}")
         except Exception as e:
             logger.error(f"Kesim hızı buton yönetimi hatası: {e}")
             self.add_log(f"Kesim hızı değiştirme hatası: {str(e)}", "ERROR")
@@ -1004,10 +1020,10 @@ class ControlPanelWindow(QMainWindow):
             self.current_values['serit_inme_hizi'] = f"{descent_speed:.1f} "
             
             # Hız değerlerini UI'da güncelle
-            if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
-                self.ui.labelBandCuttingSpeedValue.setText(f"{cutting_speed:.1f}")
-            if hasattr(self.ui, 'labelBandDescentSpeedValue'):
-                self.ui.labelBandDescentSpeedValue.setText(f"{descent_speed:.1f}")
+            if hasattr(self.ui, 'labelSentCuttingSpeed'):
+                self.ui.labelSentCuttingSpeed.setText(f"{cutting_speed:.1f}")
+            if hasattr(self.ui, 'labelSentDescentSpeed'):
+                self.ui.labelSentDescentSpeed.setText(f"{descent_speed:.1f}")
             
             # Kesim bilgileri
             self.current_values['kesilen_parca_adeti'] = str(processed_data.get('kesilen_parca_adeti', 0))
@@ -1223,6 +1239,53 @@ class ControlPanelWindow(QMainWindow):
             logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:") 
 
+    def _update_band_speeds_live(self):
+        """Register'lardan hızları okuyup büyük hız label'larını sürekli günceller."""
+        try:
+            if not hasattr(self, 'controller_factory') or not self.controller_factory:
+                return
+            modbus_client = getattr(self.controller_factory, 'modbus_client', None)
+            speeds = read_band_speeds(modbus_client)
+            if speeds is None:
+                return
+            cutting_speed, descent_speed = speeds
+            if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
+                self.ui.labelBandCuttingSpeedValue.setText(f"{cutting_speed:.0f}")
+            if hasattr(self.ui, 'labelBandDescentSpeedValue'):
+                self.ui.labelBandDescentSpeedValue.setText(f"{descent_speed:.0f}")
+        except Exception as e:
+            logger.debug(f"Hız label güncelleme hatası: {e}")
+
+    def keyPressEvent(self, event):
+        try:
+            if event.key() == Qt.Key_Q and not event.isAutoRepeat():
+                app = QApplication.instance()
+                if app:
+                    app.quit()
+                else:
+                    self.close()
+        except Exception:
+            pass
+        finally:
+            super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        try:
+            if event.key() == Qt.Key_Q and not event.isAutoRepeat():
+                # Tek basışta kapattığımız için buradan ek işlem gerekmiyor
+                pass
+        except Exception:
+            pass
+        finally:
+            super().keyReleaseEvent(event)
+
+    def _on_q_hold_timeout(self):
+        # Artık kullanılmıyor (tek basışta çıkış)
+        try:
+            pass
+        except Exception:
+            pass
+
     def _update_cutting_button_states(self, testere_durumu: int):
         """Kesim butonlarının durumunu günceller."""
         try:
@@ -1366,8 +1429,8 @@ class ControlPanelWindow(QMainWindow):
                 event.accept()
             
             # Mevcut değeri al ve float'a çevir
-            if hasattr(self.ui, 'labelBandCuttingSpeedValue'):
-                current_value = self.ui.labelBandCuttingSpeedValue.text()
+            if hasattr(self.ui, 'labelSentCuttingSpeed'):
+                current_value = self.ui.labelSentCuttingSpeed.text()
                 try:
                     initial_value = float(current_value) if current_value != "NULL" else 0.0
                 except ValueError:
@@ -1390,7 +1453,7 @@ class ControlPanelWindow(QMainWindow):
                     if value > 0:
                         self._send_manual_speed_value(value)
                         self.current_values['serit_kesme_hizi'] = f"{value:.1f}"
-                        self.ui.labelBandCuttingSpeedValue.setText(f"{value:.2f}")
+                        self.ui.labelSentCuttingSpeed.setText(f"{value:.2f}")
                         self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"Kesme hızı ayarlama hatası: {e}")
@@ -1428,8 +1491,8 @@ class ControlPanelWindow(QMainWindow):
                 event.accept()
             
             # Mevcut değeri al ve float'a çevir
-            if hasattr(self.ui, 'labelBandDescentSpeedValue'):
-                current_value = self.ui.labelBandDescentSpeedValue.text()
+            if hasattr(self.ui, 'labelSentDescentSpeed'):
+                current_value = self.ui.labelSentDescentSpeed.text()
                 try:
                     initial_value = float(current_value) if current_value != "NULL" else 0.0
                 except ValueError:

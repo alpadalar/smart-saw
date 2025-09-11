@@ -82,10 +82,10 @@ class DelayCalculator:
                 logger.warning("Modbus bağlantısı yok")
                 return None
             
-            # İnme hızı register'ını oku (client.py'da +1000 eklendiği için -1000 yapıyoruz)
+            # İnme hızı register'ını oku
             start_time = time.time()
             registers = modbus_client.read_registers(
-                address=INME_HIZI_REGISTER_ADDRESS - 1000, 
+                address=INME_HIZI_REGISTER_ADDRESS, 
                 count=1
             )
             read_time = time.time() - start_time
