@@ -109,11 +109,12 @@ class FuzzyController:
         except Exception as e:
             logger.error(f"Veri kaydetme hatası: {str(e)}")
 
-    def _calculate_speed_change_percentage(self, speed_change, speed_type):
+    def _calculate_speed_change_percentage(self, speed_change, speed_type, current_speed):
         """Hız değişiminin yüzdesini hesaplar"""
-        speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
-        if speed_range == 0:
-            return 0
+        if speed_change > 0:
+            speed_range = SPEED_LIMITS[speed_type]['max'] - current_speed
+        else:
+            speed_range = current_speed - SPEED_LIMITS[speed_type]['min']
         return (speed_change / speed_range) * 100
 
     def _calculate_speed_change_from_percentage(self, percentage, speed_type):
@@ -269,7 +270,7 @@ class FuzzyController:
             
             # İnme hızı değişim yüzdesini hesapla
             inme_hizi_degisim = new_inme_hizi - current_inme_hizi
-            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
+            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme', current_inme_hizi)
             logger.debug(f"İnme hızı değişim yüzdesi: %{inme_degisim_yuzdesi:.2f}")
             
             # İnme hızı değişimini buffer'a ekle

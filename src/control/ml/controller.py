@@ -70,7 +70,7 @@ class MLController:
         self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         # Tork verisi için bağımsız buffer
-        self.torque_buffer = deque(maxlen=BUFFER_SIZE)
+        self.torque_buffer = deque(maxlen=6)
         self.last_buffer_update = time.time()
     
     def _get_db(self):
@@ -228,7 +228,7 @@ class MLController:
             
             # İnme hızı değişim yüzdesini hesapla
             inme_hizi_degisim = new_inme_hizi - avg_inme_hizi
-            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme')
+            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(inme_hizi_degisim, 'inme', avg_inme_hizi)
             
             # Kesme hızı için değişimi hesapla
             if coefficient < 0:
@@ -276,12 +276,21 @@ class MLController:
             logger.error(f"Katsayı tahmini hatası: {str(e)}")
             return 0.0
     
-    def _calculate_speed_change_percentage(self, speed_change: float, speed_type: str) -> float:
+    def _calculate_speed_change_percentage(self, speed_change: float, speed_type: str, current_speed: float) -> float:
         """Hız değişiminin yüzdesini hesaplar"""
-        speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
-        if speed_range == 0:
-            return 0
-        return (speed_change / speed_range) * 100
+        try:
+            # Değişim pozitif ise range: mevcut -> max, negatif ise mevcut -> min
+            if speed_change > 0:
+                speed_range = SPEED_LIMITS[speed_type]['max'] - current_speed
+            else:
+                speed_range = current_speed - SPEED_LIMITS[speed_type]['min']
+
+            if speed_range <= 0:
+                return 0.0
+
+            return (speed_change / speed_range) * 100.0
+        except Exception:
+            return 0.0
 
     def _calculate_speed_change_from_percentage(self, percentage: float, speed_type: str) -> float:
         """Yüzdeye göre hız değişimini hesaplar"""
@@ -342,7 +351,7 @@ class MLController:
             new_inme_hizi = max(SPEED_LIMITS['inme']['min'], min(new_inme_hizi, SPEED_LIMITS['inme']['max']))
             
             # İnme hızı değişim yüzdesini hesapla
-            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(new_inme_hizi - current_inme_hizi, 'inme')
+            inme_degisim_yuzdesi = self._calculate_speed_change_percentage(new_inme_hizi - current_inme_hizi, 'inme', current_inme_hizi)
             
             # İnme hızı değişimini buffer'a ekle
             self.inme_hizi_degisim_buffer += (new_inme_hizi - current_inme_hizi)
