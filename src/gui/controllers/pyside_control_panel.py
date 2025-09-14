@@ -326,10 +326,10 @@ class BandDeviationGraphWidget(QWidget):
                     fill_points.append((points[-1][0], rect.bottom()))
                     fill_points.append((points[0][0], rect.bottom()))
                     
-                    from PySide6.QtGui import QPolygon
+                    from PySide6.QtGui import QPolygon, QPoint
                     polygon = QPolygon()
                     for x, y in fill_points:
-                        polygon.append(int(x), int(y))
+                        polygon.append(QPoint(int(x), int(y)))
                     
                     painter.drawPolygon(polygon)
                 
@@ -348,7 +348,7 @@ class BandDeviationGraphWidget(QWidget):
                     
                     triangle_polygon = QPolygon()
                     for x, y in triangle_points:
-                        triangle_polygon.append(int(x), int(y))
+                        triangle_polygon.append(QPoint(int(x), int(y)))
                     
                     painter.drawPolygon(triangle_polygon)
                     
