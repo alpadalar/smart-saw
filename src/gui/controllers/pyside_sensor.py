@@ -1103,8 +1103,13 @@ class SensorPage(QWidget):
             logger.error(f"Buffer'dan grafik çizim hatası: {e}")
 
     def _load_last_cut_data(self):
-        """Son kesim verilerini veritabanından yükler"""
+        """Son kesim verilerini veritabanından yükler - sadece kesim yapılmıyor ise"""
         try:
+            # Eğer şu anda kesim yapılıyorsa, geçmiş verileri yükleme
+            if self.is_cutting:
+                logger.info("Kesim devam ediyor, geçmiş veri yüklenmeyecek")
+                return
+                
             if not self.cutting_graph or not self.db:
                 logger.warning("Grafik widget veya veritabanı bağlantısı yok")
                 return
@@ -1112,6 +1117,9 @@ class SensorPage(QWidget):
             # Grafiği temizle
             self.cutting_graph.clear_data()
             logger.info("Grafik temizlendi")
+            
+            # Geçmiş veri yüklemesi öncesi hazırlık
+            self._prepare_for_historical_data_load()
             
             # Son kesim verilerini al
             data = self._get_last_cut_data_from_db()
@@ -1128,10 +1136,14 @@ class SensorPage(QWidget):
             logger.info(f"Seçili eksenler - X: {x_axis}, Y: {y_axis}")
             
             added_points = 0
-            # Zaman etiketleri için başlangıç/son zamanlarını hesapla (timestamp alanı mevcutsa)
+            # Zaman etiketleri için başlangıç/son zamanlarını hesapla
             start_dt = None
             end_dt = None
-            for i, row in enumerate(data):
+            
+            # Veriyi kronolojik sıraya çevir (en eski önce olacak şekilde)
+            data_sorted = sorted(data, key=lambda x: x.get('timestamp', ''))
+            
+            for i, row in enumerate(data_sorted):
                 x_value = self._get_value_for_axis(row, x_axis)
                 y_value = self._get_value_for_axis(row, y_axis)
                 
@@ -1140,6 +1152,7 @@ class SensorPage(QWidget):
                 if x_value is not None and y_value is not None:
                     self.cutting_graph.add_data_point(x_value, y_value)
                     added_points += 1
+                    
                 # Zaman alanını oku
                 try:
                     ts = row.get('timestamp')
@@ -1153,10 +1166,22 @@ class SensorPage(QWidget):
                     pass
             
             logger.info(f"Son kesim verisi yüklendi: {added_points} nokta grafiğe eklendi")
+            
             # Zaman ekseni seçiliyse etiketler için süreleri ata
             if self.cutting_graph.x_axis_type == "timestamp" and start_dt and end_dt:
                 self.cutting_graph.cut_start_time = start_dt
                 self.cutting_graph.last_point_time = end_dt
+            
+            # Yükseklik ekseni için başlangıç/mevcut değerleri ata
+            if self.cutting_graph.x_axis_type == "kafa_yuksekligi_mm" and data_sorted:
+                try:
+                    start_height = self._get_value_for_axis(data_sorted[0], "kafa_yuksekligi_mm")
+                    end_height = self._get_value_for_axis(data_sorted[-1], "kafa_yuksekligi_mm")
+                    if start_height is not None and end_height is not None:
+                        self.cutting_graph.start_height_value = float(start_height)
+                        self.cutting_graph.current_height_value = float(end_height)
+                except Exception:
+                    pass
             
         except Exception as e:
             logger.error(f"Son kesim verisi yükleme hatası: {e}")
@@ -1164,49 +1189,115 @@ class SensorPage(QWidget):
             logger.error(f"Detaylı hata: {traceback.format_exc()}")
 
     def _get_last_cut_data_from_db(self):
-        """Veritabanından son kesim verilerini alır"""
+        """Veritabanından son kesim aralığının verilerini alır"""
         try:
             if not self.db:
                 logger.warning("Veritabanı bağlantısı yok")
                 return None
             
-            # Önce basit bir sorgu ile veri var mı kontrol et
             cursor = self.db.cursor()
-            check_query = "SELECT COUNT(*) FROM testere_data WHERE testere_durumu = 3"
-            total_cutting_records = cursor.execute(check_query).fetchone()[0]
-            logger.info(f"Toplam kesim kaydı sayısı: {total_cutting_records}")
             
-            if total_cutting_records == 0:
-                logger.warning("Veritabanında kesim verisi bulunamadı")
-                return None
-            
-            # Son kesim verilerini al (basitleştirilmiş sorgu)
-            simple_query = """
-                SELECT 
-                    timestamp,
-                    serit_motor_akim_a,
-                    inme_motor_akim_a,
-                    kafa_yuksekligi_mm,
-                    serit_kesme_hizi,
-                    serit_inme_hizi,
-                    serit_sapmasi,
-                    serit_motor_tork_percentage,
-                    ivme_olcer_x_hz,
-                    ivme_olcer_y_hz,
-                    ivme_olcer_z_hz
-                FROM testere_data
-                WHERE testere_durumu = 3
-                AND serit_motor_akim_a IS NOT NULL
-                AND kafa_yuksekligi_mm IS NOT NULL
-                ORDER BY timestamp DESC
-                LIMIT 100
+            # Önce testere_durumu 3 olan son kesim aralığını bul
+            # Son kesim bloğunun başlangıç ve bitiş zamanlarını tespit et
+            find_last_cut_query = """
+                WITH cutting_sessions AS (
+                    SELECT 
+                        timestamp,
+                        testere_durumu,
+                        LAG(testere_durumu) OVER (ORDER BY timestamp) as prev_durumu
+                    FROM testere_data 
+                    WHERE timestamp IS NOT NULL
+                    ORDER BY timestamp
+                ),
+                session_boundaries AS (
+                    SELECT 
+                        timestamp,
+                        testere_durumu,
+                        CASE 
+                            WHEN testere_durumu = 3 AND (prev_durumu != 3 OR prev_durumu IS NULL) THEN 'START'
+                            WHEN testere_durumu != 3 AND prev_durumu = 3 THEN 'END'
+                            ELSE NULL 
+                        END as boundary_type
+                    FROM cutting_sessions
+                ),
+                last_session AS (
+                    SELECT 
+                        MAX(CASE WHEN boundary_type = 'START' THEN timestamp END) as session_start
+                    FROM session_boundaries
+                )
+                SELECT session_start FROM last_session WHERE session_start IS NOT NULL
             """
             
-            result = cursor.execute(simple_query).fetchall()
-            logger.info(f"Sorgu sonucu {len(result)} kayıt bulundu")
+            result = cursor.execute(find_last_cut_query).fetchone()
+            
+            if not result or not result[0]:
+                logger.warning("Son kesim oturumu bulunamadı")
+                return None
+                
+            last_cut_start = result[0]
+            logger.info(f"Son kesim başlangıcı: {last_cut_start}")
+            
+            # Son kesim oturumunun bitişini bul
+            find_cut_end_query = """
+                SELECT MIN(timestamp) as cut_end
+                FROM testere_data 
+                WHERE timestamp > ? AND testere_durumu != 3
+            """
+            
+            end_result = cursor.execute(find_cut_end_query, (last_cut_start,)).fetchone()
+            last_cut_end = end_result[0] if end_result and end_result[0] else None
+            
+            if last_cut_end:
+                logger.info(f"Son kesim bitişi: {last_cut_end}")
+                # Belirli bir aralıktaki verileri al
+                data_query = """
+                    SELECT 
+                        timestamp,
+                        serit_motor_akim_a,
+                        inme_motor_akim_a,
+                        kafa_yuksekligi_mm,
+                        serit_kesme_hizi,
+                        serit_inme_hizi,
+                        serit_sapmasi,
+                        serit_motor_tork_percentage,
+                        ivme_olcer_x_hz,
+                        ivme_olcer_y_hz,
+                        ivme_olcer_z_hz
+                    FROM testere_data
+                    WHERE timestamp >= ? AND timestamp < ?
+                    AND testere_durumu = 3
+                    ORDER BY timestamp ASC
+                """
+                data_params = (last_cut_start, last_cut_end)
+            else:
+                # Eğer kesim bitişi bulunamadıysa, başlangıçtan itibaren tüm kesim verilerini al
+                logger.info("Kesim bitişi bulunamadı, başlangıçtan itibaren alınıyor")
+                data_query = """
+                    SELECT 
+                        timestamp,
+                        serit_motor_akim_a,
+                        inme_motor_akim_a,
+                        kafa_yuksekligi_mm,
+                        serit_kesme_hizi,
+                        serit_inme_hizi,
+                        serit_sapmasi,
+                        serit_motor_tork_percentage,
+                        ivme_olcer_x_hz,
+                        ivme_olcer_y_hz,
+                        ivme_olcer_z_hz
+                    FROM testere_data
+                    WHERE timestamp >= ?
+                    AND testere_durumu = 3
+                    ORDER BY timestamp ASC
+                    LIMIT 1000
+                """
+                data_params = (last_cut_start,)
+            
+            result = cursor.execute(data_query, data_params).fetchall()
+            logger.info(f"Son kesim aralığından {len(result)} kayıt bulundu")
             
             if not result:
-                logger.warning("Sorgu sonucu boş")
+                logger.warning("Son kesim aralığında veri bulunamadı")
                 return None
 
             # Verileri sözlük formatına dönüştür
@@ -1228,7 +1319,7 @@ class SensorPage(QWidget):
                 
                 # İlk birkaç kaydı log'la
                 if i < 3:
-                    logger.info(f"Örnek veri {i}: {data[-1]}")
+                    logger.info(f"Örnek veri {i}: timestamp={row[0]}, kesme_hızı={row[4]}")
             
             logger.info(f"Toplam {len(data)} veri satırı hazırlandı")
             return data
@@ -1255,15 +1346,19 @@ class SensorPage(QWidget):
             elif axis_type == "kafa_yuksekligi_mm":
                 return data_row.get('kafa_yuksekligi_mm', 0.0)
             elif axis_type == "timestamp":
-                # Zaman için timestamp'i saniyeye çevir
+                # Zaman için elapsed time hesapla (ilk veri noktasından itibaren geçen süre)
                 try:
-                    from datetime import datetime
                     timestamp_str = data_row.get('timestamp', '')
-                    if timestamp_str:
-                        dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                        timestamp_val = dt.timestamp()
-                        logger.info(f"Timestamp dönüşümü: '{timestamp_str}' -> {timestamp_val}")
-                        return timestamp_val
+                    if timestamp_str and hasattr(self, '_first_timestamp_for_axis'):
+                        if not hasattr(self, '_first_timestamp_for_axis') or self._first_timestamp_for_axis is None:
+                            # İlk timestamp'i kaydet
+                            self._first_timestamp_for_axis = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                            return 0.0
+                        else:
+                            # Geçen süreyi hesapla (saniye cinsinden)
+                            current_dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                            elapsed_seconds = (current_dt - self._first_timestamp_for_axis).total_seconds()
+                            return float(elapsed_seconds)
                     return 0.0
                 except Exception as e:
                     logger.error(f"Timestamp dönüşüm hatası: {e}")
@@ -1272,4 +1367,9 @@ class SensorPage(QWidget):
                 return 0.0
         except Exception as e:
             logger.error(f"Eksen değeri alma hatası: {e}")
-            return 0.0 
+            return 0.0
+
+    # _get_last_cut_data_from_db metodunu çağırmadan önce timestamp referansını sıfırla
+    def _prepare_for_historical_data_load(self):
+        """Geçmiş veri yüklemesi öncesi hazırlık"""
+        self._first_timestamp_for_axis = None 
