@@ -120,6 +120,32 @@ except ImportError:
 last_meaningful_speed = None
 
 
+class ControlPanelLogHandler(logging.Handler):
+    """Control panel için özel log handler"""
+    
+    def __init__(self, control_panel_ref):
+        super().__init__()
+        self.control_panel = control_panel_ref
+        
+    def emit(self, record):
+        try:
+            message = self.format(record)
+            # Sadece kontrol sistemi devreye girme mesajlarını yakala
+            if "Kontrol sisteminin devreye girmesine" in message and "saniye kaldı" in message:
+                # Mesajdan saniye değerini çıkar
+                import re
+                match = re.search(r'(\d+) saniye kaldı', message)
+                if match:
+                    remaining_time = int(match.group(1))
+                    # Aynı mesajın tekrar etmemesini sağla
+                    if remaining_time != self.control_panel._last_control_factory_log:
+                        self.control_panel.add_log(message, "INFO")
+                        self.control_panel._last_control_factory_log = remaining_time
+        except Exception as e:
+            # Handler hatası log'lanmamalı (sonsuz döngü olabilir)
+            pass
+
+
 
 class BandDeviationGraphWidget(QWidget):
     """Şerit sapması değerlerini gösteren gerçek zamanlı grafik widget'ı"""
@@ -396,6 +422,10 @@ class ControlPanelWindow(QMainWindow):
         # Timer yönetimi için
         self._hide_timer = None
         
+        # Control factory log takibi için
+        self._last_control_factory_log = None
+        self._control_log_handler = None
+        
         # Başlangıç değerlerini ayarla
         self._initialize_current_values()
         
@@ -435,6 +465,9 @@ class ControlPanelWindow(QMainWindow):
 
         # GUI'yi başlat
         self.setup_gui()
+        
+        # Log handler'ı setup et
+        self._setup_log_handler()
         
         # Control panel'i aktif olarak ayarla
         self.set_active_nav("btnControlPanel")
@@ -479,6 +512,20 @@ class ControlPanelWindow(QMainWindow):
                     self.update_data(data)
         except Exception as e:
             logger.error(f"Data tick hatası: {e}")
+
+    def _setup_log_handler(self):
+        """Log handler'ı setup eder"""
+        try:
+            # Özel log handler'ı oluştur
+            self._control_log_handler = ControlPanelLogHandler(self)
+            self._control_log_handler.setLevel(logging.INFO)
+            
+            # Ana logger'a handler'ı ekle
+            main_logger = logging.getLogger()
+            main_logger.addHandler(self._control_log_handler)
+            
+        except Exception as e:
+            logger.error(f"Log handler setup hatası: {e}")
 
     def _initialize_current_values(self):
         """Başlangıç değerlerini ayarlar"""
