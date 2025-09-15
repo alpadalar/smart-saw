@@ -645,7 +645,7 @@ class Ui_MainWindow(object):
         self.altdegerlabel.setAlignment(Qt.AlignLeft)
         self.systemStatusFrame = QFrame(self.centralwidget)
         self.systemStatusFrame.setObjectName(u"systemStatusFrame")
-        self.systemStatusFrame.setGeometry(QRect(1568, 127, 321, 344))
+        self.systemStatusFrame.setGeometry(QRect(1568, 127, 321, 243))
         self.systemStatusFrame.setStyleSheet(u"QFrame {\n"
 "    background: qlineargradient(\n"
 "        x1:0, y1:0, x2:0, y2:1,\n"
@@ -669,7 +669,7 @@ class Ui_MainWindow(object):
 "}")
         self.labelSystemStatusInfo = QLabel(self.systemStatusFrame)
         self.labelSystemStatusInfo.setObjectName(u"labelSystemStatusInfo")
-        self.labelSystemStatusInfo.setGeometry(QRect(41, 72, 241, 141))
+        self.labelSystemStatusInfo.setGeometry(QRect(41, 42, 241, 141))
         self.labelSystemStatusInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
 "	color: #F4F6FC;\n"
@@ -681,7 +681,7 @@ class Ui_MainWindow(object):
         self.labelSystemStatusInfo.setWordWrap(True)
         self.iconStatus = QLabel(self.systemStatusFrame)
         self.iconStatus.setObjectName(u"iconStatus")
-        self.iconStatus.setGeometry(QRect(121, 230, 71, 71))
+        self.iconStatus.setGeometry(QRect(121, 146, 71, 71))
         self.iconStatus.setStyleSheet(u"QLabel {\n"
 "    border: none;\n"
 "    background: transparent;\n"
@@ -946,7 +946,7 @@ class Ui_MainWindow(object):
 "}")
         self.logViewerFrame = QFrame(self.centralwidget)
         self.logViewerFrame.setObjectName(u"logViewerFrame")
-        self.logViewerFrame.setGeometry(QRect(1568, 486, 321, 580))
+        self.logViewerFrame.setGeometry(QRect(1568, 384, 321, 480))
         self.logViewerFrame.setStyleSheet(u"QFrame {\n"
 "    background: qlineargradient(\n"
 "        x1:0, y1:0, x2:0, y2:1,\n"
@@ -970,7 +970,7 @@ class Ui_MainWindow(object):
 "}")
         self.logViewerScroll = QScrollArea(self.logViewerFrame)
         self.logViewerScroll.setObjectName(u"logViewerScroll")
-        self.logViewerScroll.setGeometry(QRect(30, 90, 261, 461))
+        self.logViewerScroll.setGeometry(QRect(30, 90, 261, 361))
         self.logViewerScroll.setStyleSheet(u"QScrollArea {\n"
 "    background-color: transparent;\n"
 "    border: none;\n"
@@ -1139,6 +1139,70 @@ class Ui_MainWindow(object):
         self.toolBtnSawdustCleaning.setIconSize(QSize(105, 105))
         self.toolBtnSawdustCleaning.setCheckable(True)
         self.toolBtnSawdustCleaning.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.cuttingTimeFrame = QFrame(self.centralwidget)
+        self.cuttingTimeFrame.setObjectName(u"cuttingTimeFrame")
+        self.cuttingTimeFrame.setGeometry(QRect(1576, 879, 321, 187))
+        self.cuttingTimeFrame.setStyleSheet(u"QFrame {\n"
+"    background: qlineargradient(\n"
+"        x1:0, y1:0, x2:0, y2:1,\n"
+"        stop:0 rgba(6, 11, 38, 240),\n"
+"        stop:1 rgba(26, 31, 55, 0)\n"
+"    );\n"
+"    border-radius: 20px;\n"
+"}\n"
+"")
+        self.cuttingTimeFrame.setFrameShape(QFrame.StyledPanel)
+        self.cuttingTimeFrame.setFrameShadow(QFrame.Raised)
+        self.labelStartTime = QLabel(self.cuttingTimeFrame)
+        self.labelStartTime.setObjectName(u"labelStartTime")
+        self.labelStartTime.setGeometry(QRect(27, 11, 264, 34))
+        self.labelStartTime.setStyleSheet(u"QLabel {\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: medium;\n"
+"    font-size: 24px;\n"
+"}\n"
+"")
+        self.labelStartTime.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        self.labelStopTime = QLabel(self.cuttingTimeFrame)
+        self.labelStopTime.setObjectName(u"labelStopTime")
+        self.labelStopTime.setGeometry(QRect(27, 94, 264, 34))
+        self.labelStopTime.setStyleSheet(u"QLabel {\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: medium;\n"
+"    font-size: 24px;\n"
+"}\n"
+"")
+        self.labelStopTime.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        self.labelStartTimeValue = QLabel(self.cuttingTimeFrame)
+        self.labelStartTimeValue.setObjectName(u"labelStartTimeValue")
+        self.labelStartTimeValue.setGeometry(QRect(27, 53, 264, 34))
+        self.labelStartTimeValue.setStyleSheet(u"QLabel {\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: light;\n"
+"    font-size: 24px;\n"
+"    letter-spacing: 10px;\n"
+"}\n"
+"")
+        self.labelStartTimeValue.setAlignment(Qt.AlignCenter)
+        self.labelStopTimeValue = QLabel(self.cuttingTimeFrame)
+        self.labelStopTimeValue.setObjectName(u"labelStopTimeValue")
+        self.labelStopTimeValue.setGeometry(QRect(27, 136, 264, 34))
+        self.labelStopTimeValue.setStyleSheet(u"QLabel {\n"
+"    background-color: transparent;\n"
+"    color: #F4F6FC;\n"
+"    font-family: 'Plus-Jakarta-Sans';\n"
+"    font-weight: light;\n"
+"    font-size: 24px;\n"
+"    letter-spacing: 10px;\n"
+"}\n"
+"")
+        self.labelStopTimeValue.setAlignment(Qt.AlignCenter)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -1197,5 +1261,9 @@ class Ui_MainWindow(object):
         self.toolBtnCuttingStop.setText(QCoreApplication.translate("MainWindow", u"Kesim Durdur", None))
         self.toolBtnCoolant.setText(QCoreApplication.translate("MainWindow", u"So\u011futma S\u0131v\u0131s\u0131", None))
         self.toolBtnSawdustCleaning.setText(QCoreApplication.translate("MainWindow", u"Tala\u015f Temizlik", None))
+        self.labelStartTime.setText(QCoreApplication.translate("MainWindow", u"Kesim Ba\u015flang\u0131\u00e7", None))
+        self.labelStopTime.setText(QCoreApplication.translate("MainWindow", u"Kesim Biti\u015f", None))
+        self.labelStartTimeValue.setText(QCoreApplication.translate("MainWindow", u"--:--:--", None))
+        self.labelStopTimeValue.setText(QCoreApplication.translate("MainWindow", u"--:--:--", None))
     # retranslateUi
 

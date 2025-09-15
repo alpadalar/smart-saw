@@ -403,6 +403,10 @@ class ControlPanelWindow(QMainWindow):
         self.kesim_baslama_zamani = None
         self._cutting_start_time = None
         
+        # Kesim zamanı takibi için değişkenler
+        self._cutting_start_datetime = None
+        self._cutting_stop_datetime = None
+        
         # Hız değerleri
         self.speed_values = {
             "slow": {"cutting": 15.0, "descent": 8.0},
@@ -857,6 +861,45 @@ class ControlPanelWindow(QMainWindow):
         except Exception as e:
             logger.error(f"Status icon güncelleme hatası: {e}")
 
+    def _update_cutting_time_labels(self, testere_durumu: int):
+        """Kesim zamanı label'larını günceller."""
+        try:
+            # Kesim başladığında - ŞERİT MOTOR ÇALIŞIYOR (2)
+            if testere_durumu == 2:  # ŞERİT MOTOR ÇALIŞIYOR
+                if not self._cutting_start_datetime:
+                    # Kesim başladı - başlangıç zamanını kaydet
+                    self._cutting_start_datetime = datetime.now()
+                    
+                    # Başlangıç zamanı label'ını güncelle
+                    if hasattr(self.ui, 'labelStartTimeValue'):
+                        start_time_str = self._cutting_start_datetime.strftime('%H:%M:%S')
+                        self.ui.labelStartTimeValue.setText(start_time_str)
+                    
+                    # Bitiş zamanı label'ını sıfırla (yeni kesim için)
+                    if hasattr(self.ui, 'labelStopTimeValue'):
+                        self.ui.labelStopTimeValue.setText("--:--:--")
+                    
+                    logger.info(f"Kesim başladı (Şerit Motor Çalışıyor): {start_time_str}")
+            
+            # Kesim bittiğinde - KESİM BİTTİ (4)
+            elif testere_durumu == 4 and self._cutting_start_datetime:  # KESİM BİTTİ
+                # Kesim bitti - bitiş zamanını kaydet
+                self._cutting_stop_datetime = datetime.now()
+                
+                # Bitiş zamanı label'ını güncelle
+                if hasattr(self.ui, 'labelStopTimeValue'):
+                    stop_time_str = self._cutting_stop_datetime.strftime('%H:%M:%S')
+                    self.ui.labelStopTimeValue.setText(stop_time_str)
+                
+                logger.info(f"Kesim bitti: {stop_time_str}")
+                
+                # Kesim bilgilerini sıfırla (bir sonraki kesim için)
+                self._cutting_start_datetime = None
+                self._cutting_stop_datetime = None
+                
+        except Exception as e:
+            logger.error(f"Kesim zamanı label güncelleme hatası: {e}")
+
     def _handle_cutting_mode_buttons(self, clicked_button):
         """Kesim modu butonlarını yönetir"""
         try:
@@ -1282,6 +1325,9 @@ class ControlPanelWindow(QMainWindow):
             # Cutting start/stop button states
             self._update_cutting_button_states(testere_durumu)
             
+            # Kesim zamanı label'larını güncelle
+            self._update_cutting_time_labels(testere_durumu)
+            
         except Exception as e:
             logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:") 
@@ -1370,6 +1416,15 @@ class ControlPanelWindow(QMainWindow):
                 self._cutting_start_time = datetime.now()
                 self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
                 self.current_values['kesim_sure'] = "00:00"
+                
+                # Kesim zamanı label'larını güncelle
+                self._cutting_start_datetime = datetime.now()
+                if hasattr(self.ui, 'labelStartTimeValue'):
+                    start_time_str = self._cutting_start_datetime.strftime('%H:%M:%S')
+                    self.ui.labelStartTimeValue.setText(start_time_str)
+                if hasattr(self.ui, 'labelStopTimeValue'):
+                    self.ui.labelStopTimeValue.setText("--:--:--")
+                
                 self.update_ui()
             else:
                 self.add_log("Kesim başlatılamadı!", "ERROR")
@@ -1390,6 +1445,18 @@ class ControlPanelWindow(QMainWindow):
                 self._cutting_start_time = None
                 self.current_values['kesim_baslama'] = "-"
                 self.current_values['kesim_sure'] = "-"
+                
+                # Kesim bitiş zamanı label'ını güncelle
+                if self._cutting_start_datetime:
+                    self._cutting_stop_datetime = datetime.now()
+                    if hasattr(self.ui, 'labelStopTimeValue'):
+                        stop_time_str = self._cutting_stop_datetime.strftime('%H:%M:%S')
+                        self.ui.labelStopTimeValue.setText(stop_time_str)
+                    
+                    # Kesim bilgilerini sıfırla
+                    self._cutting_start_datetime = None
+                    self._cutting_stop_datetime = None
+                
                 self.update_ui()
             else:
                 self.add_log("Kesim durdurulamadı!", "ERROR")
