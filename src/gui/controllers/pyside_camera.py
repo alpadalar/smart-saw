@@ -104,7 +104,12 @@ class CameraPage(QWidget):
         # Sıralı görüntü güncelleme timer'ı - her 30 saniyede bir güncelle
         self._siralı_goruntu_timer = QTimer(self)
         self._siralı_goruntu_timer.timeout.connect(self._check_and_update_siralı_goruntu)
-        self._siralı_goruntu_timer.start(30000)  # 30 saniyede bir kontrol et
+        self._siralı_goruntu_timer.start(10000)  # 30 saniyede bir kontrol et
+
+        # Detected büyük önizleme güncelleme timer'ı - 30 saniyede bir
+        self._detected_refresh_timer = QTimer(self)
+        self._detected_refresh_timer.timeout.connect(self._refresh_detected_preview)
+        self._detected_refresh_timer.start(10000)
 
         # Optional toggle button wiring (safe if not present)
         if hasattr(self.ui, 'kameraOnOffButton'):
@@ -399,30 +404,9 @@ class CameraPage(QWidget):
         if self.get_data_callback:
             data = self.get_data_callback() or {}
             self._update_ui_from_data(data)
-            # Manage detection lifecycle based on saw state
-            testere_durumu_raw = data.get('testere_durumu', 0)
-            try:
-                testere_durumu = int(testere_durumu_raw)
-            except (ValueError, TypeError):
-                mapping = {
-                    'BOŞTA': TestereState.BOSTA.value,
-                    'HİDROLİK AKTİF': TestereState.HIDROLIK_AKTIF.value,
-                    'ŞERİT MOTOR ÇALIŞIYOR': TestereState.SERIT_MOTOR_CALISIYOR.value,
-                    'KESİM YAPILIYOR': TestereState.KESIM_YAPILIYOR.value,
-                    'KESİM BİTTİ': TestereState.KESIM_BITTI.value,
-                    'ŞERİT YUKARI ÇIKIYOR': TestereState.SERIT_YUKARI_CIKIYOR.value,
-                    'MALZEME BESLEME': TestereState.MALZEME_BESLEME.value,
-                }
-                testere_durumu = mapping.get(str(testere_durumu_raw).strip().upper(), 0)
-            if testere_durumu in (
-                TestereState.KESIM_YAPILIYOR.value,
-                TestereState.KESIM_BITTI.value,
-                TestereState.SERIT_YUKARI_CIKIYOR.value,
-            ):
-                if not self.camera_module.is_detecting:
-                    self.camera_module.start_detection(on_finish=self._on_detection_finished)
-            else:
-                self.camera_module.stop_detection()
+            # Detection kontrolü: yalnızca aktif kayıt varken GUI tarafından başlat, otomatik durdurma yapma
+            if getattr(self.camera_module, 'is_recording', False) and not self.camera_module.is_detecting:
+                self.camera_module.start_detection(on_finish=self._on_detection_finished)
 
     # ---- Frame/stat helpers
     def _get_latest_folder(self) -> Optional[str]:
@@ -882,11 +866,16 @@ class CameraPage(QWidget):
             if not os.path.exists(recordings_dir):
                 return
             
-            # Tüm görüntü dosyalarını listele
+            # Tüm görüntü dosyalarını listele (100KB altını ele)
             image_files = []
             for f in os.listdir(recordings_dir):
                 if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')) and f.startswith('frame_'):
-                    image_files.append(f)
+                    fpath = os.path.join(recordings_dir, f)
+                    try:
+                        if os.path.getsize(fpath) >= 100 * 1024:
+                            image_files.append(f)
+                    except OSError:
+                        continue
             
             if not image_files:
                 return
@@ -916,11 +905,16 @@ class CameraPage(QWidget):
                 print(f"Sıralı görüntü: Klasör bulunamadı: {recordings_dir}")
                 return
             
-            # Tüm görüntü dosyalarını listele (frame_*.png, frame_*.jpg vb.)
+            # Tüm görüntü dosyalarını listele (frame_*.png, frame_*.jpg vb.) ve 100KB altını ele
             image_files = []
             for f in os.listdir(recordings_dir):
                 if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')) and f.startswith('frame_'):
-                    image_files.append(f)
+                    fpath = os.path.join(recordings_dir, f)
+                    try:
+                        if os.path.getsize(fpath) >= 100 * 1024:
+                            image_files.append(f)
+                    except OSError:
+                        continue
             
             if not image_files:
                 print(f"Sıralı görüntü: {recordings_dir} klasöründe görüntü dosyası bulunamadı")
@@ -1043,6 +1037,15 @@ class CameraPage(QWidget):
             print(f"Sıralı görüntü frame oluşturma hatası: {e}")
             import traceback
             traceback.print_exc()
+
+    def _refresh_detected_preview(self) -> None:
+        """Detected klasöründeki büyük frame önizlemesini 30 saniyede bir yeniler."""
+        try:
+            frame_path, _ = self._get_latest_detection_data()
+            if frame_path:
+                self._load_and_display_frame(frame_path)
+        except Exception as e:
+            print(f"Detected önizleme yenileme hatası: {e}")
     
     def resizeEvent(self, event):
         super().resizeEvent(event)

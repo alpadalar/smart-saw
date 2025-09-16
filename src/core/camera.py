@@ -261,8 +261,8 @@ class CameraModule:
         """Nesne tespiti döngüsü"""
         try:
             while not self.detection_stop_event.is_set():
-                # Sadece aktif recording klasöründe detection yap
-                if self.is_recording and self.output_dir:
+                # Kayıt bitse bile son oluşturulan klasörde detection yapmaya devam et
+                if self.output_dir:
                     try:
                         # Thread-safe detection işlemleri
                         self._run_detection_on_current_recording()

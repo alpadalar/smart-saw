@@ -155,36 +155,14 @@ class SmartSaw:
 
         # self._setup_web_server()
 
-        # Kamera kaydı ve detection + vision servisi başlat
+        # Kamera/detection/vision/wear: yukarı çıkış başlayınca tetiklenecek
         try:
             self.camera_module = CameraModule()
-            self.camera_module.start_recording()
-            self.camera_module.start_detection()
-            
-            # Vision service: recordings klasörünü izleyip LDC + wear çalıştırır
-            from vision.service import VisionService
-            self.vision_service = VisionService(
-                recordings_root=os.path.join(os.getcwd(), "recordings"),
-                real_ldc_root=os.path.join(os.getcwd(), "real_ldc"),
-                watchdog_interval_s=0.2,
-            )
-            self.vision_service.start()
-            
-            # Wear calculator: CSV'lerden real-time ortalama hesaplar
-            from core.wear_calculator import WearCalculator
-            self.wear_calculator = WearCalculator(
-                recordings_root=os.path.join(os.getcwd(), "recordings"),
-                update_callback=self._on_wear_update
-            )
-            self.wear_calculator.start()
-            
-            # GUI'ye wear calculator referansını ver
-            if hasattr(self, 'gui') and self.gui:
-                self.gui.wear_calculator = self.wear_calculator
-            
-            logger.info("Kamera kaydı, detection, vision servisi ve wear calculator başlatıldı.")
+            self.vision_service = None
+            self.wear_calculator = None
+            logger.info("Kamera ve modeller, şerit yukarı çıkarken başlatılacak.")
         except Exception as e:
-            logger.error(f"Kamera kaydı/detection/vision başlatılamadı: {e}")
+            logger.error(f"Kamera modülü başlatılamadı: {e}")
 
 
         logger.info("Başlatma tamamlandı")
@@ -373,21 +351,50 @@ class SmartSaw:
                         self.current_kesim_id += 1
                         logger.info(f"Yeni kesim başladı. Kesim ID: {self.current_kesim_id}")
                     
-                    # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR)
-                    """
-                    if current_testere_durumu == 5 and self.previous_testere_durumu != 5:
-                        # Yukarı çıkış başladı, kaydı başlat
+                    # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR) ve kayıt/model yönetimini yap
+                    if current_testere_durumu == TestereState.SERIT_YUKARI_CIKIYOR.value and self.previous_testere_durumu != TestereState.SERIT_YUKARI_CIKIYOR.value:
+                        # Yukarı çıkış başladı, kaydı ve modelleri başlat
                         if not self.is_recording_upward:
                             logger.info("Şerit yukarı çıkıyor, kamera kaydı başlatılıyor...")
-                            self.camera.start_recording()
-                            self.is_recording_upward = True
-                    elif current_testere_durumu != 5 and self.previous_testere_durumu == 5:
-                        # Yukarı çıkış bitti, kaydı durdur
+                            if self.camera_module.start_recording():
+                                self.is_recording_upward = True
+                                # Detection kayıtla birlikte başlasın
+                                try:
+                                    self.camera_module.start_detection()
+                                except Exception as _e:
+                                    logger.error(f"Detection başlatma hatası: {_e}")
+
+                                # Vision service / Wear calculator başlat (henüz çalışmıyorsa)
+                                try:
+                                    if self.vision_service is None:
+                                        from vision.service import VisionService
+                                        self.vision_service = VisionService(
+                                            recordings_root=os.path.join(os.getcwd(), "recordings"),
+                                            real_ldc_root=os.path.join(os.getcwd(), "real_ldc"),
+                                            watchdog_interval_s=0.2,
+                                        )
+                                        self.vision_service.start()
+                                    if self.wear_calculator is None:
+                                        from core.wear_calculator import WearCalculator
+                                        self.wear_calculator = WearCalculator(
+                                            recordings_root=os.path.join(os.getcwd(), "recordings"),
+                                            update_callback=self._on_wear_update
+                                        )
+                                        self.wear_calculator.start()
+                                        if hasattr(self, 'gui') and self.gui:
+                                            self.gui.wear_calculator = self.wear_calculator
+                                    logger.info("Detection, vision servisi ve wear calculator başlatıldı.")
+                                except Exception as _e:
+                                    logger.error(f"Modelleri başlatma hatası: {_e}")
+                    elif current_testere_durumu != TestereState.SERIT_YUKARI_CIKIYOR.value and self.previous_testere_durumu == TestereState.SERIT_YUKARI_CIKIYOR.value:
+                        # Yukarı çıkış bitti, yalnızca kaydı durdur (modeller çalışmaya devam)
                         if self.is_recording_upward:
                             logger.info("Şerit yukarı çıkış tamamlandı, kamera kaydı durduruluyor...")
-                            self.camera.stop_recording()
+                            try:
+                                self.camera_module.stop_recording()
+                            except Exception as _e:
+                                logger.error(f"Kamera kaydı durdurma hatası: {_e}")
                             self.is_recording_upward = False
-                    """
                     # Önceki durumu güncelle
                     self.previous_testere_durumu = current_testere_durumu
                     
