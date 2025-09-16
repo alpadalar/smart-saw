@@ -462,7 +462,7 @@ class CameraPage(QWidget):
     def update_camera_frame(self) -> None:
         frame_path, stats = self._get_latest_detection_data()
         processed = {
-            'tespit_edilen_dis': stats.get('total_tooth', '-') if stats else '-',
+            'tespit_edilen_dis': stats.get('total_crack', '-') if stats else '-',
             'tespit_edilen_kirik': stats.get('total_broken', '-') if stats else '-',
         }
         self._update_values(processed)
@@ -498,7 +498,7 @@ class CameraPage(QWidget):
                 value = processed_data.get(data_key, '-')
                 if stats:
                     if label_name == 'labelTespitEdilenDisValue':
-                        value = stats.get('total_tooth', value)
+                        value = stats.get('total_crack', value)
                     elif label_name == 'labelTespitEdilenKirikValue':
                         value = stats.get('total_broken', value)
                 label_widget = getattr(self.ui, label_name, None)

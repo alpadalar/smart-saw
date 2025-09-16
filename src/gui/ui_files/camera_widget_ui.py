@@ -626,7 +626,7 @@ class Ui_Form(object):
         self.labelTestereSagligiValue.setText(QCoreApplication.translate("Form", u"16.35", None))
         self.labelTespitEdilenKirik.setText(QCoreApplication.translate("Form", u"Tespit Edilen K\u0131r\u0131k Say\u0131s\u0131", None))
         self.labelTespitEdilenKirikValue.setText(QCoreApplication.translate("Form", u"12", None))
-        self.labelTespitEdilenDis.setText(QCoreApplication.translate("Form", u"Tespit Edilen Di\u015f Say\u0131s\u0131", None))
+        self.labelTespitEdilenDis.setText(QCoreApplication.translate("Form", u"Tespit Edilen \u00c7atlak Say\u0131s\u0131", None))
         self.labelTespitEdilenDisValue.setText(QCoreApplication.translate("Form", u"235", None))
         self.labelTestereDurumu.setText(QCoreApplication.translate("Form", u"Testere Durumu", None))
         self.labelTestereDurumuValue.setText(QCoreApplication.translate("Form", u"Sa\u011fl\u0131kl\u0131", None))
