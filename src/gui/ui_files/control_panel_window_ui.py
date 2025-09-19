@@ -533,7 +533,7 @@ class Ui_MainWindow(object):
 "    font-weight: 500;\n"
 "    font-size: 17px;\n"
 "}")
-        self.labelHeightMid.setText("150\nmm")
+        self.labelHeightMid.setText("175\nmm")
         self.labelHeightMid.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.labelHeightMid.setObjectName(u"labelHeightMid")
 

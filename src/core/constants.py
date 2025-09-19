@@ -27,8 +27,8 @@ SPEED_LIMITS = {
 # f(x) = A2*x^2 + A1*x + A0
 # x: serit_motor_tork_percentage (yüzde), çıktı: akım (A)
 TORQUE_TO_CURRENT_A2 = 0.015
-TORQUE_TO_CURRENT_A1 = -0.187
-TORQUE_TO_CURRENT_A0 = 15.000
+TORQUE_TO_CURRENT_A1 = -0.278
+TORQUE_TO_CURRENT_A0 = 15.656
 
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
