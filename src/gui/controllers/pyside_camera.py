@@ -101,15 +101,10 @@ class CameraPage(QWidget):
         # Wear calculator referansı (main'den gelecek)
         self.wear_calculator = None
         
-        # Sıralı görüntü güncelleme timer'ı - her 30 saniyede bir güncelle
-        self._siralı_goruntu_timer = QTimer(self)
-        self._siralı_goruntu_timer.timeout.connect(self._check_and_update_siralı_goruntu)
-        self._siralı_goruntu_timer.start(10000)  # 30 saniyede bir kontrol et
-
-        # Detected büyük önizleme güncelleme timer'ı - 30 saniyede bir
-        self._detected_refresh_timer = QTimer(self)
-        self._detected_refresh_timer.timeout.connect(self._refresh_detected_preview)
-        self._detected_refresh_timer.start(10000)
+        # Birleştirilmiş görüntü güncelleme timer'ı - hem sıralı hem de detected görüntüleri 10 saniyede bir güncelle
+        self._combined_image_refresh_timer = QTimer(self)
+        self._combined_image_refresh_timer.timeout.connect(self._refresh_all_images)
+        self._combined_image_refresh_timer.start(10000)  # 10 saniyede bir kontrol et
 
         # Optional toggle button wiring (safe if not present)
         if hasattr(self.ui, 'kameraOnOffButton'):
@@ -120,7 +115,7 @@ class CameraPage(QWidget):
         self._check_recordings_and_create_crack_frames()
         
         # İlk yüklemede sıralı görüntüleri kontrol et
-        self._check_and_update_siralı_goruntu()  # İlk yüklemede çalıştır
+        self._refresh_all_images()  # İlk yüklemede çalıştır
         
         # Set camera page as active initially
         self.set_active_nav('btnCamera')
@@ -416,11 +411,24 @@ class CameraPage(QWidget):
         return max(folders) if folders else None
 
     def _find_priority_frame(self, detected_frames: List[str], detected_dir: str) -> Optional[str]:
+        # Önce broken ve tooth içeren dosyaları topla
+        priority_frames = []
         for keyword in ('broken', 'tooth'):
             for fname in detected_frames:
                 if keyword in fname:
-                    return os.path.join(detected_dir, fname)
-        return os.path.join(detected_dir, detected_frames[0]) if detected_frames else None
+                    priority_frames.append(fname)
+        
+        # Eğer priority frame varsa rastgele birini seç
+        if priority_frames:
+            selected_frame = random.choice(priority_frames)
+            return os.path.join(detected_dir, selected_frame)
+        
+        # Priority frame yoksa tüm detected frame'lerden rastgele birini seç
+        if detected_frames:
+            selected_frame = random.choice(detected_frames)
+            return os.path.join(detected_dir, selected_frame)
+            
+        return None
 
     def _load_stats_file(self, stats_path: str) -> Optional[dict]:
         if not os.path.exists(stats_path):
@@ -460,16 +468,14 @@ class CameraPage(QWidget):
         self.camera_label.setPixmap(pixmap)
 
     def update_camera_frame(self) -> None:
+        # Sadece istatistikleri güncelle, görüntü güncellemesi _refresh_all_images() tarafından yapılacak
         frame_path, stats = self._get_latest_detection_data()
         processed = {
             'tespit_edilen_dis': stats.get('total_crack', '-') if stats else '-',
             'tespit_edilen_kirik': stats.get('total_broken', '-') if stats else '-',
         }
         self._update_values(processed)
-        if frame_path:
-            self._load_and_display_frame(frame_path)
-        else:
-            self.camera_label.clear()
+        # Görüntü güncelleme kaldırıldı - artık sadece _refresh_all_images() tarafından yapılacak
 
     # ---- UI mapping
     def _get_stats_from_recordings(self) -> Optional[dict]:
@@ -520,20 +526,20 @@ class CameraPage(QWidget):
             # Detection end info banner - yeni sistem kullanılıyor
             if self.camera_module.is_detecting:
                 if not self._detection_was_running:
-                    # Detection başladığında sıralı görüntüleri güncelle
-                    self._check_and_update_siralı_goruntu()
+                    # Detection başladığında tüm görüntüleri güncelle
+                    self._refresh_all_images()
                 self._detection_was_running = True
             elif self._detection_was_running:
                 # Detection bittiğinde recordings klasörünü yeniden kontrol et
                 self._check_recordings_and_create_frames()
                 self._check_recordings_and_create_crack_frames()
-                # Sıralı görüntüleri güncelle
-                self._check_and_update_siralı_goruntu()
+                # Tüm görüntüleri güncelle
+                self._refresh_all_images()
                 self._detection_was_running = False
             else:
                 # Detection çalışmıyorsa sadece ilk yüklemede sıralı görüntüleri göster
                 if not self._siralı_goruntu_loaded:
-                    self._check_and_update_siralı_goruntu()
+                    self._refresh_all_images()
                     self._siralı_goruntu_loaded = True
         except Exception as e:
             print(f"Camera _update_values hata: {e}")
@@ -1039,13 +1045,33 @@ class CameraPage(QWidget):
             traceback.print_exc()
 
     def _refresh_detected_preview(self) -> None:
-        """Detected klasöründeki büyük frame önizlemesini 30 saniyede bir yeniler."""
+        """Detected klasöründeki büyük frame önizlemesini 10 saniyede bir yeniler."""
         try:
+            # Her seferinde en güncel detected klasörünü kontrol et
             frame_path, _ = self._get_latest_detection_data()
             if frame_path:
                 self._load_and_display_frame(frame_path)
+            else:
+                # Eğer detected görüntü yoksa camera label'ını temizle
+                self.camera_label.clear()
         except Exception as e:
             print(f"Detected önizleme yenileme hatası: {e}")
+    
+    def _refresh_all_images(self) -> None:
+        """Hem sıralı görüntüleri hem de detected görüntüyü aynı anda günceller."""
+        try:
+            print("Tüm görüntüler güncelleniyor...")
+            
+            # Sıralı görüntüleri güncelle
+            self._check_and_update_siralı_goruntu()
+            
+            # Detected görüntüyü güncelle
+            self._refresh_detected_preview()
+            
+            print("Tüm görüntü güncellemesi tamamlandı")
+            
+        except Exception as e:
+            print(f"Birleşik görüntü güncelleme hatası: {e}")
     
     def resizeEvent(self, event):
         super().resizeEvent(event)
