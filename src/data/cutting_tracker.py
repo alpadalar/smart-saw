@@ -8,13 +8,17 @@ from core.logger import logger
 from utils.helpers import get_current_time_ms, calculate_elapsed_time_ms, format_time
 
 class CuttingTracker:
-    """Kesim işlemlerini takip eden sınıf"""
+    """Kesim işlemlerini takip eden sınıf (thread-safe singleton)"""
     _instance = None
+    _creation_lock = threading.Lock()
     
     def __new__(cls):
+        # Thread-safe singleton creation
         if cls._instance is None:
-            cls._instance = super(CuttingTracker, cls).__new__(cls)
-            cls._instance._initialize()
+            with cls._creation_lock:
+                if cls._instance is None:
+                    cls._instance = super(CuttingTracker, cls).__new__(cls)
+                    cls._instance._initialize()
         return cls._instance
     
     def _initialize(self):
@@ -183,10 +187,13 @@ class CuttingTracker:
                     logger.error(f"Kesim bitişi kaydetme hatası: {str(e)}")
     
     def update_cutting_state(self, is_cutting: bool, controller_name: str = None):
-        """Kesim durumunu günceller"""
-        if is_cutting and not self.is_cutting:
+        """Kesim durumunu günceller (thread-safe)"""
+        with self.lock:
+            current_state = self.is_cutting
+        
+        if is_cutting and not current_state:
             self.start_cutting(controller_name)
-        elif not is_cutting and self.is_cutting:
+        elif not is_cutting and current_state:
             self.end_cutting()
     
     def get_cutting_info(self):

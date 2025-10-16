@@ -16,14 +16,16 @@ class DataMapper:
     """Ham veriyi işlenmiş veriye dönüştürür"""
     
     def __init__(self):
+        import threading
         self.registers = ModbusRegisters()
         self._last_processed_data: Optional[ProcessedData] = None
         self._last_fuzzy_output: float = 0.0
         self._last_kesme_hizi_degisim: float = 0.0
+        self._lock = threading.Lock()  # Thread-safety için lock
 
     def map_data(self, raw_data: Dict[int, float], fuzzy_output: Optional[float] = None, kesme_hizi_degisim: Optional[float] = None) -> ProcessedData:
         """
-        Ham modbus verisini işlenmiş veriye dönüştürür
+        Ham modbus verisini işlenmiş veriye dönüştürür (thread-safe)
         
         Args:
             raw_data: Ham modbus register değerleri
@@ -63,11 +65,17 @@ class DataMapper:
                 0.0
             )
             
-            # Fuzzy değerlerini güncelle
-            if fuzzy_output is not None:
-                self._last_fuzzy_output = fuzzy_output
-            if kesme_hizi_degisim is not None:
-                self._last_kesme_hizi_degisim = kesme_hizi_degisim
+            # Thread-safe instance değişken güncelleme
+            with self._lock:
+                # Fuzzy değerlerini güncelle
+                if fuzzy_output is not None:
+                    self._last_fuzzy_output = fuzzy_output
+                if kesme_hizi_degisim is not None:
+                    self._last_kesme_hizi_degisim = kesme_hizi_degisim
+                
+                # Mevcut değerleri al
+                current_fuzzy = self._last_fuzzy_output
+                current_kesme_hizi = self._last_kesme_hizi_degisim
             
             # Değerleri ölçek ve birimlere dönüştür
             processed_data = ProcessedData({
@@ -78,55 +86,66 @@ class DataMapper:
                 'testere_durumu': testere_durum,
                 'serit_kesme_hizi': self._scale_speed(kesme_hiz),
                 'serit_inme_hizi': self._scale_speed(inme_hiz),
-                'fuzzy_output': self._last_fuzzy_output,
-                'kesme_hizi_degisim': self._last_kesme_hizi_degisim
+                'fuzzy_output': current_fuzzy,
+                'kesme_hizi_degisim': current_kesme_hizi
             })
             
-            # Son işlenmiş veriyi sakla
-            self._last_processed_data = processed_data
+            # Son işlenmiş veriyi sakla (thread-safe)
+            with self._lock:
+                self._last_processed_data = processed_data
             
             return processed_data
             
         except Exception as e:
             logger.error(f"Veri dönüştürme hatası: {str(e)}")
             # Hata durumunda son geçerli veriyi veya varsayılan değerleri döndür
-            return self._last_processed_data or ProcessedData({
+            with self._lock:
+                last_data = self._last_processed_data
+                current_fuzzy = self._last_fuzzy_output
+                current_kesme_hizi = self._last_kesme_hizi_degisim
+            
+            return last_data or ProcessedData({
                 'timestamp': datetime.now(),
-                'fuzzy_output': self._last_fuzzy_output,
-                'kesme_hizi_degisim': self._last_kesme_hizi_degisim
+                'fuzzy_output': current_fuzzy,
+                'kesme_hizi_degisim': current_kesme_hizi
             })
 
     def _scale_current(self, raw_value: float) -> float:
         """Akım değerini ölçeklendirir (0-65535 -> 0-100A)"""
         try:
             return (raw_value / 65535) * 100.0
-        except:
+        except Exception as e:
+            logger.warning(f"Akım ölçekleme hatası: {e}")
             return 0.0
 
     def _scale_deviation(self, raw_value: float) -> float:
         """Sapma değerini ölçeklendirir (0-65535 -> -10mm - +10mm)"""
         try:
             return ((raw_value / 65535) * 20.0) - 10.0
-        except:
+        except Exception as e:
+            logger.warning(f"Sapma ölçekleme hatası: {e}")
             return 0.0
 
     def _scale_height(self, raw_value: float) -> float:
         """Yükseklik değerini ölçeklendirir (0-65535 -> 0-300mm)"""
         try:
             return (raw_value / 65535) * 300.0
-        except:
+        except Exception as e:
+            logger.warning(f"Yükseklik ölçekleme hatası: {e}")
             return 0.0
 
     def _scale_speed(self, raw_value: float) -> float:
         """Hız değerini ölçeklendirir (0-65535 -> 0-100mm/s)"""
         try:
             return (raw_value / 65535) * 100.0
-        except:
+        except Exception as e:
+            logger.warning(f"Hız ölçekleme hatası: {e}")
             return 0.0
 
     def get_last_processed_data(self) -> Optional[ProcessedData]:
-        """Son işlenmiş veriyi döndürür"""
-        return self._last_processed_data
+        """Son işlenmiş veriyi döndürür (thread-safe)"""
+        with self._lock:
+            return self._last_processed_data
 
     def map_speed_data(self, speed_data: Dict[str, float]) -> SpeedData:
         """

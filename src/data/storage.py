@@ -15,11 +15,32 @@ from core.config import Config
 class LocalStorage:
     """SQLite veritabanı işlemleri"""
     
+    # Güvenli column isimleri whitelist (SQL injection koruması)
+    ALLOWED_COLUMNS = {
+        'id', 'timestamp', 'makine_id', 'serit_id', 'serit_dis_mm', 'serit_tip',
+        'serit_marka', 'serit_malz', 'malzeme_cinsi', 'malzeme_sertlik',
+        'kesit_yapisi', 'a_mm', 'b_mm', 'c_mm', 'd_mm', 'kafa_yuksekligi_mm',
+        'kesilen_parca_adeti', 'serit_motor_akim_a', 'serit_motor_tork_percentage',
+        'inme_motor_akim_a', 'inme_motor_tork_percentage', 'mengene_basinc_bar',
+        'serit_gerginligi_bar', 'serit_sapmasi', 'ortam_sicakligi_c',
+        'ortam_nem_percentage', 'sogutma_sivi_sicakligi_c', 'hidrolik_yag_sicakligi_c',
+        'serit_sicakligi_c', 'ivme_olcer_x', 'ivme_olcer_y', 'ivme_olcer_z',
+        'ivme_olcer_x_hz', 'ivme_olcer_y_hz', 'ivme_olcer_z_hz', 'max_titresim_hz',
+        'testere_durumu', 'alarm_status', 'alarm_bilgisi', 'serit_kesme_hizi',
+        'serit_inme_hizi', 'malzeme_genisligi', 'fark_hz_x', 'fark_hz_y',
+        'fark_hz_z', 'fuzzy_output', 'kesme_hizi_degisim', 'modbus_connected',
+        'modbus_ip', 'kesim_turu', 'kesim_id'
+    }
+    
     def __init__(self, config):
         self.config = config
         self.db_path = config.storage.database.sqlite_path
         self.total_db = config.storage.database.total_db_path
         self.raw_db = config.storage.database.raw_db_path
+        
+        # Thread-local storage için
+        import threading
+        self._thread_local = threading.local()
         
         # Veritabanı dizinlerini oluştur
         self._create_directories()
@@ -181,8 +202,25 @@ class LocalStorage:
             logger.error(f"SQLite veritabanı oluşturma hatası: {str(e)}")
             raise
 
+    def _get_connection(self, db_path: str):
+        """Thread-safe connection döndürür"""
+        # Her thread için ayrı connection kullan
+        if not hasattr(self._thread_local, 'connections'):
+            self._thread_local.connections = {}
+        
+        if db_path not in self._thread_local.connections:
+            # Her thread için ayrı connection kullandığımızdan check_same_thread parametresine gerek yok
+            conn = sqlite3.connect(db_path)
+            self._thread_local.connections[db_path] = conn
+        
+        return self._thread_local.connections[db_path]
+    
     def save_data(self, data: Dict[str, Any]) -> bool:
-        """Veriyi SQLite'a kaydeder"""
+        """Veriyi SQLite'a kaydeder (thread-safe, SQL injection korumalı)"""
+        conn = None
+        total_conn = None
+        raw_conn = None
+        
         try:
             # Fuzzy verilerini düzenle
             if 'fuzzy_output' not in data:
@@ -206,27 +244,38 @@ class LocalStorage:
             else:
                 data['kesim_turu'] = None
             
-            # Ana veritabanına kaydet
-            conn = sqlite3.connect(self.db_path.format(data['makine_id']))
-            cursor = conn.cursor()
+            # SQL injection koruması - sadece izin verilen column'ları kullan
+            safe_data = {}
+            for key, value in data.items():
+                if key in self.ALLOWED_COLUMNS:
+                    safe_data[key] = value
+                else:
+                    logger.warning(f"İzin verilmeyen column atlandı: {key}")
             
-            columns = ', '.join(data.keys())
-            placeholders = ', '.join(['?' for _ in data])
-            values = tuple(data.values())
+            if not safe_data:
+                logger.error("Kaydedilecek geçerli veri yok")
+                return False
             
+            # SQL query hazırla (güvenli column isimleri ile)
+            columns = ', '.join(safe_data.keys())
+            placeholders = ', '.join(['?' for _ in safe_data])
+            values = tuple(safe_data.values())
             query = f"INSERT INTO testere_data ({columns}) VALUES ({placeholders})"
             
+            # Ana veritabanına kaydet (thread-safe connection)
+            conn = self._get_connection(self.db_path.format(data['makine_id']))
+            cursor = conn.cursor()
             cursor.execute(query, values)
             conn.commit()
             
-            # Total veritabanına kaydet
-            total_conn = sqlite3.connect(self.total_db)
+            # Total veritabanına kaydet (thread-safe connection)
+            total_conn = self._get_connection(self.total_db)
             total_cursor = total_conn.cursor()
             total_cursor.execute(query, values)
             total_conn.commit()
             
-            # Raw veritabanına kaydet
-            raw_conn = sqlite3.connect(self.raw_db)
+            # Raw veritabanına kaydet (thread-safe connection)
+            raw_conn = self._get_connection(self.raw_db)
             raw_cursor = raw_conn.cursor()
             raw_cursor.execute(query, values)
             raw_conn.commit()
@@ -236,11 +285,19 @@ class LocalStorage:
         except Exception as e:
             logger.error(f"SQLite kayıt hatası: {str(e)}")
             return False
-            
-        finally:
-            if 'conn' in locals(): conn.close()
-            if 'total_conn' in locals(): total_conn.close()
-            if 'raw_conn' in locals(): raw_conn.close()
+    
+    def __del__(self):
+        """Cleanup - thread-local connection'ları kapat"""
+        try:
+            if hasattr(self, '_thread_local') and hasattr(self._thread_local, 'connections'):
+                for db_path, conn in self._thread_local.connections.items():
+                    try:
+                        conn.close()
+                        logger.debug(f"LocalStorage connection kapatıldı: {db_path}")
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
 
 class RemoteStorage:
@@ -381,5 +438,16 @@ class DataStorage:
 
     def close(self):
         """Veritabanı bağlantılarını kapatır"""
-        pass
+        try:
+            # LocalStorage connection'ları kapat
+            if hasattr(self.local_storage, '_thread_local'):
+                if hasattr(self.local_storage._thread_local, 'connections'):
+                    for db_path, conn in self.local_storage._thread_local.connections.items():
+                        try:
+                            conn.close()
+                            logger.info(f"Veritabanı bağlantısı kapatıldı: {db_path}")
+                        except Exception as e:
+                            logger.error(f"Veritabanı kapatma hatası ({db_path}): {e}")
+        except Exception as e:
+            logger.error(f"DataStorage cleanup hatası: {e}")
 
