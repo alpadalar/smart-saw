@@ -1,28 +1,38 @@
 # src/hardware/modbus/client.py
-from pymodbus.client import ModbusTcpClient
-from core.logger import logger
-from typing import Optional, List, Generator
+import logging
+import threading
 import time
 from datetime import datetime
-import logging
+from typing import Optional, List, Generator
+
+from pymodbus.client import ModbusTcpClient
+
+from core.logger import logger
 
 class ModbusClient:
     _instance: Optional['ModbusClient'] = None
+    _lock = threading.Lock()  # Thread-safe singleton creation için
     
     def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
+        # Thread-safe singleton pattern
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialized = False  # İlk oluşturmada flag set et
         return cls._instance
     
     def __init__(self, host='192.168.1.147', port=502):
-        """ModbusClient başlatılır"""
-        if not hasattr(self, 'initialized'):
-            self.client = ModbusTcpClient(host=host, port=port)
-            self.connected = False
-            self.logger = logging.getLogger(__name__)
-            self.last_write_time = time.time()
-            self.write_interval = 0.1
-            self.initialized = True
+        """ModbusClient başlatılır (thread-safe)"""
+        # Double-check locking pattern
+        if not self._initialized:
+            with ModbusClient._lock:
+                if not self._initialized:
+                    self.client = ModbusTcpClient(host=host, port=port)
+                    self.connected = False
+                    self.logger = logging.getLogger(__name__)
+                    self.last_write_time = time.time()
+                    self.write_interval = 0.1
+                    self._initialized = True
             
     def connect(self) -> bool:
         """Modbus sunucusuna bağlanır"""

@@ -176,55 +176,83 @@ class CameraModule:
             self.threads.append(t)
 
     def start_recording(self):
-        """Kayıt işlemini başlatır"""
+        """Kayıt işlemini başlatır (thread-safe)"""
         if not self._lazy_initialize():
             return False
+        
+        # Directory path'i hazırla (lock dışında)
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        output_dir = os.path.join(self.base_output_dir, timestamp)
+        
+        # Directory oluştur (lock dışında, blocking operation)
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+        except Exception as e:
+            logger.error(f"Recording klasörü oluşturma hatası: {e}")
+            return False
+        
+        # State değişikliğini lock içinde yap
         with self.data_lock:
-            if not self.is_recording and self.cap is not None:
-                try:
-                    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-                    self.output_dir = os.path.join(self.base_output_dir, timestamp)
-                    os.makedirs(self.output_dir, exist_ok=True)
-                    self.is_recording = True
-                    self.frame_count = 0
-                    self.start_time = time.time()
+            if self.is_recording or self.cap is None:
+                return False
+            
+            try:
+                self.output_dir = output_dir
+                self.is_recording = True
+                self.frame_count = 0
+                self.start_time = time.time()
+                callback = self.frame_count_callback
 
-                    # Frame sayacını sıfırla
-                    if self.frame_count_callback:
-                        self.frame_count_callback(0)
-
-                    logger.info(f"Kayıt başladı: {self.output_dir}")
-                    return True
-                except Exception as e:
-                    logger.error(f"Kayıt başlatma hatası: {str(e)}")
-                    self.is_recording = False
-                    return False
-        return False
+                logger.info(f"Kayıt başladı: {self.output_dir}")
+            except Exception as e:
+                logger.error(f"Kayıt başlatma hatası: {str(e)}")
+                self.is_recording = False
+                return False
+        
+        # Frame sayacını lock dışında sıfırla (callback UI thread'de çalışabilir)
+        if callback:
+            try:
+                callback(0)
+            except Exception as e:
+                logger.error(f"Frame callback hatası: {e}")
+        
+        return True
 
     def stop_recording(self):
-        """Kayıt işlemini durdurur"""
+        """Kayıt işlemini durdurur (thread-safe)"""
         with self.data_lock:
-            if self.is_recording:
-                try:
-                    self.is_recording = False
-                    elapsed_time = time.time() - self.start_time
-                    total_frames = self.frame_count
+            if not self.is_recording:
+                return False
+            
+            try:
+                self.is_recording = False
+                elapsed_time = time.time() - self.start_time
+                total_frames = self.frame_count
+                callback = self.frame_count_callback
 
-                    # Frame kuyruğunun boşalmasını bekle
-                    self.frame_queue.join()
-
-                    logger.info(f"Kayıt durduruldu - Toplam kare: {total_frames}, Süre: {elapsed_time:.2f} saniye")
-
-                    # Frame sayacını sıfırla
-                    self.frame_count = 0
-                    if self.frame_count_callback:
-                        self.frame_count_callback(0)
-
-                    return True
-                except Exception as e:
-                    logger.error(f"Kayıt durdurma hatası: {str(e)}")
-                    return False
-        return False
+                logger.info(f"Kayıt durduruluyor - Toplam kare: {total_frames}, Süre: {elapsed_time:.2f} saniye")
+            except Exception as e:
+                logger.error(f"Kayıt durdurma hatası: {str(e)}")
+                return False
+        
+        # Frame kuyruğunun boşalmasını lock dışında bekle (blocking operation)
+        try:
+            self.frame_queue.join()
+            logger.info("Frame kuyruğu boşaldı")
+        except Exception as e:
+            logger.error(f"Frame kuyruğu bekleme hatası: {e}")
+        
+        # Frame sayacını lock dışında sıfırla (callback UI thread'de çalışabilir)
+        with self.data_lock:
+            self.frame_count = 0
+        
+        if callback:
+            try:
+                callback(0)
+            except Exception as e:
+                logger.error(f"Frame callback hatası: {e}")
+        
+        return True
 
     def start_detection(self, on_finish=None):
         """Nesne tespiti işlemini başlatır (GUI tarafı yeni)."""

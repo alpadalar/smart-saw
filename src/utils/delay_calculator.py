@@ -1,21 +1,24 @@
 # src/utils/delay_calculator.py
+import threading
 import time
 from typing import Optional
+
 from core.logger import logger
 from core.constants import CONTROL_INITIAL_DELAY, INME_HIZI_REGISTER_ADDRESS
 
 
 class DelayCalculator:
-    """İnme hızına göre dinamik başlangıç gecikmesi hesaplayan sınıf"""
+    """İnme hızına göre dinamik başlangıç gecikmesi hesaplayan sınıf (thread-safe)"""
     
     def __init__(self):
         self.last_calculated_delay = CONTROL_INITIAL_DELAY['DEFAULT_DELAY_MS']
         self.last_read_time = 0
         self.cache_duration = 5.0  # 5 saniye cache
+        self._lock = threading.Lock()  # Thread-safe cache access için
     
     def calculate_initial_delay(self, modbus_client, target_distance_mm: Optional[float] = None) -> int:
         """
-        Modbus register'dan inme hızını okuyarak dinamik gecikme hesaplar
+        Modbus register'dan inme hızını okuyarak dinamik gecikme hesaplar (thread-safe)
         
         Args:
             modbus_client: Modbus istemcisi
@@ -25,11 +28,14 @@ class DelayCalculator:
             int: Hesaplanan gecikme süresi (milisaniye)
         """
         try:
-            # Cache kontrolü - son 5 saniye içinde hesaplanmışsa tekrar hesaplama
             current_time = time.time()
-            if current_time - self.last_read_time < self.cache_duration:
-                logger.debug(f"Cache'den gecikme döndürülüyor: {self.last_calculated_delay/1000:.1f} saniye")
-                return self.last_calculated_delay
+            
+            # Thread-safe cache kontrolü
+            with self._lock:
+                if current_time - self.last_read_time < self.cache_duration:
+                    cached_delay = self.last_calculated_delay
+                    logger.debug(f"Cache'den gecikme döndürülüyor: {cached_delay/1000:.1f} saniye")
+                    return cached_delay
             
             # İnme hızını register'dan oku
             inme_hizi = self._read_inme_hizi_from_register(modbus_client)
@@ -51,9 +57,10 @@ class DelayCalculator:
                 min(delay_ms, CONTROL_INITIAL_DELAY['MAX_DELAY_MS'])
             )
             
-            # Cache güncelle
-            self.last_calculated_delay = int(delay_ms)
-            self.last_read_time = current_time
+            # Thread-safe cache güncelle
+            with self._lock:
+                self.last_calculated_delay = int(delay_ms)
+                self.last_read_time = current_time
             
             logger.info(
                 f"İnme hızı register'dan okundu: {inme_hizi:.2f} mm/dakika, "
@@ -114,12 +121,14 @@ class DelayCalculator:
             return None
     
     def get_last_calculated_delay(self) -> int:
-        """Son hesaplanan gecikme değerini döndürür"""
-        return self.last_calculated_delay
+        """Son hesaplanan gecikme değerini döndürür (thread-safe)"""
+        with self._lock:
+            return self.last_calculated_delay
     
     def reset_cache(self):
-        """Cache'i sıfırlar"""
-        self.last_read_time = 0
+        """Cache'i sıfırlar (thread-safe)"""
+        with self._lock:
+            self.last_read_time = 0
         logger.debug("Gecikme hesaplama cache'i sıfırlandı")
 
 
