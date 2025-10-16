@@ -1,33 +1,17 @@
 # src/main.py
-import sys
 import os
+import signal
+import shutil
+import sys
+import threading
+import time
+from datetime import datetime
+from typing import Optional, Dict
+
 # Ensure '/src' is on sys.path for absolute imports like `from core ...`
 _src_dir = os.path.dirname(os.path.abspath(__file__))
 if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
-import time
-import signal
-import threading
-
-import shutil
-import glob
-try:
-    import uvicorn
-    UVICORN_AVAILABLE = True
-except ImportError:
-    UVICORN_AVAILABLE = False
-try:
-    from fastapi import FastAPI
-    from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import RedirectResponse
-    FASTAPI_AVAILABLE = True
-except ImportError:
-    FASTAPI_AVAILABLE = False
-
-from queue import Queue
-from typing import Optional, Dict
-from datetime import datetime
-import subprocess
 
 from core import (
     logger,
@@ -75,19 +59,11 @@ class SmartSaw:
         # Recordings klasörünü temizle (thread-safe)
         self._cleanup_old_recordings()
         
-        # Web sunucusu
-        self.web_server = None
-        self.api_app = None
-
-        
         # KAMERANIN YUKARI CIKARKEN DUZENLENECEK
         # Kesim takibi için değişkenler
         self.current_kesim_id = -1  # Başlangıçta kesim yok
         self.previous_testere_durumu = None
         self.is_recording_upward = False  # Yukarı çıkış kaydı durumu
-        
-        # Kamera modülü
-        self.camera = CameraModule()
         
 
         
@@ -142,25 +118,25 @@ class SmartSaw:
         self.lock = threading.Lock()
         
         # Durum değişkenleri
-        self.is_running = False
+        self.is_running = False  # Thread'ler start() metodunda başlatılacak
         self.last_modbus_write_time = 0
         self.prev_current = 0
         self.last_processed_data = None
         
-        # Başlatma
+        # Başlatma (sadece kurulum, thread'ler henüz başlamaz)
         self._setup_database()
         self._setup_modbus()
-        self._setup_control_loop()
-        self._setup_data_loop()
-
-        # self._setup_web_server()
+        # Thread'leri oluştur ama başlatma - start() metodunda başlatılacak
+        self.control_loop = None
+        self.data_loop = None
 
         # Kamera/detection/vision/wear: yukarı çıkış başlayınca tetiklenecek
         try:
+            # Tek kamera module instance kullan
             self.camera_module = CameraModule()
             self.vision_service = None
             self.wear_calculator = None
-            logger.info("Kamera ve modeller, şerit yukarı çıkarken başlatılacak.")
+            logger.info("Kamera modülü başlatıldı. Detection ve vision servisleri şerit yukarı çıkarken başlatılacak.")
         except Exception as e:
             logger.error(f"Kamera modülü başlatılamadı: {e}")
 
@@ -246,82 +222,78 @@ class SmartSaw:
             raise
             
     def _setup_modbus(self):
-        """Modbus başlatma"""
+        """Modbus bağlantısını hazırlar (ilk deneme, başarısız olması normal)"""
         try:
+            # İlk bağlantı denemesi - başarısız olabilir, sorun değil
+            # start() metodunda tekrar denenecek
             self.modbus_client.connect()
+            logger.info("İlk Modbus bağlantı denemesi başarılı")
         except Exception as e:
-            logger.error(f"Modbus başlatma hatası: {e}")
-            raise
-#WEB SERVER KODLARI
-    def _setup_web_server(self):
-        """Web sunucusunu doğrudan uvicorn ile (ayrı thread'de) başlatır.
-        Dosya yazmaz, 'run_server.py' oluşturmaz.
-        """
-        if not (UVICORN_AVAILABLE and FASTAPI_AVAILABLE):
-            logger.warning("FastAPI/uvicorn yok, web sunucusu başlatılmayacak.")
-            return
-        try:
-            # Webui dizini
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            webui_dir = os.path.join(current_dir, "webui")
-            if not os.path.exists(webui_dir):
-                logger.warning(f"Webui dizini bulunamadı: {webui_dir}")
+            # Exception raise etme - start() metodunda tekrar denenecek
+            logger.warning(f"İlk Modbus bağlantı denemesi başarısız: {e}")
+            logger.info("Modbus bağlantısı start() metodunda tekrar denenecek")
 
-            # Basit FastAPI uygulaması (statik webui servis eder)
-            app = FastAPI()
-            app.mount("/", StaticFiles(directory=webui_dir, html=True), name="webui")
-
-            @app.get("/")
-            async def _redirect_to_index():
-                return RedirectResponse(url="/index.html")
-
-            # Uvicorn'u ayrı bir thread'de başlat
-            def _start_server():
-                try:
-                    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
-                except Exception as e:
-                    logger.error(f"Uvicorn çalışma hatası: {e}")
-
-            self.web_server = threading.Thread(target=_start_server, daemon=True)
-            self.web_server.start()
-            logger.info("Web sunucusu başlatıldı. http://localhost:8080 adresinden erişebilirsiniz...")
-
-        except Exception as e:
-            logger.error(f"Web sunucusu başlatma hatası: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-    
-    def _setup_web_server_thread(self):
-        """
-        Web sunucusu ayrı bir process olarak çalıştığından, bu metot artık kullanılmıyor.
-        """
-        pass
-#WEB SERVER KODLARI BURAYA KADAR
-
-    def _setup_control_loop(self):
-        """Kontrol döngüsü başlatma"""
-        try:
-            self.control_loop = threading.Thread(target=self.start_control_loop)
-            self.control_loop.daemon = True
-            self.is_running = True  # Thread'i başlatmadan önce flag'i ayarla
-            self.control_loop.start()  # Thread'i başlat
-        except Exception as e:
-            logger.error(f"Kontrol döngüsü başlatma hatası: {e}")
-            raise
+    def _start_control_loop(self):
+        """Kontrol döngüsü thread'ini başlatır (sadece bir kez çağrılmalı)"""
+        if self.control_loop is None or not self.control_loop.is_alive():
+            try:
+                # is_running flag start() metodunda ayarlanacak, burada ayarlama
+                self.control_loop = threading.Thread(target=self.start_control_loop)
+                self.control_loop.daemon = True
+                self.control_loop.start()
+                logger.info("Kontrol döngüsü thread'i başlatıldı")
+            except Exception as e:
+                logger.error(f"Kontrol döngüsü başlatma hatası: {e}")
+                raise
+        else:
+            logger.warning("Kontrol döngüsü zaten çalışıyor")
             
-    def _setup_data_loop(self):
-        """Veri döngüsü başlatma"""
-        try:
-            self.data_loop = threading.Thread(target=self.start_data_loop)
-            self.data_loop.daemon = True
-            self.data_loop.start()  # Thread'i başlat
-        except Exception as e:
-            logger.error(f"Veri döngüsü başlatma hatası: {e}")
-            raise
+    def _start_data_loop(self):
+        """Veri döngüsü thread'ini başlatır (sadece bir kez çağrılmalı)"""
+        if self.data_loop is None or not self.data_loop.is_alive():
+            try:
+                self.data_loop = threading.Thread(target=self.start_data_loop)
+                self.data_loop.daemon = True
+                self.data_loop.start()
+                logger.info("Veri döngüsü thread'i başlatıldı")
+            except Exception as e:
+                logger.error(f"Veri döngüsü başlatma hatası: {e}")
+                raise
+        else:
+            logger.warning("Veri döngüsü zaten çalışıyor")
 
+    def _lazy_init_vision_services(self):
+        """Vision service ve wear calculator'ı lazy olarak başlatır (lock dışında çağrılmalı)"""
+        try:
+            if self.vision_service is None:
+                from vision.service import VisionService
+                logger.info("VisionService başlatılıyor...")
+                self.vision_service = VisionService(
+                    recordings_root=os.path.join(os.getcwd(), "recordings"),
+                    watchdog_interval_s=0.2,
+                )
+                self.vision_service.start()
+                logger.info("VisionService başlatıldı")
+            
+            if self.wear_calculator is None:
+                from core.wear_calculator import WearCalculator
+                logger.info("WearCalculator başlatılıyor...")
+                self.wear_calculator = WearCalculator(
+                    recordings_root=os.path.join(os.getcwd(), "recordings"),
+                    update_callback=self._on_wear_update
+                )
+                self.wear_calculator.start()
+                if hasattr(self, 'gui') and self.gui:
+                    self.gui.wear_calculator = self.wear_calculator
+                logger.info("WearCalculator başlatıldı")
+        except Exception as e:
+            logger.error(f"Vision services başlatma hatası: {e}")
+    
     def start_control_loop(self):
         """Kontrol döngüsünü başlatır"""
         logger.info("Kontrol döngüsü başlatılıyor...")
+        
+        vision_services_started = False  # Vision services sadece bir kez başlatılsın
         
         while self.is_running:
             try:
@@ -333,25 +305,23 @@ class SmartSaw:
                         time.sleep(1)
                         continue
                     
-                    # Veriyi işle
-                    mapped_data = self.data_mapper.map_data(raw_data)
-                    
                     # Ham modbus verisini direkt olarak kullan
                     base_data = raw_data.copy()
                     
                     # Aktif kontrolcüyü geçici değişkende tut
                     current_controller = self.controller_factory.active_controller.value if self.controller_factory.active_controller else None
                     
-                    # Kesim durumunu kontrol et ve kesim ID'sini güncelle
+                    # Kesim durumunu kontrol et ve kesim ID'sini güncelle (thread-safe)
                     current_testere_durumu = base_data.get('testere_durumu', 0)
                     
                     # Kesim başlangıcını kontrol et (3: KESIM_YAPILIYOR)
                     if current_testere_durumu == 3 and self.previous_testere_durumu != 3:
-                        # Yeni kesim başladı
+                        # Yeni kesim başladı (kesim_id güncellemesi lock içinde)
                         self.current_kesim_id += 1
                         logger.info(f"Yeni kesim başladı. Kesim ID: {self.current_kesim_id}")
                     
                     # Yukarı çıkış durumunu kontrol et (5: SERIT_YUKARI_CIKIYOR) ve kayıt/model yönetimini yap
+                    should_start_vision_services = False
                     if current_testere_durumu == TestereState.SERIT_YUKARI_CIKIYOR.value and self.previous_testere_durumu != TestereState.SERIT_YUKARI_CIKIYOR.value:
                         # Yukarı çıkış başladı, kaydı ve modelleri başlat
                         if not self.is_recording_upward:
@@ -364,28 +334,10 @@ class SmartSaw:
                                 except Exception as _e:
                                     logger.error(f"Detection başlatma hatası: {_e}")
 
-                                # Vision service / Wear calculator başlat (henüz çalışmıyorsa)
-                                try:
-                                    if self.vision_service is None:
-                                        from vision.service import VisionService
-                                        self.vision_service = VisionService(
-                                            recordings_root=os.path.join(os.getcwd(), "recordings"),
-                                            real_ldc_root=os.path.join(os.getcwd(), "real_ldc"),
-                                            watchdog_interval_s=0.2,
-                                        )
-                                        self.vision_service.start()
-                                    if self.wear_calculator is None:
-                                        from core.wear_calculator import WearCalculator
-                                        self.wear_calculator = WearCalculator(
-                                            recordings_root=os.path.join(os.getcwd(), "recordings"),
-                                            update_callback=self._on_wear_update
-                                        )
-                                        self.wear_calculator.start()
-                                        if hasattr(self, 'gui') and self.gui:
-                                            self.gui.wear_calculator = self.wear_calculator
-                                    logger.info("Detection, vision servisi ve wear calculator başlatıldı.")
-                                except Exception as _e:
-                                    logger.error(f"Modelleri başlatma hatası: {_e}")
+                                # Vision services'i lock DIŞINDA başlatmak için flag set et
+                                if not vision_services_started:
+                                    should_start_vision_services = True
+                                    vision_services_started = True
                     elif current_testere_durumu != TestereState.SERIT_YUKARI_CIKIYOR.value and self.previous_testere_durumu == TestereState.SERIT_YUKARI_CIKIYOR.value:
                         # Yukarı çıkış bitti, yalnızca kaydı durdur (modeller çalışmaya devam)
                         if self.is_recording_upward:
@@ -465,6 +417,10 @@ class SmartSaw:
                     else:
                         logger.debug("Kontrol sistemi aktif değil")
                 
+                # Lock DIŞINDA vision services başlat (performans için)
+                if should_start_vision_services:
+                    self._lazy_init_vision_services()
+                
                 # Döngü gecikmesi
                 time.sleep(self.config.control.loop_delay)
                 
@@ -477,27 +433,55 @@ class SmartSaw:
         """Veri kayıt ve GUI güncelleme döngüsünü başlatır"""
         logger.info("Veri döngüsü başlatılıyor...")
         
+        last_saved_timestamp = None  # Son kaydedilen veri timestamp'i
         
         while self.is_running:
             try:
                 snapshot_to_send = None # ThingsBoard için hazırlanan gönderilecek veri
+                data_to_save = None
+                data_to_update = None
+                should_save = False
 
+                # Thread-safe veri okuma
                 with self.lock:
                     if self.last_processed_data:
-                        try:
-                            # Veriyi kaydet
-                            if not self.data_storage.save_data(self.last_processed_data):
-                                logger.error("Veri kaydedilemedi")
-                            
-                            # GUI'yi güncelle
-                            self.gui.update_data(self.last_processed_data)
-                            if self.tb_enabled:
-                                now_ms = int(time.time() * 1000)
-                                if (now_ms - self._tb_last_sent_ms) >= self._tb_period_ms:
-                                    snapshot_to_send = dict(self.last_processed_data)  # kopya
-                                    self._tb_last_sent_ms = now_ms
-                        except Exception as e:
-                            logger.error(f"Veri kaydetme/güncelleme hatası: {str(e)}")
+                        # Modbus bağlantısı kontrolü - bağlantı yoksa kaydetme
+                        is_connected = self.last_processed_data.get('modbus_connected', False)
+                        current_timestamp = self.last_processed_data.get('timestamp')
+                        
+                        # Sadece yeni veri ise ve bağlantı varsa kaydet
+                        if is_connected and current_timestamp != last_saved_timestamp:
+                            # Veriyi kopyala (lock içinde)
+                            data_to_save = dict(self.last_processed_data)
+                            data_to_update = dict(self.last_processed_data)
+                            should_save = True
+                            last_saved_timestamp = current_timestamp
+                        elif not is_connected:
+                            # Bağlantı yoksa sadece GUI güncelle (eski veri göster)
+                            data_to_update = dict(self.last_processed_data)
+                        # Bağlantı var ama timestamp aynı ise hiçbir şey yapma
+                        
+                        if self.tb_enabled and is_connected:
+                            now_ms = int(time.time() * 1000)
+                            if (now_ms - self._tb_last_sent_ms) >= self._tb_period_ms:
+                                snapshot_to_send = dict(self.last_processed_data)
+                                self._tb_last_sent_ms = now_ms
+                
+                # Lock dışında işlemleri yap
+                if should_save and data_to_save:
+                    try:
+                        # Veriyi kaydet
+                        if not self.data_storage.save_data(data_to_save):
+                            logger.error("Veri kaydedilemedi")
+                    except Exception as e:
+                        logger.error(f"Veri kaydetme hatası: {str(e)}")
+                
+                # GUI'yi her zaman güncelle (bağlantı durumu göstermek için)
+                if data_to_update:
+                    try:
+                        self.gui.update_data(data_to_update)
+                    except Exception as e:
+                        logger.error(f"GUI güncelleme hatası: {str(e)}")
 
                 if snapshot_to_send is not None and self.tb_enabled and self.tb is not None:
                     try:
@@ -539,16 +523,13 @@ class SmartSaw:
                     time.sleep(1)
                     continue
 
-            # Çalışma bayrağını ayarla
+            # Çalışma bayrağını ayarla (thread'ler başlamadan önce)
             self.is_running = True
             
-            # Thread'leri başlat (kontrol ve veri döngüleri)
-            self._setup_control_loop()
-            self._setup_data_loop()
-            
-
-            # Web sunucusunu başlat (opsiyonel)
-            self._setup_web_server()
+            # Thread'leri başlat (kontrol ve veri döngüleri) - sadece bir kez
+            logger.info("Kontrol ve veri döngüleri başlatılıyor...")
+            self._start_control_loop()
+            self._start_data_loop()
 
             # Thread'lerin başladığını bildir
             self.gui.threads_ready.set()
@@ -617,14 +598,14 @@ class SmartSaw:
             # Kamera modülünü kapat
             if hasattr(self, 'camera_module') and self.camera_module:
                 logger.info("Kamera modülü kapatılıyor...")
+                # Kayıt varsa durdur
+                if self.is_recording_upward:
+                    try:
+                        self.camera_module.stop_recording()
+                    except Exception as e:
+                        logger.error(f"Kamera kaydı durdurma hatası: {e}")
+                # Kamerayı kapat
                 self.camera_module.close()
-            """
-KAMERA YUKARI CIKARKEN KODU
-            # Kamera kaydını durdur
-            if self.is_recording_upward:
-                self.camera.stop_recording()
-            self.camera.close()
-            """
             
             # Kontrol istatistiklerini logla
             stats = self.controller_factory.get_stats()
@@ -639,19 +620,6 @@ KAMERA YUKARI CIKARKEN KODU
                 self.control_loop.join(timeout=2)
             if self.data_loop and self.data_loop.is_alive():
                 self.data_loop.join(timeout=2)
-
-            # Web sunucusunu kapat
-            # if hasattr(self, 'web_server') and self.web_server and self.web_server.poll() is None:
-            #     logger.info("Web sunucusu kapatılıyor...")
-            #     try:
-            #         self.web_server.terminate()  # Güvenli bir şekilde sonlandır
-            #         self.web_server.wait(timeout=3)  # En fazla 3 saniye bekle
-            #     except Exception as e:
-            #         logger.error(f"Web sunucusu kapatma hatası: {str(e)}")
-            #         try:
-            #             self.web_server.kill()  # Son çare olarak zorla sonlandır
-            #         except:
-            #             pass
             
             # Modbus bağlantısını kapat
             if self.modbus_client:
