@@ -43,6 +43,7 @@ from core.constants import TestereState
 from thingsboard.sender import create_sender_from_env
 
 from core.camera import CameraModule
+from anomaly.service import AnomalyService
 
 
 class SmartSaw:
@@ -140,6 +141,17 @@ class SmartSaw:
         except Exception as e:
             logger.error(f"Kamera modülü başlatılamadı: {e}")
 
+        # Anomaly detection service
+        try:
+            self.anomaly_service = AnomalyService(
+                update_callback=self._on_anomaly_detected,
+                processing_interval=0.1
+            )
+            logger.info("Anomaly detection service başlatıldı")
+        except Exception as e:
+            logger.error(f"Anomaly service başlatılamadı: {e}")
+            self.anomaly_service = None
+
 
         logger.info("Başlatma tamamlandı")
     
@@ -202,6 +214,40 @@ class SmartSaw:
             import traceback
             logger.error(traceback.format_exc())
         
+    def _on_anomaly_detected(self, anomaly_type: str, anomaly_info: Dict[str, Any]):
+        """Anomali tespit edildiğinde çağrılır"""
+        try:
+            logger.warning(f"ANOMALI TESPİT EDİLDİ: {anomaly_type}")
+            logger.warning(f"Anomali detayları: {anomaly_info}")
+            
+            # GUI'ye anomali bilgisini gönder (eğer GUI hazırsa)
+            if hasattr(self, 'gui') and self.gui:
+                try:
+                    # Control panel window'dan sensor page'e erişim
+                    if hasattr(self.gui, '_window') and hasattr(self.gui._window, '_sensor_page'):
+                        sensor_page = self.gui._window._sensor_page
+                        if sensor_page and hasattr(sensor_page, 'on_anomaly_detected'):
+                            sensor_page.on_anomaly_detected(anomaly_type, anomaly_info)
+                except Exception as e:
+                    logger.error(f"GUI anomali bildirimi hatası: {e}")
+            
+            # ThingsBoard'a anomali bilgisini gönder
+            if self.tb_enabled and self.tb:
+                try:
+                    anomaly_data = {
+                        'anomaly_type': anomaly_type,
+                        'anomaly_value': anomaly_info.get('value', 0),
+                        'anomaly_timestamp': anomaly_info.get('timestamp', time.time()),
+                        'anomaly_z_score': anomaly_info.get('z_score', 0),
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                    }
+                    self.tb.send_processed_row(anomaly_data)
+                except Exception as e:
+                    logger.error(f"ThingsBoard anomali gönderimi hatası: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Anomali callback işleme hatası: {e}")
+    
     def _on_wear_update(self, wear_percentage: float):
         """Callback for wear percentage updates - sends to GUI."""
         try:
@@ -476,6 +522,13 @@ class SmartSaw:
                     except Exception as e:
                         logger.error(f"Veri kaydetme hatası: {str(e)}")
                 
+                # Anomaly service'e veri gönder
+                if data_to_update and self.anomaly_service and self.anomaly_service.is_running():
+                    try:
+                        self.anomaly_service.add_data(data_to_update)
+                    except Exception as e:
+                        logger.error(f"Anomaly service veri gönderme hatası: {e}")
+                
                 # GUI'yi her zaman güncelle (bağlantı durumu göstermek için)
                 if data_to_update:
                     try:
@@ -525,6 +578,18 @@ class SmartSaw:
 
             # Çalışma bayrağını ayarla (thread'ler başlamadan önce)
             self.is_running = True
+            
+            # Anomaly service'i başlat
+            if self.anomaly_service:
+                try:
+                    self.anomaly_service.start()
+                    # Tüm detector'ları aktif yap
+                    self.anomaly_service.set_detector_active('serit_sapmasi', True)
+                    self.anomaly_service.set_detector_active('serit_motor_tork', True)
+                    self.anomaly_service.set_detector_active('serit_motor_akim', True)
+                    logger.info("Anomaly service başlatıldı ve tüm detector'lar aktif yapıldı")
+                except Exception as e:
+                    logger.error(f"Anomaly service başlatma hatası: {e}")
             
             # Thread'leri başlat (kontrol ve veri döngüleri) - sadece bir kez
             logger.info("Kontrol ve veri döngüleri başlatılıyor...")
@@ -594,6 +659,20 @@ class SmartSaw:
             if hasattr(self, 'wear_calculator') and self.wear_calculator:
                 logger.info("Wear calculator kapatılıyor...")
                 self.wear_calculator.stop()
+            
+            # Anomaly service'i kapat
+            if hasattr(self, 'anomaly_service') and self.anomaly_service:
+                logger.info("Anomaly service kapatılıyor...")
+                try:
+                    self.anomaly_service.stop()
+                    # Anomaly service istatistiklerini logla
+                    anomaly_stats = self.anomaly_service.get_stats()
+                    logger.info("Anomaly service istatistikleri:")
+                    logger.info(f"  Toplam işlenen veri: {anomaly_stats.get('total_processed', 0)}")
+                    logger.info(f"  Tespit edilen anomali: {anomaly_stats.get('anomalies_detected', 0)}")
+                    logger.info(f"  Son anomali zamanı: {anomaly_stats.get('last_anomaly_time', 'Yok')}")
+                except Exception as e:
+                    logger.error(f"Anomaly service kapatma hatası: {e}")
             
             # Kamera modülünü kapat
             if hasattr(self, 'camera_module') and self.camera_module:

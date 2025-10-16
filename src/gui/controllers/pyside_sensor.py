@@ -908,8 +908,8 @@ class SensorPage(QWidget):
             upd('IlerlemeHiziFrame','labelIlerlemeHiziInfo', ilerleme_hizi < 100 or self.anomaly_states['IlerlemeHizi'])
             self.anomaly_states['IlerlemeHizi'] |= (ilerleme_hizi < 100)
 
-            upd('SeritAkimFrame','labelSeritAkimInfo', serit_akim > 15 or self.anomaly_states['SeritAkim'])
-            self.anomaly_states['SeritAkim'] |= (serit_akim > 15)
+            # SeritAkim - Anomaly detector kullanılıyor (manuel kontrol kaldırıldı)
+            upd('SeritAkimFrame','labelSeritAkimInfo', self.anomaly_states['SeritAkim'])
 
             upd('SicaklikFrame','labelSicaklikInfo', sicaklik > 40 or self.anomaly_states['Sicaklik'])
             self.anomaly_states['Sicaklik'] |= (sicaklik > 40)
@@ -917,8 +917,8 @@ class SensorPage(QWidget):
             upd('NemFrame','labelNemInfo', nem > 80 or self.anomaly_states['Nem'])
             self.anomaly_states['Nem'] |= (nem > 80)
 
-            upd('SeritSapmasiFrame','labelSeritSapmasiInfo', abs(serit_sapmasi) > 0.5 or self.anomaly_states['SeritSapmasi'])
-            self.anomaly_states['SeritSapmasi'] |= (abs(serit_sapmasi) > 0.5)
+            # SeritSapmasi - Anomaly detector kullanılıyor (manuel kontrol kaldırıldı)
+            upd('SeritSapmasiFrame','labelSeritSapmasiInfo', self.anomaly_states['SeritSapmasi'])
 
             upd('TitresimXFrame','labelTitresimXInfo', vib_x > 200 or self.anomaly_states['TitresimX'])
             self.anomaly_states['TitresimX'] |= (vib_x > 200)
@@ -926,8 +926,8 @@ class SensorPage(QWidget):
             upd('TitresimYFrame','labelTitresimYInfo', vib_y > 200 or self.anomaly_states['TitresimY'])
             self.anomaly_states['TitresimY'] |= (vib_y > 200)
 
-            upd('TitresimZFrame','labelTitresimZInfo', vib_z > 200 or self.anomaly_states['TitresimZ'])
-            self.anomaly_states['TitresimZ'] |= (vib_z > 200)
+            # TitresimZ - Motor tork anomaly detector kullanılıyor (manuel kontrol kaldırıldı)
+            upd('TitresimZFrame','labelTitresimZInfo', self.anomaly_states['TitresimZ'])
         except Exception:
             # swallow to keep UI responsive
             pass
@@ -1415,4 +1415,27 @@ class SensorPage(QWidget):
                 self._thread_local.db.close()
                 logger.info("SensorPage veritabanı bağlantısı kapatıldı")
         except Exception as e:
-            logger.debug(f"SensorPage cleanup hatası: {e}") 
+            logger.debug(f"SensorPage cleanup hatası: {e}")
+    
+    def on_anomaly_detected(self, anomaly_type: str, anomaly_info: dict):
+        """
+        Anomaly detector'dan gelen anomali tespitlerini GUI'ye aktarır (thread-safe)
+        
+        Args:
+            anomaly_type: Anomali tipi
+            anomaly_info: Anomali detayları
+        """
+        try:
+            # Thread-safe anomaly state güncelleme
+            with self._buffer_lock:
+                if anomaly_type == "serit_sapmasi":
+                    self.anomaly_states['SeritSapmasi'] = True
+                elif anomaly_type == "serit_motor_tork":
+                    self.anomaly_states['TitresimZ'] = True  # Motor tork için TitresimZ kullanılıyor
+                elif anomaly_type == "serit_motor_akim":
+                    self.anomaly_states['SeritAkim'] = True  # Motor akım için SeritAkim kullanılıyor
+            
+            logger.warning(f"Anomaly detector'dan GUI'ye anomali bildirimi: {anomaly_type}")
+            
+        except Exception as e:
+            logger.error(f"GUI anomaly callback hatası: {e}") 
