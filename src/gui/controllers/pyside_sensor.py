@@ -466,17 +466,16 @@ class SensorPage(QWidget):
         self.last_cut_data = []
         self.is_cutting = False
         self.cut_start_time = None
-        # Buffer to store full current cut for all metrics
-        self.current_cut_buffer = []
+        # Buffer to store full current cut for all metrics (overflow koruması ile)
+        from collections import deque
+        self.current_cut_buffer = deque(maxlen=2000)  # Max 2000 veri noktası (~3-4 dakika kesim)
         
-        # Veritabanı bağlantısı
-        try:
-            import sqlite3
-            self.db = sqlite3.connect('data/total.db')
-            logger.info("Veritabanı bağlantısı başarılı: data/total.db")
-        except Exception as e:
-            logger.error(f"Veritabanı bağlantı hatası: {e}")
-            self.db = None
+        # Thread-safety için buffer lock
+        self._buffer_lock = threading.Lock()
+        
+        # Thread-local veritabanı bağlantısı
+        self._thread_local = threading.local()
+        logger.info("Thread-local veritabanı bağlantısı hazır")
 
         # Timers (date/time)
         self._datetime_timer = QTimer(self)
@@ -616,7 +615,7 @@ class SensorPage(QWidget):
                     else:
                         btn.setIcon(self._icon(passive_icon))
         except Exception as e:
-            print(f"Navigation aktif durum ayarlama hatası: {e}")
+            logger.error(f"Navigation aktif durum ayarlama hatası: {e}")
 
     def _icon(self, name: str) -> QIcon:
         base = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
@@ -707,7 +706,7 @@ class SensorPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -728,7 +727,7 @@ class SensorPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -749,7 +748,7 @@ class SensorPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -770,7 +769,7 @@ class SensorPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -934,7 +933,7 @@ class SensorPage(QWidget):
             pass
 
     def _update_cutting_graph(self, data: Dict) -> None:
-        """Kesim grafiğini günceller"""
+        """Kesim grafiğini günceller (thread-safe)"""
         try:
             if not self.cutting_graph:
                 return
@@ -942,20 +941,26 @@ class SensorPage(QWidget):
             # Testere durumunu kontrol et
             testere_durumu = data.get('testere_durumu', 0)
             
+            # Thread-safe state kontrolü
+            with self._buffer_lock:
+                is_currently_cutting = self.is_cutting
+            
             # Kesim başladı mı kontrol et
             if testere_durumu == 3:  # KESIM_YAPILIYOR
-                if not self.is_cutting:
-                    # Kesim başladı
-                    self.is_cutting = True
-                    self.cut_start_time = datetime.now()
+                if not is_currently_cutting:
+                    # Kesim başladı (thread-safe)
+                    with self._buffer_lock:
+                        self.is_cutting = True
+                        self.cut_start_time = datetime.now()
+                        self.last_cut_data = []
+                        self.current_cut_buffer = []
+                    
                     # Zaman etiketleri için başlangıç saatini grafiğe aktar
                     self.cutting_graph.cut_start_time = self.cut_start_time
                     self.cutting_graph.last_point_time = self.cut_start_time
                     # Yükseklik için başlangıç değeri, ilk paket geldiğinde set edilecek
                     self.cutting_graph.start_height_value = None
                     self.cutting_graph.current_height_value = None
-                    self.last_cut_data = []
-                    self.current_cut_buffer = []
                     self.cutting_graph.clear_data()
                     # Gerçek zamanlı grafiği yeniden başlat
                     try:
@@ -968,9 +973,10 @@ class SensorPage(QWidget):
                 # Kesim sırasında veri topla
                 self._add_cutting_data_point(data)
                 
-            elif testere_durumu != 3 and self.is_cutting:
-                # Kesim bitti
-                self.is_cutting = False
+            elif testere_durumu != 3 and is_currently_cutting:
+                # Kesim bitti (thread-safe)
+                with self._buffer_lock:
+                    self.is_cutting = False
                 # Başlangıç saatini koru, son kesim görünsün
                 logger.info("Kesim bitti")
                 # Gerçek zamanlı grafiği durdur (son kesimi göster)
@@ -984,14 +990,19 @@ class SensorPage(QWidget):
             logger.error(f"Kesim grafiği güncelleme hatası: {e}")
 
     def _add_cutting_data_point(self, data: Dict) -> None:
-        """Kesim sırasında veri noktası ekler"""
+        """Kesim sırasında veri noktası ekler (thread-safe)"""
         try:
-            if not self.cutting_graph or not self.is_cutting:
+            # Thread-safe state kontrolü
+            with self._buffer_lock:
+                is_cutting = self.is_cutting
+                cut_start = self.cut_start_time
+            
+            if not self.cutting_graph or not is_cutting:
                 return
             
             # Buffer'a tüm metrikleri ekle
             now_dt = datetime.now()
-            elapsed_s = (now_dt - self.cut_start_time).total_seconds() if self.cut_start_time else 0.0
+            elapsed_s = (now_dt - cut_start).total_seconds() if cut_start else 0.0
             buffer_row = {
                 'timestamp_dt': now_dt,
                 'elapsed_s': float(elapsed_s),
@@ -1005,7 +1016,10 @@ class SensorPage(QWidget):
                 'ivme_olcer_y_hz': float(data.get('ivme_olcer_y_hz', 0.0)),
                 'ivme_olcer_z_hz': float(data.get('ivme_olcer_z_hz', 0.0)),
             }
-            self.current_cut_buffer.append(buffer_row)
+            
+            # Thread-safe buffer ekleme
+            with self._buffer_lock:
+                self.current_cut_buffer.append(buffer_row)
 
             # Yükseklik ekseni etiketleri için başlangıç/mevcut değerleri güncelle
             try:
@@ -1060,10 +1074,15 @@ class SensorPage(QWidget):
             return 0.0
 
     def _rebuild_graph_from_buffer(self) -> None:
-        """Buffer'daki mevcut/son kesimi, seçili eksenlere göre yeniden çizer"""
+        """Buffer'daki mevcut/son kesimi, seçili eksenlere göre yeniden çizer (thread-safe)"""
         try:
-            if not self.cutting_graph or not self.current_cut_buffer:
-                return
+            # Thread-safe buffer kopyalama
+            with self._buffer_lock:
+                if not self.cutting_graph or not self.current_cut_buffer:
+                    return
+                buffer_copy = list(self.current_cut_buffer)
+                cut_start = self.cut_start_time
+            
             # Grafiği temizle
             self.cutting_graph.clear_data()
 
@@ -1071,24 +1090,24 @@ class SensorPage(QWidget):
             y_axis = self.cutting_graph.y_axis_type
 
             # Zaman etiketleri için başlangıç/son
-            if self.cut_start_time:
-                self.cutting_graph.cut_start_time = self.cut_start_time
-            first_dt = self.current_cut_buffer[0].get('timestamp_dt', None)
-            last_dt = self.current_cut_buffer[-1].get('timestamp_dt', None)
+            if cut_start:
+                self.cutting_graph.cut_start_time = cut_start
+            first_dt = buffer_copy[0].get('timestamp_dt', None)
+            last_dt = buffer_copy[-1].get('timestamp_dt', None)
             if first_dt and last_dt:
                 self.cutting_graph.cut_start_time = first_dt
                 self.cutting_graph.last_point_time = last_dt
             # Yükseklik için başlangıç/mevcut değerleri buffer'dan belirle
             try:
-                first_h = self.current_cut_buffer[0].get('kafa_yuksekligi_mm', None)
-                last_h = self.current_cut_buffer[-1].get('kafa_yuksekligi_mm', None)
+                first_h = buffer_copy[0].get('kafa_yuksekligi_mm', None)
+                last_h = buffer_copy[-1].get('kafa_yuksekligi_mm', None)
                 if first_h is not None and last_h is not None:
                     self.cutting_graph.start_height_value = float(first_h)
                     self.cutting_graph.current_height_value = float(last_h)
             except Exception:
                 pass
 
-            for row in self.current_cut_buffer:
+            for row in buffer_copy:
                 x_value = self._get_value_for_axis_from_buffer(row, x_axis)
                 y_value = self._get_value_for_axis_from_buffer(row, y_axis)
                 self.cutting_graph.add_data_point(float(x_value), float(y_value))
@@ -1102,15 +1121,29 @@ class SensorPage(QWidget):
         except Exception as e:
             logger.error(f"Buffer'dan grafik çizim hatası: {e}")
 
+    def _get_db_connection(self):
+        """Thread-safe veritabanı bağlantısı döndürür"""
+        if not hasattr(self._thread_local, 'db'):
+            import sqlite3
+            # Thread-local kullandığımızdan check_same_thread parametresine gerek yok
+            self._thread_local.db = sqlite3.connect('data/total.db')
+            logger.info("Thread-local veritabanı bağlantısı oluşturuldu")
+        return self._thread_local.db
+    
     def _load_last_cut_data(self):
-        """Son kesim verilerini veritabanından yükler - sadece kesim yapılmıyor ise"""
+        """Son kesim verilerini veritabanından yükler - sadece kesim yapılmıyor ise (thread-safe)"""
         try:
+            # Thread-safe state kontrolü
+            with self._buffer_lock:
+                is_cutting = self.is_cutting
+            
             # Eğer şu anda kesim yapılıyorsa, geçmiş verileri yükleme
-            if self.is_cutting:
+            if is_cutting:
                 logger.info("Kesim devam ediyor, geçmiş veri yüklenmeyecek")
                 return
                 
-            if not self.cutting_graph or not self.db:
+            db = self._get_db_connection()
+            if not self.cutting_graph or not db:
                 logger.warning("Grafik widget veya veritabanı bağlantısı yok")
                 return
             
@@ -1189,13 +1222,14 @@ class SensorPage(QWidget):
             logger.error(f"Detaylı hata: {traceback.format_exc()}")
 
     def _get_last_cut_data_from_db(self):
-        """Veritabanından son kesim aralığının verilerini alır"""
+        """Veritabanından son kesim aralığının verilerini alır (thread-safe)"""
         try:
-            if not self.db:
+            db = self._get_db_connection()
+            if not db:
                 logger.warning("Veritabanı bağlantısı yok")
                 return None
             
-            cursor = self.db.cursor()
+            cursor = db.cursor()
             
             # Önce testere_durumu 3 olan son kesim aralığını bul
             # Son kesim bloğunun başlangıç ve bitiş zamanlarını tespit et
@@ -1372,4 +1406,13 @@ class SensorPage(QWidget):
     # _get_last_cut_data_from_db metodunu çağırmadan önce timestamp referansını sıfırla
     def _prepare_for_historical_data_load(self):
         """Geçmiş veri yüklemesi öncesi hazırlık"""
-        self._first_timestamp_for_axis = None 
+        self._first_timestamp_for_axis = None
+    
+    def __del__(self):
+        """Cleanup - thread-local veritabanı bağlantılarını kapat"""
+        try:
+            if hasattr(self, '_thread_local') and hasattr(self._thread_local, 'db'):
+                self._thread_local.db.close()
+                logger.info("SensorPage veritabanı bağlantısı kapatıldı")
+        except Exception as e:
+            logger.debug(f"SensorPage cleanup hatası: {e}") 

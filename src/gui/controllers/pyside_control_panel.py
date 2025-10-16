@@ -399,13 +399,12 @@ class ControlPanelWindow(QMainWindow):
 
         # Veri yönetimi için gerekli değişkenler
         self.current_values = {}
+        self._values_lock = threading.Lock()  # Thread-safety için lock
         self._last_update_time = None
-        self.kesim_baslama_zamani = None
-        self._cutting_start_time = None
         
-        # Kesim zamanı takibi için değişkenler
-        self._cutting_start_datetime = None
-        self._cutting_stop_datetime = None
+        # Kesim zamanı takibi için değişkenler (tek değişken kullan)
+        self._cutting_start_time = None  # Kesim başlangıç zamanı (datetime)
+        self._cutting_stop_datetime = None  # Kesim bitiş zamanı (datetime)
         
         # Hız değerleri
         self.speed_values = {
@@ -433,8 +432,9 @@ class ControlPanelWindow(QMainWindow):
         # Başlangıç değerlerini ayarla
         self._initialize_current_values()
         
-        # Başlangıçta bağlantı yok olarak ayarla
-        self.current_values['testere_durumu'] = 'Bağlantı Yok'
+        # Başlangıçta bağlantı yok olarak ayarla (thread-safe)
+        with self._values_lock:
+            self.current_values['testere_durumu'] = 'Bağlantı Yok'
         
         # Başlangıç status icon'unu ayarla
         self._update_status_icon('Bağlantı Yok')
@@ -1002,30 +1002,35 @@ class ControlPanelWindow(QMainWindow):
             logger.error(f"Log işleme hatası: {e}")
 
     def _update_values(self, processed_data: Dict):
-        """Gösterilen değerleri günceller"""
+        """Gösterilen değerleri günceller (thread-safe)"""
         global last_meaningful_speed
         ui_speed = None
+        kesim_basladi = False
+        kesim_bitti = False
+        
         try:
-            # Temel bilgiler
-            self.current_values['makine_id'] = str(processed_data.get('makine_id', '-'))
-            self.current_values['serit_id'] = str(processed_data.get('serit_id', '-'))
-            self.current_values['serit_dis_mm'] = str(processed_data.get('serit_dis_mm', '-'))
-            self.current_values['serit_tip'] = str(processed_data.get('serit_tip', '-'))
-            self.current_values['serit_marka'] = str(processed_data.get('serit_marka', '-'))
-            self.current_values['serit_malz'] = str(processed_data.get('serit_malz', '-'))
+            # Thread-safe değer güncelleme
+            with self._values_lock:
+                # Temel bilgiler
+                self.current_values['makine_id'] = str(processed_data.get('makine_id', '-'))
+                self.current_values['serit_id'] = str(processed_data.get('serit_id', '-'))
+                self.current_values['serit_dis_mm'] = str(processed_data.get('serit_dis_mm', '-'))
+                self.current_values['serit_tip'] = str(processed_data.get('serit_tip', '-'))
+                self.current_values['serit_marka'] = str(processed_data.get('serit_marka', '-'))
+                self.current_values['serit_malz'] = str(processed_data.get('serit_malz', '-'))
             
-            # # Malzeme bilgileri
-            self.current_values['malzeme_cinsi'] = str(processed_data.get('malzeme_cinsi', '-'))
-            self.current_values['malzeme_sertlik'] = str(processed_data.get('malzeme_sertlik', '-'))
-            self.current_values['kesit_yapisi'] = str(processed_data.get('kesit_yapisi', '-'))
-            self.current_values['a_mm'] = str(processed_data.get('a_mm', '-'))
-            self.current_values['b_mm'] = str(processed_data.get('b_mm', '-'))
-            self.current_values['c_mm'] = str(processed_data.get('c_mm', '-'))
-            self.current_values['d_mm'] = str(processed_data.get('d_mm', '-'))
-            
-            # Motor ve hareket bilgileri
-            kafa_yuksekligi = processed_data.get('kafa_yuksekligi_mm', 0)
-            self.current_values['kafa_yuksekligi_mm'] = f"{kafa_yuksekligi:.1f} "
+                # # Malzeme bilgileri
+                self.current_values['malzeme_cinsi'] = str(processed_data.get('malzeme_cinsi', '-'))
+                self.current_values['malzeme_sertlik'] = str(processed_data.get('malzeme_sertlik', '-'))
+                self.current_values['kesit_yapisi'] = str(processed_data.get('kesit_yapisi', '-'))
+                self.current_values['a_mm'] = str(processed_data.get('a_mm', '-'))
+                self.current_values['b_mm'] = str(processed_data.get('b_mm', '-'))
+                self.current_values['c_mm'] = str(processed_data.get('c_mm', '-'))
+                self.current_values['d_mm'] = str(processed_data.get('d_mm', '-'))
+                
+                # Motor ve hareket bilgileri
+                kafa_yuksekligi = processed_data.get('kafa_yuksekligi_mm', 0)
+                self.current_values['kafa_yuksekligi_mm'] = f"{kafa_yuksekligi:.1f} "
             
             # Kafa yüksekliği değerini UI'da güncelle
             if hasattr(self.ui, 'labelValue'):
@@ -1035,12 +1040,12 @@ class ControlPanelWindow(QMainWindow):
                     self.ui.progressBarHeight.setValue(int(kafa_yuksekligi))
                 except (ValueError, TypeError):
                     self.ui.progressBarHeight.setValue(0)
-            serit_motor_akim = processed_data.get('serit_motor_akim_a', 0)
-            inme_motor_akim = processed_data.get('inme_motor_akim_a', 0)
-            self.current_values['serit_motor_akim_a'] = f"{serit_motor_akim:.1f} "
-            self.current_values['serit_motor_tork_percentage'] = f"{processed_data.get('serit_motor_tork_percentage', 0):.1f} "
-            self.current_values['inme_motor_akim_a'] = f"{inme_motor_akim:.1f} "
-            self.current_values['inme_motor_tork_percentage'] = f"{processed_data.get('inme_motor_tork_percentage', 0):.1f} "
+                serit_motor_akim = processed_data.get('serit_motor_akim_a', 0)
+                inme_motor_akim = processed_data.get('inme_motor_akim_a', 0)
+                self.current_values['serit_motor_akim_a'] = f"{serit_motor_akim:.1f} "
+                self.current_values['serit_motor_tork_percentage'] = f"{processed_data.get('serit_motor_tork_percentage', 0):.1f} "
+                self.current_values['inme_motor_akim_a'] = f"{inme_motor_akim:.1f} "
+                self.current_values['inme_motor_tork_percentage'] = f"{processed_data.get('inme_motor_tork_percentage', 0):.1f} "
             
             # Motor akım değerlerini UI'da güncelle
             if hasattr(self.ui, 'labelBandCuttingCurrentValue'):
@@ -1056,9 +1061,9 @@ class ControlPanelWindow(QMainWindow):
             if hasattr(self.ui, 'labelBandDescentTorqueValue'):
                 self.ui.labelBandDescentTorqueValue.setText(f"{inme_motor_tork:.1f}")
             
-            # Basınç ve sıcaklık bilgileri
-            self.current_values['mengene_basinc_bar'] = f"{processed_data.get('mengene_basinc_bar', 0):.1f} "
-            self.current_values['serit_gerginligi_bar'] = f"{processed_data.get('serit_gerginligi_bar', 0):.1f} "
+                # Basınç ve sıcaklık bilgileri
+                self.current_values['mengene_basinc_bar'] = f"{processed_data.get('mengene_basinc_bar', 0):.1f} "
+                self.current_values['serit_gerginligi_bar'] = f"{processed_data.get('serit_gerginligi_bar', 0):.1f} "
             
             # Şerit sapması grafiğine veri ekle
             if self.band_deviation_graph:
@@ -1089,74 +1094,83 @@ class ControlPanelWindow(QMainWindow):
                 self.ui.labelBandDeviationValue.setText(f"{deviation_value:.2f}")
                 # current_values'ı da güncelle
                 self.current_values['serit_sapmasi'] = f"{deviation_value:.2f} "
+                
+                self.current_values['ortam_sicakligi_c'] = f"{processed_data.get('ortam_sicakligi_c', 0):.1f} "
+                self.current_values['ortam_nem_percentage'] = f"{processed_data.get('ortam_nem_percentage', 0):.1f} "
+                self.current_values['sogutma_sivi_sicakligi_c'] = f"{processed_data.get('sogutma_sivi_sicakligi_c', 0):.1f} "
+                self.current_values['hidrolik_yag_sicakligi_c'] = f"{processed_data.get('hidrolik_yag_sicakligi_c', 0):.1f} "
+                
+                # İvme ölçer bilgileri
+                self.current_values['ivme_olcer_x'] = f"{processed_data.get('ivme_olcer_x', 0):.3f} "
+                self.current_values['ivme_olcer_y'] = f"{processed_data.get('ivme_olcer_y', 0):.3f} "
+                self.current_values['ivme_olcer_z'] = f"{processed_data.get('ivme_olcer_z', 0):.3f} "
+                self.current_values['ivme_olcer_x_hz'] = f"{processed_data.get('ivme_olcer_x_hz', 0):.1f} "
+                self.current_values['ivme_olcer_y_hz'] = f"{processed_data.get('ivme_olcer_y_hz', 0):.1f} "
+                self.current_values['ivme_olcer_z_hz'] = f"{processed_data.get('ivme_olcer_z_hz', 0):.1f} "
+                
+                # Hız bilgileri
+                cutting_speed = processed_data.get('serit_kesme_hizi', 0)
+                descent_speed = processed_data.get('serit_inme_hizi', 0)
+                self.current_values['serit_kesme_hizi'] = f"{cutting_speed:.1f} "
+                self.current_values['serit_inme_hizi'] = f"{descent_speed:.1f} "
+                
+                # Kesim bilgileri
+                self.current_values['kesilen_parca_adeti'] = str(processed_data.get('kesilen_parca_adeti', 0))
             
-            self.current_values['ortam_sicakligi_c'] = f"{processed_data.get('ortam_sicakligi_c', 0):.1f} "
-            self.current_values['ortam_nem_percentage'] = f"{processed_data.get('ortam_nem_percentage', 0):.1f} "
-            self.current_values['sogutma_sivi_sicakligi_c'] = f"{processed_data.get('sogutma_sivi_sicakligi_c', 0):.1f} "
-            self.current_values['hidrolik_yag_sicakligi_c'] = f"{processed_data.get('hidrolik_yag_sicakligi_c', 0):.1f} "
-            
-            # İvme ölçer bilgileri
-            self.current_values['ivme_olcer_x'] = f"{processed_data.get('ivme_olcer_x', 0):.3f} "
-            self.current_values['ivme_olcer_y'] = f"{processed_data.get('ivme_olcer_y', 0):.3f} "
-            self.current_values['ivme_olcer_z'] = f"{processed_data.get('ivme_olcer_z', 0):.3f} "
-            self.current_values['ivme_olcer_x_hz'] = f"{processed_data.get('ivme_olcer_x_hz', 0):.1f} "
-            self.current_values['ivme_olcer_y_hz'] = f"{processed_data.get('ivme_olcer_y_hz', 0):.1f} "
-            self.current_values['ivme_olcer_z_hz'] = f"{processed_data.get('ivme_olcer_z_hz', 0):.1f} "
-            
-            # Hız bilgileri
-            cutting_speed = processed_data.get('serit_kesme_hizi', 0)
-            descent_speed = processed_data.get('serit_inme_hizi', 0)
-            self.current_values['serit_kesme_hizi'] = f"{cutting_speed:.1f} "
-            self.current_values['serit_inme_hizi'] = f"{descent_speed:.1f} "
-            
-            # Hız değerlerini UI'da güncelle
+            # UI güncellemelerini lock dışında yap
             if hasattr(self.ui, 'labelSentCuttingSpeed'):
                 self.ui.labelSentCuttingSpeed.setText(f"{cutting_speed:.1f}")
             if hasattr(self.ui, 'labelSentDescentSpeed'):
                 self.ui.labelSentDescentSpeed.setText(f"{descent_speed:.1f}")
             
-            # Kesim bilgileri
-            self.current_values['kesilen_parca_adeti'] = str(processed_data.get('kesilen_parca_adeti', 0))
-            
-            # Durum ve alarm bilgileri
-            testere_durumu = processed_data.get('testere_durumu', 0)
-            durum_text = {
-                0: "BOŞTA",
-                1: "HİDROLİK AKTİF",
-                2: "ŞERİT MOTOR ÇALIŞIYOR",
-                3: "KESİM YAPILIYOR",
-                4: "KESİM BİTTİ",
-                5: "ŞERİT YUKARI ÇIKIYOR",
-                6: "MALZEME BESLEME"
-            }.get(testere_durumu, "BİLİNMİYOR")
-            
-            self.current_values['testere_durumu'] = durum_text
-            self.current_values['alarm_status'] = str(processed_data.get('alarm_status', '-'))
-            self.current_values['alarm_bilgisi'] = str(processed_data.get('alarm_bilgisi', '-'))
-            
-            # Kesim durumunu kontrol et
-            if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
-                if not self.kesim_baslama_zamani:
-                    # Kesim başladı
-                    self.kesim_baslama_zamani = datetime.now()
-                    self.current_values['kesim_baslama'] = self.kesim_baslama_zamani.strftime("%H:%M:%S.%f")[:-3]
-                    # Log ekle
-                    self.add_log("Kesim Başladı !", "INFO")
+                # Durum ve alarm bilgileri
+                testere_durumu = processed_data.get('testere_durumu', 0)
+                durum_text = {
+                    0: "BOŞTA",
+                    1: "HİDROLİK AKTİF",
+                    2: "ŞERİT MOTOR ÇALIŞIYOR",
+                    3: "KESİM YAPILIYOR",
+                    4: "KESİM BİTTİ",
+                    5: "ŞERİT YUKARI ÇIKIYOR",
+                    6: "MALZEME BESLEME"
+                }.get(testere_durumu, "BİLİNMİYOR")
                 
-                # Kesim süresini güncelle
-                if self.kesim_baslama_zamani:
-                    sure = datetime.now() - self.kesim_baslama_zamani
-                    self.current_values['kesim_sure'] = f"{int(sure.total_seconds())} saniye"
-            elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self.kesim_baslama_zamani:
-                # Kesim bitti, süreyi sıfırla
-                self.kesim_baslama_zamani = None
-                self.current_values['kesim_baslama'] = "-"
-                self.current_values['kesim_sure'] = "-"
-                # Log ekle
-                self.add_log("Kesim Bitti !", "INFO")
+                self.current_values['testere_durumu'] = durum_text
+                self.current_values['alarm_status'] = str(processed_data.get('alarm_status', '-'))
+                self.current_values['alarm_bilgisi'] = str(processed_data.get('alarm_bilgisi', '-'))
+                
+                # Kesim durumunu kontrol et (_cutting_start_time kullan)
+                if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
+                    if not self._cutting_start_time:
+                        # Kesim başladı
+                        self._cutting_start_time = datetime.now()
+                        self.current_values['kesim_baslama'] = self._cutting_start_time.strftime("%H:%M:%S.%f")[:-3]
+                        kesim_basladi = True
+                    else:
+                        kesim_basladi = False
+                    
+                    # Kesim süresini güncelle
+                    if self._cutting_start_time:
+                        sure = datetime.now() - self._cutting_start_time
+                        self.current_values['kesim_sure'] = f"{int(sure.total_seconds())} saniye"
+                elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self._cutting_start_time:
+                    # Kesim bitti, süreyi sıfırla
+                    self._cutting_start_time = None
+                    self.current_values['kesim_baslama'] = "-"
+                    self.current_values['kesim_sure'] = "-"
+                    kesim_bitti = True
+                else:
+                    kesim_basladi = False
+                    kesim_bitti = False
+                
+                # Son güncelleme zamanını kaydet
+                self._last_update_time = datetime.now()
             
-            # Son güncelleme zamanını kaydet
-            self._last_update_time = datetime.now()
+            # Lock dışında log ekle
+            if kesim_basladi:
+                self.add_log("Kesim Başladı !", "INFO")
+            if kesim_bitti:
+                self.add_log("Kesim Bitti !", "INFO")
             
             # UI'ı güncelle
             self.update_ui()
@@ -1230,31 +1244,37 @@ class ControlPanelWindow(QMainWindow):
             logger.error(f"Log ekleme hatası: {e}")
 
     def update_modbus_status(self, connected: bool, ip: str):
-        """Modbus durumunu günceller"""
+        """Modbus durumunu günceller (thread-safe)"""
         try:
-            if connected:
-                self.current_values['modbus_status'] = f"Bağlı ({ip})"
-                self.current_values['testere_durumu'] = "Veri bekleniyor..."
-                if hasattr(self.ui, 'labelSystemStatusInfo'):
-                    self.ui.labelSystemStatusInfo.setText("Veri bekleniyor...")
-                    # Status icon'unu güncelle
-                    self._update_status_icon("Veri bekleniyor...")
-            else:
-                self.current_values['modbus_status'] = f"Bağlantı Yok ({ip})"
-                self.current_values['testere_durumu'] = "Bağlantı Yok"
-                if hasattr(self.ui, 'labelSystemStatusInfo'):
-                    self.ui.labelSystemStatusInfo.setText("Bağlantı Yok")
-                    # Status icon'unu güncelle
-                    self._update_status_icon("Bağlantı Yok")
+            # Thread-safe current_values update
+            with self._values_lock:
+                if connected:
+                    self.current_values['modbus_status'] = f"Bağlı ({ip})"
+                    self.current_values['testere_durumu'] = "Veri bekleniyor..."
+                    status_text = "Veri bekleniyor..."
+                else:
+                    self.current_values['modbus_status'] = f"Bağlantı Yok ({ip})"
+                    self.current_values['testere_durumu'] = "Bağlantı Yok"
+                    status_text = "Bağlantı Yok"
+            
+            # UI güncellemelerini lock dışında yap
+            if hasattr(self.ui, 'labelSystemStatusInfo'):
+                self.ui.labelSystemStatusInfo.setText(status_text)
+                # Status icon'unu güncelle
+                self._update_status_icon(status_text)
         except Exception as e:
             logger.error(f"Modbus durum güncelleme hatası: {e}")
     
     def update_ui(self):
-        """UI bileşenlerini günceller"""
+        """UI bileşenlerini günceller (thread-safe)"""
         try:
+            # Thread-safe testere durumu okuma
+            with self._values_lock:
+                durum_text = self.current_values.get('testere_durumu', 'Bilinmiyor')
+            
             # Sistem durumu etiketi
             if hasattr(self.ui, 'labelSystemStatusInfo'):
-                self.ui.labelSystemStatusInfo.setText(self._get_status_message(self.current_values['testere_durumu']))
+                self.ui.labelSystemStatusInfo.setText(self._get_status_message(durum_text))
             
         except Exception as e:
             logger.error(f"UI güncelleme hatası: {e}")
@@ -1282,7 +1302,10 @@ class ControlPanelWindow(QMainWindow):
                 6: "MALZEME BESLEME"
             }.get(testere_durumu, "BİLİNMİYOR")
             
-            self.current_values['testere_durumu'] = durum_text
+            # Thread-safe current_values update
+            with self._values_lock:
+                self.current_values['testere_durumu'] = durum_text
+            
             if hasattr(self.ui, 'labelSystemStatusInfo'):
                 self.ui.labelSystemStatusInfo.setText(self._get_status_message(durum_text))
             
@@ -1290,27 +1313,30 @@ class ControlPanelWindow(QMainWindow):
             if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
                 if not self._cutting_start_time:
                     self._cutting_start_time = datetime.now()
-                    self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
+                    with self._values_lock:
+                        self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
                 
                 # Geçen süreyi hesapla ve göster
                 elapsed = datetime.now() - self._cutting_start_time
                 minutes = int(elapsed.total_seconds() // 60)
                 seconds = int(elapsed.total_seconds() % 60)
                 milliseconds = int(elapsed.total_seconds() * 1000) % 1000
-                self.current_values['cutting_time'] = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+                with self._values_lock:
+                    self.current_values['cutting_time'] = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
                 
             elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self._cutting_start_time:
                 # Kesim bitti, süreleri kaydet
                 end_time = datetime.now()
                 elapsed = end_time - self._cutting_start_time
                 
-                # Önceki kesim bilgilerini güncelle
-                self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
-                self.current_values['kesim_sure'] = f"{int(elapsed.total_seconds() // 60):02d}:{int(elapsed.total_seconds() % 60):02d}"
+                # Önceki kesim bilgilerini güncelle (thread-safe)
+                with self._values_lock:
+                    self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
+                    self.current_values['kesim_sure'] = f"{int(elapsed.total_seconds() // 60):02d}:{int(elapsed.total_seconds() % 60):02d}"
+                    self.current_values['cutting_time'] = "00:00"
                 
                 # Kesim bilgilerini sıfırla
                 self._cutting_start_time = None
-                self.current_values['cutting_time'] = "00:00"
             
             # Diğer değerleri güncelle
             self._update_values(processed_data)
@@ -1318,9 +1344,9 @@ class ControlPanelWindow(QMainWindow):
             # Kritik değerleri kontrol et
             self._check_critical_values(processed_data)
             
-            # Kamera frame sayısını güncelle
-            if hasattr(self, 'camera') and self.camera.is_recording:
-                self.current_values['camera_frame_count'] = str(self.camera.frame_count)
+            # Kamera frame sayısını güncelle (thread-safe)
+            # Not: Artık self.camera yok, camera_module main.py'de
+            # Bu kod kaldırılabilir veya main_ref üzerinden erişilebilir
             
             # Cutting start/stop button states
             self._update_cutting_button_states(testere_durumu)
@@ -1414,13 +1440,14 @@ class ControlPanelWindow(QMainWindow):
             if success:
                 self.add_log("Kesim başlatıldı.", "INFO")
                 self._cutting_start_time = datetime.now()
-                self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
-                self.current_values['kesim_sure'] = "00:00"
+                # Thread-safe current_values update
+                with self._values_lock:
+                    self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
+                    self.current_values['kesim_sure'] = "00:00"
                 
                 # Kesim zamanı label'larını güncelle
-                self._cutting_start_datetime = datetime.now()
                 if hasattr(self.ui, 'labelStartTimeValue'):
-                    start_time_str = self._cutting_start_datetime.strftime('%H:%M:%S')
+                    start_time_str = self._cutting_start_time.strftime('%H:%M:%S')
                     self.ui.labelStartTimeValue.setText(start_time_str)
                 if hasattr(self.ui, 'labelStopTimeValue'):
                     self.ui.labelStopTimeValue.setText("--:--:--")
@@ -1443,18 +1470,19 @@ class ControlPanelWindow(QMainWindow):
             if success:
                 self.add_log("Kesim durduruldu.", "INFO")
                 self._cutting_start_time = None
-                self.current_values['kesim_baslama'] = "-"
-                self.current_values['kesim_sure'] = "-"
+                # Thread-safe current_values update
+                with self._values_lock:
+                    self.current_values['kesim_baslama'] = "-"
+                    self.current_values['kesim_sure'] = "-"
                 
                 # Kesim bitiş zamanı label'ını güncelle
-                if self._cutting_start_datetime:
+                if self._cutting_start_time:
                     self._cutting_stop_datetime = datetime.now()
                     if hasattr(self.ui, 'labelStopTimeValue'):
                         stop_time_str = self._cutting_stop_datetime.strftime('%H:%M:%S')
                         self.ui.labelStopTimeValue.setText(stop_time_str)
                     
-                    # Kesim bilgilerini sıfırla
-                    self._cutting_start_datetime = None
+                    # Kesim bitiş zamanı referansını temizle
                     self._cutting_stop_datetime = None
                 
                 self.update_ui()
@@ -1566,7 +1594,9 @@ class ControlPanelWindow(QMainWindow):
                     
                     if value > 0:
                         self._send_manual_speed_value(value)
-                        self.current_values['serit_kesme_hizi'] = f"{value:.1f}"
+                        # Thread-safe current_values update
+                        with self._values_lock:
+                            self.current_values['serit_kesme_hizi'] = f"{value:.1f}"
                         self.ui.labelSentCuttingSpeed.setText(f"{value:.2f}")
                         self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
@@ -1628,7 +1658,9 @@ class ControlPanelWindow(QMainWindow):
                     
                     if value > 0:
                         self._send_manual_descent_speed_value(value)
-                        self.current_values['serit_inme_hizi'] = f"{value:.1f}"
+                        # Thread-safe current_values update
+                        with self._values_lock:
+                            self.current_values['serit_inme_hizi'] = f"{value:.1f}"
                         self.ui.labelBandDescentSpeedValue.setText(f"{value:.2f}")
                         self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:

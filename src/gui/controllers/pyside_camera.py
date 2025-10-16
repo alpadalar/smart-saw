@@ -1,23 +1,31 @@
+import csv
+import json
+import logging
+import os
+import random
+import threading
+from datetime import datetime
 from typing import Callable, Dict, Optional, List
+
+import cv2
 from PySide6.QtCore import QTimer, Qt, QDateTime
 from PySide6.QtWidgets import QWidget, QLabel, QFrame, QVBoxLayout, QHBoxLayout
 from PySide6.QtGui import QIcon, QImage, QPixmap
-import os
-import json
-import csv
-import cv2
-import random
-from datetime import datetime
-
 
 from gui.ui_files.camera_widget_ui import Ui_Form
 from core.camera import CameraModule
 from core.constants import TestereState
 from core.saw_health_calculator import SawHealthCalculator
 
+# Logger
+logger = logging.getLogger(__name__)
 
 
 class CameraPage(QWidget):
+    # Class-level lock for thread-safe singleton creation
+    _camera_module_lock = threading.Lock()
+    _camera_module_instance = None
+    
     def __init__(self, main_ref=None, get_data_callback: Optional[Callable[[], Dict]] = None) -> None:
         super().__init__(None)  # top-level window
         self.ui = Ui_Form()
@@ -35,15 +43,20 @@ class CameraPage(QWidget):
         self.camera_label.lower()
         self.camera_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
-        # Camera module (singleton)
-        if not hasattr(CameraPage, "_camera_module_instance"):
-            CameraPage._camera_module_instance = CameraModule()
+        # Camera module (thread-safe singleton)
+        with CameraPage._camera_module_lock:
+            if CameraPage._camera_module_instance is None:
+                CameraPage._camera_module_instance = CameraModule()
         self.camera_module: CameraModule = CameraPage._camera_module_instance
         self.camera_module.set_detection_finish_callback(self._on_detection_finished)
 
         # Detection/recordings state
         self._recordings_dir = os.path.join(os.getcwd(), "recordings")
         self._detection_was_running = False
+        
+        # Thread-safety için UI lock
+        import threading
+        self._ui_lock = threading.Lock()
         
         # Kırık tespiti rectangle'ları için container
         self._kirik_info_frames = []
@@ -137,7 +150,7 @@ class CameraPage(QWidget):
             # Wear percentage değiştiğinde saw health'i de güncelle
             self._calculate_and_update_saw_health()
         except Exception as e:
-            print(f"Wear percentage güncelleme hatası: {e}")
+            logger.debug(f"Wear percentage güncelleme hatası: {e}")
     
     def _update_wear_percentage(self):
         """Timer-based wear percentage update - uses wear calculator if available."""
@@ -172,7 +185,7 @@ class CameraPage(QWidget):
                     self.update_wear_percentage(average_wear)
                     
         except Exception as e:
-            print(f"Wear güncelleme hatası: {e}")
+            logger.debug(f"Wear güncelleme hatası: {e}")
     
     def _update_kirik_frames(self):
         """Periyodik olarak kırık tespiti frame'lerini günceller"""
@@ -186,7 +199,7 @@ class CameraPage(QWidget):
             self._check_recordings_and_create_crack_frames()
             
         except Exception as e:
-            print(f"Kırık frame güncelleme hatası: {e}")
+            logger.debug(f"Kırık frame güncelleme hatası: {e}")
     
     def _calculate_and_update_saw_health(self):
         """Testere sağlığını hesapla ve güncelle."""
@@ -218,7 +231,7 @@ class CameraPage(QWidget):
                 self.ui.labelTestereDurumuValue.setText(health_status)
                 
         except Exception as e:
-            print(f"Saw health hesaplama hatası: {e}")
+            logger.debug(f"Saw health hesaplama hatası: {e}")
 
     def set_active_nav(self, active_btn_name: str):
         """Navigation butonlarının aktif/pasif durumunu ayarla"""
@@ -240,7 +253,7 @@ class CameraPage(QWidget):
                     else:
                         btn.setIcon(self._icon(passive_icon))
         except Exception as e:
-            print(f"Navigation aktif durum ayarlama hatası: {e}")
+            logger.error(f"Navigation aktif durum ayarlama hatası: {e}")
 
     def _icon(self, name: str) -> QIcon:
         base = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
@@ -301,7 +314,7 @@ class CameraPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -322,7 +335,7 @@ class CameraPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -343,7 +356,7 @@ class CameraPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -368,7 +381,7 @@ class CameraPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -523,26 +536,33 @@ class CameraPage(QWidget):
             if stats and (stats.get('total_tooth', 0) > 0 or stats.get('total_broken', 0) > 0):
                 self._calculate_and_update_saw_health()
 
-            # Detection end info banner - yeni sistem kullanılıyor
+            # Detection end info banner - yeni sistem kullanılıyor (thread-safe)
+            with self._ui_lock:
+                detection_was_running = self._detection_was_running
+                siralı_loaded = self._siralı_goruntu_loaded
+            
             if self.camera_module.is_detecting:
-                if not self._detection_was_running:
+                if not detection_was_running:
                     # Detection başladığında tüm görüntüleri güncelle
                     self._refresh_all_images()
-                self._detection_was_running = True
-            elif self._detection_was_running:
+                with self._ui_lock:
+                    self._detection_was_running = True
+            elif detection_was_running:
                 # Detection bittiğinde recordings klasörünü yeniden kontrol et
                 self._check_recordings_and_create_frames()
                 self._check_recordings_and_create_crack_frames()
                 # Tüm görüntüleri güncelle
                 self._refresh_all_images()
-                self._detection_was_running = False
+                with self._ui_lock:
+                    self._detection_was_running = False
             else:
                 # Detection çalışmıyorsa sadece ilk yüklemede sıralı görüntüleri göster
-                if not self._siralı_goruntu_loaded:
+                if not siralı_loaded:
                     self._refresh_all_images()
-                    self._siralı_goruntu_loaded = True
+                    with self._ui_lock:
+                        self._siralı_goruntu_loaded = True
         except Exception as e:
-            print(f"Camera _update_values hata: {e}")
+            logger.debug(f"Camera _update_values hata: {e}")
 
     def _update_ui_from_data(self, data: Dict) -> None:
         # Keep placeholder mapping extensible
@@ -589,7 +609,7 @@ class CameraPage(QWidget):
                 self._create_red_info_frame(message)
                 
         except Exception as e:
-            print(f"Recordings kontrol hatası: {e}")
+            logger.debug(f"Recordings kontrol hatası: {e}")
             # Hata durumunda yeşil frame göster
             self._create_green_info_frame("Kırık diş tespit edilmedi.")
     
@@ -634,7 +654,8 @@ class CameraPage(QWidget):
                         # Tarih formatını düzenle (yılın ilk iki rakamını kaldır)
                         try:
                             formatted_date = dt_object.strftime('%d.%m.%y')  # %y kullanarak 2 haneli yıl
-                        except:
+                        except Exception as e:
+                            logger.warning(f"Tarih formatlama hatası: {e}")
                             formatted_date = str(timestamp).split(' ')[0]
                         
                         recordings_data.append({
@@ -646,32 +667,36 @@ class CameraPage(QWidget):
                         })
                         
         except Exception as e:
-            print(f"Recordings tarama hatası: {e}")
+            logger.debug(f"Recordings tarama hatası: {e}")
             
         return recordings_data
     
     def _clear_kirik_info_frames(self) -> None:
-        """Mevcut kırık tespiti frame'lerini temizler"""
+        """Mevcut kırık tespiti frame'lerini temizler (thread-safe)"""
         try:
-            # Mevcut frame'leri sil
-            for frame in self._kirik_info_frames:
+            # Thread-safe liste kopyalama
+            with self._ui_lock:
+                frames_copy = list(self._kirik_info_frames)
+                labels_copy = list(self._kirik_info_labels)
+                self._kirik_info_frames.clear()
+                self._kirik_info_labels.clear()
+            
+            # Lock dışında UI işlemleri
+            for frame in frames_copy:
                 if frame and frame.parent():
                     frame.setParent(None)
                     frame.deleteLater()
             
-            for label in self._kirik_info_labels:
+            for label in labels_copy:
                 if label and label.parent():
                     label.setParent(None)
                     label.deleteLater()
-            
-            self._kirik_info_frames.clear()
-            self._kirik_info_labels.clear()
             
             # Okey icon'ını da gizle
             self._hide_kirik_okey_icon()
             
         except Exception as e:
-            print(f"Frame temizleme hatası: {e}")
+            logger.debug(f"Frame temizleme hatası: {e}")
     
     def _create_red_info_frame(self, message: str) -> None:
         """Bordo renkli kırık tespiti frame'i oluşturur"""
@@ -710,14 +735,18 @@ class CameraPage(QWidget):
             layout.addWidget(info_label)
             layout.setContentsMargins(25, 22, 25, 22)
             
+            # Thread-safe liste erişimi
+            with self._ui_lock:
+                frame_count = len(self._kirik_info_frames)
+            
             # Frame'i konumlandır
-            frame_count = len(self._kirik_info_frames)
             y_position = 94 + (frame_count * 80)  # Her frame 80 piksel aşağıda
             info_frame.setGeometry(31, y_position, 443, 60)
             
-            # Listeye ekle
-            self._kirik_info_frames.append(info_frame)
-            self._kirik_info_labels.append(info_label)
+            # Thread-safe listeye ekle
+            with self._ui_lock:
+                self._kirik_info_frames.append(info_frame)
+                self._kirik_info_labels.append(info_label)
             
             info_frame.show()
             
@@ -725,7 +754,7 @@ class CameraPage(QWidget):
             self._hide_kirik_okey_icon()
             
         except Exception as e:
-            print(f"Kırmızı frame oluşturma hatası: {e}")
+            logger.debug(f"Kırmızı frame oluşturma hatası: {e}")
     
     def _create_green_info_frame(self, message: str) -> None:
         """Yeşil renkli bilgi frame'i oluşturur"""
@@ -768,9 +797,10 @@ class CameraPage(QWidget):
             # Frame'i konumlandır
             info_frame.setGeometry(31, 94, 443, 60)
             
-            # Listeye ekle
-            self._kirik_info_frames.append(info_frame)
-            self._kirik_info_labels.append(info_label)
+            # Thread-safe listeye ekle
+            with self._ui_lock:
+                self._kirik_info_frames.append(info_frame)
+                self._kirik_info_labels.append(info_label)
             
             info_frame.show()
             
@@ -781,7 +811,7 @@ class CameraPage(QWidget):
                 self._hide_kirik_okey_icon()
             
         except Exception as e:
-            print(f"Yeşil frame oluşturma hatası: {e}") 
+            logger.debug(f"Yeşil frame oluşturma hatası: {e}") 
 
     def _create_okey_icon(self, parent_frame, icon_type: str) -> QLabel:
         """Okey icon'ı oluşturur"""
@@ -790,7 +820,7 @@ class CameraPage(QWidget):
             icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images", "okey-icon.svg")
             
             if not os.path.exists(icon_path):
-                print(f"Okey icon dosyası bulunamadı: {icon_path}")
+                logger.debug(f"Okey icon dosyası bulunamadı: {icon_path}")
                 return None
             
             # QLabel oluştur
@@ -806,7 +836,7 @@ class CameraPage(QWidget):
             return icon_label
             
         except Exception as e:
-            print(f"Okey icon oluşturma hatası ({icon_type}): {e}")
+            logger.debug(f"Okey icon oluşturma hatası ({icon_type}): {e}")
             return None
     
     def _show_kirik_okey_icon(self) -> None:
@@ -824,7 +854,7 @@ class CameraPage(QWidget):
                 self._kirik_okey_icon.show()
                 
         except Exception as e:
-            print(f"Kırık okey icon gösterme hatası: {e}")
+            logger.debug(f"Kırık okey icon gösterme hatası: {e}")
     
     def _hide_kirik_okey_icon(self) -> None:
         """Kırık tespiti için okey icon'ını gizler"""
@@ -832,7 +862,7 @@ class CameraPage(QWidget):
             if self._kirik_okey_icon:
                 self._kirik_okey_icon.hide()
         except Exception as e:
-            print(f"Kırık okey icon gizleme hatası: {e}")
+            logger.debug(f"Kırık okey icon gizleme hatası: {e}")
     
     def _show_crack_okey_icon(self) -> None:
         """Çatlak tespiti için okey icon'ını gösterir"""
@@ -849,7 +879,7 @@ class CameraPage(QWidget):
                 self._crack_okey_icon.show()
                 
         except Exception as e:
-            print(f"Çatlak okey icon gösterme hatası: {e}")
+            logger.debug(f"Çatlak okey icon gösterme hatası: {e}")
     
     def _hide_crack_okey_icon(self) -> None:
         """Çatlak tespiti için okey icon'ını gizler"""
@@ -857,7 +887,7 @@ class CameraPage(QWidget):
             if self._crack_okey_icon:
                 self._crack_okey_icon.hide()
         except Exception as e:
-            print(f"Çatlak okey icon gizleme hatası: {e}")
+            logger.debug(f"Çatlak okey icon gizleme hatası: {e}")
 
     def _check_and_update_siralı_goruntu(self) -> None:
         """Sıralı görüntü güncellemesini kontrol eder ve gerekirse günceller"""
@@ -894,7 +924,7 @@ class CameraPage(QWidget):
                 self._update_siralı_goruntu()
             
         except Exception as e:
-            print(f"Sıralı görüntü kontrol hatası: {e}")
+            logger.debug(f"Sıralı görüntü kontrol hatası: {e}")
     
     def _update_siralı_goruntu(self) -> None:
         """Sıralı görüntü frame'ini günceller - recordings klasöründen 4 adet frame alır"""
@@ -908,7 +938,7 @@ class CameraPage(QWidget):
             # Recordings klasörünün kendisinden görüntüleri al (detected değil)
             recordings_dir = os.path.join(self._recordings_dir, latest_folder)
             if not os.path.exists(recordings_dir):
-                print(f"Sıralı görüntü: Klasör bulunamadı: {recordings_dir}")
+                logger.debug(f"Sıralı görüntü: Klasör bulunamadı: {recordings_dir}")
                 return
             
             # Tüm görüntü dosyalarını listele (frame_*.png, frame_*.jpg vb.) ve 100KB altını ele
@@ -923,7 +953,7 @@ class CameraPage(QWidget):
                         continue
             
             if not image_files:
-                print(f"Sıralı görüntü: {recordings_dir} klasöründe görüntü dosyası bulunamadı")
+                logger.debug(f"Sıralı görüntü: {recordings_dir} klasöründe görüntü dosyası bulunamadı")
                 return
             
             # Dosyaları sırala (en yeni önce)
@@ -935,7 +965,7 @@ class CameraPage(QWidget):
             else:
                 selected_images = image_files  # 4'ten az varsa hepsini al
             
-            print(f"Sıralı görüntü: {len(selected_images)} adet görüntü seçildi")
+            logger.debug(f"Sıralı görüntü: {len(selected_images)} adet görüntü seçildi")
             
             # Mevcut görüntü label'larını temizle
             self._clear_siralı_goruntu_labels()
@@ -947,24 +977,26 @@ class CameraPage(QWidget):
             self._last_siralı_goruntu_update = datetime.now().timestamp()
             
         except Exception as e:
-            print(f"Sıralı görüntü güncelleme hatası: {e}")
+            logger.debug(f"Sıralı görüntü güncelleme hatası: {e}")
     
     def _clear_siralı_goruntu_labels(self) -> None:
-        """Mevcut sıralı görüntü label'larını temizler"""
+        """Mevcut sıralı görüntü label'larını temizler (thread-safe)"""
         try:
-            # Eğer hiç label yoksa temizleme yapma
-            if len(self._siralı_goruntu_labels) == 0:
-                return
+            # Thread-safe liste kopyalama
+            with self._ui_lock:
+                if len(self._siralı_goruntu_labels) == 0:
+                    return
+                labels_copy = list(self._siralı_goruntu_labels)
+                self._siralı_goruntu_labels.clear()
                 
-            for label in self._siralı_goruntu_labels:
+            # Lock dışında UI işlemleri
+            for label in labels_copy:
                 if label and label.parent():
                     label.setParent(None)
                     label.deleteLater()
             
-            self._siralı_goruntu_labels.clear()
-            
         except Exception as e:
-            print(f"Sıralı görüntü temizleme hatası: {e}")
+            logger.debug(f"Sıralı görüntü temizleme hatası: {e}")
     
     def _create_siralı_goruntu_frame(self, image_files: List[str], recordings_dir: str) -> None:
         """Sıralı görüntü frame'ini oluşturur - 4 adet görüntüyü yan yana dizerek"""
@@ -1024,23 +1056,26 @@ class CameraPage(QWidget):
                         
                         # Layout'a ekle
                         layout.addWidget(image_label)
-                        self._siralı_goruntu_labels.append(image_label)
                         
-                        print(f"Görüntü eklendi: {image_file}")
+                        # Thread-safe listeye ekle
+                        with self._ui_lock:
+                            self._siralı_goruntu_labels.append(image_label)
+                        
+                        logger.debug(f"Görüntü eklendi: {image_file}")
                     else:
-                        print(f"Görüntü yüklenemedi: {image_path}")
+                        logger.debug(f"Görüntü yüklenemedi: {image_path}")
                 else:
-                    print(f"Görüntü dosyası bulunamadı: {image_path}")
+                    logger.debug(f"Görüntü dosyası bulunamadı: {image_path}")
             
             # Container'ı SiraliGoruntuFrame'e yerleştir (sola yaslanmış)
             container_widget.move(0, 0)
             container_widget.show()
             
             # Görüntülerin yüklendiğini işaretle
-            print(f"Sıralı görüntü frame oluşturuldu: {len(self._siralı_goruntu_labels)} görüntü")
+            logger.debug(f"Sıralı görüntü frame oluşturuldu: {len(self._siralı_goruntu_labels)} görüntü")
             
         except Exception as e:
-            print(f"Sıralı görüntü frame oluşturma hatası: {e}")
+            logger.debug(f"Sıralı görüntü frame oluşturma hatası: {e}")
             import traceback
             traceback.print_exc()
 
@@ -1055,7 +1090,7 @@ class CameraPage(QWidget):
                 # Eğer detected görüntü yoksa camera label'ını temizle
                 self.camera_label.clear()
         except Exception as e:
-            print(f"Detected önizleme yenileme hatası: {e}")
+            logger.debug(f"Detected önizleme yenileme hatası: {e}")
     
     def _refresh_all_images(self) -> None:
         """Hem sıralı görüntüleri hem de detected görüntüyü aynı anda günceller."""
@@ -1071,7 +1106,7 @@ class CameraPage(QWidget):
             print("Tüm görüntü güncellemesi tamamlandı")
             
         except Exception as e:
-            print(f"Birleşik görüntü güncelleme hatası: {e}")
+            logger.debug(f"Birleşik görüntü güncelleme hatası: {e}")
     
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1114,7 +1149,7 @@ class CameraPage(QWidget):
                 self._create_red_crack_info_frame(message)
                 
         except Exception as e:
-            print(f"Recordings crack kontrol hatası: {e}")
+            logger.debug(f"Recordings crack kontrol hatası: {e}")
             # Hata durumunda yeşil frame göster
             self._create_green_crack_info_frame("Çatlak tespit edilmedi.")
     
@@ -1159,7 +1194,8 @@ class CameraPage(QWidget):
                         # Tarih formatını düzenle (yılın ilk iki rakamını kaldır)
                         try:
                             formatted_date = dt_object.strftime('%d.%m.%y')  # %y kullanarak 2 haneli yıl
-                        except:
+                        except Exception as e:
+                            logger.warning(f"Tarih formatlama hatası: {e}")
                             formatted_date = str(timestamp).split(' ')[0]
                         
                         recordings_data.append({
@@ -1170,7 +1206,7 @@ class CameraPage(QWidget):
                         })
                         
         except Exception as e:
-            print(f"Recordings crack tarama hatası: {e}")
+            logger.debug(f"Recordings crack tarama hatası: {e}")
             
         return recordings_data
     
@@ -1195,7 +1231,7 @@ class CameraPage(QWidget):
             self._hide_crack_okey_icon()
             
         except Exception as e:
-            print(f"Crack frame temizleme hatası: {e}")
+            logger.debug(f"Crack frame temizleme hatası: {e}")
     
     def _create_red_crack_info_frame(self, message: str) -> None:
         """Bordo renkli çatlak tespiti frame'i oluşturur (kırık tespitinde olduğu gibi)"""
@@ -1249,7 +1285,7 @@ class CameraPage(QWidget):
             self._hide_crack_okey_icon()
             
         except Exception as e:
-            print(f"Bordo crack frame oluşturma hatası: {e}")
+            logger.debug(f"Bordo crack frame oluşturma hatası: {e}")
     
     def _create_green_crack_info_frame(self, message: str) -> None:
         """Yeşil renkli çatlak tespiti frame'i oluşturur (çatlak tespit edilmediğinde)"""
@@ -1307,6 +1343,6 @@ class CameraPage(QWidget):
                 self._hide_crack_okey_icon()
             
         except Exception as e:
-            print(f"Yeşil crack frame oluşturma hatası: {e}")
+            logger.debug(f"Yeşil crack frame oluşturma hatası: {e}")
     
  

@@ -57,7 +57,7 @@ class MonitoringPage(QWidget):
                     else:
                         btn.setIcon(self._icon(passive_icon))
         except Exception as e:
-            print(f"Navigation aktif durum ayarlama hatası: {e}")
+            logger.error(f"Navigation aktif durum ayarlama hatası: {e}")
 
     def _icon(self, name: str) -> QIcon:
         base = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
@@ -119,7 +119,7 @@ class MonitoringPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -140,7 +140,7 @@ class MonitoringPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -165,7 +165,7 @@ class MonitoringPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -186,7 +186,7 @@ class MonitoringPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -261,7 +261,7 @@ class MonitoringPage(QWidget):
                 if label_widget:
                     label_widget.setText(str(value))
         except Exception as e:
-            print(f"Monitoring _update_values hata: {e}")
+            logger.debug(f"Monitoring _update_values hata: {e}")
 
     def update_ui(self, processed_data: Dict):
         self._update_values(processed_data) 

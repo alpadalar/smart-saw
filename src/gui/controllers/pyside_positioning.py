@@ -1,12 +1,17 @@
+import logging
+import os
+import time
 from typing import Callable, Dict, Optional
+
 from PySide6.QtCore import QTimer, QDateTime, Qt
 from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtGui import QIcon
-import os
-import time
 
 from gui.ui_files.positioning_widget_ui import Ui_Form
 from hardware.machine_control import MachineControl
+
+# Logger
+logger = logging.getLogger(__name__)
 
 
 class PositioningPage(QWidget):
@@ -59,13 +64,13 @@ class PositioningPage(QWidget):
             if data and data.get('modbus_connected', False):
                 # Bağlantı varsa MachineControl'ü oluştur
                 self.machine_control = MachineControl()
-                print("MachineControl başarıyla başlatıldı")
+                logger.info("MachineControl başarıyla başlatıldı")
             else:
                 # Bağlantı yoksa None bırak, butonlar pasif olacak
                 self.machine_control = None
-                print("Makine bağlantısı yok, MachineControl başlatılmadı")
+                logger.warning("Makine bağlantısı yok, MachineControl başlatılmadı")
         except Exception as e:
-            print(f"MachineControl başlatma hatası: {e}")
+            logger.debug(f"MachineControl başlatma hatası: {e}")
             self.machine_control = None
 
     def set_active_nav(self, active_btn_name: str):
@@ -88,7 +93,7 @@ class PositioningPage(QWidget):
                     else:
                         btn.setIcon(self._icon(passive_icon))
         except Exception as e:
-            print(f"Navigation aktif durum ayarlama hatası: {e}")
+            logger.debug(f"Navigation aktif durum ayarlama hatası: {e}")
 
     def _icon(self, name: str) -> QIcon:
         base = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
@@ -175,18 +180,18 @@ class PositioningPage(QWidget):
                 btn.pressed.connect(lambda b=btn: self._on_hold_button(b, "testere_asagi", True))
                 btn.released.connect(lambda b=btn: self._on_hold_button(b, "testere_asagi", False))
         except Exception as e:
-            print(f"Konumlandırma buton bağlantı hatası: {e}")
+            logger.debug(f"Konumlandırma buton bağlantı hatası: {e}")
 
     def _on_toggle_button(self, button, command: str, checked: bool) -> None:
         """Toggle çalışan butonlar için tek noktadan handler"""
         try:
             # MachineControl yoksa işlem yapma
             if self.machine_control is None:
-                print(f"Makine bağlantısı yok, {command} komutu atlandı")
+                logger.debug(f"Makine bağlantısı yok, {command} komutu atlandı")
                 return
                 
             state_text = "AKTIF" if checked else "PASIF"
-            print(f"{command} => {state_text}")
+            logger.debug(f"{command} => {state_text}")
             
             # MachineControl fonksiyonlarını çağır
             if command == "arka_mengene_ac":
@@ -301,14 +306,14 @@ class PositioningPage(QWidget):
                 self.send_modbus_command(command, checked)
                 
         except Exception as e:
-            print(f"Toggle buton hata: {e}")
+            logger.debug(f"Toggle buton hata: {e}")
 
     def _on_hold_button(self, button, command: str, is_pressed: bool) -> None:
         """Basılı tutma ile çalışan butonlar için handler"""
         try:
             # MachineControl yoksa işlem yapma
             if self.machine_control is None:
-                print(f"Makine bağlantısı yok, {command} komutu atlandı")
+                logger.debug(f"Makine bağlantısı yok, {command} komutu atlandı")
                 return
                 
             # Görsel geri bildirim için butonu checked göster (stil :checked kullanıyorsa)
@@ -317,7 +322,7 @@ class PositioningPage(QWidget):
             else:
                 button.setDown(is_pressed)
             state_text = "BASILI" if is_pressed else "BOSALDI"
-            print(f"{command} => {state_text}")
+            logger.debug(f"{command} => {state_text}")
             
             # MachineControl fonksiyonlarını çağır
             if command == "malzeme_geri":
@@ -345,7 +350,7 @@ class PositioningPage(QWidget):
                 self.send_modbus_command(command, is_pressed)
                 
         except Exception as e:
-            print(f"Hold buton hata: {e}")
+            logger.debug(f"Hold buton hata: {e}")
 
     def _open_control_panel(self) -> None:
         if self.main_ref:
@@ -363,7 +368,7 @@ class PositioningPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -388,7 +393,7 @@ class PositioningPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -409,7 +414,7 @@ class PositioningPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -430,7 +435,7 @@ class PositioningPage(QWidget):
                     if self.isVisible():
                         self.hide()
                 except Exception as e:
-                    print(f"Hide işlemi hatası: {e}")
+                    logger.debug(f"Hide işlemi hatası: {e}")
             
             QTimer.singleShot(500, safe_hide)
 
@@ -450,16 +455,16 @@ class PositioningPage(QWidget):
                 # Bağlantı yoksa MachineControl'ü temizle
                 if self.machine_control is not None:
                     self.machine_control = None
-                    print("Makine bağlantısı kesildi, MachineControl temizlendi")
+                    logger.warning("Makine bağlantısı kesildi, MachineControl temizlendi")
             else:
                 self.update_ui(data)
                 # Bağlantı varsa ve MachineControl yoksa oluştur
                 if self.machine_control is None:
                     try:
                         self.machine_control = MachineControl()
-                        print("Makine bağlantısı kuruldu, MachineControl başlatıldı")
+                        logger.info("Makine bağlantısı kuruldu, MachineControl başlatıldı")
                     except Exception as e:
-                        print(f"MachineControl başlatma hatası: {e}")
+                        logger.debug(f"MachineControl başlatma hatası: {e}")
                         self.machine_control = None
             
             # Buton durumlarını kontrol et ve güncelle
@@ -517,7 +522,7 @@ class PositioningPage(QWidget):
                     self.ui.btnTestereAsagi.setChecked(saw_down_status)
                     
         except Exception as e:
-            print(f"Buton durum güncelleme hatası: {e}")
+            logger.debug(f"Buton durum güncelleme hatası: {e}")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -536,15 +541,15 @@ class PositioningPage(QWidget):
             # Örneğin mengene durumu, motor durumları vs.
             pass
         except Exception as e:
-            print(f"Positioning UI güncelleme hatası: {e}")
+            logger.debug(f"Positioning UI güncelleme hatası: {e}")
 
     def send_modbus_command(self, command: str, value: bool):
         """Modbus komutu gönder (placeholder)"""
         try:
             # Burada gerçek Modbus komutları gönderilecek
-            print(f"Modbus komutu gönderiliyor: {command} = {value}")
+            logger.debug(f"Modbus komutu gönderiliyor: {command} = {value}")
             if self.get_data_callback:
                 # Ana sistemdeki Modbus handler'a komut gönder
                 pass
         except Exception as e:
-            print(f"Modbus komut gönderme hatası: {e}")
+            logger.debug(f"Modbus komut gönderme hatası: {e}")
