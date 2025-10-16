@@ -1,12 +1,15 @@
 import cv2
-import os
-import time
 import json
+import os
 import re
-from ultralytics import RTDETR
-import torch
 import threading
+import time
+
+import torch
+from ultralytics import RTDETR
+
 from core.logger import logger
+from core.constants import CRACK_DETECTION_MODEL_PATH
 
 # Global değişkenler ve kilitler
 _crack_model = None
@@ -21,10 +24,11 @@ def _load_crack_model():
     with _crack_model_lock:
         if not _crack_model_loaded:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            _crack_model = RTDETR(r"./catlak-best.pt")
+            # Config'den model path al
+            _crack_model = RTDETR(CRACK_DETECTION_MODEL_PATH)
             _crack_model.to(device)
             _crack_model_loaded = True
-            logger.info(f"Crack modeli yüklendi - Kullanılan cihaz: {device}")
+            logger.info(f"Crack detection model yüklendi: {CRACK_DETECTION_MODEL_PATH} - Cihaz: {device}")
     return _crack_model
 
 

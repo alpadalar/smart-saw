@@ -1,12 +1,15 @@
 import cv2  
+import json
 import os   
-import time
-import json 
 import re
-from ultralytics import RTDETR  
-import torch 
 import threading
-from core.logger import logger 
+import time
+
+import torch
+from ultralytics import RTDETR  
+
+from core.logger import logger
+from core.constants import BROKEN_DETECTION_MODEL_PATH 
 
 # Global değişkenler ve kilitler
 _model = None
@@ -21,10 +24,11 @@ def _load_model():
     with _model_lock:
         if not _model_loaded:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            _model = RTDETR(r"./best.pt")
+            # Config'den model path al
+            _model = RTDETR(BROKEN_DETECTION_MODEL_PATH)
             _model.to(device)
             _model_loaded = True
-            logger.info(f"Model yüklendi - Kullanılan cihaz: {device}")
+            logger.info(f"Broken detection model yüklendi: {BROKEN_DETECTION_MODEL_PATH} - Cihaz: {device}")
     return _model
 
 

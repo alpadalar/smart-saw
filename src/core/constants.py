@@ -5,8 +5,10 @@ import os
 KESME_HIZI_REGISTER_ADDRESS = 2066
 INME_HIZI_REGISTER_ADDRESS = 2041
 
-# Model yolu
-ML_MODEL_PATH = os.getenv("ML_MODEL_PATH", "src\control\ml\Bagging_dataset_v17_20250509.pkl")
+# Model yolları (platform-independent paths)
+ML_MODEL_PATH = os.getenv("ML_MODEL_PATH", os.path.join("src", "control", "ml", "Bagging_dataset_v17_20250509.pkl"))
+BROKEN_DETECTION_MODEL_PATH = os.getenv("BROKEN_MODEL_PATH", "best.pt")
+CRACK_DETECTION_MODEL_PATH = os.getenv("CRACK_MODEL_PATH", "catlak-best.pt")
 
 # Hız Limitleri
 MIN_SPEED = 5.0

@@ -24,11 +24,11 @@ except Exception as e:
 
 class VisionService:
     """
-    Thread-safe vision service that mirrors real_ldc behavior but processes frames
+    Thread-safe vision service that processes frames using LDC model
     incrementally as they are saved into recordings/<recording>/.
 
     - Watches the recordings root for new recording folders and new frame files
-    - Runs LDC model per-frame (using real_ldc code) and saves edge map with original size
+    - Runs LDC model per-frame and saves edge map with original size
     - Runs wear calculation over the LDC-processed frame and appends percentage to one CSV per recording
     - Starts processing immediately without waiting recording to finish
     - Only processes the most recent active recording folder
@@ -36,11 +36,16 @@ class VisionService:
 
     def __init__(self,
                  recordings_root: Optional[str] = None,
-                 real_ldc_root: Optional[str] = None,
+                 ldc_module_root: Optional[str] = None,
                  watchdog_interval_s: float = 0.2,
                  max_queue_size: int = 1024):
         self.recordings_root = recordings_root or os.path.join(os.getcwd(), "recordings")
-        self.real_ldc_root = real_ldc_root or os.path.join(os.getcwd(), "real_ldc")
+        # src/vision/ldc klasörünü kullan (real_ldc yerine)
+        if ldc_module_root is None:
+            # src/vision/ldc path'ini belirle
+            current_file_dir = os.path.dirname(os.path.abspath(__file__))  # src/vision
+            ldc_module_root = os.path.join(current_file_dir, "ldc")
+        self.ldc_module_root = ldc_module_root
         self.watchdog_interval_s = watchdog_interval_s
         self._stop_event = threading.Event()
         self._watcher_thread: Optional[threading.Thread] = None
@@ -54,7 +59,7 @@ class VisionService:
         self._ldc_queue: "queue.Queue[Tuple[str, str]]" = queue.Queue(maxsize=max_queue_size)  # (frame_path, recording_dir)
         self._wear_queue: "queue.Queue[Tuple[str, str, str]]" = queue.Queue(maxsize=max_queue_size)  # (ldc_image_path, csv_path, recording_dir)
 
-        # Model / real_ldc components
+        # Model / LDC components
         self._ldc_device = None
         self._ldc_model = None
         self._test_dataset_ctor = None
@@ -72,7 +77,7 @@ class VisionService:
     # ------ Public API ------
     def start(self) -> None:
         os.makedirs(self.recordings_root, exist_ok=True)
-        self._load_real_ldc_components()
+        self._load_ldc_components()
         self._stop_event.clear()
         self._watcher_thread = threading.Thread(target=self._watch_recordings_loop, daemon=True)
         self._ldc_thread = threading.Thread(target=self._ldc_worker, daemon=True)
@@ -100,16 +105,17 @@ class VisionService:
             st["wear_queue_size"] = self._wear_queue.qsize()
             return st
 
-    # ------ Internal: real_ldc adapters ------
-    def _load_real_ldc_components(self) -> None:
-        """Import real_ldc components and load model once."""
-        # Make real_ldc importable
-        if self.real_ldc_root not in sys.path:
-            sys.path.insert(0, self.real_ldc_root)
+    # ------ Internal: LDC model loading ------
+    def _load_ldc_components(self) -> None:
+        """Import LDC components from src/vision/ldc and load model once."""
+        # Make src/vision/ldc importable
+        if self.ldc_module_root not in sys.path:
+            sys.path.insert(0, self.ldc_module_root)
         try:
+            # src/vision/ldc/modelB4.py'den import et
             from modelB4 import LDC  # type: ignore
         except Exception as e:
-            logger.error(f"real_ldc import hatası (modelB4): {e}")
+            logger.error(f"LDC model import hatası (modelB4): {e}")
             self._ldc_model = None
             return
 
@@ -122,8 +128,8 @@ class VisionService:
         logger.info(f"LDC device: {self._ldc_device}, cuda_count={torch.cuda.device_count()}")
         # Model
         self._ldc_model = LDC().to(self._ldc_device)
-        # Checkpoint path inside real_ldc
-        checkpoint_path = os.path.join(self.real_ldc_root, "checkpoints", "BIPED", "16", "16_model.pth")
+        # Checkpoint path inside src/vision/ldc
+        checkpoint_path = os.path.join(self.ldc_module_root, "checkpoints", "BIPED", "16", "16_model.pth")
         if os.path.isfile(checkpoint_path):
             try:
                 state = torch.load(checkpoint_path, map_location=self._ldc_device)
@@ -304,14 +310,14 @@ class VisionService:
                 m = np.squeeze(m)  # [H,W]
                 m = (m - m.min()) / (m.max() - m.min() + 1e-8)
                 m = (m * 255.0).astype(np.uint8)
-                m = cv2.bitwise_not(m)  # invert as in real_ldc
+                m = cv2.bitwise_not(m)  # invert for edge detection
                 # Resize to original input image size (w,h)
                 m = cv2.resize(m, (w, h))
                 preds_uint8.append(m)
             # fused = last, average = mean of all
             fused = preds_uint8[-1]
             average = np.uint8(np.mean(np.stack(preds_uint8, axis=0), axis=0))
-        # Use fused for sharper edges, then binarize like real_ldc
+        # Use fused for sharper edges, then binarize
         edge_gray = fused
         # Invert -> threshold -> invert back to get black edges on white
         inv = cv2.bitwise_not(edge_gray)
@@ -347,7 +353,7 @@ class VisionService:
             finally:
                 self._wear_queue.task_done()
 
-    # Adapted from real_ldc/wear_calculation.py
+    # Wear calculation logic
     def _compute_wear(self, image_path: str) -> Tuple[Optional[float], Optional[np.ndarray]]:
         TOP_LINE_Y = 170
         BOTTOM_LINE_Y = 236
@@ -407,12 +413,25 @@ class VisionService:
         cv2.putText(image, text, (image_width - 300, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         return asinma_yuzdesi, image
 
-    @staticmethod
-    def _append_csv(csv_path: str, ldc_image_path: str, percent: float) -> None:
-        header_needed = not os.path.exists(csv_path)
-        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-        with open(csv_path, 'a', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            if header_needed:
-                writer.writerow(["timestamp", "frame", "wear_percent"])
-            writer.writerow([datetime.now().isoformat(timespec='seconds'), os.path.basename(ldc_image_path), f"{percent:.2f}"]) 
+    # Class-level lock for thread-safe CSV writing
+    _csv_locks = {}  # csv_path -> Lock mapping
+    _csv_locks_lock = threading.Lock()  # Lock for managing locks dict
+    
+    @classmethod
+    def _append_csv(cls, csv_path: str, ldc_image_path: str, percent: float) -> None:
+        """CSV dosyasına thread-safe append yapar"""
+        # Her CSV dosyası için ayrı lock kullan
+        with cls._csv_locks_lock:
+            if csv_path not in cls._csv_locks:
+                cls._csv_locks[csv_path] = threading.Lock()
+            csv_lock = cls._csv_locks[csv_path]
+        
+        # CSV yazma işlemini lock ile koru
+        with csv_lock:
+            header_needed = not os.path.exists(csv_path)
+            os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+            with open(csv_path, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                if header_needed:
+                    writer.writerow(["timestamp", "frame", "wear_percent"])
+                writer.writerow([datetime.now().isoformat(timespec='seconds'), os.path.basename(ldc_image_path), f"{percent:.2f}"]) 
