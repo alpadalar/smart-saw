@@ -16,7 +16,7 @@ prev_time = time.time()
 fps_update_interval = 1.0  # FPS'i her 1 saniyede bir güncelle
 
 # Kamera bağlantısı
-cap = cv2.VideoCapture(1)  # 0 for internal camera, 1 for external camera
+cap = cv2.VideoCapture(2)  # 0 for internal camera, 1 for external camera
 
 if not cap.isOpened():
     print("Kamera açılamadı! Lütfen bağlantıyı kontrol edin.")
@@ -119,8 +119,9 @@ try:
                 elapsed_time = time.time() - start_time
                 print(f"Toplam Kare: {frame_count}, Süre: {elapsed_time:.2f} saniye")
 
-        # Kareyi göster (tam ekran)
-        cv2.namedWindow("Arducam UVC Kamera", cv2.WINDOW_FULLSCREEN)
+        # Kareyi göster (pencereli mod - maksimize)
+        cv2.namedWindow("Arducam UVC Kamera", cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty("Arducam UVC Kamera", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
         cv2.imshow("Arducam UVC Kamera", frame)
 
         key = cv2.waitKey(1) & 0xFF
