@@ -32,15 +32,26 @@ class ModbusClient:
                     self.logger = logging.getLogger(__name__)
                     self.last_write_time = time.time()
                     self.write_interval = 0.1
+                    self._last_reconnect_attempt = 0
+                    self._reconnect_interval = 2.0  # Minimum 2 seconds between reconnection attempts
                     self._initialized = True
             
     def connect(self) -> bool:
         """Modbus sunucusuna bağlanır"""
         try:
+            # Check if we should attempt reconnection (rate limiting)
+            current_time = time.time()
+            if current_time - self._last_reconnect_attempt < self._reconnect_interval:
+                return False
+            
+            self._last_reconnect_attempt = current_time
+            
             if not self.connected:
                 self.connected = self.client.connect()
                 if self.connected:
                     self.logger.info("Modbus bağlantısı başarılı.")
+                    # Add small delay after successful connection
+                    time.sleep(0.15)  # 150ms delay for connection stabilization
             return self.connected
         except Exception as e:
             self.logger.error(f"Modbus bağlantı hatası: {e}")
@@ -61,7 +72,13 @@ class ModbusClient:
         try:
             if not self.client.is_socket_open():
                 self.logger.debug("Modbus soketi kapalı, bağlanmayı deniyorum...")
-                self.connect()
+                if self.connect():
+                    # Connection successful, small delay already added in connect()
+                    pass
+                else:
+                    # Connection failed or rate limited
+                    return None
+            
             if self.client.is_socket_open():
                 kwargs = {
                     'address': address,
@@ -72,12 +89,16 @@ class ModbusClient:
                     return response.registers
                 else:
                     self.logger.error(f"Register okuma hatası: {response}")
+                    # Mark connection as failed
+                    self.connected = False
                     return None
             else:
                 self.logger.error("Modbus bağlantısı kapalı")
                 return None
         except Exception as e:
             self.logger.error(f"Veri okuma hatası: {e}")
+            # Mark connection as failed on exception
+            self.connected = False
             return None
 
     def write_register(self, address: int, value: int) -> bool:
@@ -115,6 +136,15 @@ class ModbusClient:
     def read_all(self):
         """Tüm registerları okur"""
         try:
+            if not self.client.is_socket_open():
+                self.logger.debug("Modbus soketi kapalı, bağlanmayı deniyorum...")
+                if self.connect():
+                    # Connection successful, small delay already added in connect()
+                    pass
+                else:
+                    # Connection failed or rate limited
+                    return None
+            
             if self.client.is_socket_open():
                 kwargs = {
                     'address': 1000,
@@ -169,9 +199,16 @@ class ModbusClient:
                         'fark_hz_z': response.registers[40],  # 1040
                         'malzeme_genisligi': response.registers[41]  # 1041
                     }
+                else:
+                    self.logger.error(f"Register okuma hatası: {response}")
+                    # Mark connection as failed
+                    self.connected = False
+                    return None
             return None
         except Exception as e:
             self.logger.error(f"Veri okuma hatası: {e}")
+            # Mark connection as failed on exception
+            self.connected = False
             return None
 
     def read_continuous(self, address: int, count: int, interval: float = 0.1) -> Generator[List[int], None, None]:

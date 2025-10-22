@@ -120,8 +120,9 @@ class DataProcessor:
             if processed_data['inme_motor_akim_a'] > 15:
                 processed_data['inme_motor_akim_a'] = 655.35 - processed_data['inme_motor_akim_a']
             
-            if abs(processed_data['serit_sapmasi']) > 1.5:
-                processed_data['serit_sapmasi'] = abs(processed_data['serit_sapmasi']) - 655.35
+            # Signed 16-bit conversion for deviation (if value > 1.5, it's a negative value represented as positive)
+            if processed_data['serit_sapmasi'] > 1.5:
+                processed_data['serit_sapmasi'] = processed_data['serit_sapmasi'] - 655.35
             
             # Fuzzy değerleri
             if fuzzy_output_value is not None:

@@ -396,6 +396,10 @@ class ControlPanelWindow(QMainWindow):
 
         # Şerit sapması grafik widget'ı
         self.band_deviation_graph = None
+        
+        # Navigation lock to prevent overlapping tab switches
+        self._navigation_lock = threading.Lock()
+        self._is_switching = False
 
         # Veri yönetimi için gerekli değişkenler
         self.current_values = {}
@@ -1592,13 +1596,22 @@ class ControlPanelWindow(QMainWindow):
                     except Exception:
                         value = 0.0
                     
+                    # Clamp value between 0 and 500
+                    original_value = value
+                    value = max(0, min(500, value))
+                    
                     if value > 0:
                         self._send_manual_speed_value(value)
                         # Thread-safe current_values update
                         with self._values_lock:
                             self.current_values['serit_kesme_hizi'] = f"{value:.1f}"
                         self.ui.labelSentCuttingSpeed.setText(f"{value:.2f}")
-                        self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
+                        
+                        # Add feedback if value was clamped
+                        if original_value != value:
+                            self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı (girilen değer: {original_value:.2f}, limit: 0-500)", "WARNING")
+                        else:
+                            self.add_log(f"Kesme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"Kesme hızı ayarlama hatası: {e}")
             logger.exception("Detaylı hata:")
@@ -1656,13 +1669,22 @@ class ControlPanelWindow(QMainWindow):
                     except Exception:
                         value = 0.0
                     
+                    # Clamp value between 0 and 500
+                    original_value = value
+                    value = max(0, min(500, value))
+                    
                     if value > 0:
                         self._send_manual_descent_speed_value(value)
                         # Thread-safe current_values update
                         with self._values_lock:
                             self.current_values['serit_inme_hizi'] = f"{value:.1f}"
                         self.ui.labelBandDescentSpeedValue.setText(f"{value:.2f}")
-                        self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
+                        
+                        # Add feedback if value was clamped
+                        if original_value != value:
+                            self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı (girilen değer: {original_value:.2f}, limit: 0-500)", "WARNING")
+                        else:
+                            self.add_log(f"İnme hızı {value:.2f} mm/s olarak ayarlandı", "INFO")
         except Exception as e:
             logger.error(f"İnme hızı ayarlama hatası: {e}")
             logger.exception("Detaylı hata:")
@@ -1726,136 +1748,212 @@ class ControlPanelWindow(QMainWindow):
 
 
     def _open_positioning(self) -> None:
-        if self._positioning_page is None:
-            from .pyside_positioning import PositioningPage
-            self._positioning_page = PositioningPage(main_ref=self, get_data_callback=self.get_data_callback)
+        # Check navigation lock to prevent overlapping switches
+        if not self._navigation_lock.acquire(blocking=False):
+            logger.warning("Navigation already in progress, ignoring request")
+            return
         
-        # Positioning widget'ını direkt göster ve aktif icon'u ayarla
-        self._positioning_page.set_active_nav("btnPositioning_2")
-        self._positioning_page.showFullScreen()            
-        self._positioning_page.raise_()
-        self._positioning_page.activateWindow()
-        self._positioning_page.setFocus()
-        
-        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
-        # Önceki timer'ı iptal et
-        if self._hide_timer:
-            self._hide_timer.stop()
-        
-        # Timer'ı güvenli hale getir
-        def safe_hide():
-            try:
-                if self.isVisible():
-                    self.hide()
-            except Exception as e:
-                logger.error(f"Hide işlemi hatası: {e}")
-            finally:
+        try:
+            self._is_switching = True
+            
+            if self._positioning_page is None:
+                from .pyside_positioning import PositioningPage
+                self._positioning_page = PositioningPage(main_ref=self, get_data_callback=self.get_data_callback)
+                # Disable window manager animations on Linux
+                current_flags = self._positioning_page.windowFlags()
+                self._positioning_page.setWindowFlags(current_flags | Qt.BypassWindowManagerHint)
+            
+            # Positioning widget'ını direkt göster ve aktif icon'u ayarla
+            self._positioning_page.set_active_nav("btnPositioning_2")
+            self._positioning_page.showFullScreen()            
+            self._positioning_page.raise_()
+            self._positioning_page.activateWindow()
+            self._positioning_page.setFocus()
+            
+            # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Önceki timer'ı iptal et
+            if self._hide_timer and self._hide_timer.isActive():
+                self._hide_timer.stop()
+                self._hide_timer.deleteLater()
                 self._hide_timer = None
-        
-        self._hide_timer = QTimer()
-        self._hide_timer.setSingleShot(True)
-        self._hide_timer.timeout.connect(safe_hide)
-        self._hide_timer.start(500)
+            
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    logger.error(f"Hide işlemi hatası: {e}")
+                finally:
+                    self._hide_timer = None
+                    self._is_switching = False
+                    self._navigation_lock.release()
+            
+            self._hide_timer = QTimer()
+            self._hide_timer.setSingleShot(True)
+            self._hide_timer.timeout.connect(safe_hide)
+            self._hide_timer.start(500)
+        except Exception as e:
+            logger.error(f"Positioning page açma hatası: {e}")
+            self._is_switching = False
+            self._navigation_lock.release()
 
     def _open_monitoring(self) -> None:
-        if self._monitoring_page is None:
-            from .pyside_monitoring import MonitoringPage
-            self._monitoring_page = MonitoringPage(main_ref=self, get_data_callback=self.get_data_callback)
+        # Check navigation lock to prevent overlapping switches
+        if not self._navigation_lock.acquire(blocking=False):
+            logger.warning("Navigation already in progress, ignoring request")
+            return
         
-        # Monitoring widget'ını direkt göster ve aktif icon'u ayarla
-        self._monitoring_page.set_active_nav("btnTracking")
-        self._monitoring_page.showFullScreen()
-        self._monitoring_page.raise_()
-        self._monitoring_page.activateWindow()
-        self._monitoring_page.setFocus()
-        
-        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
-        # Önceki timer'ı iptal et
-        if self._hide_timer:
-            self._hide_timer.stop()
-        
-        # Timer'ı güvenli hale getir
-        def safe_hide():
-            try:
-                if self.isVisible():
-                    self.hide()
-            except Exception as e:
-                logger.error(f"Hide işlemi hatası: {e}")
-            finally:
+        try:
+            self._is_switching = True
+            
+            if self._monitoring_page is None:
+                from .pyside_monitoring import MonitoringPage
+                self._monitoring_page = MonitoringPage(main_ref=self, get_data_callback=self.get_data_callback)
+                # Disable window manager animations on Linux
+                current_flags = self._monitoring_page.windowFlags()
+                self._monitoring_page.setWindowFlags(current_flags | Qt.BypassWindowManagerHint)
+            
+            # Monitoring widget'ını direkt göster ve aktif icon'u ayarla
+            self._monitoring_page.set_active_nav("btnTracking")
+            self._monitoring_page.showFullScreen()
+            self._monitoring_page.raise_()
+            self._monitoring_page.activateWindow()
+            self._monitoring_page.setFocus()
+            
+            # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Önceki timer'ı iptal et
+            if self._hide_timer and self._hide_timer.isActive():
+                self._hide_timer.stop()
+                self._hide_timer.deleteLater()
                 self._hide_timer = None
-        
-        self._hide_timer = QTimer()
-        self._hide_timer.setSingleShot(True)
-        self._hide_timer.timeout.connect(safe_hide)
-        self._hide_timer.start(500)
+            
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    logger.error(f"Hide işlemi hatası: {e}")
+                finally:
+                    self._hide_timer = None
+                    self._is_switching = False
+                    self._navigation_lock.release()
+            
+            self._hide_timer = QTimer()
+            self._hide_timer.setSingleShot(True)
+            self._hide_timer.timeout.connect(safe_hide)
+            self._hide_timer.start(500)
+        except Exception as e:
+            logger.error(f"Monitoring page açma hatası: {e}")
+            self._is_switching = False
+            self._navigation_lock.release()
 
     def _open_camera(self) -> None:
-        if self._camera_page is None:
-            from .pyside_camera import CameraPage
-            self._camera_page = CameraPage(main_ref=self, get_data_callback=self.get_data_callback)
+        # Check navigation lock to prevent overlapping switches
+        if not self._navigation_lock.acquire(blocking=False):
+            logger.warning("Navigation already in progress, ignoring request")
+            return
+        
+        try:
+            self._is_switching = True
             
-            # Wear calculator referansını camera page'e ver
-            if hasattr(self, 'wear_calculator') and self.wear_calculator:
-                self._camera_page.wear_calculator = self.wear_calculator
-        
-        # Camera widget'ını direkt göster ve aktif icon'u ayarla
-        self._camera_page.set_active_nav("btnCamera")
-        self._camera_page.showFullScreen()
-        self._camera_page.raise_()
-        self._camera_page.activateWindow()
-        self._camera_page.setFocus()
-        
-        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
-        # Önceki timer'ı iptal et
-        if self._hide_timer:
-            self._hide_timer.stop()
-        
-        # Timer'ı güvenli hale getir
-        def safe_hide():
-            try:
-                if self.isVisible():
-                    self.hide()
-            except Exception as e:
-                logger.error(f"Hide işlemi hatası: {e}")
-            finally:
+            if self._camera_page is None:
+                from .pyside_camera import CameraPage
+                self._camera_page = CameraPage(main_ref=self, get_data_callback=self.get_data_callback)
+                # Disable window manager animations on Linux
+                current_flags = self._camera_page.windowFlags()
+                self._camera_page.setWindowFlags(current_flags | Qt.BypassWindowManagerHint)
+                
+                # Wear calculator referansını camera page'e ver
+                if hasattr(self, 'wear_calculator') and self.wear_calculator:
+                    self._camera_page.wear_calculator = self.wear_calculator
+            
+            # Camera widget'ını direkt göster ve aktif icon'u ayarla
+            self._camera_page.set_active_nav("btnCamera")
+            self._camera_page.showFullScreen()
+            self._camera_page.raise_()
+            self._camera_page.activateWindow()
+            self._camera_page.setFocus()
+            
+            # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Önceki timer'ı iptal et
+            if self._hide_timer and self._hide_timer.isActive():
+                self._hide_timer.stop()
+                self._hide_timer.deleteLater()
                 self._hide_timer = None
-        
-        self._hide_timer = QTimer()
-        self._hide_timer.setSingleShot(True)
-        self._hide_timer.timeout.connect(safe_hide)
-        self._hide_timer.start(500)
+            
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    logger.error(f"Hide işlemi hatası: {e}")
+                finally:
+                    self._hide_timer = None
+                    self._is_switching = False
+                    self._navigation_lock.release()
+            
+            self._hide_timer = QTimer()
+            self._hide_timer.setSingleShot(True)
+            self._hide_timer.timeout.connect(safe_hide)
+            self._hide_timer.start(500)
+        except Exception as e:
+            logger.error(f"Camera page açma hatası: {e}")
+            self._is_switching = False
+            self._navigation_lock.release()
 
     def _open_sensor(self) -> None:
-        if self._sensor_page is None:
-            from .pyside_sensor import SensorPage
-            self._sensor_page = SensorPage(main_ref=self, get_data_callback=self.get_data_callback)
+        # Check navigation lock to prevent overlapping switches
+        if not self._navigation_lock.acquire(blocking=False):
+            logger.warning("Navigation already in progress, ignoring request")
+            return
         
-        # Sensor widget'ını direkt göster ve aktif icon'u ayarla
-        self._sensor_page.set_active_nav("btnSensor")
-        self._sensor_page.showFullScreen()
-        self._sensor_page.raise_()
-        self._sensor_page.activateWindow()
-        self._sensor_page.setFocus()
-        
-        # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
-        # Önceki timer'ı iptal et
-        if self._hide_timer:
-            self._hide_timer.stop()
-        
-        # Timer'ı güvenli hale getir
-        def safe_hide():
-            try:
-                if self.isVisible():
-                    self.hide()
-            except Exception as e:
-                logger.error(f"Hide işlemi hatası: {e}")
-            finally:
+        try:
+            self._is_switching = True
+            
+            if self._sensor_page is None:
+                from .pyside_sensor import SensorPage
+                self._sensor_page = SensorPage(main_ref=self, get_data_callback=self.get_data_callback)
+                # Disable window manager animations on Linux
+                current_flags = self._sensor_page.windowFlags()
+                self._sensor_page.setWindowFlags(current_flags | Qt.BypassWindowManagerHint)
+            
+            # Sensor widget'ını direkt göster ve aktif icon'u ayarla
+            self._sensor_page.set_active_nav("btnSensor")
+            self._sensor_page.showFullScreen()
+            self._sensor_page.raise_()
+            self._sensor_page.activateWindow()
+            self._sensor_page.setFocus()
+            
+            # Control panel'i 500ms sonra gizle (flaş efektini engellemek için)
+            # Önceki timer'ı iptal et
+            if self._hide_timer and self._hide_timer.isActive():
+                self._hide_timer.stop()
+                self._hide_timer.deleteLater()
                 self._hide_timer = None
-        
-        self._hide_timer = QTimer()
-        self._hide_timer.setSingleShot(True)
-        self._hide_timer.timeout.connect(safe_hide)
-        self._hide_timer.start(500)
+            
+            # Timer'ı güvenli hale getir
+            def safe_hide():
+                try:
+                    if self.isVisible():
+                        self.hide()
+                except Exception as e:
+                    logger.error(f"Hide işlemi hatası: {e}")
+                finally:
+                    self._hide_timer = None
+                    self._is_switching = False
+                    self._navigation_lock.release()
+            
+            self._hide_timer = QTimer()
+            self._hide_timer.setSingleShot(True)
+            self._hide_timer.timeout.connect(safe_hide)
+            self._hide_timer.start(500)
+        except Exception as e:
+            logger.error(f"Sensor page açma hatası: {e}")
+            self._is_switching = False
+            self._navigation_lock.release()
 
     # ---- Date/Time
     def _update_datetime_labels(self) -> None:

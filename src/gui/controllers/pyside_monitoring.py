@@ -105,23 +105,56 @@ class MonitoringPage(QWidget):
 
     def _open_control_panel(self) -> None:
         if self.main_ref:
-            # Control panel'i direkt göster
-            self.main_ref.set_active_nav("btnControlPanel")
-            self.main_ref.showFullScreen()
-            self.main_ref.raise_()
-            self.main_ref.activateWindow()
-            self.main_ref.setFocus()
-            
-            # Monitoring page'i 500ms sonra gizle (flaş efektini engellemek için)
-            # Timer'ı güvenli hale getir
-            def safe_hide():
+            # Check if main_ref has navigation lock
+            if hasattr(self.main_ref, '_navigation_lock') and hasattr(self.main_ref, '_is_switching'):
+                if not self.main_ref._navigation_lock.acquire(blocking=False):
+                    logger.warning("Navigation already in progress, ignoring request")
+                    return
+                
                 try:
-                    if self.isVisible():
-                        self.hide()
+                    self.main_ref._is_switching = True
+                    
+                    # Control panel'i direkt göster
+                    self.main_ref.set_active_nav("btnControlPanel")
+                    self.main_ref.showFullScreen()
+                    self.main_ref.raise_()
+                    self.main_ref.activateWindow()
+                    self.main_ref.setFocus()
+                    
+                    # Monitoring page'i 500ms sonra gizle (flaş efektini engellemek için)
+                    def safe_hide():
+                        try:
+                            if self.isVisible():
+                                self.hide()
+                        except Exception as e:
+                            logger.debug(f"Hide işlemi hatası: {e}")
+                        finally:
+                            if hasattr(self.main_ref, '_is_switching'):
+                                self.main_ref._is_switching = False
+                            if hasattr(self.main_ref, '_navigation_lock'):
+                                self.main_ref._navigation_lock.release()
+                    
+                    QTimer.singleShot(500, safe_hide)
                 except Exception as e:
-                    logger.debug(f"Hide işlemi hatası: {e}")
-            
-            QTimer.singleShot(500, safe_hide)
+                    logger.error(f"Control panel açma hatası: {e}")
+                    self.main_ref._is_switching = False
+                    self.main_ref._navigation_lock.release()
+            else:
+                # Legacy behavior if navigation lock not available
+                self.main_ref.set_active_nav("btnControlPanel")
+                self.main_ref.showFullScreen()
+                self.main_ref.raise_()
+                self.main_ref.activateWindow()
+                self.main_ref.setFocus()
+                
+                def safe_hide():
+                    try:
+                        if self.isVisible():
+                            self.hide()
+                    except Exception as e:
+                        logger.debug(f"Hide işlemi hatası: {e}")
+                
+                QTimer.singleShot(500, safe_hide)
 
     def _open_positioning(self) -> None:
         if self.main_ref:
@@ -257,6 +290,13 @@ class MonitoringPage(QWidget):
                 # Replace default '16.35' placeholders if no data
                 if value == '-' or value is None or value == '':
                     value = '—'
+                else:
+                    # Format serit_sapmasi consistently with control panel
+                    if data_key == 'serit_sapmasi':
+                        try:
+                            value = f"{float(value):.2f}"
+                        except (ValueError, TypeError):
+                            value = '—'
                 label_widget = getattr(self.ui, label_name, None)
                 if label_widget:
                     label_widget.setText(str(value))

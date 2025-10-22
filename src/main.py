@@ -301,8 +301,8 @@ class SmartSaw:
                     # Ham veriyi oku
                     raw_data = self.modbus_client.read_all()
                     if raw_data is None:
-                        logger.warning("Modbus verisi okunamadı")
-                        time.sleep(1)
+                        logger.warning("Modbus verisi okunamadı, bağlantı kontrol ediliyor...")
+                        # Don't sleep here, let the reconnection logic in ModbusClient handle timing
                         continue
                     
                     # Ham modbus verisini direkt olarak kullan
