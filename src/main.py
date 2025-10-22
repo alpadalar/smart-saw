@@ -176,7 +176,7 @@ class SmartSaw:
         try:
             recordings_dir = os.path.join(os.getcwd(), "recordings")
             
-            # Recordings klasörü yoksa oluştur
+            # Recordings klasörü yoksa oluştur.
             if not os.path.exists(recordings_dir):
                 os.makedirs(recordings_dir)
                 logger.info("Recordings klasörü oluşturuldu.")
