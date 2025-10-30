@@ -930,8 +930,8 @@ class ControlPanelWindow(QMainWindow):
                 self._switch_controller(ControllerType.FUZZY)
                 self.add_log("Kesim modu fuzzy olarak ayarlandı", "INFO")
             elif clicked_button == self.ui.btnExpertSystemMode:
-                self._switch_controller(ControllerType.EXPERT)
-                self.add_log("Kesim modu expert system olarak ayarlandı", "INFO")
+                self._switch_controller(ControllerType.LINEAR)
+                self.add_log("Kesim modu Linear system olarak ayarlandı", "INFO")
             elif clicked_button == self.ui.btnAiMode:
                 self._switch_controller(ControllerType.ML)
                 self.add_log("Kesim modu AI olarak ayarlandı", "INFO")
@@ -1291,7 +1291,7 @@ class ControlPanelWindow(QMainWindow):
             if 'modbus_connected' in processed_data:
                 self.update_modbus_status(
                     processed_data['modbus_connected'],
-                    processed_data.get('modbus_ip', '192.168.1.147')
+                    processed_data.get('modbus_ip', '192.168.1.103')
                 )
             
             # Testere durumunu güncelle
