@@ -95,18 +95,27 @@ class SmartSaw:
         self._tb_last_sent_ms = 0
         self._tb_period_ms = 1000  # ms; 1000=1 saniye. Gerekirse 200-500 ms yap.
         self._tb_field_map = None  
-        self._tb_prefix = None  
+        self._tb_prefix = None
+        self._tb_consecutive_failures = 0  # Ardışık başarısız gönderim sayacı
+        self._tb_max_consecutive_failures = 10  # Bu kadar başarısız denemeden sonra disable et
+        self._tb_backoff_until = 0  # Backoff süresi (timestamp)
 
         try:
-            # ThingsBoard sender'ı oluştur
-            self.tb = create_sender_from_env()
-            if self.tb and self.tb.access_token:
-                self.tb_enabled = True
-                logger.info(f"ThingsBoard sender aktif: {self.tb.base_url}")
-            else:
-                logger.warning("ThingsBoard sender pasif: TB_TOKEN boş veya geçersiz.")
+            # ThingsBoard sender'ı oluştur - logger'ı aktar
+            self.tb = create_sender_from_env(logger=logger, enable_metrics=True)
+            self.tb_enabled = True
+            logger.info(f"✓ ThingsBoard sender aktif: {self.tb.base_url}")
+            logger.info(f"  - Timeout: connect={self.tb._client.timeout.connect}s, read={self.tb._client.timeout.read}s")
+            logger.info(f"  - Retries: {self.tb.max_retries}, Backoff: {self.tb.backoff_factor}s")
+        except ValueError as e:
+            # Token yok veya geçersiz - bu beklenen bir durum olabilir
+            logger.warning(f"ThingsBoard sender devre dışı: {e}")
+            self.tb = None
+            self.tb_enabled = False
         except Exception as e:
+            # Beklenmeyen hata
             logger.error(f"ThingsBoard sender başlatılamadı: {e}")
+            logger.exception("Detaylı hata:")
             self.tb = None
             self.tb_enabled = False
         
@@ -463,9 +472,13 @@ class SmartSaw:
                         
                         if self.tb_enabled and is_connected:
                             now_ms = int(time.time() * 1000)
-                            if (now_ms - self._tb_last_sent_ms) >= self._tb_period_ms:
+                            
+                            # Backoff kontrolü: eğer backoff süresindeyse gönderme
+                            if now_ms < self._tb_backoff_until:
+                                pass  # Henüz backoff süresi dolmadı
+                            elif (now_ms - self._tb_last_sent_ms) >= self._tb_period_ms:
                                 snapshot_to_send = dict(self.last_processed_data)
-                                self._tb_last_sent_ms = now_ms
+                                # Not: _tb_last_sent_ms başarılı gönderimden sonra güncellenir
                 
                 # Lock dışında işlemleri yap
                 if should_save and data_to_save:
@@ -487,10 +500,37 @@ class SmartSaw:
                     try:
                         # 'timestamp' string ise sender.send_processed_row ms'e çevirir ve ts/values ile yollar
                         ok = self.tb.send_processed_row(snapshot_to_send, field_map=self._tb_field_map)
-                        if not ok:
-                            logger.warning("ThingsBoard gönderimi başarısız (HTTP 2xx değil).")
+                        
+                        if ok:
+                            # Başarılı gönderim
+                            self._tb_last_sent_ms = int(time.time() * 1000)
+                            self._tb_consecutive_failures = 0
+                            self._tb_backoff_until = 0  # Backoff'u sıfırla
+                        else:
+                            # Başarısız gönderim
+                            self._tb_consecutive_failures += 1
+                            
+                            if self._tb_consecutive_failures >= self._tb_max_consecutive_failures:
+                                logger.error(f"ThingsBoard: {self._tb_consecutive_failures} ardışık başarısızlık, sender devre dışı bırakılıyor.")
+                                self.tb_enabled = False
+                            else:
+                                # Adaptive backoff: başarısızlık sayısına göre bekleme süresi
+                                backoff_seconds = min(30, 2 ** self._tb_consecutive_failures)
+                                self._tb_backoff_until = int(time.time() * 1000) + (backoff_seconds * 1000)
+                                logger.warning(f"ThingsBoard gönderimi başarısız ({self._tb_consecutive_failures}/{self._tb_max_consecutive_failures}). {backoff_seconds}s backoff.")
+                    
                     except Exception as e:
-                        logger.error(f"ThingsBoard gönderim hatası: {e}")                
+                        self._tb_consecutive_failures += 1
+                        logger.error(f"ThingsBoard gönderim hatası: {e}")
+                        
+                        if self._tb_consecutive_failures >= self._tb_max_consecutive_failures:
+                            logger.error(f"ThingsBoard: {self._tb_consecutive_failures} ardışık exception, sender devre dışı bırakılıyor.")
+                            self.tb_enabled = False
+                        else:
+                            # Adaptive backoff
+                            backoff_seconds = min(30, 2 ** self._tb_consecutive_failures)
+                            self._tb_backoff_until = int(time.time() * 1000) + (backoff_seconds * 1000)
+                            logger.warning(f"ThingsBoard exception ({self._tb_consecutive_failures}/{self._tb_max_consecutive_failures}). {backoff_seconds}s backoff.")                
                 
                 # Döngü gecikmesi
                 time.sleep(0.1)  # 100ms güncelleme aralığı
@@ -625,11 +665,22 @@ class SmartSaw:
             if self.modbus_client:
                 self.modbus_client.disconnect()
 
+            # ThingsBoard metrikleri logla ve kapat
             if getattr(self, "tb", None):
                 try:
+                    metrics = self.tb.get_metrics()
+                    if metrics:
+                        logger.info("ThingsBoard sender istatistikleri:")
+                        logger.info(f"  - Toplam istek: {metrics.get('total_requests', 0)}")
+                        logger.info(f"  - Başarılı: {metrics.get('successful_requests', 0)}")
+                        logger.info(f"  - Başarısız: {metrics.get('failed_requests', 0)}")
+                        logger.info(f"  - Başarı oranı: {metrics.get('success_rate', 0):.2%}")
+                        if metrics.get('last_error'):
+                            logger.info(f"  - Son hata: {metrics['last_error']}")
                     self.tb.close()
-                except Exception:
-                    pass
+                    logger.info("ThingsBoard sender kapatıldı.")
+                except Exception as e:
+                    logger.error(f"ThingsBoard kapatma hatası: {e}")
             
             # Veri depolama sistemini kapat
             self.data_storage.close()
