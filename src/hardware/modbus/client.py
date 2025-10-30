@@ -21,7 +21,7 @@ class ModbusClient:
                 cls._instance._initialized = False  # İlk oluşturmada flag set et
         return cls._instance
     
-    def __init__(self, host='192.168.1.147', port=502):
+    def __init__(self, host='192.168.1.103', port=502):
         """ModbusClient başlatılır (thread-safe)"""
         # Double-check locking pattern
         if not self._initialized:

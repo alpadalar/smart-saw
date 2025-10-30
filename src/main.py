@@ -69,7 +69,7 @@ class SmartSaw:
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
-            host='192.168.1.147',
+            host='192.168.1.103',
             port=502
         )
         
@@ -364,7 +364,7 @@ class SmartSaw:
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.1.147',
+                        'modbus_ip': '192.168.1.103',
                         'kesim_turu': current_controller if current_testere_durumu == 3 else None,
                         'kesim_id': self.current_kesim_id if current_testere_durumu == 3 else None
 
