@@ -30,6 +30,15 @@ from utils.helpers import (
     format_time
 )
 
+# === Torque Guard (parametrik) ===
+TORQUE_BUFFER_SIZE: int = 6                 # Ortalama alınacak son tork örneği sayısı
+TORQUE_HIGH_THRESHOLD: float = 35.0         # "yüksek tork" eşiği (yüzde)
+TORQUE_CONSEC_LIMIT: int = 3                # Üst üste kaç kez aşıldığında tetiklensin
+DESCENT_REDUCTION_FACTOR: float = 0.5       # İnme hızı düşürme oranı (0.5 = yarıya)
+TORQUE_ACTION_COOLDOWN_S: float = 5.0       # Koruma sonrası bekleme süresi (saniye)
+ENABLE_TORQUE_GUARD: bool = True            # False yaparsan devre dışı
+DIRECT_WRITE_ON_TORQUE_GUARD: bool = True   # True → Modbus'a anında yaz, False → buffer mekanizmasına bırak
+
 class MLController:
     def __init__(self):
         """ML tabanlı kontrol sistemi başlatılır"""
@@ -70,7 +79,10 @@ class MLController:
         self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         # Tork verisi için bağımsız buffer
-        self.torque_buffer = deque(maxlen=6)
+        self.torque_buffer = deque(maxlen=TORQUE_BUFFER_SIZE)
+        # Torque Guard durumu
+        self.high_torque_consec = 0
+        self.last_torque_action_ts = 0.0
         self.last_buffer_update = time.time()
     
     def _get_db(self):
@@ -335,6 +347,43 @@ class MLController:
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
+            
+            # --- Torque Guard: Ortalama tork kontrolü ---
+            if ENABLE_TORQUE_GUARD:
+                if avg_torque > TORQUE_HIGH_THRESHOLD:
+                    self.high_torque_consec += 1
+                else:
+                    self.high_torque_consec = 0
+
+                now_ts = time.time()
+                can_fire = (now_ts - self.last_torque_action_ts) >= TORQUE_ACTION_COOLDOWN_S
+
+                if self.high_torque_consec >= TORQUE_CONSEC_LIMIT and can_fire:
+                    target_inme_hizi = current_inme_hizi * DESCENT_REDUCTION_FACTOR
+                    target_inme_hizi = max(SPEED_LIMITS['inme']['min'],
+                                           min(target_inme_hizi, SPEED_LIMITS['inme']['max']))
+
+                    logger.info("="*80)
+                    logger.info("🛡️ TORQUE GUARD DEVREYE GİRDİ")
+                    logger.info("="*80)
+                    logger.info(f"📈 Ortalama Tork: {avg_torque:.2f}% "
+                                f"(Eşik: {TORQUE_HIGH_THRESHOLD}, Üst Üste: {self.high_torque_consec}/{TORQUE_CONSEC_LIMIT})")
+                    logger.info(f"🎯 İnme Hızını {current_inme_hizi:.2f} ➜ {target_inme_hizi:.2f} (×{DESCENT_REDUCTION_FACTOR})")
+                    logger.info("="*80)
+
+                    if DIRECT_WRITE_ON_TORQUE_GUARD:
+                        reverse_calculate_value(modbus_client, int(target_inme_hizi),
+                                                'serit_inme_hizi',
+                                                target_inme_hizi < 0)
+                        self.inme_hizi_degisim_buffer = 0.0
+                        self.last_update_time = now_ts
+                    else:
+                        self.inme_hizi_degisim_buffer += (target_inme_hizi - current_inme_hizi)
+
+                    self.high_torque_consec = 0
+                    self.last_torque_action_ts = now_ts
+                    return last_modbus_write_time, 0.0
+            # --- /Torque Guard ---
             
             # ML modelinden katsayı tahmin et
             coefficient = self.predict_coefficient(current_akim, current_sapma, current_kesme_hizi, current_inme_hizi)
