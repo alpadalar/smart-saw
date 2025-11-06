@@ -34,8 +34,32 @@ TORQUE_TO_CURRENT_A0 = 15.656
 
 # Fuzzy Kontrol Parametreleri
 IDEAL_AKIM = 17.0
-MIN_SPEED_UPDATE_INTERVAL = 1.0 / 5.0  # 5 Hz
+MIN_SPEED_UPDATE_INTERVAL = 1.0 / 5.0  # 5 Hz (ML controller için minimum güncelleme aralığı)
 KATSAYI = 1.0
+
+# ============================================================================
+# MODBUS VE VERİ İŞLEME HIZ PARAMETRELERİ
+# ============================================================================
+
+# Modbus Bağlantı Parametreleri
+MODBUS_RECONNECT_INTERVAL = 2.0           # Bağlantı koptuğunda yeniden bağlanma aralığı (saniye)
+MODBUS_CONNECTION_STABILIZATION_DELAY = 0.15  # Bağlantı sonrası stabilizasyon gecikmesi (saniye)
+MODBUS_WRITE_INTERVAL = 0.1               # Minimum yazma aralığı (saniye) - max 10 yazma/sn
+
+# Veri İşleme Parametreleri
+MAIN_LOOP_DELAY = 0.0                     # Ana döngü gecikmesi (saniye) - 0 = maksimum hız
+DATA_PROCESSING_WARNING_THRESHOLD = 6     # Saniyede minimum veri sayısı (altında uyarı verir)
+
+# ============================================================================
+# TORQUE GUARD PARAMETRELERİ (Kafa Yüksekliği Bazlı Tork Kontrolü)
+# ============================================================================
+
+TORQUE_BUFFER_SIZE = 3                    # Ortalama alınacak son tork örneği sayısı
+TORQUE_HEIGHT_LOOKBACK_MM = 3.0           # Kaç mm geriye bakılacak
+TORQUE_INITIAL_THRESHOLD_MM = 3.0         # İlk kaç mm'den sonra kontrol başlayacak
+TORQUE_INCREASE_THRESHOLD = 50.0          # %50 artış eşiği (yüzde)
+DESCENT_REDUCTION_PERCENT = 25.0          # İnme hızı azaltma oranı (yüzde)
+ENABLE_TORQUE_GUARD = True                # Torque Guard aktif/pasif
 
 # Kontrol Sistemi Başlangıç Parametreleri
 CONTROL_INITIAL_DELAY = {

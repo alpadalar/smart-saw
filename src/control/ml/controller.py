@@ -21,7 +21,14 @@ from core.constants import (
     KATSAYI,
     TORQUE_TO_CURRENT_A2,
     TORQUE_TO_CURRENT_A1,
-    TORQUE_TO_CURRENT_A0
+    TORQUE_TO_CURRENT_A0,
+    # Torque Guard parametreleri
+    TORQUE_BUFFER_SIZE,
+    TORQUE_HEIGHT_LOOKBACK_MM,
+    TORQUE_INITIAL_THRESHOLD_MM,
+    TORQUE_INCREASE_THRESHOLD,
+    DESCENT_REDUCTION_PERCENT,
+    ENABLE_TORQUE_GUARD
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -29,15 +36,7 @@ from utils.helpers import (
     calculate_elapsed_time_ms,
     format_time
 )
-
-# === Torque Guard (parametrik) ===
-TORQUE_BUFFER_SIZE: int = 3                 # Ortalama alınacak son tork örneği sayısı
-TORQUE_HIGH_THRESHOLD: float = 30.0         # "yüksek tork" eşiği (yüzde)
-TORQUE_CONSEC_LIMIT: int = 3                # Üst üste kaç kez aşıldığında tetiklensin
-DESCENT_REDUCTION_FACTOR: float = 0.75       # İnme hızı düşürme oranı (0.5 = yarıya)
-TORQUE_ACTION_COOLDOWN_S: float = 0.5       # Koruma sonrası bekleme süresi (saniye)
-ENABLE_TORQUE_GUARD: bool = True            # False yaparsan devre dışı
-DIRECT_WRITE_ON_TORQUE_GUARD: bool = True   # True → Modbus'a anında yaz, False → buffer mekanizmasına bırak
+from data.cutting_tracker import get_cutting_tracker
 
 class MLController:
     def __init__(self):
@@ -45,9 +44,12 @@ class MLController:
         self.cutting_start_time = None
         self.is_cutting = False
         self.last_update_time = 0
-        
+
         # Thread-local storage için
         self.thread_local = threading.local()
+
+        # Kesim takipçisi
+        self.cutting_tracker = get_cutting_tracker()
         
         # Veritabanı dizinini oluştur
         os.makedirs('data', exist_ok=True)
@@ -78,11 +80,13 @@ class MLController:
         self.sapma_buffer = deque(maxlen=BUFFER_SIZE)
         self.kesme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
         self.inme_hizi_buffer = deque(maxlen=BUFFER_SIZE)
-        # Tork verisi için bağımsız buffer
+        # Tork verisi için bağımsız buffer (mevcut ortalama hesabı için)
         self.torque_buffer = deque(maxlen=TORQUE_BUFFER_SIZE)
-        # Torque Guard durumu
-        self.high_torque_consec = 0
-        self.last_torque_action_ts = 0.0
+        # Kafa yüksekliği - Tork buffer'ı (yeni Torque Guard için)
+        # Her eleman: (kafa_yuksekligi_mm, ortalama_tork_percentage)
+        self.height_torque_buffer = []
+        # Kesim başlangıç kafa yüksekliği (referans için)
+        self.cutting_start_height = None
         self.last_buffer_update = time.time()
     
     def _get_db(self):
@@ -159,12 +163,61 @@ class MLController:
         """Tork buffer'ındaki verilerin ortalamasını alır"""
         if not self.torque_buffer:
             return 0.0
-        
+
         # Tork değerlerinin ortalamasını al
         torque_values = [torque for _, torque in self.torque_buffer]
         avg_torque = sum(torque_values) / len(torque_values)
-        
+
         return avg_torque
+
+    def _get_torque_at_height(self, target_height: float) -> Optional[float]:
+        """Belirli bir kafa yüksekliğindeki torku döndürür (interpolasyon ile)
+
+        Args:
+            target_height: Hedef kafa yüksekliği (mm)
+
+        Returns:
+            float: O yükseklikteki tork değeri (yüzde), bulunamazsa None
+        """
+        if not self.height_torque_buffer or len(self.height_torque_buffer) < 2:
+            return None
+
+        # Buffer'daki en yakın değerleri bul
+        # Binary search gibi ama doğrusal, çünkü buffer sıralı değil olabilir
+        closest_below = None
+        closest_above = None
+
+        for height, torque in self.height_torque_buffer:
+            if height <= target_height:
+                if closest_below is None or height > closest_below[0]:
+                    closest_below = (height, torque)
+            if height >= target_height:
+                if closest_above is None or height < closest_above[0]:
+                    closest_above = (height, torque)
+
+        # Tam eşleşme varsa
+        if closest_below and closest_below[0] == target_height:
+            return closest_below[1]
+        if closest_above and closest_above[0] == target_height:
+            return closest_above[1]
+
+        # İki nokta arasında interpolasyon yap
+        if closest_below and closest_above:
+            h1, t1 = closest_below
+            h2, t2 = closest_above
+
+            # Lineer interpolasyon: t = t1 + (t2-t1) * (h-h1)/(h2-h1)
+            if h2 - h1 > 0:
+                interpolated_torque = t1 + (t2 - t1) * (target_height - h1) / (h2 - h1)
+                return interpolated_torque
+
+        # Sadece bir tarafta veri varsa
+        if closest_below:
+            return closest_below[1]
+        if closest_above:
+            return closest_above[1]
+
+        return None
     
     def _get_buffer_averages(self):
         """Tamponlardaki verilerin ortalamasını alır"""
@@ -309,17 +362,17 @@ class MLController:
         speed_range = SPEED_LIMITS[speed_type]['max'] - SPEED_LIMITS[speed_type]['min']
         return (percentage / 100) * speed_range
 
-    def kesim_durumu_kontrol(self, testere_durumu: int) -> bool:
+    def kesim_durumu_kontrol(self, testere_durumu: int, kafa_yuksekligi: Optional[float] = None) -> bool:
         """Kesim durumunu kontrol eder"""
         current_time = time.time() * 1000
-        
+
         if testere_durumu != TestereState.KESIM_YAPILIYOR.value:
             if self.is_cutting:
                 self._log_kesim_bitis()
             return False
 
         if not self.is_cutting:
-            self._log_kesim_baslangic()
+            self._log_kesim_baslangic(kafa_yuksekligi)
 
         return True
 
@@ -331,7 +384,11 @@ class MLController:
     def adjust_speeds(self, processed_data: dict, modbus_client, last_modbus_write_time: float,
                      speed_adjustment_interval: float, prev_current: float) -> Tuple[float, Optional[float]]:
         """Hızları ayarlar"""
-        if not self.kesim_durumu_kontrol(processed_data.get('testere_durumu')):
+        # Kafa yüksekliğini önce al
+        current_kafa_yuksekligi = float(processed_data.get('kafa_yuksekligi', 0))
+        testere_durumu = processed_data.get('testere_durumu', 0)
+
+        if not self.kesim_durumu_kontrol(int(testere_durumu), current_kafa_yuksekligi):
             return last_modbus_write_time, None
 
         if not self.hiz_guncelleme_zamani_geldi_mi():
@@ -347,42 +404,83 @@ class MLController:
             current_sapma = float(processed_data.get('serit_sapmasi', 0))
             current_kesme_hizi = float(processed_data.get('serit_kesme_hizi', SPEED_LIMITS['kesme']['min']))
             current_inme_hizi = float(processed_data.get('serit_inme_hizi', SPEED_LIMITS['inme']['min']))
-            
-            # --- Torque Guard: Ortalama tork kontrolü ---
+
+            # --- Torque Guard: Kafa yüksekliği bazlı tork kontrolü ---
             if ENABLE_TORQUE_GUARD:
-                if avg_torque > TORQUE_HIGH_THRESHOLD:
-                    self.high_torque_consec += 1
-                else:
-                    self.high_torque_consec = 0
+                # Kafa yüksekliği - Tork ikilisini buffer'a ekle
+                self.height_torque_buffer.append((current_kafa_yuksekligi, avg_torque))
 
-                now_ts = time.time()
-                can_fire = (now_ts - self.last_torque_action_ts) >= TORQUE_ACTION_COOLDOWN_S
+                # Kesim başlangıcından itibaren ne kadar ilerlendi?
+                if self.cutting_start_height is not None:
+                    descent_distance = self.cutting_start_height - current_kafa_yuksekligi
 
-                if self.high_torque_consec >= TORQUE_CONSEC_LIMIT and can_fire:
-                    target_inme_hizi = current_inme_hizi * DESCENT_REDUCTION_FACTOR
-                    target_inme_hizi = max(SPEED_LIMITS['inme']['min'],
-                                           min(target_inme_hizi, SPEED_LIMITS['inme']['max']))
+                    # İlk 3mm'den sonra kontrol başlat
+                    if descent_distance >= TORQUE_INITIAL_THRESHOLD_MM:
+                        # 3mm önceki yükseklik
+                        lookback_height = current_kafa_yuksekligi + TORQUE_HEIGHT_LOOKBACK_MM
 
-                    logger.info("="*80)
-                    logger.info("🛡️ TORQUE GUARD DEVREYE GİRDİ")
-                    logger.info("="*80)
-                    logger.info(f"📈 Ortalama Tork: {avg_torque:.2f}% "
-                                f"(Eşik: {TORQUE_HIGH_THRESHOLD}, Üst Üste: {self.high_torque_consec}/{TORQUE_CONSEC_LIMIT})")
-                    logger.info(f"🎯 İnme Hızını {current_inme_hizi:.2f} ➜ {target_inme_hizi:.2f} (×{DESCENT_REDUCTION_FACTOR})")
-                    logger.info("="*80)
+                        # 3mm önceki torku bul
+                        previous_torque = self._get_torque_at_height(lookback_height)
 
-                    if DIRECT_WRITE_ON_TORQUE_GUARD:
-                        reverse_calculate_value(modbus_client, int(target_inme_hizi),
-                                                'serit_inme_hizi',
-                                                target_inme_hizi < 0)
-                        self.inme_hizi_degisim_buffer = 0.0
-                        self.last_update_time = now_ts
-                    else:
-                        self.inme_hizi_degisim_buffer += (target_inme_hizi - current_inme_hizi)
+                        if previous_torque is not None and previous_torque > 0:
+                            # Tork artış yüzdesini hesapla
+                            torque_increase_percent = ((avg_torque - previous_torque) / previous_torque) * 100.0
 
-                    self.high_torque_consec = 0
-                    self.last_torque_action_ts = now_ts
-                    return last_modbus_write_time, 0.0
+                            # Eğer %50'den fazla artış varsa
+                            if torque_increase_percent >= TORQUE_INCREASE_THRESHOLD:
+                                # İnme hızını %25 azalt
+                                target_inme_hizi = current_inme_hizi * (1.0 - DESCENT_REDUCTION_PERCENT / 100.0)
+                                target_inme_hizi = max(SPEED_LIMITS['inme']['min'],
+                                                       min(target_inme_hizi, SPEED_LIMITS['inme']['max']))
+
+                                # İnme hızı değişim yüzdesini hesapla
+                                inme_hizi_degisim = target_inme_hizi - current_inme_hizi
+                                inme_degisim_yuzdesi = self._calculate_speed_change_percentage(
+                                    inme_hizi_degisim, 'inme', current_inme_hizi
+                                )
+
+                                # Kesme hızını da inme hızı değişimine göre ayarla
+                                if inme_hizi_degisim < 0:
+                                    # Negatif değişim: mevcut hız ile minimum hız arası
+                                    speed_range = current_kesme_hizi - SPEED_LIMITS['kesme']['min']
+                                    kesme_hizi_degisim = -(speed_range * abs(inme_degisim_yuzdesi) / 100)
+                                else:
+                                    # Pozitif değişim: mevcut hız ile maksimum hız arası
+                                    speed_range = SPEED_LIMITS['kesme']['max'] - current_kesme_hizi
+                                    kesme_hizi_degisim = (speed_range * abs(inme_degisim_yuzdesi) / 100)
+
+                                target_kesme_hizi = current_kesme_hizi + kesme_hizi_degisim
+                                target_kesme_hizi = max(SPEED_LIMITS['kesme']['min'],
+                                                       min(target_kesme_hizi, SPEED_LIMITS['kesme']['max']))
+
+                                logger.info("="*80)
+                                logger.info("🛡️ TORQUE GUARD DEVREYE GİRDİ")
+                                logger.info("="*80)
+                                logger.info(f"📍 Mevcut Yükseklik: {current_kafa_yuksekligi:.2f} mm")
+                                logger.info(f"📍 3mm Önceki Yükseklik: {lookback_height:.2f} mm")
+                                logger.info(f"📈 3mm Önceki Tork: {previous_torque:.2f}%")
+                                logger.info(f"📈 Mevcut Tork: {avg_torque:.2f}%")
+                                logger.info(f"📊 Tork Artışı: %{torque_increase_percent:.2f} (Eşik: %{TORQUE_INCREASE_THRESHOLD})")
+                                logger.info(f"🎯 İnme Hızı: {current_inme_hizi:.2f} ➜ {target_inme_hizi:.2f} (-%{DESCENT_REDUCTION_PERCENT})")
+                                logger.info(f"🎯 Kesme Hızı: {current_kesme_hizi:.2f} ➜ {target_kesme_hizi:.2f}")
+                                logger.info("="*80)
+
+                                # Buffer'ları sıfırla ve doğrudan yaz
+                                self.inme_hizi_degisim_buffer = 0.0
+                                self.kesme_hizi_degisim_buffer = 0.0
+
+                                # İnme hızını yaz
+                                reverse_calculate_value(modbus_client, int(target_inme_hizi),
+                                                       'serit_inme_hizi',
+                                                       target_inme_hizi < 0)
+
+                                # Kesme hızını yaz
+                                reverse_calculate_value(modbus_client, int(target_kesme_hizi),
+                                                       'serit_kesme_hizi',
+                                                       target_kesme_hizi < 0)
+
+                                self.last_update_time = time.time()
+                                return last_modbus_write_time, 0.0
             # --- /Torque Guard ---
             
             # ML modelinden katsayı tahmin et
@@ -476,15 +574,29 @@ class MLController:
             logger.exception("Detaylı hata:")
             return last_modbus_write_time, None
 
-    def _log_kesim_baslangic(self):
+    def _log_kesim_baslangic(self, kafa_yuksekligi: Optional[float] = None):
         """Kesim başlangıcını loglar"""
         self.cutting_start_time = time.time() * 1000
         self.is_cutting = True
+
+        # Torque Guard için buffer'ı sıfırla ve başlangıç yüksekliğini kaydet
+        self.height_torque_buffer = []
+        self.cutting_start_height = kafa_yuksekligi
+
+        # Cutting tracker'ı bilgilendir
+        try:
+            self.cutting_tracker.start_cutting("ML")
+            logger.debug("Cutting tracker bilgilendirildi: Kesim başladı")
+        except Exception as e:
+            logger.error(f"Cutting tracker bilgilendirme hatası: {str(e)}")
+
         start_time_str = get_current_time_ms()
         logger.info("\n" + "="*60)
         logger.info("YENİ KESİM BAŞLADI (ML Kontrol)")
         logger.info("-"*60)
         logger.info(f"Başlangıç Zamanı : {start_time_str}")
+        if kafa_yuksekligi is not None:
+            logger.info(f"Başlangıç Kafa Yüksekliği : {kafa_yuksekligi:.2f} mm")
         logger.info("Kontrol sistemi başlangıç gecikmesi sonrası devreye girecek...")
         logger.info("="*60 + "\n")
 
@@ -500,10 +612,17 @@ class MLController:
             logger.info(f"Bitiş Zamanı     : {end_time_str}")
             logger.info(f"Toplam Süre      : {elapsed_str}")
             logger.info("="*60 + "\n")
-        
+
         self.is_cutting = False
         self.cutting_start_time = None
-        
+
+        # Cutting tracker'ı bilgilendir
+        try:
+            self.cutting_tracker.end_cutting()
+            logger.debug("Cutting tracker bilgilendirildi: Kesim bitti")
+        except Exception as e:
+            logger.error(f"Cutting tracker bilgilendirme hatası: {str(e)}")
+
         # Delay calculator cache'ini sıfırla - bir sonraki kesim için hazırlık
         from utils.delay_calculator import reset_delay_cache
         reset_delay_cache()

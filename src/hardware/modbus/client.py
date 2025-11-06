@@ -8,6 +8,12 @@ from typing import Optional, List, Generator
 from pymodbus.client import ModbusTcpClient
 
 from core.logger import logger
+from core.constants import (
+    MODBUS_RECONNECT_INTERVAL,
+    MODBUS_CONNECTION_STABILIZATION_DELAY,
+    MODBUS_WRITE_INTERVAL,
+    DATA_PROCESSING_WARNING_THRESHOLD
+)
 
 class ModbusClient:
     _instance: Optional['ModbusClient'] = None
@@ -32,13 +38,14 @@ class ModbusClient:
                     # Global uygulama logger'ını kullan (konsol + dosya)
                     self.logger = logger
                     self.last_write_time = time.time()
-                    self.write_interval = 0.1
+                    self.write_interval = MODBUS_WRITE_INTERVAL
                     self._last_reconnect_attempt = 0
-                    self._reconnect_interval = 2.0  # Minimum 2 seconds between reconnection attempts
+                    self._reconnect_interval = MODBUS_RECONNECT_INTERVAL
                     # Okuma hızını izlemek için sayaçlar (hafif ve thread-safe kullanım)
                     self._reads_in_current_sec = 0
                     self._reads_prev_sec = 0
                     self._last_sec = int(time.time())
+                    self._warning_threshold = DATA_PROCESSING_WARNING_THRESHOLD
                     self._initialized = True
             
     def connect(self) -> bool:
@@ -56,7 +63,7 @@ class ModbusClient:
                 if self.connected:
                     self.logger.info("Modbus bağlantısı başarılı.")
                     # Add small delay after successful connection
-                    time.sleep(0.15)  # 150ms delay for connection stabilization
+                    time.sleep(MODBUS_CONNECTION_STABILIZATION_DELAY)
             return self.connected
         except Exception as e:
             self.logger.error(f"Modbus bağlantı hatası: {e}")
@@ -160,8 +167,12 @@ class ModbusClient:
                     # Başarılı okuma: saniyelik sayaçları güncelle ve gerekirse logla
                     now_sec = int(time.time())
                     if now_sec != self._last_sec:
-                        # Önceki saniyenin toplamını logla
-                        self.logger.info(f"Modbus okuma hızı: {self._reads_in_current_sec} okuma/sn")
+                        # Eğer son saniyede threshold'dan az okuma varsa belirgin uyarı göster
+                        if self._reads_in_current_sec < self._warning_threshold:
+                            self.logger.warning("="*80)
+                            self.logger.warning(f"⚠️  DÜŞÜK MODBUS OKUMA HIZI ALGILANDI!")
+                            self.logger.warning(f"📊 Son saniyede sadece {self._reads_in_current_sec} okuma yapıldı (Beklenen: ≥{self._warning_threshold})")
+                            self.logger.warning("="*80)
                         self._reads_prev_sec = self._reads_in_current_sec
                         self._reads_in_current_sec = 0
                         self._last_sec = now_sec

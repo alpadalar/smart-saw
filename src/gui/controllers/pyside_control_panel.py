@@ -1354,10 +1354,14 @@ class ControlPanelWindow(QMainWindow):
             
             # Cutting start/stop button states
             self._update_cutting_button_states(testere_durumu)
-            
+
             # Kesim zamanı label'larını güncelle
             self._update_cutting_time_labels(testere_durumu)
-            
+
+            # Soğutma ve talaş temizlik butonlarının durumunu güncelle
+            self._refresh_coolant_state()
+            self._refresh_chip_cleaning_state()
+
         except Exception as e:
             logger.error(f"Veri güncelleme hatası: {str(e)}")
             logger.exception("Detaylı hata:") 

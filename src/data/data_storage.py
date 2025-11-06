@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from core.logger import logger
+from core.constants import DATA_PROCESSING_WARNING_THRESHOLD
 
 class DataStorage:
     def __init__(self, path: str = "data"):
@@ -178,12 +179,17 @@ class DataStorage:
                 # Başarılı insert sonrası saniyelik sayaçları güncelle ve gerekirse logla
                 now_sec = int(time.time())
                 if now_sec != self._db_last_sec:
-                    self.logger.info(f"DB yazma hızı: {self._db_saves_in_current_sec} kayıt/sn")
+                    # Eğer son saniyede threshold'dan az kayıt varsa belirgin uyarı göster
+                    if self._db_saves_in_current_sec < DATA_PROCESSING_WARNING_THRESHOLD:
+                        self.logger.warning("="*80)
+                        self.logger.warning(f"⚠️  DÜŞÜK DB YAZMA HIZI ALGILANDI!")
+                        self.logger.warning(f"📊 Son saniyede sadece {self._db_saves_in_current_sec} kayıt yazıldı (Beklenen: ≥{DATA_PROCESSING_WARNING_THRESHOLD})")
+                        self.logger.warning("="*80)
                     self._db_saves_prev_sec = self._db_saves_in_current_sec
                     self._db_saves_in_current_sec = 0
                     self._db_last_sec = now_sec
                 self._db_saves_in_current_sec += 1
-                
+
         except Exception as e:
             self.logger.error(f"Sensör verisi kaydetme hatası: {e}")
             
@@ -218,12 +224,17 @@ class DataStorage:
                 # Başarılı insert sonrası saniyelik sayaçları güncelle ve gerekirse logla
                 now_sec = int(time.time())
                 if now_sec != self._db_last_sec:
-                    self.logger.info(f"DB yazma hızı: {self._db_saves_in_current_sec} kayıt/sn")
+                    # Eğer son saniyede threshold'dan az kayıt varsa belirgin uyarı göster
+                    if self._db_saves_in_current_sec < DATA_PROCESSING_WARNING_THRESHOLD:
+                        self.logger.warning("="*80)
+                        self.logger.warning(f"⚠️  DÜŞÜK DB YAZMA HIZI ALGILANDI!")
+                        self.logger.warning(f"📊 Son saniyede sadece {self._db_saves_in_current_sec} kayıt yazıldı (Beklenen: ≥{DATA_PROCESSING_WARNING_THRESHOLD})")
+                        self.logger.warning("="*80)
                     self._db_saves_prev_sec = self._db_saves_in_current_sec
                     self._db_saves_in_current_sec = 0
                     self._db_last_sec = now_sec
                 self._db_saves_in_current_sec += 1
-                
+
         except Exception as e:
             self.logger.error(f"Kesim verisi kaydetme hatası: {e}")
             
