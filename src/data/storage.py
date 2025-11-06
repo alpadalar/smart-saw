@@ -9,6 +9,7 @@ except ImportError:
     _PSYCOPG2_AVAILABLE = False
 import os
 from datetime import datetime
+import time
 from core.logger import logger
 from core.config import Config
 
@@ -37,6 +38,10 @@ class LocalStorage:
         self.db_path = config.storage.database.sqlite_path
         self.total_db = config.storage.database.total_db_path
         self.raw_db = config.storage.database.raw_db_path
+        # DB yazma hızını izlemek için saniyelik sayaçlar
+        self._db_saves_in_current_sec = 0
+        self._db_saves_prev_sec = 0
+        self._db_last_sec = int(time.time())
         
         # Thread-local storage için
         import threading
@@ -279,7 +284,15 @@ class LocalStorage:
             raw_cursor = raw_conn.cursor()
             raw_cursor.execute(query, values)
             raw_conn.commit()
-            
+            # Başarılı insertler sonrası saniyelik sayaçları güncelle ve gerekirse logla
+            now_sec = int(time.time())
+            if now_sec != self._db_last_sec:
+                logger.info(f"DB yazma hızı: {self._db_saves_in_current_sec} kayıt/sn")
+                self._db_saves_prev_sec = self._db_saves_in_current_sec
+                self._db_saves_in_current_sec = 0
+                self._db_last_sec = now_sec
+            self._db_saves_in_current_sec += 1
+
             return True
             
         except Exception as e:

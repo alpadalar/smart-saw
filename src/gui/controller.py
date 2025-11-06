@@ -922,7 +922,7 @@ class SimpleGUI:
             if 'modbus_connected' in processed_data:
                 self.update_modbus_status(
                     processed_data['modbus_connected'],
-                    processed_data.get('modbus_ip', '192.168.1.103')
+                    processed_data.get('modbus_ip', '192.168.2.147')
                 )
             
             # Testere durumunu güncelle

@@ -69,7 +69,7 @@ class SmartSaw:
         
         # Modbus istemcisi
         self.modbus_client = ModbusClient(
-            host='192.168.1.103',
+            host='192.168.2.147',
             port=502
         )
         
@@ -373,7 +373,7 @@ class SmartSaw:
                         'fuzzy_output': 0.0,
                         'kesme_hizi_degisim': 0.0,
                         'modbus_connected': self.modbus_client.is_connected,
-                        'modbus_ip': '192.168.1.103',
+                        'modbus_ip': '192.168.2.147',
                         'kesim_turu': current_controller if current_testere_durumu == 3 else None,
                         'kesim_id': self.current_kesim_id if current_testere_durumu == 3 else None
 
@@ -533,7 +533,7 @@ class SmartSaw:
                             logger.warning(f"ThingsBoard exception ({self._tb_consecutive_failures}/{self._tb_max_consecutive_failures}). {backoff_seconds}s backoff.")                
                 
                 # Döngü gecikmesi
-                time.sleep(0.1)  # 100ms güncelleme aralığı
+                # time.sleep(0.1)  # 100ms güncelleme aralığı
                 
             except Exception as e:
                 logger.error(f"Veri işleme hatası: {str(e)}")

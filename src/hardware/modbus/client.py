@@ -21,7 +21,7 @@ class ModbusClient:
                 cls._instance._initialized = False  # İlk oluşturmada flag set et
         return cls._instance
     
-    def __init__(self, host='192.168.1.103', port=502):
+    def __init__(self, host='192.168.2.147', port=502):
         """ModbusClient başlatılır (thread-safe)"""
         # Double-check locking pattern
         if not self._initialized:
@@ -29,11 +29,16 @@ class ModbusClient:
                 if not self._initialized:
                     self.client = ModbusTcpClient(host=host, port=port)
                     self.connected = False
-                    self.logger = logging.getLogger(__name__)
+                    # Global uygulama logger'ını kullan (konsol + dosya)
+                    self.logger = logger
                     self.last_write_time = time.time()
                     self.write_interval = 0.1
                     self._last_reconnect_attempt = 0
                     self._reconnect_interval = 2.0  # Minimum 2 seconds between reconnection attempts
+                    # Okuma hızını izlemek için sayaçlar (hafif ve thread-safe kullanım)
+                    self._reads_in_current_sec = 0
+                    self._reads_prev_sec = 0
+                    self._last_sec = int(time.time())
                     self._initialized = True
             
     def connect(self) -> bool:
@@ -152,6 +157,15 @@ class ModbusClient:
                 }
                 response = self.client.read_holding_registers(**kwargs)
                 if not response.isError():
+                    # Başarılı okuma: saniyelik sayaçları güncelle ve gerekirse logla
+                    now_sec = int(time.time())
+                    if now_sec != self._last_sec:
+                        # Önceki saniyenin toplamını logla
+                        self.logger.info(f"Modbus okuma hızı: {self._reads_in_current_sec} okuma/sn")
+                        self._reads_prev_sec = self._reads_in_current_sec
+                        self._reads_in_current_sec = 0
+                        self._last_sec = now_sec
+                    self._reads_in_current_sec += 1
                     self.logger.debug(f"Modbus verisi başarıyla okundu. Register sayısı: {len(response.registers)}")
                     self.logger.debug("Modbus registerları okunuyor...")
                     

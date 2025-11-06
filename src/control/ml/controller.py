@@ -31,11 +31,11 @@ from utils.helpers import (
 )
 
 # === Torque Guard (parametrik) ===
-TORQUE_BUFFER_SIZE: int = 6                 # Ortalama alınacak son tork örneği sayısı
-TORQUE_HIGH_THRESHOLD: float = 35.0         # "yüksek tork" eşiği (yüzde)
+TORQUE_BUFFER_SIZE: int = 3                 # Ortalama alınacak son tork örneği sayısı
+TORQUE_HIGH_THRESHOLD: float = 30.0         # "yüksek tork" eşiği (yüzde)
 TORQUE_CONSEC_LIMIT: int = 3                # Üst üste kaç kez aşıldığında tetiklensin
-DESCENT_REDUCTION_FACTOR: float = 0.5       # İnme hızı düşürme oranı (0.5 = yarıya)
-TORQUE_ACTION_COOLDOWN_S: float = 5.0       # Koruma sonrası bekleme süresi (saniye)
+DESCENT_REDUCTION_FACTOR: float = 0.75       # İnme hızı düşürme oranı (0.5 = yarıya)
+TORQUE_ACTION_COOLDOWN_S: float = 0.5       # Koruma sonrası bekleme süresi (saniye)
 ENABLE_TORQUE_GUARD: bool = True            # False yaparsan devre dışı
 DIRECT_WRITE_ON_TORQUE_GUARD: bool = True   # True → Modbus'a anında yaz, False → buffer mekanizmasına bırak
 
@@ -226,13 +226,13 @@ class MLController:
             # Katsayıyı -1 ile 1 arasına sınırla
             coefficient = max(-1.0, min(coefficient, 1.0))
             
-            # ML çıktısını logla
-            logger.info("="*80)
-            logger.info("🤖 ML MODEL ÇIKTISI")
-            logger.info("="*80)
-            logger.info(f"📊 ML Model Çıktısı (Ham): {coefficient:.6f}")
-            logger.info(f"🎯 Sınırlandırılmış Çıktı: {coefficient:.6f}")
-            logger.info("="*80)
+            # # ML çıktısını logla
+            # logger.info("="*80)
+            # logger.info("🤖 ML MODEL ÇIKTISI")
+            # logger.info("="*80)
+            # logger.info(f"📊 ML Model Çıktısı (Ham): {coefficient:.6f}")
+            # logger.info(f"🎯 Sınırlandırılmış Çıktı: {coefficient:.6f}")
+            # logger.info("="*80)
             
             # Yeni hızları hesapla
             new_inme_hizi = avg_inme_hizi + coefficient
@@ -256,19 +256,19 @@ class MLController:
             new_kesme_hizi = avg_kesme_hizi + kesme_hizi_degisim
             new_kesme_hizi = max(SPEED_LIMITS['kesme']['min'], min(new_kesme_hizi, SPEED_LIMITS['kesme']['max']))
             
-            # Hesaplama formülünü ve sonuçları logla
-            logger.info("="*80)
-            logger.info("🧮 HIZ HESAPLAMA FORMÜLÜ")
-            logger.info("="*80)
-            logger.info(f"📈 Mevcut İnme Hızı: {avg_inme_hizi:.2f} mm/dak")
-            logger.info(f"📊 ML Katsayısı: {coefficient:.6f}")
-            logger.info(f"🔢 İnme Hızı Formülü: {avg_inme_hizi:.2f} + {coefficient:.6f} = {new_inme_hizi:.2f} mm/dak")
-            logger.info(f"📉 İnme Hızı Değişimi: {inme_hizi_degisim:+.2f} mm/dak (%{inme_degisim_yuzdesi:+.2f})")
-            logger.info("")
-            logger.info(f"📈 Mevcut Kesme Hızı: {avg_kesme_hizi:.2f} mm/dak")
-            logger.info(f"🔢 Kesme Hızı Değişimi: {kesme_hizi_degisim:+.2f} mm/dak")
-            logger.info(f"🔢 Kesme Hızı Formülü: {avg_kesme_hizi:.2f} + {kesme_hizi_degisim:+.2f} = {new_kesme_hizi:.2f} mm/dak")
-            logger.info("="*80)
+            # # Hesaplama formülünü ve sonuçları logla
+            # logger.info("="*80)
+            # logger.info("🧮 HIZ HESAPLAMA FORMÜLÜ")
+            # logger.info("="*80)
+            # logger.info(f"📈 Mevcut İnme Hızı: {avg_inme_hizi:.2f} mm/dak")
+            # logger.info(f"📊 ML Katsayısı: {coefficient:.6f}")
+            # logger.info(f"🔢 İnme Hızı Formülü: {avg_inme_hizi:.2f} + {coefficient:.6f} = {new_inme_hizi:.2f} mm/dak")
+            # logger.info(f"📉 İnme Hızı Değişimi: {inme_hizi_degisim:+.2f} mm/dak (%{inme_degisim_yuzdesi:+.2f})")
+            # logger.info("")
+            # logger.info(f"📈 Mevcut Kesme Hızı: {avg_kesme_hizi:.2f} mm/dak")
+            # logger.info(f"🔢 Kesme Hızı Değişimi: {kesme_hizi_degisim:+.2f} mm/dak")
+            # logger.info(f"🔢 Kesme Hızı Formülü: {avg_kesme_hizi:.2f} + {kesme_hizi_degisim:+.2f} = {new_kesme_hizi:.2f} mm/dak")
+            # logger.info("="*80)
 
             # Verileri kaydet
             self._save_control_data(
@@ -430,15 +430,15 @@ class MLController:
                 modbus_value = int(new_inme_hizi * 100)  # Makineye gönderilecek değer
                 reverse_calculate_value(modbus_client, int(new_inme_hizi), 'serit_inme_hizi', inme_hizi_is_negative)
                 
-                # Makineye gönderilen değeri logla
-                logger.info("="*80)
-                logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER")
-                logger.info("="*80)
-                logger.info(f"📤 İnme Hızı (Hesaplanan): {new_inme_hizi:.2f} mm/dak")
-                logger.info(f"📤 İnme Hızı (Register): {modbus_value} (int)")
-                logger.info(f"📤 İnme Hızı (Makine Formatı): {new_inme_hizi * 100:.0f}")
-                logger.info(f"📊 Buffer Değeri: {self.inme_hizi_degisim_buffer:+.2f}")
-                logger.info("="*80)
+                # # Makineye gönderilen değeri logla
+                # logger.info("="*80)
+                # logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER")
+                # logger.info("="*80)
+                # logger.info(f"📤 İnme Hızı (Hesaplanan): {new_inme_hizi:.2f} mm/dak")
+                # logger.info(f"📤 İnme Hızı (Register): {modbus_value} (int)")
+                # logger.info(f"📤 İnme Hızı (Makine Formatı): {new_inme_hizi * 100:.0f}")
+                # logger.info(f"📊 Buffer Değeri: {self.inme_hizi_degisim_buffer:+.2f}")
+                # logger.info("="*80)
                 
                 # Buffer'ı sıfırla
                 self.inme_hizi_degisim_buffer = 0.0
@@ -454,14 +454,14 @@ class MLController:
                 modbus_value_kesme = int(new_kesme_hizi)  # Makineye gönderilecek değer
                 reverse_calculate_value(modbus_client, int(new_kesme_hizi), 'serit_kesme_hizi', kesme_hizi_is_negative)
                 
-                # Makineye gönderilen değeri logla
-                logger.info("="*80)
-                logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER (KESME)")
-                logger.info("="*80)
-                logger.info(f"📤 Kesme Hızı (Hesaplanan): {new_kesme_hizi:.2f} mm/dak")
-                logger.info(f"📤 Kesme Hızı (Register): {modbus_value_kesme} (int)")
-                logger.info(f"📊 Buffer Değeri: {self.kesme_hizi_degisim_buffer:+.2f}")
-                logger.info("="*80)
+                # # Makineye gönderilen değeri logla
+                # logger.info("="*80)
+                # logger.info("🚀 MAKİNEYE GÖNDERİLEN DEĞERLER (KESME)")
+                # logger.info("="*80)
+                # logger.info(f"📤 Kesme Hızı (Hesaplanan): {new_kesme_hizi:.2f} mm/dak")
+                # logger.info(f"📤 Kesme Hızı (Register): {modbus_value_kesme} (int)")
+                # logger.info(f"📊 Buffer Değeri: {self.kesme_hizi_degisim_buffer:+.2f}")
+                # logger.info("="*80)
                 
                 # Buffer'ı sıfırla
                 self.kesme_hizi_degisim_buffer = 0.0

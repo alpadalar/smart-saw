@@ -2,8 +2,11 @@
 import sqlite3
 import logging
 import os
+import time
 from datetime import datetime
 from typing import Dict, Optional
+
+from core.logger import logger
 
 class DataStorage:
     def __init__(self, path: str = "data"):
@@ -12,7 +15,12 @@ class DataStorage:
         Args:
             path (str): Veritabanı dosyalarının kaydedileceği dizin
         """
-        self.logger = logging.getLogger(__name__)
+        # Global uygulama logger'ını kullan (konsol + dosya)
+        self.logger = logger
+        # DB yazma hızını izlemek için sayaçlar
+        self._db_saves_in_current_sec = 0
+        self._db_saves_prev_sec = 0
+        self._db_last_sec = int(time.time())
         
         # Veritabanı dizinini oluştur
         if not os.path.exists(path):
@@ -167,6 +175,14 @@ class DataStorage:
                     data.get('frekans_y'),
                     data.get('frekans_z')
                 ))
+                # Başarılı insert sonrası saniyelik sayaçları güncelle ve gerekirse logla
+                now_sec = int(time.time())
+                if now_sec != self._db_last_sec:
+                    self.logger.info(f"DB yazma hızı: {self._db_saves_in_current_sec} kayıt/sn")
+                    self._db_saves_prev_sec = self._db_saves_in_current_sec
+                    self._db_saves_in_current_sec = 0
+                    self._db_last_sec = now_sec
+                self._db_saves_in_current_sec += 1
                 
         except Exception as e:
             self.logger.error(f"Sensör verisi kaydetme hatası: {e}")
@@ -199,6 +215,14 @@ class DataStorage:
                     data.get('testere_durum'),
                     data.get('parca_adet')
                 ))
+                # Başarılı insert sonrası saniyelik sayaçları güncelle ve gerekirse logla
+                now_sec = int(time.time())
+                if now_sec != self._db_last_sec:
+                    self.logger.info(f"DB yazma hızı: {self._db_saves_in_current_sec} kayıt/sn")
+                    self._db_saves_prev_sec = self._db_saves_in_current_sec
+                    self._db_saves_in_current_sec = 0
+                    self._db_last_sec = now_sec
+                self._db_saves_in_current_sec += 1
                 
         except Exception as e:
             self.logger.error(f"Kesim verisi kaydetme hatası: {e}")
