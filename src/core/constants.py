@@ -55,9 +55,9 @@ DATA_PROCESSING_WARNING_THRESHOLD = 6     # Saniyede minimum veri sayısı (alt�
 # ============================================================================
 
 TORQUE_BUFFER_SIZE = 3                    # Ortalama alınacak son tork örneği sayısı
-TORQUE_HEIGHT_LOOKBACK_MM = 3.0           # Kaç mm geriye bakılacak
-TORQUE_INITIAL_THRESHOLD_MM = 3.0         # İlk kaç mm'den sonra kontrol başlayacak
-TORQUE_INCREASE_THRESHOLD = 50.0          # %50 artış eşiği (yüzde)
+TORQUE_HEIGHT_LOOKBACK_MM = 2.5           # Kaç mm geriye bakılacak
+TORQUE_INITIAL_THRESHOLD_MM = 2.5         # İlk kaç mm'den sonra kontrol başlayacak
+TORQUE_INCREASE_THRESHOLD = 40.0          # %50 artış eşiği (yüzde)
 DESCENT_REDUCTION_PERCENT = 25.0          # İnme hızı azaltma oranı (yüzde)
 ENABLE_TORQUE_GUARD = True                # Torque Guard aktif/pasif
 

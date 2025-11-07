@@ -385,7 +385,7 @@ class MLController:
                      speed_adjustment_interval: float, prev_current: float) -> Tuple[float, Optional[float]]:
         """Hızları ayarlar"""
         # Kafa yüksekliğini önce al
-        current_kafa_yuksekligi = float(processed_data.get('kafa_yuksekligi', 0))
+        current_kafa_yuksekligi = float(processed_data.get('kafa_yuksekligi_mm', 0))
         testere_durumu = processed_data.get('testere_durumu', 0)
 
         if not self.kesim_durumu_kontrol(int(testere_durumu), current_kafa_yuksekligi):

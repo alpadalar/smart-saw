@@ -16,7 +16,7 @@ prev_time = time.time()
 fps_update_interval = 1.0  # FPS'i her 1 saniyede bir güncelle
 
 # Kamera bağlantısı
-cap = cv2.VideoCapture(2)  # 0 for internal camera, 1 for external camera
+cap = cv2.VideoCapture(0)  # 0 for internal camera, 1 for external camera
 
 if not cap.isOpened():
     print("Kamera açılamadı! Lütfen bağlantıyı kontrol edin.")
@@ -27,7 +27,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
 cap.set(cv2.CAP_PROP_FPS, FPS)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Buffer boyutunu küçült
-cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)  # Auto exposure (3: ON, 1: OFF)
+cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # Auto exposure (3: ON, 1: OFF)
 
 # Windows'ta v4l2 çalışmadığı için bu kısmı atlıyoruz
 if os.name != 'nt':  # Eğer Windows değilse
