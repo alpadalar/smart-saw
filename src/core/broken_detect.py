@@ -6,7 +6,7 @@ import threading
 import time
 
 import torch
-from ultralytics import RTDETR  
+from ultralytics import RTDETR, YOLO
 
 from core.logger import logger
 from core.constants import BROKEN_DETECTION_MODEL_PATH 
@@ -25,10 +25,22 @@ def _load_model():
         if not _model_loaded:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             # Config'den model path al
-            _model = RTDETR(BROKEN_DETECTION_MODEL_PATH)
-            _model.to(device)
-            _model_loaded = True
-            logger.info(f"Broken detection model yüklendi: {BROKEN_DETECTION_MODEL_PATH} - Cihaz: {device}")
+            # Önce RTDETR ile yüklemeyi dene, başarısız olursa YOLO ile dene
+            try:
+                _model = RTDETR(BROKEN_DETECTION_MODEL_PATH)
+                _model.to(device)
+                _model_loaded = True
+                logger.info(f"Broken detection model (RTDETR) yüklendi: {BROKEN_DETECTION_MODEL_PATH} - Cihaz: {device}")
+            except Exception as e:
+                logger.warning(f"RTDETR ile model yüklenemedi, YOLO deneniyor: {e}")
+                try:
+                    _model = YOLO(BROKEN_DETECTION_MODEL_PATH)
+                    _model.to(device)
+                    _model_loaded = True
+                    logger.info(f"Broken detection model (YOLO) yüklendi: {BROKEN_DETECTION_MODEL_PATH} - Cihaz: {device}")
+                except Exception as e2:
+                    logger.error(f"Model yüklenemedi (RTDETR ve YOLO denendi): {e2}")
+                    raise RuntimeError(f"Model yüklenemedi: {e2}")
     return _model
 
 
