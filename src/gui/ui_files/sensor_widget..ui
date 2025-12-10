@@ -664,7 +664,7 @@ Sapması</string>
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QFrame" name="SicaklikFrame">
+    <widget class="QFrame" name="SeritTorkFrame">
      <property name="geometry">
       <rect>
        <x>8</x>
@@ -694,7 +694,7 @@ Sapması</string>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QLabel" name="labelSicaklikInfo">
+     <widget class="QLabel" name="labelSeritTorkInfo">
       <property name="geometry">
        <rect>
         <x>25</x>
@@ -719,7 +719,7 @@ Sapması</string>
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
       </property>
      </widget>
-     <widget class="QLabel" name="labelSicaklik">
+     <widget class="QLabel" name="labelSeritTork">
       <property name="geometry">
        <rect>
         <x>25</x>
@@ -738,11 +738,11 @@ Sapması</string>
 }</string>
       </property>
       <property name="text">
-       <string>Sıcaklık</string>
+       <string>Şerit Torku</string>
       </property>
      </widget>
     </widget>
-    <widget class="QFrame" name="NemFrame">
+    <widget class="QFrame" name="SeritGerginligiFrame">
      <property name="geometry">
       <rect>
        <x>8</x>
@@ -772,7 +772,7 @@ Sapması</string>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QLabel" name="labelNemInfo">
+     <widget class="QLabel" name="labelSeritGerginligiInfo">
       <property name="geometry">
        <rect>
         <x>25</x>
@@ -797,7 +797,7 @@ Sapması</string>
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
       </property>
      </widget>
-     <widget class="QLabel" name="labelNem">
+     <widget class="QLabel" name="labelSeritGerginligi">
       <property name="geometry">
        <rect>
         <x>25</x>
@@ -816,7 +816,7 @@ Sapması</string>
 }</string>
       </property>
       <property name="text">
-       <string>Nem</string>
+       <string>Serit Gerginliği</string>
       </property>
      </widget>
     </widget>

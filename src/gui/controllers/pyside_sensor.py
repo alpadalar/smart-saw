@@ -450,13 +450,16 @@ class SensorPage(QWidget):
             'KesmeHizi': False,
             'IlerlemeHizi': False,
             'SeritAkim': False,
-            'Sicaklik': False,
-            'Nem': False,
+            'SeritTork': False,
+            'SeritGerginligi': False,
             'SeritSapmasi': False,
             'TitresimX': False,
             'TitresimY': False,
             'TitresimZ': False,
         }
+        
+        # Anomaly manager callback'ini ayarla (main_ref üzerinden)
+        self._setup_anomaly_callback()
 
         # Kesim grafiği widget'ı
         self.cutting_graph = None
@@ -504,6 +507,29 @@ class SensorPage(QWidget):
         if self.cutting_graph:
             # Eksen değişiklik event'ini manuel olarak tetikle
             self._on_x_axis_changed(None)
+    
+    def _setup_anomaly_callback(self) -> None:
+        """Anomaly manager callback'ini ayarlar"""
+        try:
+            # main_ref üzerinden anomaly_manager'a eriş
+            if self.main_ref and hasattr(self.main_ref, 'anomaly_manager') and self.main_ref.anomaly_manager:
+                # Callback fonksiyonu: anomaly_states'i güncelle
+                def update_anomaly_state(sensor_key: str, is_anomaly: bool) -> None:
+                    """Anomali durumunu günceller"""
+                    try:
+                        if sensor_key in self.anomaly_states:
+                            self.anomaly_states[sensor_key] = is_anomaly
+                            logger.debug(f"Anomali durumu güncellendi: {sensor_key} = {is_anomaly}")
+                    except Exception as e:
+                        logger.error(f"Anomali durumu güncelleme hatası: {e}")
+                
+                # Callback'i ayarla
+                self.main_ref.anomaly_manager.set_update_callback(update_anomaly_state)
+                logger.info("Anomaly manager callback ayarlandı")
+            else:
+                logger.warning("Anomaly manager bulunamadı veya başlatılmamış")
+        except Exception as e:
+            logger.error(f"Anomaly callback ayarlama hatası: {e}")
 
     def _setup_cutting_graph(self):
         """Kesim grafiği widget'ını kurar"""
@@ -820,7 +846,7 @@ class SensorPage(QWidget):
             """
         )
         for name in (
-            'KesmeHiziFrame','IlerlemeHiziFrame','SeritAkimFrame','SicaklikFrame','NemFrame',
+            'KesmeHiziFrame','IlerlemeHiziFrame','SeritAkimFrame','SeritTorkFrame','SeritGerginligiFrame',
             'SeritSapmasiFrame','TitresimXFrame','TitresimYFrame','TitresimZFrame'
         ):
             frame = getattr(self.ui, name, None)
@@ -829,7 +855,7 @@ class SensorPage(QWidget):
 
     def _set_all_info_labels(self, text: str) -> None:
         for name in (
-            'labelKesmeHiziInfo','labelIlerlemeHiziInfo','labelSeritAkimInfo','labelSicaklikInfo','labelNemInfo',
+            'labelKesmeHiziInfo','labelIlerlemeHiziInfo','labelSeritAkimInfo','labelSeritTorkInfo','labelSeritGerginligiInfo',
             'labelSeritSapmasiInfo','labelTitresimXInfo','labelTitresimYInfo','labelTitresimZInfo'
         ):
             lbl = getattr(self.ui, name, None)
@@ -837,8 +863,17 @@ class SensorPage(QWidget):
                 lbl.setText(text)
 
     def reset_anomaly_states(self) -> None:
+        """Tüm anomali durumlarını sıfırlar"""
         for key in self.anomaly_states:
             self.anomaly_states[key] = False
+        
+        # Anomaly manager'ı da sıfırla
+        try:
+            if self.main_ref and hasattr(self.main_ref, 'anomaly_manager') and self.main_ref.anomaly_manager:
+                self.main_ref.anomaly_manager.reset_anomaly_states()
+        except Exception as e:
+            logger.error(f"Anomaly manager reset hatası: {e}")
+        
         self._set_all_frames_green()
         self._set_all_info_labels("Her şey yolunda.")
 
@@ -860,8 +895,10 @@ class SensorPage(QWidget):
             vib_x = _f(data.get('ivme_olcer_x_hz', 0))
             vib_y = _f(data.get('ivme_olcer_y_hz', 0))
             vib_z = _f(data.get('ivme_olcer_z_hz', 0))
-            sicaklik = _f(data.get('ortam_sicakligi_c', 0))
-            nem = _f(data.get('ortam_nem_percentage', 0))
+            # SicaklikFrame yerine Şerit Torku gösterilecek
+            serit_tork = _f(data.get('serit_motor_tork_percentage', 0))
+            # NemFrame yerine Serit Gerginliği gösterilecek
+            serit_gerginligi = _f(data.get('serit_gerginligi_bar', 0))
             
             # Kesim grafiği için veri güncelleme
             self._update_cutting_graph(data)
@@ -901,33 +938,31 @@ class SensorPage(QWidget):
                 if label:
                     label.setText(f"{current_time} tarihinde anomali tespit edildi.") if is_anom else label.setText(ok_text)
 
-            # Rules (same as legacy)
-            upd('KesmeHiziFrame','labelKesmeHiziInfo', serit_akim > 100 or self.anomaly_states['KesmeHizi'])
-            self.anomaly_states['KesmeHizi'] |= (serit_akim > 100)
+            # Rules - Anomaly detection modülünden gelen durumları kullan
+            # KesmeHizi, IlerlemeHizi, SeritAkim, SeritSapmasi için anomaly detection modülü kullanılıyor
+            # Diğerleri için eski threshold mantığı korunuyor
+            
+            # Anomaly detection modülünden gelen durumları kullan
+            upd('KesmeHiziFrame','labelKesmeHiziInfo', self.anomaly_states['KesmeHizi'])
+            
+            upd('IlerlemeHiziFrame','labelIlerlemeHiziInfo', self.anomaly_states['IlerlemeHizi'])
+            
+            upd('SeritAkimFrame','labelSeritAkimInfo', self.anomaly_states['SeritAkim'])
 
-            upd('IlerlemeHiziFrame','labelIlerlemeHiziInfo', ilerleme_hizi < 100 or self.anomaly_states['IlerlemeHizi'])
-            self.anomaly_states['IlerlemeHizi'] |= (ilerleme_hizi < 100)
+            # Şerit Torku
+            upd('SeritTorkFrame','labelSeritTorkInfo', self.anomaly_states['SeritTork'])
 
-            upd('SeritAkimFrame','labelSeritAkimInfo', serit_akim > 15 or self.anomaly_states['SeritAkim'])
-            self.anomaly_states['SeritAkim'] |= (serit_akim > 15)
+            # Serit Gerginliği
+            upd('SeritGerginligiFrame','labelSeritGerginligiInfo', self.anomaly_states['SeritGerginligi'])
 
-            upd('SicaklikFrame','labelSicaklikInfo', sicaklik > 40 or self.anomaly_states['Sicaklik'])
-            self.anomaly_states['Sicaklik'] |= (sicaklik > 40)
+            upd('SeritSapmasiFrame','labelSeritSapmasiInfo', self.anomaly_states['SeritSapmasi'])
 
-            upd('NemFrame','labelNemInfo', nem > 80 or self.anomaly_states['Nem'])
-            self.anomaly_states['Nem'] |= (nem > 80)
+            # Titresim değerleri için anomaly detection modülünden gelen durumları kullan
+            upd('TitresimXFrame','labelTitresimXInfo', self.anomaly_states['TitresimX'])
 
-            upd('SeritSapmasiFrame','labelSeritSapmasiInfo', abs(serit_sapmasi) > 0.5 or self.anomaly_states['SeritSapmasi'])
-            self.anomaly_states['SeritSapmasi'] |= (abs(serit_sapmasi) > 0.5)
+            upd('TitresimYFrame','labelTitresimYInfo', self.anomaly_states['TitresimY'])
 
-            upd('TitresimXFrame','labelTitresimXInfo', vib_x > 200 or self.anomaly_states['TitresimX'])
-            self.anomaly_states['TitresimX'] |= (vib_x > 200)
-
-            upd('TitresimYFrame','labelTitresimYInfo', vib_y > 200 or self.anomaly_states['TitresimY'])
-            self.anomaly_states['TitresimY'] |= (vib_y > 200)
-
-            upd('TitresimZFrame','labelTitresimZInfo', vib_z > 200 or self.anomaly_states['TitresimZ'])
-            self.anomaly_states['TitresimZ'] |= (vib_z > 200)
+            upd('TitresimZFrame','labelTitresimZInfo', self.anomaly_states['TitresimZ'])
         except Exception:
             # swallow to keep UI responsive
             pass

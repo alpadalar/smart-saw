@@ -341,10 +341,10 @@ class Ui_Form(object):
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
 "}")
-        self.SicaklikFrame = QFrame(self.MotorVerileriFrame)
-        self.SicaklikFrame.setObjectName(u"SicaklikFrame")
-        self.SicaklikFrame.setGeometry(QRect(8, 270, 443, 60))
-        self.SicaklikFrame.setStyleSheet(u"QFrame {\n"
+        self.SeritTorkFrame = QFrame(self.MotorVerileriFrame)
+        self.SeritTorkFrame.setObjectName(u"SeritTorkFrame")
+        self.SeritTorkFrame.setGeometry(QRect(8, 270, 443, 60))
+        self.SeritTorkFrame.setStyleSheet(u"QFrame {\n"
 "    background: qlineargradient(\n"
 "    spread:pad,\n"
 "    x1:0, y1:0,\n"
@@ -357,33 +357,33 @@ class Ui_Form(object):
 "    border-radius: 20px;\n"
 "}\n"
 "")
-        self.SicaklikFrame.setFrameShape(QFrame.StyledPanel)
-        self.SicaklikFrame.setFrameShadow(QFrame.Raised)
-        self.labelSicaklikInfo = QLabel(self.SicaklikFrame)
-        self.labelSicaklikInfo.setObjectName(u"labelSicaklikInfo")
-        self.labelSicaklikInfo.setGeometry(QRect(25, 33, 401, 20))
-        self.labelSicaklikInfo.setStyleSheet(u"QLabel{\n"
+        self.SeritTorkFrame.setFrameShape(QFrame.StyledPanel)
+        self.SeritTorkFrame.setFrameShadow(QFrame.Raised)
+        self.labelSeritTorkInfo = QLabel(self.SeritTorkFrame)
+        self.labelSeritTorkInfo.setObjectName(u"labelSeritTorkInfo")
+        self.labelSeritTorkInfo.setGeometry(QRect(25, 33, 401, 20))
+        self.labelSeritTorkInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
 "	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
 "}")
-        self.labelSicaklikInfo.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
-        self.labelSicaklik = QLabel(self.SicaklikFrame)
-        self.labelSicaklik.setObjectName(u"labelSicaklik")
-        self.labelSicaklik.setGeometry(QRect(25, 8, 393, 20))
-        self.labelSicaklik.setStyleSheet(u"QLabel{\n"
+        self.labelSeritTorkInfo.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
+        self.labelSeritTork = QLabel(self.SeritTorkFrame)
+        self.labelSeritTork.setObjectName(u"labelSeritTork")
+        self.labelSeritTork.setGeometry(QRect(25, 8, 393, 20))
+        self.labelSeritTork.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
 "	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: bold;\n"
 "	font-size: 20px;\n"
 "}")
-        self.NemFrame = QFrame(self.MotorVerileriFrame)
-        self.NemFrame.setObjectName(u"NemFrame")
-        self.NemFrame.setGeometry(QRect(8, 350, 443, 60))
-        self.NemFrame.setStyleSheet(u"QFrame {\n"
+        self.SeritGerginligiFrame = QFrame(self.MotorVerileriFrame)
+        self.SeritGerginligiFrame.setObjectName(u"SeritGerginligiFrame")
+        self.SeritGerginligiFrame.setGeometry(QRect(8, 350, 443, 60))
+        self.SeritGerginligiFrame.setStyleSheet(u"QFrame {\n"
 "    background: qlineargradient(\n"
 "    spread:pad,\n"
 "    x1:0, y1:0,\n"
@@ -396,23 +396,23 @@ class Ui_Form(object):
 "    border-radius: 20px;\n"
 "}\n"
 "")
-        self.NemFrame.setFrameShape(QFrame.StyledPanel)
-        self.NemFrame.setFrameShadow(QFrame.Raised)
-        self.labelNemInfo = QLabel(self.NemFrame)
-        self.labelNemInfo.setObjectName(u"labelNemInfo")
-        self.labelNemInfo.setGeometry(QRect(25, 33, 401, 20))
-        self.labelNemInfo.setStyleSheet(u"QLabel{\n"
+        self.SeritGerginligiFrame.setFrameShape(QFrame.StyledPanel)
+        self.SeritGerginligiFrame.setFrameShadow(QFrame.Raised)
+        self.labelSeritGerginligiInfo = QLabel(self.SeritGerginligiFrame)
+        self.labelSeritGerginligiInfo.setObjectName(u"labelSeritGerginligiInfo")
+        self.labelSeritGerginligiInfo.setGeometry(QRect(25, 33, 401, 20))
+        self.labelSeritGerginligiInfo.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
 "	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
 "	font-weight: medium;\n"
 "	font-size: 18px;\n"
 "}")
-        self.labelNemInfo.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
-        self.labelNem = QLabel(self.NemFrame)
-        self.labelNem.setObjectName(u"labelNem")
-        self.labelNem.setGeometry(QRect(25, 8, 393, 20))
-        self.labelNem.setStyleSheet(u"QLabel{\n"
+        self.labelSeritGerginligiInfo.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
+        self.labelSeritGerginligi = QLabel(self.SeritGerginligiFrame)
+        self.labelSeritGerginligi.setObjectName(u"labelSeritGerginligi")
+        self.labelSeritGerginligi.setGeometry(QRect(25, 8, 393, 20))
+        self.labelSeritGerginligi.setStyleSheet(u"QLabel{\n"
 "	background-color: transparent;\n"
 "	color:\t#F4F6FC;\n"
 "	font-family: 'Plus-Jakarta-Sans';\n"
@@ -921,10 +921,10 @@ class Ui_Form(object):
         self.labelIlerlemeHizi.setText(QCoreApplication.translate("Form", u"\u0130lerleme H\u0131z\u0131", None))
         self.labelSeritAkimInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))
         self.labelSeritAkim.setText(QCoreApplication.translate("Form", u"\u015eerit Ak\u0131m", None))
-        self.labelSicaklikInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))
-        self.labelSicaklik.setText(QCoreApplication.translate("Form", u"S\u0131cakl\u0131k", None))
-        self.labelNemInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))
-        self.labelNem.setText(QCoreApplication.translate("Form", u"Nem", None))
+        self.labelSeritTorkInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))
+        self.labelSeritTork.setText(QCoreApplication.translate("Form", u"\u015eerit Tork", None))
+        self.labelSeritGerginligiInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))
+        self.labelSeritGerginligi.setText(QCoreApplication.translate("Form", u"\u015eerit Gerginli\u011fi", None))
         self.labelSeritSapmasiInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))
         self.labelSeritSapmasi.setText(QCoreApplication.translate("Form", u"\u015eerit Sapmas\u0131", None))
         self.labelTitresimXInfo.setText(QCoreApplication.translate("Form", u"Her \u015fey yolunda.", None))

@@ -44,6 +44,8 @@ from thingsboard.sender import create_sender_from_env
 
 from core.camera import CameraModule
 
+from anomaly import AnomalyManager
+
 
 class SmartSaw:
     def __init__(self):
@@ -148,6 +150,14 @@ class SmartSaw:
             logger.info("Kamera modülü başlatıldı. Detection ve vision servisleri şerit yukarı çıkarken başlatılacak.")
         except Exception as e:
             logger.error(f"Kamera modülü başlatılamadı: {e}")
+
+        # Anomaly detection sistemi
+        try:
+            self.anomaly_manager = AnomalyManager(buffer_size=100, min_samples=10)
+            logger.info("Anomaly detection sistemi başlatıldı")
+        except Exception as e:
+            logger.error(f"Anomaly detection sistemi başlatılamadı: {e}")
+            self.anomaly_manager = None
 
 
         logger.info("Başlatma tamamlandı")
@@ -488,6 +498,18 @@ class SmartSaw:
                             logger.error("Veri kaydedilemedi")
                     except Exception as e:
                         logger.error(f"Veri kaydetme hatası: {str(e)}")
+                
+                # Anomaly detection işlemi
+                if data_to_update and self.anomaly_manager:
+                    try:
+                        # Kesim durumunu kontrol et
+                        testere_durumu = data_to_update.get('testere_durumu', 0)
+                        is_cutting = testere_durumu == TestereState.KESIM_YAPILIYOR.value
+                        
+                        # Anomaly detection yap
+                        self.anomaly_manager.process_data(data_to_update, is_cutting=is_cutting)
+                    except Exception as e:
+                        logger.error(f"Anomaly detection hatası: {str(e)}")
                 
                 # GUI'yi her zaman güncelle (bağlantı durumu göstermek için)
                 if data_to_update:
