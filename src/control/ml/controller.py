@@ -28,7 +28,8 @@ from core.constants import (
     TORQUE_INITIAL_THRESHOLD_MM,
     TORQUE_INCREASE_THRESHOLD,
     DESCENT_REDUCTION_PERCENT,
-    ENABLE_TORQUE_GUARD
+    ENABLE_TORQUE_GUARD,
+    TORQUE_GUARD_ACTIVATION_DELAY_S
 )
 from utils.helpers import (
     reverse_calculate_value,
@@ -44,6 +45,9 @@ class MLController:
         self.cutting_start_time = None
         self.is_cutting = False
         self.last_update_time = 0
+
+        # ML kontrolü devreye girdiğinde başlar, Tork Guard için 5 saniye beklenir
+        self.ml_activation_time = None
 
         # Thread-local storage için
         self.thread_local = threading.local()
@@ -394,6 +398,11 @@ class MLController:
         if not self.hiz_guncelleme_zamani_geldi_mi():
             return last_modbus_write_time, None
 
+        # ML kontrolü ilk kez devreye girdiğinde zamanı kaydet
+        if self.ml_activation_time is None:
+            self.ml_activation_time = time.time()
+            logger.info(f"🤖 ML kontrolü devreye girdi. Tork Guard {TORQUE_GUARD_ACTIVATION_DELAY_S:.0f} saniye sonra aktif olacak.")
+
         try:
             # Mevcut değerleri al
             # Tork verisini buffer'a ekle ve ortalama değeri al
@@ -410,8 +419,12 @@ class MLController:
                 # Kafa yüksekliği - Tork ikilisini buffer'a ekle
                 self.height_torque_buffer.append((current_kafa_yuksekligi, avg_torque))
 
+                # ML aktivasyonundan 5 saniye geçti mi kontrol et
+                ml_active_duration = time.time() - self.ml_activation_time if self.ml_activation_time else 0
+                torque_guard_ready = ml_active_duration >= TORQUE_GUARD_ACTIVATION_DELAY_S
+
                 # Kesim başlangıcından itibaren ne kadar ilerlendi?
-                if self.cutting_start_height is not None:
+                if self.cutting_start_height is not None and torque_guard_ready:
                     descent_distance = self.cutting_start_height - current_kafa_yuksekligi
 
                     # İlk 3mm'den sonra kontrol başlat
@@ -456,6 +469,7 @@ class MLController:
                                 logger.info("="*80)
                                 logger.info("🛡️ TORQUE GUARD DEVREYE GİRDİ")
                                 logger.info("="*80)
+                                logger.info(f"⏱️  ML Aktivasyon Süresi: {ml_active_duration:.1f} saniye (Minimum: {TORQUE_GUARD_ACTIVATION_DELAY_S:.0f}s)")
                                 logger.info(f"📍 Mevcut Yükseklik: {current_kafa_yuksekligi:.2f} mm")
                                 logger.info(f"📍 3mm Önceki Yükseklik: {lookback_height:.2f} mm")
                                 logger.info(f"📈 3mm Önceki Tork: {previous_torque:.2f}%")
@@ -582,6 +596,8 @@ class MLController:
         # Torque Guard için buffer'ı sıfırla ve başlangıç yüksekliğini kaydet
         self.height_torque_buffer = []
         self.cutting_start_height = kafa_yuksekligi
+        # ML aktivasyon zamanını sıfırla (ML kontrolü devreye girince tekrar set edilecek)
+        self.ml_activation_time = None
 
         # Cutting tracker'ı bilgilendir
         try:
@@ -615,6 +631,7 @@ class MLController:
 
         self.is_cutting = False
         self.cutting_start_time = None
+        self.ml_activation_time = None
 
         # Cutting tracker'ı bilgilendir
         try:

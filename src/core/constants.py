@@ -60,6 +60,7 @@ TORQUE_INITIAL_THRESHOLD_MM = 2.5         # İlk kaç mm'den sonra kontrol başl
 TORQUE_INCREASE_THRESHOLD = 40.0          # %50 artış eşiği (yüzde)
 DESCENT_REDUCTION_PERCENT = 25.0          # İnme hızı azaltma oranı (yüzde)
 ENABLE_TORQUE_GUARD = True                # Torque Guard aktif/pasif
+TORQUE_GUARD_ACTIVATION_DELAY_S = 5.0     # ML devreye girdikten sonra Tork Guard için bekleme süresi (saniye)
 
 # Kontrol Sistemi Başlangıç Parametreleri
 CONTROL_INITIAL_DELAY = {
