@@ -30864,3 +30864,804 @@ TypeError: MonitoringController.__init__() takes 1 positional argument but 3 wer
 2026-01-05 02:47:35 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
 2026-01-05 02:47:35 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
 2026-01-05 02:47:35 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:47:36 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:36 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:36 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:37 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:37 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:37 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:38 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:38 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:38 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:39 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:39 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:39 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3878, commands=0
+2026-01-05 02:47:40 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:40 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:40 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:41 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:41 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:41 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:43 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:43 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:43 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:43 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:44 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:44 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:45 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:45 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:45 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:46 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:46 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:46 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:46 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3881). Waiting for PLC connection...
+2026-01-05 02:47:47 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:47 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:47 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:48 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:48 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:48 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:49 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:49 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:49 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:50 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:50 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:50 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:52 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:52 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:52 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:52 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:53 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:53 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:54 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:54 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:54 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:55 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:55 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:55 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:56 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:56 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:56 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:56 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3931). Waiting for PLC connection...
+2026-01-05 02:47:57 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:57 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:57 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:58 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:59 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:59 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:47:59 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:47:59 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:47:59 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:01 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:01 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:01 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:01 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:48:02 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:02 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:02 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:03 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:03 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:03 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:04 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:04 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:04 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:05 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:05 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:05 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3934, commands=0
+2026-01-05 02:48:06 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:06 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:06 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:07 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:07 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:07 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:08 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:08 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:08 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:08 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3891). Waiting for PLC connection...
+2026-01-05 02:48:09 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:48:09 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:10 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:10 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:11 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:11 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:11 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:12 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:12 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:12 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:13 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:13 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:13 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3892, commands=0
+2026-01-05 02:48:14 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:14 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:14 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:15 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:15 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:15 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:16 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:16 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:16 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:17 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:17 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:17 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:19 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:19 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:19 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:19 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:20 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:20 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:21 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:21 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:21 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:21 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3941). Waiting for PLC connection...
+2026-01-05 02:48:22 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:22 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:22 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:23 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:23 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:23 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:24 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:24 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:24 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:25 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:25 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:25 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:26 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:26 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:26 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:28 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:28 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:28 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:28 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:29 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:29 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:30 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:30 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:30 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:31 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:31 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:31 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:32 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:32 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:32 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:33 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:33 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:33 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:33 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3901). Waiting for PLC connection...
+2026-01-05 02:48:34 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:34 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:34 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:35 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:48:35 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:35 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:35 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:37 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:37 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:37 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:38 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:38 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:38 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:39 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:39 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:39 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3948, commands=0
+2026-01-05 02:48:40 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:40 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:40 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:41 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:41 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:41 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:42 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:42 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:42 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:43 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:48:43 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:43 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:43 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:44 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:44 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:44 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:45 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:46 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:46 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:46 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3951). Waiting for PLC connection...
+2026-01-05 02:48:46 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:47 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:47 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3906, commands=0
+2026-01-05 02:48:48 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:48 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:48 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:49 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:49 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:49 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:50 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:50 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:50 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:51 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:51 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:51 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:52 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:52 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:52 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:53 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:53 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:53 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:55 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:55 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:55 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:55 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:56 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:56 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:57 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:57 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:57 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:58 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:58 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:58 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:48:58 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3911). Waiting for PLC connection...
+2026-01-05 02:48:59 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:48:59 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:48:59 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:00 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:00 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:00 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:01 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:01 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:01 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:02 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:02 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:02 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:04 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:04 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:04 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:04 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:05 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:05 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:06 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:06 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:06 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:07 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:07 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:07 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:08 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:08 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:08 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:08 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3961). Waiting for PLC connection...
+2026-01-05 02:49:09 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:49:09 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:09 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:09 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:10 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:11 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:11 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:11 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:11 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:11 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:13 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:13 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:13 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3962, commands=0
+2026-01-05 02:49:14 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:14 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:14 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:15 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:15 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:15 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:16 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:16 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:16 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:17 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:49:17 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:17 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:17 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:18 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:18 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:18 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:19 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:19 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:19 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:20 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:20 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:20 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3920, commands=0
+2026-01-05 02:49:21 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:22 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:22 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:22 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:22 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:22 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:22 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3921). Waiting for PLC connection...
+2026-01-05 02:49:24 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:24 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:24 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:25 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:25 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:25 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:26 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:26 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:26 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:27 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:27 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:27 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:28 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:28 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:28 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:29 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:29 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:29 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:31 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:31 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:31 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:31 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:32 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:32 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:33 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:33 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:33 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:33 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3971). Waiting for PLC connection...
+2026-01-05 02:49:34 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:34 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:34 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:35 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:35 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:35 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:36 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:36 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:36 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:37 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:37 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:37 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:38 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:38 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:38 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:40 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:40 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:40 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:41 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:41 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:41 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:42 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:42 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:42 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:43 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:49:43 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:43 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:43 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:44 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:44 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:44 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:45 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:45 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:45 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:45 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3931). Waiting for PLC connection...
+2026-01-05 02:49:46 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:46 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:46 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3976, commands=0
+2026-01-05 02:49:47 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:47 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:47 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:48 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:49 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:49 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:50 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:50 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:50 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:50 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:49:51 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:51 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:51 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:52 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:52 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:52 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:53 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:53 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:53 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:54 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:54 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:54 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3934, commands=0
+2026-01-05 02:49:55 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:55 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:55 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:56 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:56 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:56 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:58 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:58 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:58 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:49:58 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3981). Waiting for PLC connection...
+2026-01-05 02:49:58 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:49:59 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:49:59 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:00 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:00 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:00 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:01 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:01 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:01 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:02 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:02 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:02 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:03 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:03 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:03 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:04 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:04 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:04 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:05 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:05 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:05 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:07 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:07 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:07 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:07 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:08 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:08 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:09 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:09 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:09 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:10 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:10 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:10 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:10 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3941). Waiting for PLC connection...
+2026-01-05 02:50:11 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:11 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:11 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:12 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:12 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:12 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:13 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:13 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:13 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:14 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:14 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:14 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:16 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:16 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:16 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:16 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:50:17 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:17 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:17 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:18 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:18 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:18 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:19 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:19 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:19 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:20 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:20 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:20 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3990, commands=0
+2026-01-05 02:50:21 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:21 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:21 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:22 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:22 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:22 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:22 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3991). Waiting for PLC connection...
+2026-01-05 02:50:23 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:23 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:23 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:24 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:50:24 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:25 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:25 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:26 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:26 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:26 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:27 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:27 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:27 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:28 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:28 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:28 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3948, commands=0
+2026-01-05 02:50:29 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:29 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:29 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:30 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:30 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:30 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:31 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:31 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:31 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:32 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:32 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:32 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:33 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:34 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:34 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:34 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:35 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:35 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:35 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3951). Waiting for PLC connection...
+2026-01-05 02:50:36 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:36 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:36 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:37 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:37 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:37 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:38 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:38 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:38 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:39 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:39 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:39 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:40 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:40 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:40 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:41 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:41 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:41 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:43 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:43 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:43 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:44 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:44 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:44 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:45 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:45 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:45 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:45 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 4001). Waiting for PLC connection...
+2026-01-05 02:50:46 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:46 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:46 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:47 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:47 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:47 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:48 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:48 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:48 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:49 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:49 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:49 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:50 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:50:50 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:50 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:50 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:52 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:52 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:52 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:53 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:53 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:53 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:54 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:54 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:54 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=4004, commands=0
+2026-01-05 02:50:55 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:55 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:55 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:56 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:56 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:56 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:57 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:57 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:57 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:57 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3961). Waiting for PLC connection...
+2026-01-05 02:50:58 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:50:58 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:58 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:58 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:50:59 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:50:59 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:50:59 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:00 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:01 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:01 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:02 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:02 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:02 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3962, commands=0
+2026-01-05 02:51:03 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:03 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:03 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:04 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:04 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:04 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:05 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:05 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:05 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:06 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:06 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:06 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:07 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:07 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:07 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:08 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:08 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:08 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:09 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:10 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:10 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:10 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 4011). Waiting for PLC connection...
+2026-01-05 02:51:11 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:11 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:11 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:12 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:12 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:12 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:13 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:13 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:13 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:14 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:14 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:14 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:15 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:15 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:15 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:16 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:16 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:16 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:17 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:17 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:17 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:19 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:19 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:19 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:20 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:20 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:20 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:21 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:21 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:21 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:22 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:22 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:22 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:22 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3971). Waiting for PLC connection...
+2026-01-05 02:51:23 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:23 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:23 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:24 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:51:24 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:24 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:24 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:25 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:25 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:25 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:26 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:26 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:26 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:27 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:28 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:28 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=4018, commands=0
+2026-01-05 02:51:29 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:29 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:29 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:30 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:30 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:30 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:31 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:31 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:31 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:32 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:51:32 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:32 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:32 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:33 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:33 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:33 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:34 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:34 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:34 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:34 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 4021). Waiting for PLC connection...
+2026-01-05 02:51:35 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:35 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:35 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3976, commands=0
+2026-01-05 02:51:36 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:37 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:37 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:37 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:38 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:38 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:39 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:39 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:39 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:40 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:40 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:40 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:41 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:41 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:41 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:42 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:42 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:42 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:43 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:43 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:43 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:44 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:44 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:44 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:46 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:46 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:46 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:47 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:47 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:47 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:47 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3981). Waiting for PLC connection...
+2026-01-05 02:51:48 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:48 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:48 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:49 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:49 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:49 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:50 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:50 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:50 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:51 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:51 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:51 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:52 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:52 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:52 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:53 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:53 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:53 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:55 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:55 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:55 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:56 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:56 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:56 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:57 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:57 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:57 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:57 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 4031). Waiting for PLC connection...
+2026-01-05 02:51:58 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:51:58 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:58 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:58 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:51:59 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:51:59 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:51:59 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:00 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:00 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:00 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:01 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:01 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:01 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=4032, commands=0
+2026-01-05 02:52:02 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:03 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:03 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:03 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:04 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:04 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:05 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:05 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:05 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:05 - src.core.lifecycle - WARNING - [lifecycle.py:409] - Modbus connection lost - attempting reconnect
+2026-01-05 02:52:06 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:06 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:06 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:07 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:07 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:07 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:08 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:08 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:08 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:09 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:09 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:09 - src.core.lifecycle - INFO - [lifecycle.py:425] - Pipeline stats: cycles=0, errors=3990, commands=0
+2026-01-05 02:52:10 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:10 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:10 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:11 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:11 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:11 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:11 - src.services.processing.data_processor - WARNING - [data_processor.py:154] - Modbus read failed (total errors: 3991). Waiting for PLC connection...
+2026-01-05 02:52:12 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:13 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:13 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:14 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:14 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:14 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:15 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:15 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:15 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:16 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:16 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:16 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:17 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:17 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:17 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:18 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:18 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:18 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:19 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:19 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:19 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
+2026-01-05 02:52:20 - pymodbus.logging - WARNING - [transport.py:250] - Failed to connect [WinError 1225] The remote computer refused the network connection
+2026-01-05 02:52:20 - src.services.modbus.client - ERROR - [client.py:53] - Modbus connection failed: 192.168.1.100:502
+2026-01-05 02:52:20 - src.services.modbus.reader - WARNING - [reader.py:41] - Failed to read register batch 2000-2099
