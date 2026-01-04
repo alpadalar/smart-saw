@@ -1,21 +1,48 @@
-# src/core/exceptions.py
+"""
+Custom exception classes for Smart Saw Control System.
+"""
 
-class ControllerNotFoundError(Exception):
-    """Kontrol sistemi bulunamadığında fırlatılır"""
+
+class SmartSawException(Exception):
+    """Base exception for all Smart Saw errors."""
     pass
 
-class ControllerError(Exception):
-    """Kontrol sistemi çalışırken hata oluştuğunda fırlatılır"""
+
+class ModbusConnectionError(SmartSawException):
+    """Raised when Modbus TCP connection fails."""
     pass
 
-class ModbusError(Exception):
-    """Modbus iletişiminde hata oluştuğunda fırlatılır"""
+
+class ModbusReadError(SmartSawException):
+    """Raised when reading Modbus registers fails."""
     pass
 
-class ConfigError(Exception):
-    """Konfigürasyon hatalarında fırlatılır"""
+
+class ModbusWriteError(SmartSawException):
+    """Raised when writing to Modbus registers fails."""
     pass
 
-class DataError(Exception):
-    """Veri işleme hatalarında fırlatılır"""
+
+class DatabaseError(SmartSawException):
+    """Raised for database operation errors."""
+    pass
+
+
+class ControllerError(SmartSawException):
+    """Raised for control system errors."""
+    pass
+
+
+class ConfigurationError(SmartSawException):
+    """Raised for configuration file errors."""
+    pass
+
+
+class MLModelError(SmartSawException):
+    """Raised for ML model loading or inference errors."""
+    pass
+
+
+class ValidationError(SmartSawException):
+    """Raised for data validation errors."""
     pass

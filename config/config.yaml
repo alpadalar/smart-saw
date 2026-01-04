@@ -1,0 +1,432 @@
+# Smart Saw Control System - Main Configuration
+# Version: 2.0.0
+
+# Application Metadata
+application:
+  name: "Smart Saw Control System"
+  version: "2.0.0"
+  debug: false
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# GUI Settings
+gui:
+  enabled: true  # Set to false to run headless
+  window_title: "Smart Band Saw Control System"
+  window_width: 1200
+  window_height: 800
+
+# Modbus TCP Settings
+modbus:
+  host: "192.168.1.100"  # PLC IP address
+  port: 502
+  timeout: 5.0  # Connection timeout (seconds)
+  retry_count: 3
+  retry_delay: 1.0  # Delay between retries (seconds)
+
+  # Read/Write Rates (Hz)
+  read_rate: 10  # 10 reads per second
+  write_rate: 5  # 5 writes per second
+
+  # Alarm thresholds for rate monitoring
+  read_rate_alarm_low: 8   # Alarm if below 8 Hz
+  write_rate_alarm_low: 3  # Alarm if below 3 Hz
+
+  # Register Address Map (from old documentation)
+  registers:
+    # === Motor & Mechanical (2000-2039) ===
+    KAFA_YUKSEKLIK: 2000          # Head height (mm * 10)
+    SERIT_MOTOR_AKIM: 2010        # Band motor current (A * 10)
+    SERIT_MOTOR_TORK: 2011        # Band motor torque (% * 10)
+    INME_MOTOR_AKIM: 2012         # Descent motor current (A * 10)
+    INME_MOTOR_TORK: 2013         # Descent motor torque (% * 10)
+
+    SERIT_GERGINLIGI: 2020        # Band tension (bar * 10)
+    SERIT_SAPMASI: 2021           # Band deviation (mm * 100, signed)
+    MENGENE_BASINC: 2022          # Vice pressure (bar * 10)
+
+    TESTERE_DURUMU: 2030          # Saw state (0=IDLE, 1=PREPARING, 2=READY, 3=CUTTING, 4=COMPLETED, 5=ERROR)
+    ALARM_STATUS: 2031            # Alarm status
+    ALARM_BILGISI: 2032           # Alarm information (hex)
+
+    # === Environment Sensors (2040-2069) ===
+    ORTAM_SICAKLIK: 2040          # Ambient temperature (°C * 10)
+    INME_HIZI: 2041               # Descent speed (mm/min * 100, signed)
+    ORTAM_NEM: 2042               # Ambient humidity (% * 10)
+
+    SOGUTMA_SIVI_SICAKLIK: 2050   # Coolant temperature (°C * 10)
+    HIDROLIK_YAG_SICAKLIK: 2051   # Hydraulic oil temperature (°C * 10)
+
+    KESME_HIZI: 2066              # Cutting speed (mm/min * 10)
+
+    # === Vibration Sensors (2100-2109) ===
+    IVME_X: 2100                  # X-axis acceleration (g)
+    IVME_Y: 2101                  # Y-axis acceleration (g)
+    IVME_Z: 2102                  # Z-axis acceleration (g)
+    IVME_X_HZ: 2103               # X-axis frequency (Hz)
+    IVME_Y_HZ: 2104               # Y-axis frequency (Hz)
+    IVME_Z_HZ: 2105               # Z-axis frequency (Hz)
+    MAX_TITRESIM_HZ: 2106         # Maximum vibration frequency (Hz)
+
+    # === Material Information (2200-2229) ===
+    MALZEME_CINSI: 2200           # Material type code
+    MALZEME_SERTLIK: 2201         # Material hardness code
+    KESIT_YAPISI: 2202            # Cross-section structure code
+    MALZEME_A_MM: 2203            # Material dimension A (mm)
+    MALZEME_B_MM: 2204            # Material dimension B (mm)
+    MALZEME_C_MM: 2205            # Material dimension C (mm)
+    MALZEME_D_MM: 2206            # Material dimension D (mm)
+    MALZEME_GENISLIK: 2207        # Material width (mm * 10)
+
+    # === Band Information (2230-2249) ===
+    SERIT_ID: 2230                # Band ID number
+    SERIT_TIP: 2231               # Band type code
+    SERIT_MARKA: 2232             # Band brand code
+    SERIT_MALZ: 2233              # Band material code
+    SERIT_DIS_MM: 2234            # Band tooth pitch (mm)
+
+    # === Statistics (2250-2269) ===
+    KESILEN_PARCA_ADETI: 2250     # Cut piece count
+    MAKINE_ID: 2251               # Machine ID number
+
+# Control System Settings
+control:
+  # Default control mode at startup
+  default_mode: "manual"  # Options: "manual" or "ml"
+
+  # Speed Limits (mm/min)
+  speed_limits:
+    kesme_hizi:
+      min: 40.0
+      max: 90.0
+    inme_hizi:
+      min: 10.0
+      max: 60.0
+
+  # Dynamic Initial Delay (delay control activation after cutting starts)
+  initial_delay:
+    enabled: true
+    default_delay_ms: 30000    # Default 30 seconds
+    min_delay_ms: 5000         # Minimum 5 seconds
+    max_delay_ms: 60000        # Maximum 60 seconds
+    target_distance_mm: 20     # Or activate after 20mm descent
+
+  # Data buffering for control decisions
+  buffer:
+    size: 100                  # Last 100 data points
+    duration_seconds: 1.0      # 1-second window
+
+# Machine Learning Control Settings
+ml:
+  # Model file path
+  model_path: "data/models/Bagging_dataset_v17_20250509.pkl"
+  enabled: true
+
+  # Global coefficient multiplier
+  katsayi: 1.0
+
+  # Buffer sizes for ML input averaging
+  buffer_size: 3               # Standard buffer (akim, sapma, kesme, inme)
+  torque_buffer_size: 3        # Torque buffer
+
+  # Torque Guard Protection Mechanism
+  # Works after ML controller is activated
+  # Timeline: Cutting starts → Dynamic delay → ML activates → Torque Guard delay → Torque Guard activates
+  torque_guard:
+    enabled: true
+    activation_delay_seconds: 5.0      # Wait X seconds after ML activation before Torque Guard starts
+    height_threshold_mm: 2.5           # Skip first 2.5mm of descent
+    height_lookback_mm: 2.5            # Look back 2.5mm in height history
+    torque_increase_threshold: 40.0    # Trigger if >40% torque increase
+    speed_reduction_factor: 25.0       # Reduce speed by 25%
+
+  # Tork → Akım Polynomial Conversion Coefficients
+  # Formula: f(x) = a2*x^2 + a1*x + a0
+  torque_to_current:
+    a2: 0.015
+    a1: -0.278
+    a0: 15.656
+
+  # Speed change accumulation thresholds (before writing to Modbus)
+  # Purpose: Reduces Modbus traffic by accumulating small changes
+  # When enabled: Speed changes accumulate until threshold is reached, then written
+  # When disabled: Every ML output immediately written to Modbus (like old project)
+  write_thresholds:
+    inme_hizi:
+      enabled: false      # Enable threshold (false = write immediately every cycle)
+      threshold: 1.0      # Write when accumulated change >= 1.0 mm/min
+    kesme_hizi:
+      enabled: false      # Enable threshold (false = write immediately every cycle)
+      threshold: 0.9      # Write when accumulated change >= 0.9 mm/min
+
+  # ML Inference settings
+  inference:
+    batch_size: 1
+    timeout_seconds: 1.0
+
+# Database Settings
+database:
+  # SQLite (Local storage)
+  sqlite:
+    enabled: true
+    path: "data/databases/current"
+    timeout: 30.0  # Connection timeout (seconds)
+
+    # Thread-safety settings
+    check_same_thread: false
+
+    # Database files
+    databases:
+      raw: "raw.db"          # Raw sensor data
+      total: "total.db"      # Processed data
+      log: "log.db"          # System logs
+      ml: "ml.db"            # ML predictions
+
+    # Performance optimizations
+    wal_mode: true                 # Write-Ahead Logging
+    synchronous: "NORMAL"          # OFF, NORMAL, FULL
+    journal_mode: "WAL"
+    cache_size_mb: 64              # Cache size in MB
+    temp_store: "MEMORY"
+
+    # Write queue settings
+    write_queue_size: 10000        # Maximum queued writes
+    batch_size: 100                # Batch commit size
+    batch_timeout_seconds: 1.0     # Commit timeout
+
+  # PostgreSQL (Remote storage - Optional)
+  postgresql:
+    enabled: false  # Set to true to enable remote database
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+
+    # Connection pooling
+    min_connections: 2
+    max_connections: 10
+    command_timeout: 30.0
+
+  # Backup Settings
+  backup:
+    enabled: true
+
+    # Daily backup schedule (24-hour format)
+    daily_backup_time: "03:00"  # Run at 3:00 AM
+
+    # Backup paths
+    archive_path: "data/databases/archive"
+    daily_path: "data/databases/daily"
+
+    # Retention policy
+    keep_daily_backups_days: 30  # Delete backups older than 30 days
+
+    # Compression
+    compress: true
+    compression_level: 6  # 1-9 (higher = better compression, slower)
+
+# IoT / ThingsBoard Settings
+iot:
+  thingsboard:
+    enabled: true
+    protocol: "mqtt"  # mqtt or http
+
+    # MQTT settings
+    mqtt:
+      broker: "${TB_MQTT_BROKER}"
+      port: 1883
+      username: "${TB_ACCESS_TOKEN}"  # Device token
+      keepalive: 60
+      qos: 1  # 0, 1, or 2
+
+      # Connection retry
+      max_retries: 3
+      retry_backoff_seconds: 2.0
+
+      # Batch sending to reduce network traffic
+      batch_size: 10                    # Send batch every 10 messages
+      batch_interval_seconds: 5.0       # Or every 5 seconds
+
+    # Telemetry fields to send (ProcessedData fields)
+    telemetry_fields:
+      - serit_motor_akim_a
+      - serit_motor_tork_percentage
+      - inme_motor_akim_a
+      - inme_motor_tork_percentage
+      - serit_kesme_hizi
+      - serit_inme_hizi
+      - kafa_yuksekligi_mm
+      - serit_sapmasi
+      - serit_gerginligi_bar
+      - mengene_basinc_bar
+      - ortam_sicakligi_c
+      - ortam_nem_percentage
+      - testere_durumu
+      - ml_output
+      - kesme_hizi_degisim
+      - inme_hizi_degisim
+      - torque_guard_active
+
+# Anomaly Detection Settings
+anomaly_detection:
+  enabled: true
+
+  # General settings
+  buffer_size: 100
+  min_samples: 10
+
+  # Per-sensor anomaly detection configuration
+  sensors:
+    serit_motor_akim:
+      method: "z_score"  # Options: iqr, z_score, dbscan
+      threshold: 3.0     # Z-score threshold
+
+    serit_motor_tork:
+      method: "z_score"
+      threshold: 3.0
+
+    serit_kesme_hizi:
+      method: "iqr"  # Interquartile range
+
+    serit_inme_hizi:
+      method: "iqr"
+
+    serit_sapmasi:
+      method: "z_score"
+      threshold: 2.5
+
+    titresim_x:
+      method: "iqr"
+
+    titresim_y:
+      method: "iqr"
+
+    titresim_z:
+      method: "iqr"
+
+# Logging Configuration
+logging:
+  version: 1
+  disable_existing_loggers: false
+
+  formatters:
+    standard:
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+
+    detailed:
+      format: "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+
+    colored:
+      (): colorlog.ColoredFormatter
+      format: "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+      log_colors:
+        DEBUG: cyan
+        INFO: green
+        WARNING: yellow
+        ERROR: red
+        CRITICAL: red,bg_white
+
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: INFO
+      formatter: colored
+      stream: ext://sys.stdout
+
+    file_app:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: detailed
+      filename: logs/app.log
+      maxBytes: 10485760  # 10MB
+      backupCount: 5
+      encoding: utf-8
+
+    file_modbus:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: detailed
+      filename: logs/modbus.log
+      maxBytes: 10485760  # 10MB
+      backupCount: 3
+      encoding: utf-8
+
+    file_database:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: detailed
+      filename: logs/database.log
+      maxBytes: 10485760  # 10MB
+      backupCount: 3
+      encoding: utf-8
+
+    file_control:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: detailed
+      filename: logs/control.log
+      maxBytes: 10485760  # 10MB
+      backupCount: 3
+      encoding: utf-8
+
+    file_iot:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: detailed
+      filename: logs/iot.log
+      maxBytes: 10485760  # 10MB
+      backupCount: 3
+      encoding: utf-8
+
+  loggers:
+    smartsaw.services.modbus:
+      level: DEBUG
+      handlers: [file_modbus, console]
+      propagate: false
+
+    smartsaw.services.database:
+      level: DEBUG
+      handlers: [file_database, console]
+      propagate: false
+
+    smartsaw.services.control:
+      level: DEBUG
+      handlers: [file_control, console]
+      propagate: false
+
+    smartsaw.services.iot:
+      level: DEBUG
+      handlers: [file_iot, console]
+      propagate: false
+
+  root:
+    level: INFO
+    handlers: [console, file_app]
+
+# GUI Settings
+gui:
+  enabled: true
+  fullscreen: true
+  window_title: "Smart Saw Control System v2.0"
+
+  # Update intervals (milliseconds)
+  data_update_interval: 200      # 5 Hz (200ms)
+  graph_update_interval: 100     # 10 Hz (100ms) for graphs
+
+  # Theme
+  theme: "dark"  # Options: "dark" or "light"
+
+# System Health Monitoring
+health:
+  check_interval_seconds: 10     # Health check every 10 seconds
+
+  # Thresholds for health warnings
+  thresholds:
+    modbus_error_rate_percent: 5.0        # Warn if >5% errors
+    database_queue_size_warning: 5000     # Warn if queue >5000
+    database_queue_size_critical: 8000    # Critical if queue >8000
+    memory_usage_percent: 80.0            # Warn if memory >80%
+    disk_usage_percent: 90.0              # Warn if disk >90%

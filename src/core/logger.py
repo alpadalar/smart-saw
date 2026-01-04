@@ -1,110 +1,126 @@
-# src/core/logger.py
-import os
-import sys
+"""
+Centralized logging system with colored console output and file rotation.
+"""
+
 import logging
-from logging.handlers import RotatingFileHandler
-from datetime import datetime
-from typing import Optional
+import logging.handlers
+import os
+from pathlib import Path
+from typing import Dict, Any
 
-class CustomFormatter(logging.Formatter):
-    """Özel log formatı"""
-    
-    def __init__(self):
-        super().__init__()
-        self.default_fmt = '%(asctime)s [%(levelname)s] %(message)s'
-        self.debug_fmt = '%(asctime)s [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s'
-        
-        self.formatters = {
-            logging.DEBUG: logging.Formatter(self.debug_fmt),
-            logging.INFO: logging.Formatter(self.default_fmt),
-            logging.WARNING: logging.Formatter(self.default_fmt),
-            logging.ERROR: logging.Formatter(self.default_fmt),
-            logging.CRITICAL: logging.Formatter(self.default_fmt)
-        }
+try:
+    import colorlog
+    HAS_COLORLOG = True
+except ImportError:
+    HAS_COLORLOG = False
 
-    def format(self, record):
-        formatter = self.formatters.get(record.levelno)
-        return formatter.format(record)
 
-def setup_logger(config):
-    """Logger'ı yapılandırır"""
-    # Log seviyesini ayarla
-    log_level = getattr(logging, config.level.upper(), logging.INFO)
-    logger.setLevel(log_level)
-    
-    # Formatı ayarla
-    formatter = CustomFormatter()
-    
-    # Konsol handler'ı
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(log_level)
-    console_handler.encoding = 'utf-8'
-    logger.addHandler(console_handler)
-    
-    # Log dizinini oluştur
-    if not os.path.exists(config.log_dir):
-        os.makedirs(config.log_dir)
-    
-    # Günlük log dosyası
-    daily_log_file = os.path.join(
-        config.log_dir,
-        f"testere_{datetime.now().strftime('%Y%m%d')}.log"
+def setup_logging(config: Dict[str, Any]) -> logging.Logger:
+    """
+    Setup logging system based on configuration.
+
+    Args:
+        config: Logging configuration dictionary
+
+    Returns:
+        Root logger instance
+    """
+    # Ensure logs directory exists
+    logs_dir = Path("logs")
+    logs_dir.mkdir(exist_ok=True)
+
+    # Get logging config
+    log_config = config.get('logging', {})
+    log_level = config.get('application', {}).get('log_level', 'INFO')
+
+    # Convert string level to logging constant
+    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+
+    # Create root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(numeric_level)
+
+    # Clear existing handlers
+    root_logger.handlers.clear()
+
+    # Console handler with color (if available)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(numeric_level)
+
+    if HAS_COLORLOG:
+        console_formatter = colorlog.ColoredFormatter(
+            "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            log_colors={
+                'DEBUG': 'cyan',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'red,bg_white'
+            }
+        )
+    else:
+        console_formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
+
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+
+    # File handler with rotation
+    detailed_formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
-    
-    # Genel log dosyası
-    general_log_file = os.path.join(config.log_dir, config.file)
-    
-    # Dosya handler'ları
-    file_handler = RotatingFileHandler(
-        general_log_file,
-        maxBytes=config.max_file_size,
-        backupCount=config.backup_count,
+
+    file_handler = logging.handlers.RotatingFileHandler(
+        filename=logs_dir / "app.log",
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=5,
         encoding='utf-8'
     )
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(detailed_formatter)
+    root_logger.addHandler(file_handler)
+
+    # Create specialized loggers
+    _create_module_logger('smartsaw.services.modbus', logs_dir / "modbus.log", detailed_formatter)
+    _create_module_logger('smartsaw.services.database', logs_dir / "database.log", detailed_formatter)
+    _create_module_logger('smartsaw.services.control', logs_dir / "control.log", detailed_formatter)
+    _create_module_logger('smartsaw.services.iot', logs_dir / "iot.log", detailed_formatter)
+
+    root_logger.info("Logging system initialized")
+    return root_logger
+
+
+def _create_module_logger(name: str, log_file: Path, formatter: logging.Formatter):
+    """Create a specialized logger for a module."""
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+
+    file_handler = logging.handlers.RotatingFileHandler(
+        filename=log_file,
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=3,
+        encoding='utf-8'
+    )
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(log_level)
+
     logger.addHandler(file_handler)
-    
-    daily_handler = logging.FileHandler(daily_log_file, encoding='utf-8')
-    daily_handler.setFormatter(formatter)
-    daily_handler.setLevel(log_level)
-    logger.addHandler(daily_handler)
-    
-    logger.info("Logger başlatıldı")
-
-# Global logger nesnesi
-logger = logging.getLogger("SmartSaw")
-
-def get_logger() -> logging.Logger:
-    """Global logger nesnesini döndürür"""
     return logger
 
-class LoggerContext:
-    """Context manager olarak kullanılabilen logger yardımcısı"""
-    
-    def __init__(self, operation: str):
-        self.operation = operation
-        self.start_time: Optional[float] = None
-    
-    def __enter__(self):
-        self.start_time = datetime.now()
-        logger.info(f"{self.operation} başlatılıyor...")
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            elapsed = datetime.now() - self.start_time
-            logger.info(f"{self.operation} tamamlandı (Süre: {elapsed.total_seconds():.2f}s)")
-        else:
-            logger.error(f"{self.operation} hata ile sonlandı: {str(exc_val)}")
-            return False  # Exception'ı yeniden fırlat
 
-def log_operation(operation: str):
-    """Operasyon decorator'ı"""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            with LoggerContext(operation):
-                return func(*args, **kwargs)
-        return wrapper
-    return decorator
+def get_logger(name: str) -> logging.Logger:
+    """
+    Get a logger instance for a module.
+
+    Args:
+        name: Logger name (typically __name__)
+
+    Returns:
+        Logger instance
+    """
+    return logging.getLogger(name)
