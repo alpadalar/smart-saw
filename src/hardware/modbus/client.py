@@ -160,7 +160,7 @@ class ModbusClient:
             if self.client.is_socket_open():
                 kwargs = {
                     'address': 1000,
-                    'count': 42
+                    'count': 44
                 }
                 response = self.client.read_holding_registers(**kwargs)
                 if not response.isError():
@@ -222,7 +222,9 @@ class ModbusClient:
                         'fark_hz_x': response.registers[38],  # 1038
                         'fark_hz_y': response.registers[39],  # 1039
                         'fark_hz_z': response.registers[40],  # 1040
-                        'malzeme_genisligi': response.registers[41]  # 1041
+                        'malzeme_genisligi': response.registers[41],  # 1041
+                        'guc': response.registers[42],  # 1042
+                        'guc2': response.registers[43]  # 1043
                     }
                 else:
                     self.logger.error(f"Register okuma hatası: {response}")

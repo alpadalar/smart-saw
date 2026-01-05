@@ -111,6 +111,10 @@ class DataProcessor:
             # Malzeme genişliği (1/10 ölçekli)
             processed_data['malzeme_genisligi'] = self._safe_float(row_data.get('malzeme_genisligi')) / 10.0
             
+            # Güç değerleri (float olarak, ölçekleme gerekirse burada yapılabilir)
+            processed_data['guc'] = self._safe_float(row_data.get('guc'))
+            processed_data['guc2'] = self._safe_float(row_data.get('guc2'))
+            
             # Fark frekansları (1/100 ölçekli)
             processed_data['fark_hz_x'] = self._safe_float(row_data.get('fark_hz_x')) / 100.0
             processed_data['fark_hz_y'] = self._safe_float(row_data.get('fark_hz_y')) / 100.0

@@ -30,7 +30,7 @@ class LocalStorage:
         'testere_durumu', 'alarm_status', 'alarm_bilgisi', 'serit_kesme_hizi',
         'serit_inme_hizi', 'malzeme_genisligi', 'fark_hz_x', 'fark_hz_y',
         'fark_hz_z', 'fuzzy_output', 'kesme_hizi_degisim', 'modbus_connected',
-        'modbus_ip', 'kesim_turu', 'kesim_id'
+        'modbus_ip', 'kesim_turu', 'kesim_id', 'guc', 'guc2'
     }
     
     def __init__(self, config):
@@ -104,6 +104,47 @@ class LocalStorage:
         except Exception as e:
             logger.error(f"Kesim ID sütunu ekleme hatası: {str(e)}")
             raise
+
+    def _add_guc_column(self, db_path: str):
+        """Güç sütununu ekler"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Sütunun var olup olmadığını kontrol et
+            cursor.execute("PRAGMA table_info(testere_data)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'guc' not in columns:
+                cursor.execute("ALTER TABLE testere_data ADD COLUMN guc REAL")
+                logger.info(f"Güç sütunu eklendi: {db_path}")
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Güç sütunu ekleme hatası: {str(e)}")
+            raise
+
+    def _add_guc2_column(self, db_path: str):
+        """Güç2 sütununu ekler"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Sütunun var olup olmadığını kontrol et
+            cursor.execute("PRAGMA table_info(testere_data)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'guc2' not in columns:
+                cursor.execute("ALTER TABLE testere_data ADD COLUMN guc2 REAL")
+                logger.info(f"Güç2 sütunu eklendi: {db_path}")
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Güç2 sütunu ekleme hatası: {str(e)}")
+            raise
+
         
     def _initialize_databases(self):
         """Veritabanlarını ve tabloları oluşturur"""
@@ -161,7 +202,9 @@ class LocalStorage:
                 modbus_connected INTEGER,
                 modbus_ip VARCHAR(50),
                 kesim_turu VARCHAR(20),
-                kesim_id INTEGER
+                kesim_id INTEGER,
+                guc REAL,
+                guc2 REAL
             )
             """
             
@@ -176,6 +219,8 @@ class LocalStorage:
             else:
                 self._add_kesim_turu_column(self.db_path.format(1))
                 self._add_kesim_id_column(self.db_path.format(1))
+                self._add_guc_column(self.db_path.format(1))
+                self._add_guc2_column(self.db_path.format(1))
             
             # Total veritabanı için
             if not os.path.exists(self.total_db):
@@ -188,6 +233,8 @@ class LocalStorage:
             else:
                 self._add_kesim_turu_column(self.total_db)
                 self._add_kesim_id_column(self.total_db)
+                self._add_guc_column(self.total_db)
+                self._add_guc2_column(self.total_db)
             
             # Raw veritabanı için
             if not os.path.exists(self.raw_db):
@@ -200,6 +247,8 @@ class LocalStorage:
             else:
                 self._add_kesim_turu_column(self.raw_db)
                 self._add_kesim_id_column(self.raw_db)
+                self._add_guc_column(self.raw_db)
+                self._add_guc2_column(self.raw_db)
             
             logger.info("SQLite veritabanları kontrol edildi")
             
@@ -386,7 +435,9 @@ class RemoteStorage:
                 fuzzy_output REAL,
                 kesme_hizi_degisim REAL,
                 modbus_connected INTEGER,
-                modbus_ip VARCHAR(50)
+                modbus_ip VARCHAR(50),
+                guc REAL,
+                guc2 REAL
             )
             """
             
