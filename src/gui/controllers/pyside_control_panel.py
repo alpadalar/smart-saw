@@ -868,25 +868,26 @@ class ControlPanelWindow(QMainWindow):
     def _update_cutting_time_labels(self, testere_durumu: int):
         """Kesim zamanı label'larını günceller."""
         try:
-            # Kesim başladığında - ŞERİT MOTOR ÇALIŞIYOR (2)
-            if testere_durumu == 2:  # ŞERİT MOTOR ÇALIŞIYOR
-                if not self._cutting_start_datetime:
+            # Kesim başladığında - KESIM_YAPILIYOR (3)
+            if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
+                if not self._cutting_start_time:
                     # Kesim başladı - başlangıç zamanını kaydet
-                    self._cutting_start_datetime = datetime.now()
+                    self._cutting_start_time = datetime.now()
+                    self._cutting_start_datetime = self._cutting_start_time  # Senkronize et
                     
                     # Başlangıç zamanı label'ını güncelle
                     if hasattr(self.ui, 'labelStartTimeValue'):
-                        start_time_str = self._cutting_start_datetime.strftime('%H:%M:%S')
+                        start_time_str = self._cutting_start_time.strftime('%H:%M:%S')
                         self.ui.labelStartTimeValue.setText(start_time_str)
                     
                     # Bitiş zamanı label'ını sıfırla (yeni kesim için)
                     if hasattr(self.ui, 'labelStopTimeValue'):
                         self.ui.labelStopTimeValue.setText("--:--:--")
                     
-                    logger.info(f"Kesim başladı (Şerit Motor Çalışıyor): {start_time_str}")
+                    logger.info(f"Kesim başladı (Kesim Yapılıyor): {start_time_str}")
             
-            # Kesim bittiğinde - KESİM BİTTİ (4)
-            elif testere_durumu == 4 and self._cutting_start_datetime:  # KESİM BİTTİ
+            # Kesim bittiğinde - KESİM BİTTİ (4) veya kesim durumu değişti
+            elif testere_durumu == TestereState.KESIM_BITTI.value and self._cutting_start_time:  # KESİM BİTTİ
                 # Kesim bitti - bitiş zamanını kaydet
                 self._cutting_stop_datetime = datetime.now()
                 
@@ -898,6 +899,23 @@ class ControlPanelWindow(QMainWindow):
                 logger.info(f"Kesim bitti: {stop_time_str}")
                 
                 # Kesim bilgilerini sıfırla (bir sonraki kesim için)
+                self._cutting_start_time = None
+                self._cutting_start_datetime = None
+                self._cutting_stop_datetime = None
+            # Kesim durumu değişti (KESIM_YAPILIYOR'dan başka bir duruma geçildi)
+            elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self._cutting_start_time:
+                # Kesim bitti - bitiş zamanını kaydet
+                self._cutting_stop_datetime = datetime.now()
+                
+                # Bitiş zamanı label'ını güncelle
+                if hasattr(self.ui, 'labelStopTimeValue'):
+                    stop_time_str = self._cutting_stop_datetime.strftime('%H:%M:%S')
+                    self.ui.labelStopTimeValue.setText(stop_time_str)
+                
+                logger.info(f"Kesim durumu değişti, kesim bitti: {stop_time_str}")
+                
+                # Kesim bilgilerini sıfırla (bir sonraki kesim için)
+                self._cutting_start_time = None
                 self._cutting_start_datetime = None
                 self._cutting_stop_datetime = None
                 
@@ -1317,8 +1335,18 @@ class ControlPanelWindow(QMainWindow):
             if testere_durumu == TestereState.KESIM_YAPILIYOR.value:  # KESIM_YAPILIYOR
                 if not self._cutting_start_time:
                     self._cutting_start_time = datetime.now()
+                    self._cutting_start_datetime = self._cutting_start_time  # Senkronize et
                     with self._values_lock:
                         self.current_values['kesim_baslama'] = self._cutting_start_time.strftime('%H:%M:%S.%f')[:-3]
+                    
+                    # Başlangıç zamanı label'ını güncelle
+                    if hasattr(self.ui, 'labelStartTimeValue'):
+                        start_time_str = self._cutting_start_time.strftime('%H:%M:%S')
+                        self.ui.labelStartTimeValue.setText(start_time_str)
+                    
+                    # Bitiş zamanı label'ını sıfırla (yeni kesim için)
+                    if hasattr(self.ui, 'labelStopTimeValue'):
+                        self.ui.labelStopTimeValue.setText("--:--:--")
                 
                 # Geçen süreyi hesapla ve göster
                 elapsed = datetime.now() - self._cutting_start_time
@@ -1331,6 +1359,7 @@ class ControlPanelWindow(QMainWindow):
             elif testere_durumu != TestereState.KESIM_YAPILIYOR.value and self._cutting_start_time:
                 # Kesim bitti, süreleri kaydet
                 end_time = datetime.now()
+                self._cutting_stop_datetime = end_time
                 elapsed = end_time - self._cutting_start_time
                 
                 # Önceki kesim bilgilerini güncelle (thread-safe)
@@ -1339,8 +1368,14 @@ class ControlPanelWindow(QMainWindow):
                     self.current_values['kesim_sure'] = f"{int(elapsed.total_seconds() // 60):02d}:{int(elapsed.total_seconds() % 60):02d}"
                     self.current_values['cutting_time'] = "00:00"
                 
+                # Bitiş zamanı label'ını güncelle
+                if hasattr(self.ui, 'labelStopTimeValue'):
+                    stop_time_str = self._cutting_stop_datetime.strftime('%H:%M:%S')
+                    self.ui.labelStopTimeValue.setText(stop_time_str)
+                
                 # Kesim bilgilerini sıfırla
                 self._cutting_start_time = None
+                self._cutting_start_datetime = None
             
             # Diğer değerleri güncelle
             self._update_values(processed_data)
