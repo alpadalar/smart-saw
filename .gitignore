@@ -1,4 +1,10 @@
+# ============================================================
+# Smart Saw - Git Ignore
+# ============================================================
+
+# ------------------------------------------------------------
 # Python
+# ------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,54 +25,147 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
+# ------------------------------------------------------------
 # Virtual Environment
+# ------------------------------------------------------------
 venv/
 ENV/
 env/
-.venv
+.venv/
+.conda/
+conda-env/
 
-# IDEs
+# ------------------------------------------------------------
+# IDEs & Editors
+# ------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+.spyderproject
+.spyproject
+.ropeproject
 
-# Environment Variables
+# ------------------------------------------------------------
+# Environment & Secrets
+# ------------------------------------------------------------
 .env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.yaml
+credentials.json
 
+# ------------------------------------------------------------
 # Logs
-logs/*.log
-logs/*.log.*
+# ------------------------------------------------------------
+logs/
+*.log
+*.log.*
 
+# ------------------------------------------------------------
 # Databases
+# ------------------------------------------------------------
 data/databases/current/*.db
 data/databases/current/*.db-shm
 data/databases/current/*.db-wal
+data/databases/current/*.db-journal
 data/databases/daily/
 data/databases/archive/
+*.sqlite
+*.sqlite3
 
-# ML Models (large files - user must copy manually)
+# ------------------------------------------------------------
+# MQTT Offline Data
+# ------------------------------------------------------------
+data/mqtt_offline/
+
+# ------------------------------------------------------------
+# ML Models (large files)
+# ------------------------------------------------------------
 data/models/*.pkl
 data/models/*.joblib
+data/models/*.h5
+data/models/*.pt
+data/models/*.pth
+data/models/*.onnx
 !data/models/.gitkeep
 
-# OS
+# ------------------------------------------------------------
+# OS Generated
+# ------------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Temporary files
+# ------------------------------------------------------------
+# Temporary Files
+# ------------------------------------------------------------
 *.tmp
+*.temp
 *.bak
-*.swp
+*.backup
+*.old
+*~
+\#*\#
 
-# Coverage
+# ------------------------------------------------------------
+# Testing & Coverage
+# ------------------------------------------------------------
 .coverage
+.coverage.*
 htmlcov/
-
-# Pytest
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
 .pytest_cache/
+nosetests.xml
 
-# MyPy
+# ------------------------------------------------------------
+# Type Checking
+# ------------------------------------------------------------
 .mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# ------------------------------------------------------------
+# Jupyter Notebooks
+# ------------------------------------------------------------
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ------------------------------------------------------------
+# Distribution & Packaging
+# ------------------------------------------------------------
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ------------------------------------------------------------
+# Documentation
+# ------------------------------------------------------------
+docs/_build/
+site/
+
+# ------------------------------------------------------------
+# Local Development
+# ------------------------------------------------------------
+.local/
+local_settings.py
+instance/
