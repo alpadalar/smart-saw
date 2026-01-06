@@ -206,7 +206,14 @@ class MainController(QMainWindow):
             self.btnTracking
         ]
 
+        # ===== CONTENT AREA (Stacked Pages) =====
+        # Created FIRST so notification bar renders on top (z-order)
+        self.stackedWidget = QStackedWidget(central_widget)
+        self.stackedWidget.setGeometry(392, 0, 1528, 1080)
+        self.stackedWidget.setStyleSheet("background-color: transparent;")
+
         # ===== NOTIFICATION FRAME (Top Bar) =====
+        # Created AFTER stacked widget to ensure it renders on top
         self.notificationFrame = QFrame(central_widget)
         self.notificationFrame.setGeometry(425, 38, 1465, 60)
         self.notificationFrame.setStyleSheet("""
@@ -215,6 +222,7 @@ class MainController(QMainWindow):
                 border-radius: 30px;
             }
         """)
+        self.notificationFrame.raise_()  # Ensure notification bar is on top
 
         # Date label
         self.labelDate = QLabel(self.notificationFrame)
@@ -241,11 +249,6 @@ class MainController(QMainWindow):
                 font-size: 24px;
             }
         """)
-
-        # ===== CONTENT AREA (Stacked Pages) =====
-        self.stackedWidget = QStackedWidget(central_widget)
-        self.stackedWidget.setGeometry(392, 0, 1528, 1080)
-        self.stackedWidget.setStyleSheet("background-color: transparent;")
 
         # Create pages - all have self.stackedWidget as parent
         # Qt will handle cleanup automatically
@@ -366,12 +369,29 @@ class MainController(QMainWindow):
         """
         Handle window close event.
 
-        PySide6 automatically handles:
-        - QTimer cleanup (no manual stop/deleteLater needed)
-        - Child widget cleanup (parent-child relationship)
-        - Signal/Slot disconnection
-
-        We just need to accept the event.
+        IMPORTANT: On Linux, Qt timers must be explicitly stopped in the GUI
+        thread before the window closes. Otherwise, Python's garbage collector
+        may try to destroy QTimer objects from the wrong thread, causing
+        "Timers cannot be stopped from another thread" errors and segfaults.
         """
-        logger.info("Main window closing - PySide6 handles cleanup automatically")
+        logger.info("Main window closing - stopping all timers")
+
+        try:
+            # Stop main controller timers
+            if hasattr(self, '_update_timer') and self._update_timer:
+                self._update_timer.stop()
+            if hasattr(self, '_datetime_timer') and self._datetime_timer:
+                self._datetime_timer.stop()
+
+            # Stop timers in child page controllers
+            for page in [self.control_panel_page, self.positioning_page,
+                         self.sensor_page, self.monitoring_page]:
+                if page and hasattr(page, 'stop_timers'):
+                    page.stop_timers()
+
+            logger.info("All timers stopped")
+
+        except Exception as e:
+            logger.error(f"Error stopping timers: {e}")
+
         event.accept()

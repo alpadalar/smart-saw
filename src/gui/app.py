@@ -2,6 +2,7 @@
 PySide6 GUI application wrapper - Clean implementation with proper Qt lifecycle.
 """
 
+import gc
 import logging
 import sys
 import threading
@@ -10,9 +11,11 @@ from typing import Optional
 try:
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import Qt
+    import shiboken6
 except ImportError:
     logging.warning("PySide6 not installed - GUI functionality disabled")
     QApplication = None
+    shiboken6 = None
 
 from .controllers.main_controller import MainController
 
@@ -125,17 +128,41 @@ class GUIApplication:
 
             logger.info(f"GUI event loop ended: exit_code={exit_code}")
 
-            # Explicitly clean up to ensure everything happens in GUI thread
-            if self._main_window:
-                self._main_window.close()
-                self._main_window.deleteLater()
-                self._main_window = None
+            # CRITICAL: Explicitly delete Qt objects in the GUI thread to prevent
+            # segmentation fault on Linux. Python's garbage collector runs in the
+            # main thread, which causes "Timers cannot be stopped from another
+            # thread" errors when it tries to destroy QTimer objects.
+            #
+            # The solution is to:
+            # 1. Delete the main window explicitly using shiboken6.delete()
+            # 2. Delete the QApplication
+            # 3. Run garbage collection in the GUI thread
+            # 4. Clear Python references
 
-            # Process remaining events to ensure cleanup
-            if self._app:
-                self._app.processEvents()
+            try:
+                # Delete main window and all its children
+                if self._main_window is not None:
+                    if shiboken6 is not None and shiboken6.isValid(self._main_window):
+                        shiboken6.delete(self._main_window)
+                    self._main_window = None
+                    logger.info("Main window deleted")
 
-            logger.info("GUI cleanup completed in GUI thread")
+                # Delete QApplication
+                if self._app is not None:
+                    if shiboken6 is not None and shiboken6.isValid(self._app):
+                        shiboken6.delete(self._app)
+                    self._app = None
+                    logger.info("QApplication deleted")
+
+                # Force garbage collection in GUI thread to clean up any remaining
+                # prevent main thread GC from touching Qt objects
+                gc.collect()
+                logger.info("GUI thread garbage collection completed")
+
+            except Exception as cleanup_error:
+                logger.error(f"Error during GUI cleanup: {cleanup_error}")
+
+            logger.info("GUI event loop ended cleanly")
 
         except Exception as e:
             logger.error(f"Error in GUI thread: {e}", exc_info=True)

@@ -9,14 +9,15 @@ class TesereDurumu(Enum):
     """
     Saw machine operational states.
 
-    Values match Modbus register values.
+    Values match Modbus register values from PLC.
     """
-    IDLE = 0          # Machine is idle
-    PREPARING = 1     # Preparing for cutting
-    READY = 2         # Ready to cut
-    CUTTING = 3       # Actively cutting
-    COMPLETED = 4     # Cutting completed
-    ERROR = 5         # Error state
+    BOSTA = 0              # BOŞTA - Machine is idle
+    HIDROLIK_AKTIF = 1     # HİDROLİK AKTİF - Hydraulic active
+    SERIT_MOTOR = 2        # ŞERİT MOTOR ÇALIŞIYOR - Band motor running
+    KESIYOR = 3            # KESİM YAPILIYOR - Actively cutting
+    KESIM_BITTI = 4        # KESİM BİTTİ - Cutting completed
+    SERIT_YUKARI = 5       # ŞERİT YUKARI ÇIKIYOR - Saw moving up
+    MALZEME_BESLEME = 6    # MALZEME BESLEME - Material feeding
 
 
 class ControlMode(Enum):

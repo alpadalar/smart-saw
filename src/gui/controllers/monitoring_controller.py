@@ -117,11 +117,12 @@ class MonitoringController(QWidget):
             'serit_motor_akim_a': '—',
             'inme_motor_akim_a': '—',
             'serit_motor_tork_percentage': '—',
-            'inme_motor_tork_percentage': '—'
+            'inme_motor_tork_percentage': '—',
+            'guc_kwh': '—'
         }
 
     def _setup_ui(self):
-        """Setup the complete UI with all frames and widgets."""
+        """Setup the complete UI with all frames and widgets - matching old UI layout."""
         # Widget size: 1528x1080
         self.setMinimumSize(1528, 1080)
         self.setStyleSheet("background-color: transparent;")
@@ -138,20 +139,21 @@ class MonitoringController(QWidget):
             }
         """
 
-        label_title_style = """
-            QLabel {
-                background-color: transparent;
-                color: #F4F6FC;
-                font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 24px;
+        inner_frame_style = """
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(6, 11, 38, 240),
+                    stop:1 rgba(26, 31, 55, 0)
+                );
+                border-radius: 20px;
             }
         """
 
-        label_field_style = """
+        label_name_style = """
             QLabel {
                 background-color: transparent;
-                color: #F4F6FC;
+                color: rgba(244, 246, 252, 151);
                 font-family: 'Plus Jakarta Sans';
                 font-weight: medium;
                 font-size: 20px;
@@ -164,316 +166,497 @@ class MonitoringController(QWidget):
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
-                font-size: 22px;
+                font-size: 36px;
             }
         """
 
-        # === MACHINE & BAND INFO FRAME (TOP LEFT) ===
-        # Position: (0, 0, 500, 520)
-        self.machineInfoFrame = QFrame(self)
-        self.machineInfoFrame.setGeometry(0, 0, 500, 520)
-        self.machineInfoFrame.setStyleSheet(frame_style)
+        # ============================================================
+        # CONTAINER 1: Makine & Şerit Bilgileri (Sol Üst)
+        # Eski: (425, 127, 582, 435) -> Yeni: (33, 127, 582, 435)
+        # ============================================================
+        self.Container = QFrame(self)
+        self.Container.setGeometry(33, 127, 582, 435)
+        self.Container.setStyleSheet(frame_style)
 
-        self.labelMachineInfoTitle = QLabel("Makine ve Şerit Bilgileri", self.machineInfoFrame)
-        self.labelMachineInfoTitle.setGeometry(25, 20, 450, 35)
-        self.labelMachineInfoTitle.setStyleSheet(label_title_style)
+        # --- FrameMakineID (20, 27, 260, 105) ---
+        self.FrameMakineID = QFrame(self.Container)
+        self.FrameMakineID.setGeometry(20, 27, 260, 105)
+        self.FrameMakineID.setStyleSheet(inner_frame_style)
 
-        # Machine ID
-        self.labelMakineID = QLabel("Makine ID:", self.machineInfoFrame)
-        self.labelMakineID.setGeometry(30, 70, 200, 30)
-        self.labelMakineID.setStyleSheet(label_field_style)
-        self.labelMakineIDValue = QLabel("—", self.machineInfoFrame)
-        self.labelMakineIDValue.setGeometry(250, 70, 220, 30)
+        self.labelMakineID = QLabel("Makine ID", self.FrameMakineID)
+        self.labelMakineID.setGeometry(33, 20, 201, 20)
+        self.labelMakineID.setStyleSheet(label_name_style)
+
+        self.labelMakineIDValue = QLabel("—", self.FrameMakineID)
+        self.labelMakineIDValue.setGeometry(30, 43, 211, 50)
         self.labelMakineIDValue.setStyleSheet(label_value_style)
         self.labelMakineIDValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Şerit ID
-        self.labelSeritID = QLabel("Şerit ID:", self.machineInfoFrame)
-        self.labelSeritID.setGeometry(30, 110, 200, 30)
-        self.labelSeritID.setStyleSheet(label_field_style)
-        self.labelSeritIDValue = QLabel("—", self.machineInfoFrame)
-        self.labelSeritIDValue.setGeometry(250, 110, 220, 30)
+        # --- FrameSeritID (297, 27, 260, 105) ---
+        self.FrameSeritID = QFrame(self.Container)
+        self.FrameSeritID.setGeometry(297, 27, 260, 105)
+        self.FrameSeritID.setStyleSheet(inner_frame_style)
+
+        self.labelSeritID = QLabel("Şerit ID", self.FrameSeritID)
+        self.labelSeritID.setGeometry(33, 20, 201, 20)
+        self.labelSeritID.setStyleSheet(label_name_style)
+
+        self.labelSeritIDValue = QLabel("—", self.FrameSeritID)
+        self.labelSeritIDValue.setGeometry(30, 43, 211, 50)
         self.labelSeritIDValue.setStyleSheet(label_value_style)
         self.labelSeritIDValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Şerit Dış Ölçüsü
-        self.labelSeritDisOlcusu = QLabel("Şerit Dış Ölçüsü:", self.machineInfoFrame)
-        self.labelSeritDisOlcusu.setGeometry(30, 150, 200, 30)
-        self.labelSeritDisOlcusu.setStyleSheet(label_field_style)
-        self.labelSeritDisOlcusuValue = QLabel("—", self.machineInfoFrame)
-        self.labelSeritDisOlcusuValue.setGeometry(250, 150, 220, 30)
+        # --- FrameSeritDisOlcusu (20, 166, 260, 105) ---
+        self.FrameSeritDisOlcusu = QFrame(self.Container)
+        self.FrameSeritDisOlcusu.setGeometry(20, 166, 260, 105)
+        self.FrameSeritDisOlcusu.setStyleSheet(inner_frame_style)
+
+        self.labelSeritDisOlcusu = QLabel("Şerit Dış Ölçüsü", self.FrameSeritDisOlcusu)
+        self.labelSeritDisOlcusu.setGeometry(33, 20, 201, 20)
+        self.labelSeritDisOlcusu.setStyleSheet(label_name_style)
+
+        self.labelSeritDisOlcusuValue = QLabel("—", self.FrameSeritDisOlcusu)
+        self.labelSeritDisOlcusuValue.setGeometry(30, 43, 211, 50)
         self.labelSeritDisOlcusuValue.setStyleSheet(label_value_style)
         self.labelSeritDisOlcusuValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Şerit Tipi
-        self.labelSeritTipi = QLabel("Şerit Tipi:", self.machineInfoFrame)
-        self.labelSeritTipi.setGeometry(30, 190, 200, 30)
-        self.labelSeritTipi.setStyleSheet(label_field_style)
-        self.labelSeritTipiValue = QLabel("—", self.machineInfoFrame)
-        self.labelSeritTipiValue.setGeometry(250, 190, 220, 30)
+        # --- FrameSeritTipi (297, 166, 260, 105) ---
+        self.FrameSeritTipi = QFrame(self.Container)
+        self.FrameSeritTipi.setGeometry(297, 166, 260, 105)
+        self.FrameSeritTipi.setStyleSheet(inner_frame_style)
+
+        self.labelSeritTipi = QLabel("Şerit Tipi", self.FrameSeritTipi)
+        self.labelSeritTipi.setGeometry(33, 20, 201, 20)
+        self.labelSeritTipi.setStyleSheet(label_name_style)
+
+        self.labelSeritTipiValue = QLabel("—", self.FrameSeritTipi)
+        self.labelSeritTipiValue.setGeometry(30, 43, 211, 50)
         self.labelSeritTipiValue.setStyleSheet(label_value_style)
         self.labelSeritTipiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Şerit Markası
-        self.labelSeritMarkasi = QLabel("Şerit Markası:", self.machineInfoFrame)
-        self.labelSeritMarkasi.setGeometry(30, 230, 200, 30)
-        self.labelSeritMarkasi.setStyleSheet(label_field_style)
-        self.labelSeritMarkasiValue = QLabel("—", self.machineInfoFrame)
-        self.labelSeritMarkasiValue.setGeometry(250, 230, 220, 30)
+        # --- FrameSeritMarkasi (20, 306, 260, 105) ---
+        self.FrameSeritMarkasi = QFrame(self.Container)
+        self.FrameSeritMarkasi.setGeometry(20, 306, 260, 105)
+        self.FrameSeritMarkasi.setStyleSheet(inner_frame_style)
+
+        self.labelSeritMarkasi = QLabel("Şerit Markası", self.FrameSeritMarkasi)
+        self.labelSeritMarkasi.setGeometry(33, 20, 201, 20)
+        self.labelSeritMarkasi.setStyleSheet(label_name_style)
+
+        self.labelSeritMarkasiValue = QLabel("—", self.FrameSeritMarkasi)
+        self.labelSeritMarkasiValue.setGeometry(30, 43, 211, 50)
         self.labelSeritMarkasiValue.setStyleSheet(label_value_style)
         self.labelSeritMarkasiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Band Şerit Malzemesi
-        self.labelBandSeritMalzemesi = QLabel("Band Şerit Malzemesi:", self.machineInfoFrame)
-        self.labelBandSeritMalzemesi.setGeometry(30, 270, 200, 30)
-        self.labelBandSeritMalzemesi.setStyleSheet(label_field_style)
-        self.labelBandSeritMalzemesiValue = QLabel("—", self.machineInfoFrame)
-        self.labelBandSeritMalzemesiValue.setGeometry(250, 270, 220, 30)
+        # --- FrameSeritMalzemesi (297, 306, 260, 105) ---
+        self.FrameSeritMalzemesi = QFrame(self.Container)
+        self.FrameSeritMalzemesi.setGeometry(297, 306, 260, 105)
+        self.FrameSeritMalzemesi.setStyleSheet(inner_frame_style)
+
+        self.labelBandSeritMalzemesi = QLabel("Şerit Malzemesi", self.FrameSeritMalzemesi)
+        self.labelBandSeritMalzemesi.setGeometry(33, 20, 201, 20)
+        self.labelBandSeritMalzemesi.setStyleSheet(label_name_style)
+
+        self.labelBandSeritMalzemesiValue = QLabel("—", self.FrameSeritMalzemesi)
+        self.labelBandSeritMalzemesiValue.setGeometry(30, 43, 211, 50)
         self.labelBandSeritMalzemesiValue.setStyleSheet(label_value_style)
         self.labelBandSeritMalzemesiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Malzeme Cinsi
-        self.labelMalzemeCinsi = QLabel("Malzeme Cinsi:", self.machineInfoFrame)
-        self.labelMalzemeCinsi.setGeometry(30, 310, 200, 30)
-        self.labelMalzemeCinsi.setStyleSheet(label_field_style)
-        self.labelMalzemeCinsiValue = QLabel("—", self.machineInfoFrame)
-        self.labelMalzemeCinsiValue.setGeometry(250, 310, 220, 30)
-        self.labelMalzemeCinsiValue.setStyleSheet(label_value_style)
-        self.labelMalzemeCinsiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # ============================================================
+        # CONTAINER 2: Motor Verileri (Sol Alt)
+        # Eski: (425, 577, 582, 435) -> Yeni: (33, 547, 582, 495)
+        # Genişletildi: Güç (kWh) göstergesi için 4. satır eklendi
+        # ============================================================
+        self.Container_2 = QFrame(self)
+        self.Container_2.setGeometry(33, 547, 582, 495)
+        self.Container_2.setStyleSheet(frame_style)
 
-        # Malzeme Sertliği
-        self.labelMalzemeSertligi = QLabel("Malzeme Sertliği:", self.machineInfoFrame)
-        self.labelMalzemeSertligi.setGeometry(30, 350, 200, 30)
-        self.labelMalzemeSertligi.setStyleSheet(label_field_style)
-        self.labelMalzemeSertligiValue = QLabel("—", self.machineInfoFrame)
-        self.labelMalzemeSertligiValue.setGeometry(250, 350, 220, 30)
-        self.labelMalzemeSertligiValue.setStyleSheet(label_value_style)
-        self.labelMalzemeSertligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # --- FrameSeritMotorHiz (20, 27, 260, 105) ---
+        self.FrameSeritMotorHiz = QFrame(self.Container_2)
+        self.FrameSeritMotorHiz.setGeometry(20, 27, 260, 105)
+        self.FrameSeritMotorHiz.setStyleSheet(inner_frame_style)
 
-        # Kesit Yapısı
-        self.labelKesitYapisi = QLabel("Kesit Yapısı:", self.machineInfoFrame)
-        self.labelKesitYapisi.setGeometry(30, 390, 200, 30)
-        self.labelKesitYapisi.setStyleSheet(label_field_style)
-        self.labelKesitYapisiValue = QLabel("—", self.machineInfoFrame)
-        self.labelKesitYapisiValue.setGeometry(250, 390, 220, 30)
-        self.labelKesitYapisiValue.setStyleSheet(label_value_style)
-        self.labelKesitYapisiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.labelSeritMotorHiz = QLabel("Şerit Motor Hızı", self.FrameSeritMotorHiz)
+        self.labelSeritMotorHiz.setGeometry(33, 20, 201, 20)
+        self.labelSeritMotorHiz.setStyleSheet(label_name_style)
 
-        # A, B, C, D değerleri
-        self.labelABCD = QLabel("A, B, C, D (mm):", self.machineInfoFrame)
-        self.labelABCD.setGeometry(30, 430, 200, 30)
-        self.labelABCD.setStyleSheet(label_field_style)
-
-        self.labelAValue = QLabel("—", self.machineInfoFrame)
-        self.labelAValue.setGeometry(250, 430, 50, 30)
-        self.labelAValue.setStyleSheet(label_value_style)
-        self.labelAValue.setAlignment(Qt.AlignCenter)
-
-        self.labelBValue = QLabel("—", self.machineInfoFrame)
-        self.labelBValue.setGeometry(310, 430, 50, 30)
-        self.labelBValue.setStyleSheet(label_value_style)
-        self.labelBValue.setAlignment(Qt.AlignCenter)
-
-        self.labelCValue = QLabel("—", self.machineInfoFrame)
-        self.labelCValue.setGeometry(370, 430, 50, 30)
-        self.labelCValue.setStyleSheet(label_value_style)
-        self.labelCValue.setAlignment(Qt.AlignCenter)
-
-        self.labelDValue = QLabel("—", self.machineInfoFrame)
-        self.labelDValue.setGeometry(430, 430, 50, 30)
-        self.labelDValue.setStyleSheet(label_value_style)
-        self.labelDValue.setAlignment(Qt.AlignCenter)
-
-        # === SENSOR DATA FRAME 1 (TOP CENTER) ===
-        # Position: (520, 0, 500, 520)
-        self.sensorData1Frame = QFrame(self)
-        self.sensorData1Frame.setGeometry(520, 0, 500, 520)
-        self.sensorData1Frame.setStyleSheet(frame_style)
-
-        self.labelSensorData1Title = QLabel("Sensör Verileri", self.sensorData1Frame)
-        self.labelSensorData1Title.setGeometry(25, 20, 450, 35)
-        self.labelSensorData1Title.setStyleSheet(label_title_style)
-
-        # Şerit Sapması
-        self.labelSeritSapmasi = QLabel("Şerit Sapması:", self.sensorData1Frame)
-        self.labelSeritSapmasi.setGeometry(30, 70, 200, 30)
-        self.labelSeritSapmasi.setStyleSheet(label_field_style)
-        self.labelSeritSapmasiValue = QLabel("—", self.sensorData1Frame)
-        self.labelSeritSapmasiValue.setGeometry(250, 70, 220, 30)
-        self.labelSeritSapmasiValue.setStyleSheet(label_value_style)
-        self.labelSeritSapmasiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Şerit Gerginliği
-        self.labelSeritGerginligi = QLabel("Şerit Gerginliği (bar):", self.sensorData1Frame)
-        self.labelSeritGerginligi.setGeometry(30, 110, 200, 30)
-        self.labelSeritGerginligi.setStyleSheet(label_field_style)
-        self.labelSeritGerginligiValue = QLabel("—", self.sensorData1Frame)
-        self.labelSeritGerginligiValue.setGeometry(250, 110, 220, 30)
-        self.labelSeritGerginligiValue.setStyleSheet(label_value_style)
-        self.labelSeritGerginligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Kafa Yüksekliği
-        self.labelKafaYuksekligi = QLabel("Kafa Yüksekliği (mm):", self.sensorData1Frame)
-        self.labelKafaYuksekligi.setGeometry(30, 150, 200, 30)
-        self.labelKafaYuksekligi.setStyleSheet(label_field_style)
-        self.labelKafaYuksekligiValue = QLabel("—", self.sensorData1Frame)
-        self.labelKafaYuksekligiValue.setGeometry(250, 150, 220, 30)
-        self.labelKafaYuksekligiValue.setStyleSheet(label_value_style)
-        self.labelKafaYuksekligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Titreşim X
-        self.labelTitresimX = QLabel("Titreşim X:", self.sensorData1Frame)
-        self.labelTitresimX.setGeometry(30, 190, 200, 30)
-        self.labelTitresimX.setStyleSheet(label_field_style)
-        self.labelTitresimXValue = QLabel("—", self.sensorData1Frame)
-        self.labelTitresimXValue.setGeometry(250, 190, 220, 30)
-        self.labelTitresimXValue.setStyleSheet(label_value_style)
-        self.labelTitresimXValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Titreşim Y
-        self.labelTitresimY = QLabel("Titreşim Y:", self.sensorData1Frame)
-        self.labelTitresimY.setGeometry(30, 230, 200, 30)
-        self.labelTitresimY.setStyleSheet(label_field_style)
-        self.labelTitresimYValue = QLabel("—", self.sensorData1Frame)
-        self.labelTitresimYValue.setGeometry(250, 230, 220, 30)
-        self.labelTitresimYValue.setStyleSheet(label_value_style)
-        self.labelTitresimYValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Titreşim Z
-        self.labelTitresimZ = QLabel("Titreşim Z:", self.sensorData1Frame)
-        self.labelTitresimZ.setGeometry(30, 270, 200, 30)
-        self.labelTitresimZ.setStyleSheet(label_field_style)
-        self.labelTitresimZValue = QLabel("—", self.sensorData1Frame)
-        self.labelTitresimZValue.setGeometry(250, 270, 220, 30)
-        self.labelTitresimZValue.setStyleSheet(label_value_style)
-        self.labelTitresimZValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Mengene Basıncı
-        self.labelMengeneBasinci = QLabel("Mengene Basıncı (bar):", self.sensorData1Frame)
-        self.labelMengeneBasinci.setGeometry(30, 310, 200, 30)
-        self.labelMengeneBasinci.setStyleSheet(label_field_style)
-        self.labelMengeneBasinciValue = QLabel("—", self.sensorData1Frame)
-        self.labelMengeneBasinciValue.setGeometry(250, 310, 220, 30)
-        self.labelMengeneBasinciValue.setStyleSheet(label_value_style)
-        self.labelMengeneBasinciValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Ortam Sıcaklığı
-        self.labelOrtamSicakligi = QLabel("Ortam Sıcaklığı (°C):", self.sensorData1Frame)
-        self.labelOrtamSicakligi.setGeometry(30, 350, 200, 30)
-        self.labelOrtamSicakligi.setStyleSheet(label_field_style)
-        self.labelOrtamSicakligiValue = QLabel("—", self.sensorData1Frame)
-        self.labelOrtamSicakligiValue.setGeometry(250, 350, 220, 30)
-        self.labelOrtamSicakligiValue.setStyleSheet(label_value_style)
-        self.labelOrtamSicakligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Ortam Nem
-        self.labelOrtamNem = QLabel("Ortam Nem (%):", self.sensorData1Frame)
-        self.labelOrtamNem.setGeometry(30, 390, 200, 30)
-        self.labelOrtamNem.setStyleSheet(label_field_style)
-        self.labelOrtamNemValue = QLabel("—", self.sensorData1Frame)
-        self.labelOrtamNemValue.setGeometry(250, 390, 220, 30)
-        self.labelOrtamNemValue.setStyleSheet(label_value_style)
-        self.labelOrtamNemValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Kesilen Parça Adeti
-        self.labelKesilenParcaAdeti = QLabel("Kesilen Parça Adeti:", self.sensorData1Frame)
-        self.labelKesilenParcaAdeti.setGeometry(30, 430, 200, 30)
-        self.labelKesilenParcaAdeti.setStyleSheet(label_field_style)
-        self.labelKesilenParcaAdetiValue = QLabel("—", self.sensorData1Frame)
-        self.labelKesilenParcaAdetiValue.setGeometry(250, 430, 220, 30)
-        self.labelKesilenParcaAdetiValue.setStyleSheet(label_value_style)
-        self.labelKesilenParcaAdetiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # === STATUS & MOTOR DATA FRAME (TOP RIGHT) ===
-        # Position: (1040, 0, 488, 520)
-        self.statusMotorFrame = QFrame(self)
-        self.statusMotorFrame.setGeometry(1040, 0, 488, 520)
-        self.statusMotorFrame.setStyleSheet(frame_style)
-
-        self.labelStatusMotorTitle = QLabel("Durum ve Motor Verileri", self.statusMotorFrame)
-        self.labelStatusMotorTitle.setGeometry(25, 20, 438, 35)
-        self.labelStatusMotorTitle.setStyleSheet(label_title_style)
-
-        # Testere Durumu
-        self.labelTestereDurum = QLabel("Testere Durumu:", self.statusMotorFrame)
-        self.labelTestereDurum.setGeometry(30, 70, 200, 30)
-        self.labelTestereDurum.setStyleSheet(label_field_style)
-        self.labelTestereDurumValue = QLabel("—", self.statusMotorFrame)
-        self.labelTestereDurumValue.setGeometry(250, 70, 210, 30)
-        self.labelTestereDurumValue.setStyleSheet(label_value_style)
-        self.labelTestereDurumValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Alarm Status
-        self.labelAlarmStatus = QLabel("Alarm Status:", self.statusMotorFrame)
-        self.labelAlarmStatus.setGeometry(30, 110, 200, 30)
-        self.labelAlarmStatus.setStyleSheet(label_field_style)
-        self.labelAlarmStatusValue = QLabel("—", self.statusMotorFrame)
-        self.labelAlarmStatusValue.setGeometry(250, 110, 210, 30)
-        self.labelAlarmStatusValue.setStyleSheet(label_value_style)
-        self.labelAlarmStatusValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        # Şerit Motor Hızı
-        self.labelSeritMotorHiz = QLabel("Şerit Motor Hızı:", self.statusMotorFrame)
-        self.labelSeritMotorHiz.setGeometry(30, 150, 200, 30)
-        self.labelSeritMotorHiz.setStyleSheet(label_field_style)
-        self.labelSeritMotorHizValue = QLabel("—", self.statusMotorFrame)
-        self.labelSeritMotorHizValue.setGeometry(250, 150, 210, 30)
+        self.labelSeritMotorHizValue = QLabel("—", self.FrameSeritMotorHiz)
+        self.labelSeritMotorHizValue.setGeometry(30, 43, 211, 50)
         self.labelSeritMotorHizValue.setStyleSheet(label_value_style)
         self.labelSeritMotorHizValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # İnme Motor Hızı
-        self.labelInmeMotorHiz = QLabel("İnme Motor Hızı:", self.statusMotorFrame)
-        self.labelInmeMotorHiz.setGeometry(30, 190, 200, 30)
-        self.labelInmeMotorHiz.setStyleSheet(label_field_style)
-        self.labelInmeMotorHizValue = QLabel("—", self.statusMotorFrame)
-        self.labelInmeMotorHizValue.setGeometry(250, 190, 210, 30)
+        # --- FrameInmeMotorHiz (297, 27, 260, 105) ---
+        self.FrameInmeMotorHiz = QFrame(self.Container_2)
+        self.FrameInmeMotorHiz.setGeometry(297, 27, 260, 105)
+        self.FrameInmeMotorHiz.setStyleSheet(inner_frame_style)
+
+        self.labelInmeMotorHiz = QLabel("İnme Motor Hızı", self.FrameInmeMotorHiz)
+        self.labelInmeMotorHiz.setGeometry(33, 20, 201, 20)
+        self.labelInmeMotorHiz.setStyleSheet(label_name_style)
+
+        self.labelInmeMotorHizValue = QLabel("—", self.FrameInmeMotorHiz)
+        self.labelInmeMotorHizValue.setGeometry(30, 43, 211, 50)
         self.labelInmeMotorHizValue.setStyleSheet(label_value_style)
         self.labelInmeMotorHizValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Şerit Motor Akımı
-        self.labelSeritMotorAkim = QLabel("Şerit Motor Akımı (A):", self.statusMotorFrame)
-        self.labelSeritMotorAkim.setGeometry(30, 230, 200, 30)
-        self.labelSeritMotorAkim.setStyleSheet(label_field_style)
-        self.labelSeritMotorAkimValue = QLabel("—", self.statusMotorFrame)
-        self.labelSeritMotorAkimValue.setGeometry(250, 230, 210, 30)
+        # --- FrameSeritMotorAkim (20, 166, 260, 105) ---
+        self.FrameSeritMotorAkim = QFrame(self.Container_2)
+        self.FrameSeritMotorAkim.setGeometry(20, 166, 260, 105)
+        self.FrameSeritMotorAkim.setStyleSheet(inner_frame_style)
+
+        self.labelSeritMotorAkim = QLabel("Şerit Motor Akımı (A)", self.FrameSeritMotorAkim)
+        self.labelSeritMotorAkim.setGeometry(33, 20, 211, 20)
+        self.labelSeritMotorAkim.setStyleSheet(label_name_style)
+
+        self.labelSeritMotorAkimValue = QLabel("—", self.FrameSeritMotorAkim)
+        self.labelSeritMotorAkimValue.setGeometry(30, 43, 211, 50)
         self.labelSeritMotorAkimValue.setStyleSheet(label_value_style)
         self.labelSeritMotorAkimValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # İnme Motor Akımı
-        self.labelInmeMotorAkim = QLabel("İnme Motor Akımı (A):", self.statusMotorFrame)
-        self.labelInmeMotorAkim.setGeometry(30, 270, 200, 30)
-        self.labelInmeMotorAkim.setStyleSheet(label_field_style)
-        self.labelInmeMotorAkimValue = QLabel("—", self.statusMotorFrame)
-        self.labelInmeMotorAkimValue.setGeometry(250, 270, 210, 30)
+        # --- FrameInmeMotorAkim (297, 166, 260, 105) ---
+        self.FrameInmeMotorAkim = QFrame(self.Container_2)
+        self.FrameInmeMotorAkim.setGeometry(297, 166, 260, 105)
+        self.FrameInmeMotorAkim.setStyleSheet(inner_frame_style)
+
+        self.labelInmeMotorAkim = QLabel("İnme Motor Akımı (A)", self.FrameInmeMotorAkim)
+        self.labelInmeMotorAkim.setGeometry(33, 20, 211, 20)
+        self.labelInmeMotorAkim.setStyleSheet(label_name_style)
+
+        self.labelInmeMotorAkimValue = QLabel("—", self.FrameInmeMotorAkim)
+        self.labelInmeMotorAkimValue.setGeometry(30, 43, 211, 50)
         self.labelInmeMotorAkimValue.setStyleSheet(label_value_style)
         self.labelInmeMotorAkimValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Şerit Motor Torku
-        self.labelSeritMotorTork = QLabel("Şerit Motor Torku (%):", self.statusMotorFrame)
-        self.labelSeritMotorTork.setGeometry(30, 310, 200, 30)
-        self.labelSeritMotorTork.setStyleSheet(label_field_style)
-        self.labelSeritMotorTorkValue = QLabel("—", self.statusMotorFrame)
-        self.labelSeritMotorTorkValue.setGeometry(250, 310, 210, 30)
+        # --- FrameSeritMotorTork (20, 306, 260, 105) ---
+        self.FrameSeritMotorTork = QFrame(self.Container_2)
+        self.FrameSeritMotorTork.setGeometry(20, 306, 260, 105)
+        self.FrameSeritMotorTork.setStyleSheet(inner_frame_style)
+
+        self.labelSeritMotorTork = QLabel("Şerit Motor Torku (%)", self.FrameSeritMotorTork)
+        self.labelSeritMotorTork.setGeometry(33, 20, 201, 20)
+        self.labelSeritMotorTork.setStyleSheet(label_name_style)
+
+        self.labelSeritMotorTorkValue = QLabel("—", self.FrameSeritMotorTork)
+        self.labelSeritMotorTorkValue.setGeometry(30, 43, 211, 50)
         self.labelSeritMotorTorkValue.setStyleSheet(label_value_style)
         self.labelSeritMotorTorkValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # İnme Motor Torku
-        self.labelInmeMotorTork = QLabel("İnme Motor Torku (%):", self.statusMotorFrame)
-        self.labelInmeMotorTork.setGeometry(30, 350, 200, 30)
-        self.labelInmeMotorTork.setStyleSheet(label_field_style)
-        self.labelInmeMotorTorkValue = QLabel("—", self.statusMotorFrame)
-        self.labelInmeMotorTorkValue.setGeometry(250, 350, 210, 30)
+        # --- FrameInmeMotorTork (297, 306, 260, 105) ---
+        self.FrameInmeMotorTork = QFrame(self.Container_2)
+        self.FrameInmeMotorTork.setGeometry(297, 306, 260, 105)
+        self.FrameInmeMotorTork.setStyleSheet(inner_frame_style)
+
+        self.labelInmeMotorTork = QLabel("İnme Motor Torku (%)", self.FrameInmeMotorTork)
+        self.labelInmeMotorTork.setGeometry(33, 20, 211, 20)
+        self.labelInmeMotorTork.setStyleSheet(label_name_style)
+
+        self.labelInmeMotorTorkValue = QLabel("—", self.FrameInmeMotorTork)
+        self.labelInmeMotorTorkValue.setGeometry(30, 43, 211, 50)
         self.labelInmeMotorTorkValue.setStyleSheet(label_value_style)
         self.labelInmeMotorTorkValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # Max Band Deviation
-        self.labelMaxBandDeviation = QLabel("Max Band Deviation:", self.statusMotorFrame)
-        self.labelMaxBandDeviation.setGeometry(30, 390, 200, 30)
-        self.labelMaxBandDeviation.setStyleSheet(label_field_style)
-        self.labelMaxBandDeviationValue = QLabel("—", self.statusMotorFrame)
-        self.labelMaxBandDeviationValue.setGeometry(250, 390, 210, 30)
-        self.labelMaxBandDeviationValue.setStyleSheet(label_value_style)
-        self.labelMaxBandDeviationValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # --- FrameGucKwh (20, 420, 537, 60) --- Full width for power display
+        self.FrameGucKwh = QFrame(self.Container_2)
+        self.FrameGucKwh.setGeometry(20, 420, 537, 60)
+        self.FrameGucKwh.setStyleSheet(inner_frame_style)
+
+        self.labelGucKwh = QLabel("Güç (kWh)", self.FrameGucKwh)
+        self.labelGucKwh.setGeometry(33, 10, 201, 20)
+        self.labelGucKwh.setStyleSheet(label_name_style)
+
+        self.labelGucKwhValue = QLabel("—", self.FrameGucKwh)
+        self.labelGucKwhValue.setGeometry(200, 10, 320, 40)
+        self.labelGucKwhValue.setStyleSheet(label_value_style)
+        self.labelGucKwhValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # ============================================================
+        # CONTAINER 3: Malzeme Bilgileri (Sağ Üst)
+        # Eski: (1033, 127, 857, 281) -> Yeni: (641, 127, 857, 281)
+        # ============================================================
+        self.Container_3 = QFrame(self)
+        self.Container_3.setGeometry(641, 127, 857, 281)
+        self.Container_3.setStyleSheet(frame_style)
+
+        # --- FrameMalzemeCinsi (20, 27, 260, 105) ---
+        self.FrameMalzemeCinsi = QFrame(self.Container_3)
+        self.FrameMalzemeCinsi.setGeometry(20, 27, 260, 105)
+        self.FrameMalzemeCinsi.setStyleSheet(inner_frame_style)
+
+        self.labelMalzemeCinsi = QLabel("Malzeme Cinsi", self.FrameMalzemeCinsi)
+        self.labelMalzemeCinsi.setGeometry(33, 20, 201, 20)
+        self.labelMalzemeCinsi.setStyleSheet(label_name_style)
+
+        self.labelMalzemeCinsiValue = QLabel("—", self.FrameMalzemeCinsi)
+        self.labelMalzemeCinsiValue.setGeometry(30, 43, 211, 50)
+        self.labelMalzemeCinsiValue.setStyleSheet(label_value_style)
+        self.labelMalzemeCinsiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameMalzemeSertligi (300, 27, 260, 105) ---
+        self.FrameMalzemeSertligi = QFrame(self.Container_3)
+        self.FrameMalzemeSertligi.setGeometry(300, 27, 260, 105)
+        self.FrameMalzemeSertligi.setStyleSheet(inner_frame_style)
+
+        self.labelMalzemeSertligi = QLabel("Malzeme Sertliği", self.FrameMalzemeSertligi)
+        self.labelMalzemeSertligi.setGeometry(33, 20, 211, 31)
+        self.labelMalzemeSertligi.setStyleSheet(label_name_style)
+
+        self.labelMalzemeSertligiValue = QLabel("—", self.FrameMalzemeSertligi)
+        self.labelMalzemeSertligiValue.setGeometry(30, 43, 211, 50)
+        self.labelMalzemeSertligiValue.setStyleSheet(label_value_style)
+        self.labelMalzemeSertligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameKesitYapisi (580, 27, 260, 105) ---
+        self.FrameKesitYapisi = QFrame(self.Container_3)
+        self.FrameKesitYapisi.setGeometry(580, 27, 260, 105)
+        self.FrameKesitYapisi.setStyleSheet(inner_frame_style)
+
+        self.labelKesitYapisi = QLabel("Kesit Yapısı", self.FrameKesitYapisi)
+        self.labelKesitYapisi.setGeometry(33, 20, 201, 31)
+        self.labelKesitYapisi.setStyleSheet(label_name_style)
+
+        self.labelKesitYapisiValue = QLabel("—", self.FrameKesitYapisi)
+        self.labelKesitYapisiValue.setGeometry(30, 43, 211, 50)
+        self.labelKesitYapisiValue.setStyleSheet(label_value_style)
+        self.labelKesitYapisiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameABCD (20, 154, 820, 105) ---
+        self.FrameABCD = QFrame(self.Container_3)
+        self.FrameABCD.setGeometry(20, 154, 820, 105)
+        self.FrameABCD.setStyleSheet(inner_frame_style)
+
+        self.labelA = QLabel("A (mm)", self.FrameABCD)
+        self.labelA.setGeometry(24, 19, 131, 20)
+        self.labelA.setStyleSheet(label_name_style)
+
+        self.labelAValue = QLabel("—", self.FrameABCD)
+        self.labelAValue.setGeometry(1, 43, 161, 50)
+        self.labelAValue.setStyleSheet(label_value_style)
+        self.labelAValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        self.labelB = QLabel("B (mm)", self.FrameABCD)
+        self.labelB.setGeometry(237, 19, 131, 20)
+        self.labelB.setStyleSheet(label_name_style)
+
+        self.labelBValue = QLabel("—", self.FrameABCD)
+        self.labelBValue.setGeometry(210, 40, 161, 50)
+        self.labelBValue.setStyleSheet(label_value_style)
+        self.labelBValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        self.labelC = QLabel("C (mm)", self.FrameABCD)
+        self.labelC.setGeometry(450, 19, 121, 20)
+        self.labelC.setStyleSheet(label_name_style)
+
+        self.labelCValue = QLabel("—", self.FrameABCD)
+        self.labelCValue.setGeometry(424, 40, 161, 50)
+        self.labelCValue.setStyleSheet(label_value_style)
+        self.labelCValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        self.labelD = QLabel("D (mm)", self.FrameABCD)
+        self.labelD.setGeometry(663, 19, 141, 20)
+        self.labelD.setStyleSheet(label_name_style)
+
+        self.labelDValue = QLabel("—", self.FrameABCD)
+        self.labelDValue.setGeometry(640, 40, 161, 50)
+        self.labelDValue.setStyleSheet(label_value_style)
+        self.labelDValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # ============================================================
+        # CONTAINER 4: Sensör Verileri (Sağ Orta)
+        # Eski: (1033, 424, 857, 412) -> Yeni: (641, 424, 857, 412)
+        # ============================================================
+        self.Container_4 = QFrame(self)
+        self.Container_4.setGeometry(641, 424, 857, 412)
+        self.Container_4.setStyleSheet(frame_style)
+
+        # --- FrameSeritSapmasi (20, 27, 260, 105) ---
+        self.FrameSeritSapmasi = QFrame(self.Container_4)
+        self.FrameSeritSapmasi.setGeometry(20, 27, 260, 105)
+        self.FrameSeritSapmasi.setStyleSheet(inner_frame_style)
+
+        self.labelSeritSapmasi = QLabel("Şerit Sapması", self.FrameSeritSapmasi)
+        self.labelSeritSapmasi.setGeometry(33, 20, 201, 20)
+        self.labelSeritSapmasi.setStyleSheet(label_name_style)
+
+        self.labelSeritSapmasiValue = QLabel("—", self.FrameSeritSapmasi)
+        self.labelSeritSapmasiValue.setGeometry(30, 43, 211, 50)
+        self.labelSeritSapmasiValue.setStyleSheet(label_value_style)
+        self.labelSeritSapmasiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameSeritGerginligi (300, 27, 260, 105) ---
+        self.FrameSeritGerginligi = QFrame(self.Container_4)
+        self.FrameSeritGerginligi.setGeometry(300, 27, 260, 105)
+        self.FrameSeritGerginligi.setStyleSheet(inner_frame_style)
+
+        self.labelSeritGerginligi = QLabel("Şerit Gerginliği (bar)", self.FrameSeritGerginligi)
+        self.labelSeritGerginligi.setGeometry(33, 20, 211, 20)
+        self.labelSeritGerginligi.setStyleSheet(label_name_style)
+
+        self.labelSeritGerginligiValue = QLabel("—", self.FrameSeritGerginligi)
+        self.labelSeritGerginligiValue.setGeometry(30, 43, 211, 50)
+        self.labelSeritGerginligiValue.setStyleSheet(label_value_style)
+        self.labelSeritGerginligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameKafaYuksekligi (580, 27, 260, 105) ---
+        self.FrameKafaYuksekligi = QFrame(self.Container_4)
+        self.FrameKafaYuksekligi.setGeometry(580, 27, 260, 105)
+        self.FrameKafaYuksekligi.setStyleSheet(inner_frame_style)
+
+        self.labelKafaYuksekligi = QLabel("Kafa Yüksekliği (mm)", self.FrameKafaYuksekligi)
+        self.labelKafaYuksekligi.setGeometry(33, 20, 211, 20)
+        self.labelKafaYuksekligi.setStyleSheet(label_name_style)
+
+        self.labelKafaYuksekligiValue = QLabel("—", self.FrameKafaYuksekligi)
+        self.labelKafaYuksekligiValue.setGeometry(30, 43, 211, 50)
+        self.labelKafaYuksekligiValue.setStyleSheet(label_value_style)
+        self.labelKafaYuksekligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameTitresimX (20, 154, 260, 105) ---
+        self.FrameTitresimX = QFrame(self.Container_4)
+        self.FrameTitresimX.setGeometry(20, 154, 260, 105)
+        self.FrameTitresimX.setStyleSheet(inner_frame_style)
+
+        self.labelTitresimX = QLabel("Titreşim X", self.FrameTitresimX)
+        self.labelTitresimX.setGeometry(33, 20, 201, 20)
+        self.labelTitresimX.setStyleSheet(label_name_style)
+
+        self.labelTitresimXValue = QLabel("—", self.FrameTitresimX)
+        self.labelTitresimXValue.setGeometry(30, 43, 211, 50)
+        self.labelTitresimXValue.setStyleSheet(label_value_style)
+        self.labelTitresimXValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameTitresimY (300, 154, 260, 105) ---
+        self.FrameTitresimY = QFrame(self.Container_4)
+        self.FrameTitresimY.setGeometry(300, 154, 260, 105)
+        self.FrameTitresimY.setStyleSheet(inner_frame_style)
+
+        self.labelTitresimY = QLabel("Titreşim Y", self.FrameTitresimY)
+        self.labelTitresimY.setGeometry(33, 20, 201, 20)
+        self.labelTitresimY.setStyleSheet(label_name_style)
+
+        self.labelTitresimYValue = QLabel("—", self.FrameTitresimY)
+        self.labelTitresimYValue.setGeometry(30, 43, 211, 50)
+        self.labelTitresimYValue.setStyleSheet(label_value_style)
+        self.labelTitresimYValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameTitresimZ (580, 154, 260, 105) ---
+        self.FrameTitresimZ = QFrame(self.Container_4)
+        self.FrameTitresimZ.setGeometry(580, 154, 260, 105)
+        self.FrameTitresimZ.setStyleSheet(inner_frame_style)
+
+        self.labelTitresimZ = QLabel("Titreşim Z", self.FrameTitresimZ)
+        self.labelTitresimZ.setGeometry(33, 20, 201, 20)
+        self.labelTitresimZ.setStyleSheet(label_name_style)
+
+        self.labelTitresimZValue = QLabel("—", self.FrameTitresimZ)
+        self.labelTitresimZValue.setGeometry(30, 43, 211, 50)
+        self.labelTitresimZValue.setStyleSheet(label_value_style)
+        self.labelTitresimZValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameMengeneBasinci (20, 281, 260, 105) ---
+        self.FrameMengeneBasinci = QFrame(self.Container_4)
+        self.FrameMengeneBasinci.setGeometry(20, 281, 260, 105)
+        self.FrameMengeneBasinci.setStyleSheet(inner_frame_style)
+
+        self.labelMengeneBasinci = QLabel("Mengene Basıncı (bar)", self.FrameMengeneBasinci)
+        self.labelMengeneBasinci.setGeometry(33, 20, 211, 20)
+        self.labelMengeneBasinci.setStyleSheet(label_name_style)
+
+        self.labelMengeneBasinciValue = QLabel("—", self.FrameMengeneBasinci)
+        self.labelMengeneBasinciValue.setGeometry(30, 43, 211, 50)
+        self.labelMengeneBasinciValue.setStyleSheet(label_value_style)
+        self.labelMengeneBasinciValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameOrtamSicakligi (300, 281, 260, 105) ---
+        self.FrameOrtamSicakligi = QFrame(self.Container_4)
+        self.FrameOrtamSicakligi.setGeometry(300, 281, 260, 105)
+        self.FrameOrtamSicakligi.setStyleSheet(inner_frame_style)
+
+        self.labelOrtamSicakligi = QLabel("Ortam Sıcaklığı (°C)", self.FrameOrtamSicakligi)
+        self.labelOrtamSicakligi.setGeometry(33, 20, 211, 20)
+        self.labelOrtamSicakligi.setStyleSheet(label_name_style)
+
+        self.labelOrtamSicakligiValue = QLabel("—", self.FrameOrtamSicakligi)
+        self.labelOrtamSicakligiValue.setGeometry(30, 43, 211, 50)
+        self.labelOrtamSicakligiValue.setStyleSheet(label_value_style)
+        self.labelOrtamSicakligiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameOrtamNem (580, 281, 260, 105) ---
+        self.FrameOrtamNem = QFrame(self.Container_4)
+        self.FrameOrtamNem.setGeometry(580, 281, 260, 105)
+        self.FrameOrtamNem.setStyleSheet(inner_frame_style)
+
+        self.labelOrtamNem = QLabel("Ortam Nem (%)", self.FrameOrtamNem)
+        self.labelOrtamNem.setGeometry(33, 20, 201, 20)
+        self.labelOrtamNem.setStyleSheet(label_name_style)
+
+        self.labelOrtamNemValue = QLabel("—", self.FrameOrtamNem)
+        self.labelOrtamNemValue.setGeometry(30, 43, 211, 50)
+        self.labelOrtamNemValue.setStyleSheet(label_value_style)
+        self.labelOrtamNemValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # ============================================================
+        # CONTAINER 5: Durum Bilgileri (Sağ Alt)
+        # Eski: (1033, 851, 857, 159) -> Yeni: (641, 851, 857, 159)
+        # ============================================================
+        self.Container_5 = QFrame(self)
+        self.Container_5.setGeometry(641, 851, 857, 159)
+        self.Container_5.setStyleSheet(frame_style)
+
+        # --- FrameKesilenParcaAdeti (20, 27, 260, 105) ---
+        self.FrameKesilenParcaAdeti = QFrame(self.Container_5)
+        self.FrameKesilenParcaAdeti.setGeometry(20, 27, 260, 105)
+        self.FrameKesilenParcaAdeti.setStyleSheet(inner_frame_style)
+
+        self.labelKesilenParcaAdeti = QLabel("Kesilen Parça Adeti", self.FrameKesilenParcaAdeti)
+        self.labelKesilenParcaAdeti.setGeometry(33, 20, 211, 31)
+        self.labelKesilenParcaAdeti.setStyleSheet(label_name_style)
+
+        self.labelKesilenParcaAdetiValue = QLabel("—", self.FrameKesilenParcaAdeti)
+        self.labelKesilenParcaAdetiValue.setGeometry(30, 43, 211, 50)
+        self.labelKesilenParcaAdetiValue.setStyleSheet(label_value_style)
+        self.labelKesilenParcaAdetiValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameTestereDurum (300, 27, 260, 105) ---
+        self.FrameTestereDurum = QFrame(self.Container_5)
+        self.FrameTestereDurum.setGeometry(300, 27, 260, 105)
+        self.FrameTestereDurum.setStyleSheet(inner_frame_style)
+
+        self.labelTestereDurum = QLabel("Testere Durumu", self.FrameTestereDurum)
+        self.labelTestereDurum.setGeometry(33, 20, 201, 20)
+        self.labelTestereDurum.setStyleSheet(label_name_style)
+
+        self.labelTestereDurumValue = QLabel("—", self.FrameTestereDurum)
+        self.labelTestereDurumValue.setGeometry(10, 43, 240, 50)
+        self.labelTestereDurumValue.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 24px;
+            }
+        """)
+        self.labelTestereDurumValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # --- FrameAlarm (580, 27, 260, 105) ---
+        self.FrameAlarm = QFrame(self.Container_5)
+        self.FrameAlarm.setGeometry(580, 27, 260, 105)
+        self.FrameAlarm.setStyleSheet(inner_frame_style)
+
+        self.labelAlarmStatus = QLabel("Alarm Durumu", self.FrameAlarm)
+        self.labelAlarmStatus.setGeometry(33, 20, 211, 20)
+        self.labelAlarmStatus.setStyleSheet(label_name_style)
+
+        self.labelAlarmStatusValue = QLabel("—", self.FrameAlarm)
+        self.labelAlarmStatusValue.setGeometry(30, 43, 211, 50)
+        self.labelAlarmStatusValue.setStyleSheet(label_value_style)
+        self.labelAlarmStatusValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # Legacy aliases for backwards compatibility with _update_ui_labels
+        self.machineInfoFrame = self.Container
+        self.sensorData1Frame = self.Container_4
+        self.statusMotorFrame = self.Container_5
+        self.labelMaxBandDeviationValue = self.labelSeritSapmasiValue  # Re-use same label
 
     def _setup_timers(self):
         """Setup all Qt timers for periodic updates."""
@@ -491,10 +674,10 @@ class MonitoringController(QWidget):
         """Called by data timer to fetch and update data."""
         try:
             if self.get_data_callback:
-                # get_data_callback is data_pipeline object, not a function
-                # Get stats if available
-                if hasattr(self.get_data_callback, 'get_stats'):
-                    data = self.get_data_callback.get_stats()
+                # get_data_callback is data_pipeline object
+                # Get latest sensor data for display
+                if hasattr(self.get_data_callback, 'get_latest_data'):
+                    data = self.get_data_callback.get_latest_data()
                     if data:
                         self.update_data(data)
         except Exception as e:
@@ -532,10 +715,10 @@ class MonitoringController(QWidget):
                 self.current_values['malzeme_cinsi'] = processed_data.get('malzeme_cinsi', '—')
                 self.current_values['malzeme_sertlik'] = processed_data.get('malzeme_sertlik', '—')
                 self.current_values['kesit_yapisi'] = processed_data.get('kesit_yapisi', '—')
-                self.current_values['a_mm'] = processed_data.get('a_mm', '—')
-                self.current_values['b_mm'] = processed_data.get('b_mm', '—')
-                self.current_values['c_mm'] = processed_data.get('c_mm', '—')
-                self.current_values['d_mm'] = processed_data.get('d_mm', '—')
+                self.current_values['a_mm'] = processed_data.get('malzeme_a_mm', '—')
+                self.current_values['b_mm'] = processed_data.get('malzeme_b_mm', '—')
+                self.current_values['c_mm'] = processed_data.get('malzeme_c_mm', '—')
+                self.current_values['d_mm'] = processed_data.get('malzeme_d_mm', '—')
 
                 # Sensor data
                 serit_sapmasi = processed_data.get('serit_sapmasi', None)
@@ -561,6 +744,7 @@ class MonitoringController(QWidget):
                 testere_durumu = processed_data.get('testere_durumu', 0)
                 if isinstance(testere_durumu, (int, float)):
                     durum_text = {
+                        -1: "BAĞLANTI BEKLENİYOR",  # Special value when Modbus not connected
                         0: "BOŞTA",
                         1: "HİDROLİK AKTİF",
                         2: "ŞERİT MOTOR ÇALIŞIYOR",
@@ -580,6 +764,16 @@ class MonitoringController(QWidget):
                 self.current_values['inme_motor_akim_a'] = processed_data.get('inme_motor_akim_a', '—')
                 self.current_values['serit_motor_tork_percentage'] = processed_data.get('serit_motor_tork_percentage', '—')
                 self.current_values['inme_motor_tork_percentage'] = processed_data.get('inme_motor_tork_percentage', '—')
+
+                # Power measurement (5 decimal places for precision)
+                guc_kwh = processed_data.get('guc_kwh', None)
+                if guc_kwh is not None and guc_kwh != '':
+                    try:
+                        self.current_values['guc_kwh'] = f"{float(guc_kwh):.5f}"
+                    except (ValueError, TypeError):
+                        self.current_values['guc_kwh'] = '—'
+                else:
+                    self.current_values['guc_kwh'] = '—'
 
             # Update UI labels (outside lock)
             self._update_ui_labels()
@@ -635,8 +829,22 @@ class MonitoringController(QWidget):
             self.labelInmeMotorTorkValue.setText(format_value(self.current_values.get('inme_motor_tork_percentage')))
             self.labelMaxBandDeviationValue.setText(format_value(self.current_values.get('serit_sapmasi')))
 
+            # Power measurement
+            self.labelGucKwhValue.setText(format_value(self.current_values.get('guc_kwh')))
+
         except Exception as e:
             logger.error(f"UI labels update error: {e}")
 
-    # No cleanup() method needed - PySide6 handles timer cleanup automatically
-    # when widget is destroyed via parent-child relationships
+    def stop_timers(self):
+        """
+        Stop all QTimers in this controller.
+
+        IMPORTANT: Must be called from the GUI thread before window closes
+        to avoid segmentation fault on Linux.
+        """
+        try:
+            if hasattr(self, '_data_timer') and self._data_timer:
+                self._data_timer.stop()
+            logger.debug("MonitoringController timers stopped")
+        except Exception as e:
+            logger.error(f"Error stopping monitoring controller timers: {e}")

@@ -86,7 +86,8 @@ class ThingsBoardFormatter:
                 'testere_durumu': raw_data.testere_durumu,
                 'alarm_status': raw_data.alarm_status,
                 'makine_id': raw_data.makine_id,
-                'serit_id': raw_data.serit_id
+                'serit_id': raw_data.serit_id,
+                'guc_kwh': raw_data.guc_kwh
             }
 
             # Add processed data fields

@@ -540,8 +540,9 @@ class SensorController(QWidget):
         """)
 
         # ===== CUTTING GRAPH FRAME (Top) =====
+        # Eski UI: (425, 127, 934, 568) -> Yeni: (33, 127, 934, 568)
         self.kesimGrafigiFrame = QFrame(main_frame)
-        self.kesimGrafigiFrame.setGeometry(33, 125, 1004, 596)
+        self.kesimGrafigiFrame.setGeometry(33, 127, 934, 568)
         self.kesimGrafigiFrame.setStyleSheet("""
             QFrame {
                 background: qlineargradient(
@@ -601,38 +602,116 @@ class SensorController(QWidget):
             }
         """
 
-        # Y-axis selection buttons (left side)
-        self.btnKesmeHizi = QPushButton("Kesme Hızı", self.kesimGrafigiFrame)
-        self.btnKesmeHizi.setGeometry(37, 555, 140, 30)
+        # Frame style for containers
+        frame_style = """
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(6, 11, 38, 240),
+                    stop:1 rgba(26, 31, 55, 0)
+                );
+                border-radius: 20px;
+            }
+        """
+
+        # ===== X EKSENI FRAME (Y-axis buttons - Left Bottom) =====
+        # Eski UI: (425, 724, 578, 342) -> Yeni: (33, 724, 578, 342)
+        self.XEkseniFrame = QFrame(main_frame)
+        self.XEkseniFrame.setGeometry(33, 724, 578, 342)
+        self.XEkseniFrame.setStyleSheet(frame_style)
+
+        labelXEkseni = QLabel("Y Ekseni", self.XEkseniFrame)
+        labelXEkseni.setGeometry(34, 19, 295, 39)
+        labelXEkseni.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 28px;
+            }
+        """)
+
+        # Y-axis buttons (in XEkseniFrame)
+        self.btnKesmeHizi = QPushButton("Kesme Hızı", self.XEkseniFrame)
+        self.btnKesmeHizi.setGeometry(41, 82, 240, 69)
         self.btnKesmeHizi.setStyleSheet(axis_btn_style)
+        self.btnKesmeHizi.setCheckable(True)
 
-        self.btnIlerlemeHizi = QPushButton("İlerleme Hızı", self.kesimGrafigiFrame)
-        self.btnIlerlemeHizi.setGeometry(187, 555, 150, 30)
+        self.btnIlerlemeHizi = QPushButton("İlerleme Hızı", self.XEkseniFrame)
+        self.btnIlerlemeHizi.setGeometry(298, 82, 240, 69)
         self.btnIlerlemeHizi.setStyleSheet(axis_btn_style)
+        self.btnIlerlemeHizi.setCheckable(True)
 
-        self.btnSeritAkim = QPushButton("Şerit Akım", self.kesimGrafigiFrame)
-        self.btnSeritAkim.setGeometry(347, 555, 130, 30)
+        self.btnSeritAkim = QPushButton("Şerit Akım", self.XEkseniFrame)
+        self.btnSeritAkim.setGeometry(41, 162, 240, 69)
         self.btnSeritAkim.setStyleSheet(axis_btn_style)
+        self.btnSeritAkim.setCheckable(True)
 
-        self.btnSeritSapmasi = QPushButton("Şerit Sapması", self.btnSeritAkim)
-        self.btnSeritSapmasi.setGeometry(487, 555, 150, 30)
+        self.btnSeritSapmasi = QPushButton("Şerit Sapması", self.XEkseniFrame)
+        self.btnSeritSapmasi.setGeometry(298, 162, 240, 69)
         self.btnSeritSapmasi.setStyleSheet(axis_btn_style)
+        self.btnSeritSapmasi.setCheckable(True)
 
-        self.btnSeritTork = QPushButton("Şerit Tork", self.kesimGrafigiFrame)
-        self.btnSeritTork.setGeometry(647, 555, 120, 30)
+        self.btnSeritTork = QPushButton("Şerit Tork", self.XEkseniFrame)
+        self.btnSeritTork.setGeometry(169, 239, 240, 69)
         self.btnSeritTork.setStyleSheet(axis_btn_style)
+        self.btnSeritTork.setCheckable(True)
 
-        # X-axis selection buttons (bottom right)
-        self.btnZaman = QPushButton("Zaman", self.kesimGrafigiFrame)
-        self.btnZaman.setGeometry(835, 555, 80, 30)
+        # ===== Y EKSENI FRAME (X-axis buttons - Center Bottom) =====
+        # Eski UI: (1030, 724, 329, 342) -> Yeni: (638, 724, 329, 342)
+        self.YEkseniFrame = QFrame(main_frame)
+        self.YEkseniFrame.setGeometry(638, 724, 329, 342)
+        self.YEkseniFrame.setStyleSheet(frame_style)
+
+        labelYEkseni = QLabel("X Ekseni", self.YEkseniFrame)
+        labelYEkseni.setGeometry(34, 19, 295, 39)
+        labelYEkseni.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 28px;
+            }
+        """)
+
+        # X-axis buttons (in YEkseniFrame)
+        self.btnZaman = QPushButton("Zaman", self.YEkseniFrame)
+        self.btnZaman.setGeometry(44, 82, 240, 69)
         self.btnZaman.setStyleSheet(axis_btn_style)
+        self.btnZaman.setCheckable(True)
+        self.btnZaman.setChecked(True)  # Default X axis
 
-        self.btnYukseklik = QPushButton("Yükseklik", self.kesimGrafigiFrame)
-        self.btnYukseklik.setGeometry(925, 555, 110, 30)
+        self.btnYukseklik = QPushButton("Yükseklik", self.YEkseniFrame)
+        self.btnYukseklik.setGeometry(44, 170, 240, 69)
         self.btnYukseklik.setStyleSheet(axis_btn_style)
+        self.btnYukseklik.setCheckable(True)
 
-        # ===== ANOMALY DETECTION FRAMES (9 frames in 3x3 grid) =====
-        # Frame style - Green gradient (normal state)
+        # ===== ANOMALY DURUMU FRAME (Right Side) =====
+        # Eski UI: (1385, 127, 505, 941) -> Yeni: (993, 127, 505, 941)
+        self.AnomaliDurumuFrame = QFrame(main_frame)
+        self.AnomaliDurumuFrame.setGeometry(993, 127, 505, 941)
+        self.AnomaliDurumuFrame.setStyleSheet(frame_style)
+
+        labelAnomaliDurumu = QLabel("Anomali Durumu", self.AnomaliDurumuFrame)
+        labelAnomaliDurumu.setGeometry(34, 19, 295, 39)
+        labelAnomaliDurumu.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 32px;
+            }
+        """)
+
+        # Motor Verileri Frame (inside AnomaliDurumuFrame)
+        self.MotorVerileriFrame = QFrame(self.AnomaliDurumuFrame)
+        self.MotorVerileriFrame.setGeometry(23, 77, 459, 839)
+        self.MotorVerileriFrame.setStyleSheet(frame_style)
+
+        # Green gradient (normal state)
         green_frame_style = """
             QFrame {
                 background: qlineargradient(
@@ -647,234 +726,167 @@ class SensorController(QWidget):
             }
         """
 
-        # Red gradient (anomaly state)
-        red_frame_style = """
-            QFrame {
-                background: qlineargradient(
-                    spread:pad,
-                    x1:0, y1:0,
-                    x2:1, y2:1,
-                    stop:0 rgba(0, 0, 0, 255),
-                    stop:1 rgba(124, 4, 66, 255)
-                );
-                border-radius: 20px;
-            }
-        """
-
         # Label style for sensor names
         sensor_name_style = """
             QLabel {
+                background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
                 font-size: 20px;
-                background-color: transparent;
-            }
-        """
-
-        # Value label style
-        value_style = """
-            QLabel {
-                color: #F4F6FC;
-                font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 32px;
-                background-color: transparent;
             }
         """
 
         # Info label style
         info_style = """
             QLabel {
-                color: rgba(244, 246, 252, 180);
-                font-family: 'Plus Jakarta Sans';
-                font-weight: 300;
-                font-size: 14px;
                 background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: medium;
+                font-size: 18px;
             }
         """
 
-        # Row 1: Kesme Hızı, İlerleme Hızı, Şerit Akım
-        # 1. Kesme Hızı Frame
-        self.KesmeHiziFrame = QFrame(main_frame)
-        self.KesmeHiziFrame.setGeometry(1064, 125, 427, 180)
+        # 1. Kesme Hızı Frame (inside MotorVerileriFrame)
+        self.KesmeHiziFrame = QFrame(self.MotorVerileriFrame)
+        self.KesmeHiziFrame.setGeometry(8, 30, 443, 60)
         self.KesmeHiziFrame.setStyleSheet(green_frame_style)
 
-        labelKesmeHizi = QLabel("Kesme Hızı", self.KesmeHiziFrame)
-        labelKesmeHizi.setGeometry(20, 20, 150, 30)
-        labelKesmeHizi.setStyleSheet(sensor_name_style)
-
-        self.labelKesmeHiziValue = QLabel("0.0 m/min", self.KesmeHiziFrame)
-        self.labelKesmeHiziValue.setGeometry(20, 60, 200, 40)
-        self.labelKesmeHiziValue.setStyleSheet(value_style)
+        self.labelKesmeHiziName = QLabel("Kesme Hızı", self.KesmeHiziFrame)
+        self.labelKesmeHiziName.setGeometry(28, 8, 393, 20)
+        self.labelKesmeHiziName.setStyleSheet(sensor_name_style)
 
         self.labelKesmeHiziInfo = QLabel("Her şey yolunda.", self.KesmeHiziFrame)
-        self.labelKesmeHiziInfo.setGeometry(20, 140, 380, 25)
+        self.labelKesmeHiziInfo.setGeometry(25, 33, 401, 20)
         self.labelKesmeHiziInfo.setStyleSheet(info_style)
 
         # 2. İlerleme Hızı Frame
-        self.IlerlemeHiziFrame = QFrame(main_frame)
-        self.IlerlemeHiziFrame.setGeometry(1064, 320, 427, 180)
+        self.IlerlemeHiziFrame = QFrame(self.MotorVerileriFrame)
+        self.IlerlemeHiziFrame.setGeometry(8, 110, 443, 60)
         self.IlerlemeHiziFrame.setStyleSheet(green_frame_style)
 
-        labelIlerlemeHizi = QLabel("İlerleme Hızı", self.IlerlemeHiziFrame)
-        labelIlerlemeHizi.setGeometry(20, 20, 180, 30)
-        labelIlerlemeHizi.setStyleSheet(sensor_name_style)
-
-        self.labelIlerlemeHiziValue = QLabel("0.0 mm/s", self.IlerlemeHiziFrame)
-        self.labelIlerlemeHiziValue.setGeometry(20, 60, 200, 40)
-        self.labelIlerlemeHiziValue.setStyleSheet(value_style)
+        self.labelIlerlemeHiziName = QLabel("İlerleme Hızı", self.IlerlemeHiziFrame)
+        self.labelIlerlemeHiziName.setGeometry(25, 8, 393, 20)
+        self.labelIlerlemeHiziName.setStyleSheet(sensor_name_style)
 
         self.labelIlerlemeHiziInfo = QLabel("Her şey yolunda.", self.IlerlemeHiziFrame)
-        self.labelIlerlemeHiziInfo.setGeometry(20, 140, 380, 25)
+        self.labelIlerlemeHiziInfo.setGeometry(25, 33, 401, 20)
         self.labelIlerlemeHiziInfo.setStyleSheet(info_style)
 
         # 3. Şerit Akım Frame
-        self.SeritAkimFrame = QFrame(main_frame)
-        self.SeritAkimFrame.setGeometry(1064, 515, 427, 180)
+        self.SeritAkimFrame = QFrame(self.MotorVerileriFrame)
+        self.SeritAkimFrame.setGeometry(8, 190, 443, 60)
         self.SeritAkimFrame.setStyleSheet(green_frame_style)
 
-        labelSeritAkim = QLabel("Şerit Akım", self.SeritAkimFrame)
-        labelSeritAkim.setGeometry(20, 20, 150, 30)
-        labelSeritAkim.setStyleSheet(sensor_name_style)
-
-        self.labelSeritAkimValue = QLabel("0.0 A", self.SeritAkimFrame)
-        self.labelSeritAkimValue.setGeometry(20, 60, 200, 40)
-        self.labelSeritAkimValue.setStyleSheet(value_style)
+        self.labelSeritAkimName = QLabel("Şerit Akım", self.SeritAkimFrame)
+        self.labelSeritAkimName.setGeometry(25, 8, 393, 20)
+        self.labelSeritAkimName.setStyleSheet(sensor_name_style)
 
         self.labelSeritAkimInfo = QLabel("Her şey yolunda.", self.SeritAkimFrame)
-        self.labelSeritAkimInfo.setGeometry(20, 140, 380, 25)
+        self.labelSeritAkimInfo.setGeometry(25, 33, 401, 20)
         self.labelSeritAkimInfo.setStyleSheet(info_style)
 
-        # Row 2: Şerit Tork, Şerit Gerginliği, Şerit Sapması
         # 4. Şerit Tork Frame
-        self.SeritTorkFrame = QFrame(main_frame)
-        self.SeritTorkFrame.setGeometry(33, 736, 310, 180)
+        self.SeritTorkFrame = QFrame(self.MotorVerileriFrame)
+        self.SeritTorkFrame.setGeometry(8, 270, 443, 60)
         self.SeritTorkFrame.setStyleSheet(green_frame_style)
 
-        labelSeritTork = QLabel("Şerit Tork", self.SeritTorkFrame)
-        labelSeritTork.setGeometry(20, 20, 150, 30)
-        labelSeritTork.setStyleSheet(sensor_name_style)
-
-        self.labelSeritTorkValue = QLabel("0.0 %", self.SeritTorkFrame)
-        self.labelSeritTorkValue.setGeometry(20, 60, 200, 40)
-        self.labelSeritTorkValue.setStyleSheet(value_style)
+        self.labelSeritTorkName = QLabel("Şerit Tork", self.SeritTorkFrame)
+        self.labelSeritTorkName.setGeometry(25, 8, 393, 20)
+        self.labelSeritTorkName.setStyleSheet(sensor_name_style)
 
         self.labelSeritTorkInfo = QLabel("Her şey yolunda.", self.SeritTorkFrame)
-        self.labelSeritTorkInfo.setGeometry(20, 140, 260, 25)
+        self.labelSeritTorkInfo.setGeometry(25, 33, 401, 20)
         self.labelSeritTorkInfo.setStyleSheet(info_style)
 
         # 5. Şerit Gerginliği Frame
-        self.SeritGerginligiFrame = QFrame(main_frame)
-        self.SeritGerginligiFrame.setGeometry(358, 736, 310, 180)
+        self.SeritGerginligiFrame = QFrame(self.MotorVerileriFrame)
+        self.SeritGerginligiFrame.setGeometry(8, 350, 443, 60)
         self.SeritGerginligiFrame.setStyleSheet(green_frame_style)
 
-        labelSeritGerginligi = QLabel("Şerit Gerginliği", self.SeritGerginligiFrame)
-        labelSeritGerginligi.setGeometry(20, 20, 200, 30)
-        labelSeritGerginligi.setStyleSheet(sensor_name_style)
-
-        self.labelSeritGerginligiValue = QLabel("0.0 bar", self.SeritGerginligiFrame)
-        self.labelSeritGerginligiValue.setGeometry(20, 60, 200, 40)
-        self.labelSeritGerginligiValue.setStyleSheet(value_style)
+        self.labelSeritGerginligiName = QLabel("Şerit Gerginliği", self.SeritGerginligiFrame)
+        self.labelSeritGerginligiName.setGeometry(25, 8, 393, 20)
+        self.labelSeritGerginligiName.setStyleSheet(sensor_name_style)
 
         self.labelSeritGerginligiInfo = QLabel("Her şey yolunda.", self.SeritGerginligiFrame)
-        self.labelSeritGerginligiInfo.setGeometry(20, 140, 260, 25)
+        self.labelSeritGerginligiInfo.setGeometry(25, 33, 401, 20)
         self.labelSeritGerginligiInfo.setStyleSheet(info_style)
 
         # 6. Şerit Sapması Frame
-        self.SeritSapmasiFrame = QFrame(main_frame)
-        self.SeritSapmasiFrame.setGeometry(683, 736, 310, 180)
+        self.SeritSapmasiFrame = QFrame(self.MotorVerileriFrame)
+        self.SeritSapmasiFrame.setGeometry(8, 430, 443, 60)
         self.SeritSapmasiFrame.setStyleSheet(green_frame_style)
 
-        labelSeritSapmasi = QLabel("Şerit Sapması", self.SeritSapmasiFrame)
-        labelSeritSapmasi.setGeometry(20, 20, 180, 30)
-        labelSeritSapmasi.setStyleSheet(sensor_name_style)
-
-        self.labelSeritSapmasiValue = QLabel("0.0 mm", self.SeritSapmasiFrame)
-        self.labelSeritSapmasiValue.setGeometry(20, 60, 200, 40)
-        self.labelSeritSapmasiValue.setStyleSheet(value_style)
+        self.labelSeritSapmasiName = QLabel("Şerit Sapması", self.SeritSapmasiFrame)
+        self.labelSeritSapmasiName.setGeometry(25, 8, 393, 20)
+        self.labelSeritSapmasiName.setStyleSheet(sensor_name_style)
 
         self.labelSeritSapmasiInfo = QLabel("Her şey yolunda.", self.SeritSapmasiFrame)
-        self.labelSeritSapmasiInfo.setGeometry(20, 140, 260, 25)
+        self.labelSeritSapmasiInfo.setGeometry(25, 33, 401, 20)
         self.labelSeritSapmasiInfo.setStyleSheet(info_style)
 
-        # Row 3: Titreşim X, Y, Z
         # 7. Titreşim X Frame
-        self.TitresimXFrame = QFrame(main_frame)
-        self.TitresimXFrame.setGeometry(1008, 736, 310, 180)
+        self.TitresimXFrame = QFrame(self.MotorVerileriFrame)
+        self.TitresimXFrame.setGeometry(8, 510, 443, 60)
         self.TitresimXFrame.setStyleSheet(green_frame_style)
 
-        labelTitresimX = QLabel("Titreşim X", self.TitresimXFrame)
-        labelTitresimX.setGeometry(20, 20, 150, 30)
-        labelTitresimX.setStyleSheet(sensor_name_style)
-
-        self.labelTitresimXValue = QLabel("0.0 Hz", self.TitresimXFrame)
-        self.labelTitresimXValue.setGeometry(20, 60, 200, 40)
-        self.labelTitresimXValue.setStyleSheet(value_style)
+        self.labelTitresimXName = QLabel("Titreşim X", self.TitresimXFrame)
+        self.labelTitresimXName.setGeometry(25, 8, 393, 20)
+        self.labelTitresimXName.setStyleSheet(sensor_name_style)
 
         self.labelTitresimXInfo = QLabel("Her şey yolunda.", self.TitresimXFrame)
-        self.labelTitresimXInfo.setGeometry(20, 140, 260, 25)
+        self.labelTitresimXInfo.setGeometry(25, 33, 401, 20)
         self.labelTitresimXInfo.setStyleSheet(info_style)
 
         # 8. Titreşim Y Frame
-        self.TitresimYFrame = QFrame(main_frame)
-        self.TitresimYFrame.setGeometry(1333, 736, 310, 180)
+        self.TitresimYFrame = QFrame(self.MotorVerileriFrame)
+        self.TitresimYFrame.setGeometry(8, 590, 443, 60)
         self.TitresimYFrame.setStyleSheet(green_frame_style)
 
-        labelTitresimY = QLabel("Titreşim Y", self.TitresimYFrame)
-        labelTitresimY.setGeometry(20, 20, 150, 30)
-        labelTitresimY.setStyleSheet(sensor_name_style)
-
-        self.labelTitresimYValue = QLabel("0.0 Hz", self.TitresimYFrame)
-        self.labelTitresimYValue.setGeometry(20, 60, 200, 40)
-        self.labelTitresimYValue.setStyleSheet(value_style)
+        self.labelTitresimYName = QLabel("Titreşim Y", self.TitresimYFrame)
+        self.labelTitresimYName.setGeometry(25, 8, 393, 20)
+        self.labelTitresimYName.setStyleSheet(sensor_name_style)
 
         self.labelTitresimYInfo = QLabel("Her şey yolunda.", self.TitresimYFrame)
-        self.labelTitresimYInfo.setGeometry(20, 140, 260, 25)
+        self.labelTitresimYInfo.setGeometry(25, 33, 401, 20)
         self.labelTitresimYInfo.setStyleSheet(info_style)
 
         # 9. Titreşim Z Frame
-        self.TitresimZFrame = QFrame(main_frame)
-        self.TitresimZFrame.setGeometry(1658, 736, 310, 180)
+        self.TitresimZFrame = QFrame(self.MotorVerileriFrame)
+        self.TitresimZFrame.setGeometry(8, 670, 443, 60)
         self.TitresimZFrame.setStyleSheet(green_frame_style)
 
-        labelTitresimZ = QLabel("Titreşim Z", self.TitresimZFrame)
-        labelTitresimZ.setGeometry(20, 20, 150, 30)
-        labelTitresimZ.setStyleSheet(sensor_name_style)
-
-        self.labelTitresimZValue = QLabel("0.0 Hz", self.TitresimZFrame)
-        self.labelTitresimZValue.setGeometry(20, 60, 200, 40)
-        self.labelTitresimZValue.setStyleSheet(value_style)
+        self.labelTitresimZName = QLabel("Titreşim Z", self.TitresimZFrame)
+        self.labelTitresimZName.setGeometry(25, 8, 393, 20)
+        self.labelTitresimZName.setStyleSheet(sensor_name_style)
 
         self.labelTitresimZInfo = QLabel("Her şey yolunda.", self.TitresimZFrame)
-        self.labelTitresimZInfo.setGeometry(20, 140, 260, 25)
+        self.labelTitresimZInfo.setGeometry(25, 33, 401, 20)
         self.labelTitresimZInfo.setStyleSheet(info_style)
 
-        # ===== RESET BUTTON =====
-        self.toolButton = QPushButton("Sıfırla", main_frame)
-        self.toolButton.setGeometry(1380, 950, 120, 40)
+        # ===== RESET BUTTON (inside MotorVerileriFrame) =====
+        self.toolButton = QPushButton("Sıfırla", self.MotorVerileriFrame)
+        self.toolButton.setGeometry(8, 750, 443, 60)
         self.toolButton.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(
-                    spread:pad,
-                    x1:0, y1:0,
-                    x2:1, y2:1,
-                    stop:0 rgba(149, 9, 82, 255),
-                    stop:1 rgba(26, 31, 55, 255)
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #000000,
+                    stop:0.38 rgba(26, 31, 55, 200)
                 );
+                border: 1px solid #F4F6FC;
                 border-radius: 20px;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 16px;
+                font-weight: medium;
+                font-size: 19px;
             }
             QPushButton:hover {
                 background: qlineargradient(
-                    spread:pad,
-                    x1:0, y1:0,
-                    x2:1, y2:1,
-                    stop:0 rgba(169, 29, 102, 255),
-                    stop:1 rgba(46, 51, 75, 255)
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(20, 20, 20, 255),
+                    stop:0.38 rgba(46, 51, 75, 200)
                 );
             }
         """)
@@ -1059,7 +1071,12 @@ class SensorController(QWidget):
         self._set_all_frames_green()
         self._set_all_info_labels("Her şey yolunda.")
 
-        # Also reset anomaly manager if available
+        # Reset anomaly tracker (persists reset time to DB)
+        if self.data_pipeline and hasattr(self.data_pipeline, 'anomaly_tracker'):
+            self.data_pipeline.anomaly_tracker.reset(reset_by="user")
+            logger.info("Anomaly tracker reset by user")
+
+        # Also reset anomaly manager (clears buffers)
         if self.data_pipeline and hasattr(self.data_pipeline, 'anomaly_manager'):
             self.data_pipeline.anomaly_manager.reset_anomaly_states()
             logger.info("Anomaly manager states reset")
@@ -1068,9 +1085,11 @@ class SensorController(QWidget):
         """Periodic data update callback"""
         try:
             if self.data_pipeline:
-                stats = self.data_pipeline.get_stats()
-                if stats and isinstance(stats, dict):
-                    self._update_sensor_values(stats)
+                # Use get_latest_data for sensor display
+                if hasattr(self.data_pipeline, 'get_latest_data'):
+                    data = self.data_pipeline.get_latest_data()
+                    if data and isinstance(data, dict):
+                        self._update_sensor_values(data)
         except Exception as e:
             logger.error(f"Error in data tick: {e}")
 
@@ -1144,24 +1163,50 @@ class SensorController(QWidget):
                 }
             """
 
-            def upd(frame_name: str, label_name: str, is_anom: bool, ok_text: str = "Her şey yolunda."):
+            # Get anomaly summary from tracker (for time range and count display)
+            anomaly_summary = {}
+            if self.data_pipeline and hasattr(self.data_pipeline, 'anomaly_tracker'):
+                anomaly_summary = self.data_pipeline.anomaly_tracker.get_anomaly_summary()
+
+            def upd(frame_name: str, label_name: str, sensor_key: str, ok_text: str = "Her şey yolunda."):
                 frame = getattr(self, frame_name, None)
                 label = getattr(self, label_name, None)
+                is_anom = sensor_key in anomaly_summary
+
                 if frame:
                     frame.setStyleSheet(red_style if is_anom else green_style)
+
                 if label:
-                    label.setText(f"{current_time} tarihinde anomali tespit edildi." if is_anom else ok_text)
+                    if is_anom:
+                        info = anomaly_summary[sensor_key]
+                        count = info.get('count', 1)
+                        first_time = info.get('first_time', '')
+                        last_time = info.get('last_time', '')
+
+                        # Format time string
+                        try:
+                            first_dt = datetime.fromisoformat(first_time)
+                            last_dt = datetime.fromisoformat(last_time)
+                            if count == 1:
+                                time_str = first_dt.strftime('%H:%M:%S')
+                            else:
+                                time_str = f"{first_dt.strftime('%H:%M:%S')} - {last_dt.strftime('%H:%M:%S')}"
+                            label.setText(f"{time_str} ({count}x anomali)")
+                        except Exception:
+                            label.setText(f"Anomali tespit edildi ({count}x)")
+                    else:
+                        label.setText(ok_text)
 
             # Update anomaly frames
-            upd('KesmeHiziFrame', 'labelKesmeHiziInfo', self.anomaly_states['KesmeHizi'])
-            upd('IlerlemeHiziFrame', 'labelIlerlemeHiziInfo', self.anomaly_states['IlerlemeHizi'])
-            upd('SeritAkimFrame', 'labelSeritAkimInfo', self.anomaly_states['SeritAkim'])
-            upd('SeritTorkFrame', 'labelSeritTorkInfo', self.anomaly_states['SeritTork'])
-            upd('SeritGerginligiFrame', 'labelSeritGerginligiInfo', self.anomaly_states['SeritGerginligi'])
-            upd('SeritSapmasiFrame', 'labelSeritSapmasiInfo', self.anomaly_states['SeritSapmasi'])
-            upd('TitresimXFrame', 'labelTitresimXInfo', self.anomaly_states['TitresimX'])
-            upd('TitresimYFrame', 'labelTitresimYInfo', self.anomaly_states['TitresimY'])
-            upd('TitresimZFrame', 'labelTitresimZInfo', self.anomaly_states['TitresimZ'])
+            upd('KesmeHiziFrame', 'labelKesmeHiziInfo', 'KesmeHizi')
+            upd('IlerlemeHiziFrame', 'labelIlerlemeHiziInfo', 'IlerlemeHizi')
+            upd('SeritAkimFrame', 'labelSeritAkimInfo', 'SeritAkim')
+            upd('SeritTorkFrame', 'labelSeritTorkInfo', 'SeritTork')
+            upd('SeritGerginligiFrame', 'labelSeritGerginligiInfo', 'SeritGerginligi')
+            upd('SeritSapmasiFrame', 'labelSeritSapmasiInfo', 'SeritSapmasi')
+            upd('TitresimXFrame', 'labelTitresimXInfo', 'TitresimX')
+            upd('TitresimYFrame', 'labelTitresimYInfo', 'TitresimY')
+            upd('TitresimZFrame', 'labelTitresimZInfo', 'TitresimZ')
 
         except Exception as e:
             logger.error(f"Error updating sensor values: {e}")
@@ -1385,5 +1430,19 @@ class SensorController(QWidget):
         except Exception as e:
             logger.error(f"Error updating data: {e}")
 
-    # No cleanup() method needed - PySide6 handles timer cleanup automatically
-    # when widget is destroyed via parent-child relationships
+    def stop_timers(self):
+        """
+        Stop all QTimers in this controller.
+
+        IMPORTANT: Must be called from the GUI thread before window closes
+        to avoid segmentation fault on Linux.
+        """
+        try:
+            if hasattr(self, '_data_timer') and self._data_timer:
+                self._data_timer.stop()
+            if hasattr(self, 'cutting_graph') and self.cutting_graph:
+                if hasattr(self.cutting_graph, 'update_timer'):
+                    self.cutting_graph.update_timer.stop()
+            logger.debug("SensorController timers stopped")
+        except Exception as e:
+            logger.error(f"Error stopping sensor controller timers: {e}")

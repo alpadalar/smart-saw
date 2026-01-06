@@ -151,6 +151,21 @@ class ApplicationLifecycle:
         logger.info("=" * 60)
 
         try:
+            # 0. Wait for GUI thread to finish FIRST
+            # This is critical to avoid segmentation fault on Linux.
+            # Qt objects (QTimers, widgets) must be destroyed in the GUI thread.
+            # If we proceed with shutdown while GUI thread is still running,
+            # Python's garbage collector may try to destroy Qt objects from
+            # the wrong thread, causing "Timers cannot be stopped from another
+            # thread" errors and segmentation faults.
+            if self.gui_thread and self.gui_thread.is_alive():
+                logger.info("Waiting for GUI thread to finish...")
+                self.gui_thread.join(timeout=timeout)
+                if self.gui_thread.is_alive():
+                    logger.warning("GUI thread did not finish in time")
+                else:
+                    logger.info("GUI thread finished")
+
             # 1. Stop data pipeline
             if self.data_pipeline:
                 logger.info("Stopping data pipeline...")
@@ -499,6 +514,21 @@ class ApplicationLifecycle:
     def request_shutdown(self):
         """
         Request application shutdown.
+
+        This also closes the GUI if it's running, ensuring that:
+        1. Qt objects are cleaned up in the GUI thread
+        2. GUI thread finishes before Python exits
+        3. No segmentation fault on Linux
         """
         logger.info("Shutdown requested")
+
+        # Close GUI first (if running) - this triggers proper Qt cleanup
+        if self.gui_app and self.gui_app._app:
+            try:
+                # QApplication.quit() is thread-safe
+                self.gui_app._app.quit()
+                logger.info("GUI quit signal sent")
+            except Exception as e:
+                logger.warning(f"Failed to quit GUI: {e}")
+
         self._shutdown_event.set()

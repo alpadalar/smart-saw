@@ -17,7 +17,7 @@ gui:
 
 # Modbus TCP Settings
 modbus:
-  host: "192.168.1.100"  # PLC IP address
+  host: "192.168.2.147"  # PLC IP address
   port: 502
   timeout: 5.0  # Connection timeout (seconds)
   retry_count: 3
@@ -25,11 +25,11 @@ modbus:
 
   # Read/Write Rates (Hz)
   read_rate: 10  # 10 reads per second
-  write_rate: 5  # 5 writes per second
+  write_rate: 10  # 10 writes per second
 
   # Alarm thresholds for rate monitoring
-  read_rate_alarm_low: 8   # Alarm if below 8 Hz
-  write_rate_alarm_low: 3  # Alarm if below 3 Hz
+  read_rate_alarm_low: 6   # Alarm if below 6 Hz
+  write_rate_alarm_low: 5  # Alarm if below 5 Hz
 
   # Register Address Map (from old documentation)
   registers:
@@ -124,6 +124,9 @@ ml:
   # Global coefficient multiplier
   katsayi: 1.0
 
+  # ML update rate (5 Hz = 0.2s, same as old project)
+  min_speed_update_interval: 0.2
+
   # Buffer sizes for ML input averaging
   buffer_size: 3               # Standard buffer (akim, sapma, kesme, inme)
   torque_buffer_size: 3        # Torque buffer
@@ -180,6 +183,7 @@ database:
       total: "total.db"      # Processed data
       log: "log.db"          # System logs
       ml: "ml.db"            # ML predictions
+      anomaly: "anomaly.db"  # Anomaly detection tracking
 
     # Performance optimizations
     wal_mode: true                 # Write-Ahead Logging

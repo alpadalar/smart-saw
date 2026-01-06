@@ -278,6 +278,34 @@ class AnomalyManager:
         else:
             logger.warning(f"Detector not found: {sensor_name}")
 
+    def get_method_for_sensor(self, sensor_key: str) -> str:
+        """
+        Get detection method name for a sensor key.
+
+        Args:
+            sensor_key: Sensor key from anomaly results (e.g., 'SeritSapmasi')
+
+        Returns:
+            Detection method name (e.g., 'z_score', 'iqr')
+        """
+        # Map anomaly result keys to detector names
+        key_to_detector = {
+            'SeritSapmasi': 'serit_sapmasi',
+            'SeritAkim': 'serit_motor_akim',
+            'SeritTork': 'serit_motor_tork',
+            'KesmeHizi': 'serit_kesme_hizi',
+            'IlerlemeHizi': 'serit_inme_hizi',
+            'TitresimX': 'titresim_x',
+            'TitresimY': 'titresim_y',
+            'TitresimZ': 'titresim_z',
+            'SeritGerginligi': 'serit_gerginligi',
+        }
+
+        detector_name = key_to_detector.get(sensor_key)
+        if detector_name and detector_name in self.detectors:
+            return self.detectors[detector_name].method.value
+        return 'unknown'
+
     def get_stats(self) -> Dict:
         """
         Get statistics from all detectors.

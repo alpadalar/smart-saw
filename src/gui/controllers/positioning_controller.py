@@ -15,7 +15,7 @@ from typing import Optional, Dict, Callable
 
 try:
     from PySide6.QtWidgets import QWidget, QFrame, QPushButton, QLabel
-    from PySide6.QtCore import Qt, QTimer, Slot, Signal
+    from PySide6.QtCore import Qt, QTimer, Slot, Signal, QSize
     from PySide6.QtGui import QFont, QPixmap, QIcon
 except ImportError:
     logging.warning("PySide6 not installed")
@@ -27,9 +27,12 @@ except ImportError:
     QTimer = object
     Slot = lambda *args, **kwargs: (lambda f: f)
     Signal = lambda *args: None
+    QSize = object
     QFont = object
     QPixmap = object
     QIcon = object
+
+from ...services.control.machine_control import MachineControl
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +73,10 @@ class PositioningController(QWidget):
         # Legacy compatibility
         self.get_data_callback = data_pipeline
 
+        # Initialize MachineControl from modbus service
+        self.machine_control: Optional[MachineControl] = None
+        self._initialize_machine_control()
+
         # UI suppression flag for mengene close button
         self._suppress_close_autocheck_until: float = 0.0
 
@@ -80,6 +87,20 @@ class PositioningController(QWidget):
         self._setup_timers()
 
         logger.info("PositioningController initialized")
+
+    def _initialize_machine_control(self) -> None:
+        """Initialize MachineControl singleton (uses its own Modbus connection)."""
+        try:
+            # MachineControl is a singleton with its own Modbus connection
+            # Just create it - it will connect automatically
+            self.machine_control = MachineControl()
+            if self.machine_control.is_connected:
+                logger.info("MachineControl initialized and connected")
+            else:
+                logger.warning("MachineControl initialized but not connected")
+        except Exception as e:
+            logger.error(f"MachineControl initialization error: {e}")
+            self.machine_control = None
 
     def _setup_ui(self):
         """Setup the complete UI with all frames and widgets."""
@@ -165,22 +186,23 @@ class PositioningController(QWidget):
         """
 
         # === MENGENE KONTROLÜ FRAME (LEFT) ===
-        # Position: (0, 0, 440, 700)
+        # Position: (33, 127, 461, 939) - eski: (425, 127, 461, 939)
         self.mengeneKontroluFrame = QFrame(self)
-        self.mengeneKontroluFrame.setGeometry(0, 0, 440, 700)
+        self.mengeneKontroluFrame.setGeometry(33, 127, 461, 939)
         self.mengeneKontroluFrame.setStyleSheet(frame_style)
 
         self.labelMengeneKontrolu = QLabel("Mengene Kontrolü", self.mengeneKontroluFrame)
-        self.labelMengeneKontrolu.setGeometry(30, 30, 380, 40)
+        self.labelMengeneKontrolu.setGeometry(4, 19, 451, 45)
         self.labelMengeneKontrolu.setStyleSheet(label_title_style)
+        self.labelMengeneKontrolu.setAlignment(Qt.AlignCenter)
 
         # Arka Mengene Aç button (top)
         self.btnArkaMengeneAc = QPushButton(self.mengeneKontroluFrame)
-        self.btnArkaMengeneAc.setGeometry(118, 100, 205, 205)
+        self.btnArkaMengeneAc.setGeometry(97, 104, 254, 251)
         self.btnArkaMengeneAc.setStyleSheet(vise_button_style)
         self.btnArkaMengeneAc.setCheckable(True)
         self.btnArkaMengeneAc.setIcon(self._load_icon("arka-mengene-ac.svg"))
-        self.btnArkaMengeneAc.setIconSize(self.btnArkaMengeneAc.size())
+        self.btnArkaMengeneAc.setIconSize(QSize(205, 205))
         self.btnArkaMengeneAc.clicked.connect(
             lambda checked: self._on_toggle_button(
                 self.btnArkaMengeneAc, "arka_mengene_ac", checked
@@ -189,11 +211,11 @@ class PositioningController(QWidget):
 
         # Mengene Kapat/Sıkıştır button (center)
         self.btnMengeneKapat = QPushButton(self.mengeneKontroluFrame)
-        self.btnMengeneKapat.setGeometry(118, 325, 205, 205)
+        self.btnMengeneKapat.setGeometry(97, 379, 254, 251)
         self.btnMengeneKapat.setStyleSheet(vise_button_style)
         self.btnMengeneKapat.setCheckable(True)
         self.btnMengeneKapat.setIcon(self._load_icon("mengene-sikistir.svg"))
-        self.btnMengeneKapat.setIconSize(self.btnMengeneKapat.size())
+        self.btnMengeneKapat.setIconSize(QSize(205, 205))
         self.btnMengeneKapat.clicked.connect(
             lambda checked: self._on_toggle_button(
                 self.btnMengeneKapat, "mengene_kapat", checked
@@ -202,11 +224,11 @@ class PositioningController(QWidget):
 
         # Ön Mengene Aç button (bottom)
         self.btnOnMengeneAc = QPushButton(self.mengeneKontroluFrame)
-        self.btnOnMengeneAc.setGeometry(118, 550, 205, 205)
+        self.btnOnMengeneAc.setGeometry(97, 654, 254, 251)
         self.btnOnMengeneAc.setStyleSheet(vise_button_style)
         self.btnOnMengeneAc.setCheckable(True)
         self.btnOnMengeneAc.setIcon(self._load_icon("on-mengene-ac.svg"))
-        self.btnOnMengeneAc.setIconSize(self.btnOnMengeneAc.size())
+        self.btnOnMengeneAc.setIconSize(QSize(205, 205))
         self.btnOnMengeneAc.clicked.connect(
             lambda checked: self._on_toggle_button(
                 self.btnOnMengeneAc, "on_mengene_ac", checked
@@ -214,25 +236,26 @@ class PositioningController(QWidget):
         )
 
         # === MALZEME KONUMLANDIRMA FRAME (CENTER) ===
-        # Position: (460, 0, 520, 700)
+        # Position: (526, 127, 481, 939) - eski: (918, 127, 481, 939)
         self.malzemeKonumlandirmaFrame = QFrame(self)
-        self.malzemeKonumlandirmaFrame.setGeometry(460, 0, 520, 700)
+        self.malzemeKonumlandirmaFrame.setGeometry(526, 127, 481, 939)
         self.malzemeKonumlandirmaFrame.setStyleSheet(frame_style)
 
         self.labelMalzemeKonumlandirma = QLabel(
             "Malzeme Konumlandırma",
             self.malzemeKonumlandirmaFrame
         )
-        self.labelMalzemeKonumlandirma.setGeometry(30, 30, 460, 40)
+        self.labelMalzemeKonumlandirma.setGeometry(4, 19, 471, 45)
         self.labelMalzemeKonumlandirma.setStyleSheet(label_title_style)
+        self.labelMalzemeKonumlandirma.setAlignment(Qt.AlignCenter)
 
         # Malzeme Geri button (top)
         self.btnMalzemeGeri = QPushButton(self.malzemeKonumlandirmaFrame)
-        self.btnMalzemeGeri.setGeometry(128, 100, 265, 265)
+        self.btnMalzemeGeri.setGeometry(50, 104, 382, 378)
         self.btnMalzemeGeri.setStyleSheet(positioning_button_style)
         self.btnMalzemeGeri.setCheckable(True)
         self.btnMalzemeGeri.setIcon(self._load_icon("malzeme-geri-icon.png"))
-        self.btnMalzemeGeri.setIconSize(self.btnMalzemeGeri.size())
+        self.btnMalzemeGeri.setIconSize(QSize(265, 265))
         self.btnMalzemeGeri.pressed.connect(
             lambda: self._on_hold_button(self.btnMalzemeGeri, "malzeme_geri", True)
         )
@@ -242,11 +265,11 @@ class PositioningController(QWidget):
 
         # Malzeme İleri button (bottom)
         self.btnMalzemeIleri = QPushButton(self.malzemeKonumlandirmaFrame)
-        self.btnMalzemeIleri.setGeometry(128, 390, 265, 265)
+        self.btnMalzemeIleri.setGeometry(50, 526, 382, 378)
         self.btnMalzemeIleri.setStyleSheet(positioning_button_style)
         self.btnMalzemeIleri.setCheckable(True)
         self.btnMalzemeIleri.setIcon(self._load_icon("malzeme-ileri-icon.png"))
-        self.btnMalzemeIleri.setIconSize(self.btnMalzemeIleri.size())
+        self.btnMalzemeIleri.setIconSize(QSize(265, 265))
         self.btnMalzemeIleri.pressed.connect(
             lambda: self._on_hold_button(self.btnMalzemeIleri, "malzeme_ileri", True)
         )
@@ -255,25 +278,26 @@ class PositioningController(QWidget):
         )
 
         # === TESTERE KONUMLANDIRMA FRAME (RIGHT) ===
-        # Position: (1000, 0, 528, 700)
+        # Position: (1038, 127, 461, 939) - eski: (1430, 127, 461, 939)
         self.testereKonumlandirmaFrame = QFrame(self)
-        self.testereKonumlandirmaFrame.setGeometry(1000, 0, 528, 700)
+        self.testereKonumlandirmaFrame.setGeometry(1038, 127, 461, 939)
         self.testereKonumlandirmaFrame.setStyleSheet(frame_style)
 
         self.labelTestereKonumlandirma = QLabel(
             "Testere Konumlandırma",
             self.testereKonumlandirmaFrame
         )
-        self.labelTestereKonumlandirma.setGeometry(30, 30, 468, 40)
+        self.labelTestereKonumlandirma.setGeometry(4, 19, 451, 45)
         self.labelTestereKonumlandirma.setStyleSheet(label_title_style)
+        self.labelTestereKonumlandirma.setAlignment(Qt.AlignCenter)
 
         # Testere Yukarı button (top)
         self.btnTestereYukari = QPushButton(self.testereKonumlandirmaFrame)
-        self.btnTestereYukari.setGeometry(132, 100, 265, 265)
+        self.btnTestereYukari.setGeometry(41, 104, 382, 378)
         self.btnTestereYukari.setStyleSheet(positioning_button_style)
         self.btnTestereYukari.setCheckable(True)
         self.btnTestereYukari.setIcon(self._load_icon("saw-up-icon.png"))
-        self.btnTestereYukari.setIconSize(self.btnTestereYukari.size())
+        self.btnTestereYukari.setIconSize(QSize(265, 265))
         self.btnTestereYukari.pressed.connect(
             lambda: self._on_hold_button(self.btnTestereYukari, "testere_yukari", True)
         )
@@ -283,11 +307,11 @@ class PositioningController(QWidget):
 
         # Testere Aşağı button (bottom)
         self.btnTestereAsagi = QPushButton(self.testereKonumlandirmaFrame)
-        self.btnTestereAsagi.setGeometry(132, 390, 265, 265)
+        self.btnTestereAsagi.setGeometry(41, 526, 382, 378)
         self.btnTestereAsagi.setStyleSheet(positioning_button_style)
         self.btnTestereAsagi.setCheckable(True)
         self.btnTestereAsagi.setIcon(self._load_icon("saw-down-icon.png"))
-        self.btnTestereAsagi.setIconSize(self.btnTestereAsagi.size())
+        self.btnTestereAsagi.setIconSize(QSize(265, 265))
         self.btnTestereAsagi.pressed.connect(
             lambda: self._on_hold_button(self.btnTestereAsagi, "testere_asagi", True)
         )
@@ -322,9 +346,9 @@ class PositioningController(QWidget):
             checked: New checked state
         """
         try:
-            # Check if control manager is available
-            if self.control_manager is None:
-                logger.warning(f"Control manager not available for {command}")
+            # Check if machine_control is available
+            if self.machine_control is None:
+                logger.warning(f"MachineControl not available for {command}")
                 # Revert button state
                 button.blockSignals(True)
                 button.setChecked(not checked)
@@ -334,45 +358,37 @@ class PositioningController(QWidget):
             state_text = "AKTIF" if checked else "PASIF"
             logger.info(f"{command} => {state_text}")
 
-            # Handle vise controls
+            # Handle vise controls (synchronous calls)
             if command == "arka_mengene_ac":
                 if checked:
                     # Suppress close button auto-activation
                     self._suppress_close_autocheck_until = time.monotonic() + 0.6
 
-                    # Open rear vise exclusively
-                    success = self._execute_control_command(
-                        "open_rear_vise_exclusive"
-                    )
+                    # Open rear vise exclusively (synchronous)
+                    self.machine_control.open_rear_vise_exclusive()
 
-                    if success:
-                        # Update UI immediately
-                        button.blockSignals(True)
-                        button.setChecked(True)
-                        button.blockSignals(False)
+                    # Update UI immediately
+                    button.blockSignals(True)
+                    button.setChecked(True)
+                    button.blockSignals(False)
 
-                        # Close front vise if open (mutual exclusivity)
-                        if hasattr(self, 'btnOnMengeneAc') and \
-                           self.btnOnMengeneAc.isChecked():
-                            self.btnOnMengeneAc.blockSignals(True)
-                            self.btnOnMengeneAc.setChecked(False)
-                            self.btnOnMengeneAc.blockSignals(False)
+                    # Close front vise if open (mutual exclusivity)
+                    if hasattr(self, 'btnOnMengeneAc') and \
+                       self.btnOnMengeneAc.isChecked():
+                        self.btnOnMengeneAc.blockSignals(True)
+                        self.btnOnMengeneAc.setChecked(False)
+                        self.btnOnMengeneAc.blockSignals(False)
 
-                        # Deactivate close button
-                        if hasattr(self, 'btnMengeneKapat'):
-                            self.btnMengeneKapat.blockSignals(True)
-                            self.btnMengeneKapat.setChecked(False)
-                            self.btnMengeneKapat.blockSignals(False)
-                    else:
-                        # Revert on failure
-                        button.blockSignals(True)
-                        button.setChecked(False)
-                        button.blockSignals(False)
+                    # Deactivate close button
+                    if hasattr(self, 'btnMengeneKapat'):
+                        self.btnMengeneKapat.blockSignals(True)
+                        self.btnMengeneKapat.setChecked(False)
+                        self.btnMengeneKapat.blockSignals(False)
                 else:
                     # Close rear vise
-                    success = self._execute_control_command("close_rear_vise")
+                    self.machine_control.close_rear_vise()
                     button.blockSignals(True)
-                    button.setChecked(False if success else True)
+                    button.setChecked(False)
                     button.blockSignals(False)
 
             elif command == "on_mengene_ac":
@@ -380,67 +396,53 @@ class PositioningController(QWidget):
                     # Suppress close button auto-activation
                     self._suppress_close_autocheck_until = time.monotonic() + 0.6
 
-                    # Open front vise exclusively
-                    success = self._execute_control_command(
-                        "open_front_vise_exclusive"
-                    )
+                    # Open front vise exclusively (synchronous)
+                    self.machine_control.open_front_vise_exclusive()
 
-                    if success:
-                        # Update UI immediately
-                        button.blockSignals(True)
-                        button.setChecked(True)
-                        button.blockSignals(False)
+                    # Update UI immediately
+                    button.blockSignals(True)
+                    button.setChecked(True)
+                    button.blockSignals(False)
 
-                        # Close rear vise if open (mutual exclusivity)
-                        if hasattr(self, 'btnArkaMengeneAc') and \
-                           self.btnArkaMengeneAc.isChecked():
-                            self.btnArkaMengeneAc.blockSignals(True)
-                            self.btnArkaMengeneAc.setChecked(False)
-                            self.btnArkaMengeneAc.blockSignals(False)
+                    # Close rear vise if open (mutual exclusivity)
+                    if hasattr(self, 'btnArkaMengeneAc') and \
+                       self.btnArkaMengeneAc.isChecked():
+                        self.btnArkaMengeneAc.blockSignals(True)
+                        self.btnArkaMengeneAc.setChecked(False)
+                        self.btnArkaMengeneAc.blockSignals(False)
 
-                        # Deactivate close button
-                        if hasattr(self, 'btnMengeneKapat'):
-                            self.btnMengeneKapat.blockSignals(True)
-                            self.btnMengeneKapat.setChecked(False)
-                            self.btnMengeneKapat.blockSignals(False)
-                    else:
-                        # Revert on failure
-                        button.blockSignals(True)
-                        button.setChecked(False)
-                        button.blockSignals(False)
+                    # Deactivate close button
+                    if hasattr(self, 'btnMengeneKapat'):
+                        self.btnMengeneKapat.blockSignals(True)
+                        self.btnMengeneKapat.setChecked(False)
+                        self.btnMengeneKapat.blockSignals(False)
                 else:
                     # Close front vise
-                    success = self._execute_control_command("close_front_vise")
+                    self.machine_control.close_front_vise()
                     button.blockSignals(True)
-                    button.setChecked(False if success else True)
+                    button.setChecked(False)
                     button.blockSignals(False)
 
             elif command == "mengene_kapat":
                 if checked:
-                    # Close both vises
-                    success = self._execute_control_command("close_both_vises")
+                    # Close both vises (synchronous)
+                    self.machine_control.close_both_vises()
 
-                    if success:
-                        # Update all mengene buttons
-                        if hasattr(self, 'btnArkaMengeneAc'):
-                            self.btnArkaMengeneAc.blockSignals(True)
-                            self.btnArkaMengeneAc.setChecked(False)
-                            self.btnArkaMengeneAc.blockSignals(False)
+                    # Update all mengene buttons
+                    if hasattr(self, 'btnArkaMengeneAc'):
+                        self.btnArkaMengeneAc.blockSignals(True)
+                        self.btnArkaMengeneAc.setChecked(False)
+                        self.btnArkaMengeneAc.blockSignals(False)
 
-                        if hasattr(self, 'btnOnMengeneAc'):
-                            self.btnOnMengeneAc.blockSignals(True)
-                            self.btnOnMengeneAc.setChecked(False)
-                            self.btnOnMengeneAc.blockSignals(False)
+                    if hasattr(self, 'btnOnMengeneAc'):
+                        self.btnOnMengeneAc.blockSignals(True)
+                        self.btnOnMengeneAc.setChecked(False)
+                        self.btnOnMengeneAc.blockSignals(False)
 
-                        # Keep close button active
-                        button.blockSignals(True)
-                        button.setChecked(True)
-                        button.blockSignals(False)
-                    else:
-                        # Revert on failure
-                        button.blockSignals(True)
-                        button.setChecked(False)
-                        button.blockSignals(False)
+                    # Keep close button active
+                    button.blockSignals(True)
+                    button.setChecked(True)
+                    button.blockSignals(False)
                 else:
                     # Deactivate close button
                     button.blockSignals(True)
@@ -464,9 +466,9 @@ class PositioningController(QWidget):
             is_pressed: True if pressed, False if released
         """
         try:
-            # Check if control manager is available
-            if self.control_manager is None:
-                logger.warning(f"Control manager not available for {command}")
+            # Check if machine_control is available
+            if self.machine_control is None:
+                logger.warning(f"MachineControl not available for {command}")
                 return
 
             # Update visual state
@@ -475,73 +477,36 @@ class PositioningController(QWidget):
             state_text = "BASILI" if is_pressed else "BOSALDI"
             logger.info(f"{command} => {state_text}")
 
-            # Handle material positioning
+            # Handle material positioning (synchronous calls)
             if command == "malzeme_geri":
                 if is_pressed:
-                    self._execute_control_command("move_material_backward")
+                    self.machine_control.move_material_backward()
                 else:
-                    self._execute_control_command("stop_material_backward")
+                    self.machine_control.stop_material_backward()
 
             elif command == "malzeme_ileri":
                 if is_pressed:
-                    self._execute_control_command("move_material_forward")
+                    self.machine_control.move_material_forward()
                 else:
-                    self._execute_control_command("stop_material_forward")
+                    self.machine_control.stop_material_forward()
 
-            # Handle saw positioning
+            # Handle saw positioning (synchronous calls)
             elif command == "testere_yukari":
                 if is_pressed:
-                    self._execute_control_command("move_saw_up")
+                    self.machine_control.move_saw_up()
                 else:
-                    self._execute_control_command("stop_saw_up")
+                    self.machine_control.stop_saw_up()
 
             elif command == "testere_asagi":
                 if is_pressed:
-                    self._execute_control_command("move_saw_down")
+                    self.machine_control.move_saw_down()
                 else:
-                    self._execute_control_command("stop_saw_down")
+                    self.machine_control.stop_saw_down()
 
         except Exception as e:
             logger.error(f"Hold button error ({command}): {e}")
             # Reset button visual state
             button.setChecked(False)
-
-    def _execute_control_command(self, command: str) -> bool:
-        """
-        Execute control command via control manager (thread-safe).
-
-        Args:
-            command: Command method name
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            if self.control_manager is None:
-                logger.error(f"Control manager not available for command: {command}")
-                return False
-
-            # Get command method
-            if not hasattr(self.control_manager, command):
-                logger.error(f"Control manager does not support command: {command}")
-                return False
-
-            command_method = getattr(self.control_manager, command)
-
-            # Execute command
-            result = command_method()
-
-            # Check result (some methods may return None for success)
-            if result is None:
-                return True
-            elif isinstance(result, bool):
-                return result
-            else:
-                return True
-
-        except Exception as e:
-            logger.error(f"Control command execution error ({command}): {e}")
-            return False
 
     # ========================================================================
     # Data Update Methods
@@ -551,10 +516,10 @@ class PositioningController(QWidget):
         """Called by data timer to fetch and update data."""
         try:
             if self.get_data_callback:
-                # get_data_callback is data_pipeline object, not a function
-                # Get stats if available
-                if hasattr(self.get_data_callback, 'get_stats'):
-                    data = self.get_data_callback.get_stats()
+                # get_data_callback is data_pipeline object
+                # Get latest sensor data for display
+                if hasattr(self.get_data_callback, 'get_latest_data'):
+                    data = self.get_data_callback.get_latest_data()
                     if data:
                         self.update_data(data)
         except Exception as e:
@@ -575,30 +540,24 @@ class PositioningController(QWidget):
             logger.error(f"Data update error: {e}")
 
     def _update_button_states(self):
-        """Update button states from machine feedback."""
+        """Update button states from machine feedback (synchronous)."""
         try:
-            # Skip if no control manager
-            if self.control_manager is None:
+            # Skip if no machine_control
+            if self.machine_control is None:
                 return
 
-            # Check if control manager has status query methods
             # Mengene status
-            if hasattr(self.control_manager, 'is_rear_vise_open'):
-                rear_vise_status = self.control_manager.is_rear_vise_open()
-                if rear_vise_status is not None and hasattr(self, 'btnArkaMengeneAc'):
-                    self.btnArkaMengeneAc.blockSignals(True)
-                    self.btnArkaMengeneAc.setChecked(rear_vise_status)
-                    self.btnArkaMengeneAc.blockSignals(False)
+            rear_vise_status = self.machine_control.is_rear_vise_open()
+            if rear_vise_status is not None and hasattr(self, 'btnArkaMengeneAc'):
+                self.btnArkaMengeneAc.blockSignals(True)
+                self.btnArkaMengeneAc.setChecked(rear_vise_status)
+                self.btnArkaMengeneAc.blockSignals(False)
 
-            if hasattr(self.control_manager, 'is_front_vise_open'):
-                front_vise_status = self.control_manager.is_front_vise_open()
-                if front_vise_status is not None and hasattr(self, 'btnOnMengeneAc'):
-                    self.btnOnMengeneAc.blockSignals(True)
-                    self.btnOnMengeneAc.setChecked(front_vise_status)
-                    self.btnOnMengeneAc.blockSignals(False)
-            else:
-                front_vise_status = None
-                rear_vise_status = None
+            front_vise_status = self.machine_control.is_front_vise_open()
+            if front_vise_status is not None and hasattr(self, 'btnOnMengeneAc'):
+                self.btnOnMengeneAc.blockSignals(True)
+                self.btnOnMengeneAc.setChecked(front_vise_status)
+                self.btnOnMengeneAc.blockSignals(False)
 
             # Mengene close button sync
             if hasattr(self, 'btnMengeneKapat') and \
@@ -614,38 +573,30 @@ class PositioningController(QWidget):
                     self.btnMengeneKapat.blockSignals(False)
 
             # Material movement status
-            if hasattr(self.control_manager, 'is_material_moving_backward'):
-                material_backward_status = \
-                    self.control_manager.is_material_moving_backward()
-                if material_backward_status is not None and \
-                   hasattr(self, 'btnMalzemeGeri'):
-                    self.btnMalzemeGeri.blockSignals(True)
-                    self.btnMalzemeGeri.setChecked(material_backward_status)
-                    self.btnMalzemeGeri.blockSignals(False)
+            material_backward_status = self.machine_control.is_material_moving_backward()
+            if material_backward_status is not None and hasattr(self, 'btnMalzemeGeri'):
+                self.btnMalzemeGeri.blockSignals(True)
+                self.btnMalzemeGeri.setChecked(material_backward_status)
+                self.btnMalzemeGeri.blockSignals(False)
 
-            if hasattr(self.control_manager, 'is_material_moving_forward'):
-                material_forward_status = \
-                    self.control_manager.is_material_moving_forward()
-                if material_forward_status is not None and \
-                   hasattr(self, 'btnMalzemeIleri'):
-                    self.btnMalzemeIleri.blockSignals(True)
-                    self.btnMalzemeIleri.setChecked(material_forward_status)
-                    self.btnMalzemeIleri.blockSignals(False)
+            material_forward_status = self.machine_control.is_material_moving_forward()
+            if material_forward_status is not None and hasattr(self, 'btnMalzemeIleri'):
+                self.btnMalzemeIleri.blockSignals(True)
+                self.btnMalzemeIleri.setChecked(material_forward_status)
+                self.btnMalzemeIleri.blockSignals(False)
 
             # Saw movement status
-            if hasattr(self.control_manager, 'is_saw_moving_up'):
-                saw_up_status = self.control_manager.is_saw_moving_up()
-                if saw_up_status is not None and hasattr(self, 'btnTestereYukari'):
-                    self.btnTestereYukari.blockSignals(True)
-                    self.btnTestereYukari.setChecked(saw_up_status)
-                    self.btnTestereYukari.blockSignals(False)
+            saw_up_status = self.machine_control.is_saw_moving_up()
+            if saw_up_status is not None and hasattr(self, 'btnTestereYukari'):
+                self.btnTestereYukari.blockSignals(True)
+                self.btnTestereYukari.setChecked(saw_up_status)
+                self.btnTestereYukari.blockSignals(False)
 
-            if hasattr(self.control_manager, 'is_saw_moving_down'):
-                saw_down_status = self.control_manager.is_saw_moving_down()
-                if saw_down_status is not None and hasattr(self, 'btnTestereAsagi'):
-                    self.btnTestereAsagi.blockSignals(True)
-                    self.btnTestereAsagi.setChecked(saw_down_status)
-                    self.btnTestereAsagi.blockSignals(False)
+            saw_down_status = self.machine_control.is_saw_moving_down()
+            if saw_down_status is not None and hasattr(self, 'btnTestereAsagi'):
+                self.btnTestereAsagi.blockSignals(True)
+                self.btnTestereAsagi.setChecked(saw_down_status)
+                self.btnTestereAsagi.blockSignals(False)
 
         except Exception as e:
             logger.debug(f"Button state update error: {e}")
@@ -679,5 +630,18 @@ class PositioningController(QWidget):
             logger.error(f"Icon load error ({icon_filename}): {e}")
             return QIcon()
 
-    # No cleanup() method needed - PySide6 handles timer cleanup automatically
-    # when widget is destroyed via parent-child relationships
+    def stop_timers(self):
+        """
+        Stop all QTimers in this controller.
+
+        IMPORTANT: Must be called from the GUI thread before window closes
+        to avoid segmentation fault on Linux.
+        """
+        try:
+            if hasattr(self, '_data_timer') and self._data_timer:
+                self._data_timer.stop()
+            if hasattr(self, '_button_state_timer') and self._button_state_timer:
+                self._button_state_timer.stop()
+            logger.debug("PositioningController timers stopped")
+        except Exception as e:
+            logger.error(f"Error stopping positioning controller timers: {e}")

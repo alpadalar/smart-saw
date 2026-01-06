@@ -24,9 +24,13 @@ class RawSensorData:
     inme_motor_akim_a: float = 0.0               # Descent motor current (A)
     inme_motor_tork_percentage: float = 0.0      # Descent motor torque (%)
 
-    # Speed values
+    # Speed values (actual - from registers 1033/1034)
     serit_kesme_hizi: float = 0.0                # Cutting speed (mm/min)
     serit_inme_hizi: float = 0.0                 # Descent speed (mm/min)
+
+    # Target speed values (from registers 2066/2041 - what we write to PLC)
+    kesme_hizi_hedef: float = 0.0                # Target cutting speed (mm/min)
+    inme_hizi_hedef: float = 0.0                 # Target descent speed (mm/min)
 
     # Mechanical measurements
     kafa_yuksekligi_mm: float = 0.0              # Head height (mm)
@@ -62,10 +66,10 @@ class RawSensorData:
     malzeme_cinsi: str = ""                      # Material type
     malzeme_sertlik: str = ""                    # Material hardness
     kesit_yapisi: str = ""                       # Cross-section structure
-    malzeme_a_mm: int = 0                        # Material dimension A (mm)
-    malzeme_b_mm: int = 0                        # Material dimension B (mm)
-    malzeme_c_mm: int = 0                        # Material dimension C (mm)
-    malzeme_d_mm: int = 0                        # Material dimension D (mm)
+    malzeme_a_mm: float = 0.0                    # Material dimension A (mm)
+    malzeme_b_mm: float = 0.0                    # Material dimension B (mm)
+    malzeme_c_mm: float = 0.0                    # Material dimension C (mm)
+    malzeme_d_mm: float = 0.0                    # Material dimension D (mm)
     malzeme_genisligi: float = 0.0               # Material width (mm)
 
     # Band information
@@ -76,6 +80,9 @@ class RawSensorData:
 
     # Statistics
     kesilen_parca_adeti: int = 0                 # Cut piece count
+
+    # Power measurement
+    guc_kwh: float = 0.0                         # Power consumption (kWh)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -103,7 +110,7 @@ class ProcessedData:
 
     # Cutting session tracking
     is_cutting: bool = False
-    cutting_session_id: Optional[str] = None
+    cutting_session_id: Optional[int] = None  # Integer kesim_id
     controller_type: str = "manual"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -117,7 +124,8 @@ class ProcessedData:
             'torque_guard_active': self.torque_guard_active,
             'anomalies': self.anomalies,
             'is_cutting': self.is_cutting,
-            'cutting_id': self.cutting_id
+            'cutting_session_id': self.cutting_session_id,
+            'controller_type': self.controller_type
         }
 
 
