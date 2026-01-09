@@ -573,19 +573,13 @@ class SensorController(QWidget):
         # Button style matching control panel
         axis_btn_style = """
             QPushButton {
-                background: qlineargradient(
-                    spread:pad,
-                    x1:0, y1:0,
-                    x2:1, y2:1,
-                    stop:0 rgba(0, 0, 0, 255),
-                    stop:1 rgba(26, 31, 55, 255)
-                );
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
                 border-radius: 20px;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
                 font-size: 18px;
-                border: 2px solid transparent;
+                border: 2px solid #F4F6FC;
             }
             QPushButton:hover {
                 border: 2px solid rgba(244, 246, 252, 100);
