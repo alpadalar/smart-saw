@@ -163,6 +163,10 @@ class CuttingGraphWidget(QWidget):
             for i in range(11):
                 y = rect.top() + (rect.height() * i) // 10
                 painter.drawLine(rect.left(), y, rect.right(), y)
+            
+            painter.setPen(QPen(self.line_color, 2))
+            painter.drawLine(rect.left(), rect.top(), rect.left(), rect.bottom())
+            painter.drawLine(rect.left(), rect.bottom(), rect.right(), rect.bottom())
 
         except Exception as e:
             logger.error(f"Error drawing grid: {e}")
@@ -573,7 +577,7 @@ class SensorController(QWidget):
         # Button style matching control panel
         axis_btn_style = """
             QPushButton {
-                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200));
                 border-radius: 20px;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
@@ -864,11 +868,7 @@ class SensorController(QWidget):
         self.toolButton.setGeometry(8, 750, 443, 60)
         self.toolButton.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #000000,
-                    stop:0.38 rgba(26, 31, 55, 200)
-                );
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200));
                 border: 1px solid #F4F6FC;
                 border-radius: 20px;
                 color: #F4F6FC;

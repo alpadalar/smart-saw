@@ -664,7 +664,7 @@ class ControlPanelController(QWidget):
 
         button_mode_style = """
             QPushButton {
-                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200));
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
@@ -683,7 +683,7 @@ class ControlPanelController(QWidget):
 
         button_speed_style = """
             QPushButton {
-                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200));
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
@@ -1199,7 +1199,7 @@ class ControlPanelController(QWidget):
         # Button style for control buttons
         control_button_style = """
             QToolButton {
-                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200));
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
