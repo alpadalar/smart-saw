@@ -149,8 +149,8 @@ class MainController(QMainWindow):
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: 600;
-                font-size: 32px;
+                font-weight: medium;
+                font-size: 26px;
                 text-align: left;
                 padding: 12px 10px 12px 25px;
                 border: none;
@@ -191,7 +191,7 @@ class MainController(QMainWindow):
         self.btnSensor.clicked.connect(lambda: self._switch_page(2))
 
         self.btnTracking = QPushButton("  İzleme", self.sidebarFrame)
-        self.btnTracking.setGeometry(27, 528, 355, 110)
+        self.btnTracking.setGeometry(26, 528, 355, 110)
         self.btnTracking.setIcon(self._icon("tracking-icon2.svg"))
         self.btnTracking.setIconSize(QSize(80, 80))
         self.btnTracking.setStyleSheet(nav_btn_style)
