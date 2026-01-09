@@ -22,10 +22,10 @@ from ...services.control.machine_control import MachineControl
 
 try:
     from PySide6.QtWidgets import (
-        QWidget, QFrame, QPushButton, QLabel, QTextEdit,
+        QWidget, QFrame, QPushButton, QLabel, QTextEdit, QToolButton,
         QProgressBar, QDialog, QVBoxLayout, QHBoxLayout, QApplication
     )
-    from PySide6.QtCore import Qt, QTimer, QDateTime, Slot, Signal, QPoint
+    from PySide6.QtCore import Qt, QTimer, QDateTime, Slot, Signal, QPoint, QSize
     from PySide6.QtGui import (
         QFont, QPixmap, QIcon, QTextCursor, QPainter, QPen,
         QColor, QBrush, QPolygon, QImage
@@ -664,31 +664,11 @@ class ControlPanelController(QWidget):
 
         button_mode_style = """
             QPushButton {
-                background-color: rgba(26, 31, 55, 200);
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
                 font-size: 20px;
-                text-align: left;
-                border-radius: 20px;
-                border: 2px solid #F4F6FC;
-                padding-left: 52px;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.1);
-            }
-            QPushButton:checked {
-                background-color: #950952;
-            }
-        """
-
-        button_speed_style = """
-            QPushButton {
-                background-color: rgba(26, 31, 55, 200);
-                color: #F4F6FC;
-                font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 18px;
                 text-align: center;
                 border-radius: 20px;
                 border: 2px solid #F4F6FC;
@@ -697,7 +677,36 @@ class ControlPanelController(QWidget):
                 background-color: rgba(255, 255, 255, 0.1);
             }
             QPushButton:checked {
-                background-color: #950952;
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(149, 9, 82, 255), stop:1 rgba(26, 31, 55, 255));
+            }
+        """
+
+        button_speed_style = """
+            QPushButton {
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 20px;
+                text-align: center;
+                border-radius: 20px;
+                border: 2px solid #F4F6FC;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            QPushButton:checked {
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(149, 9, 82, 255), stop:1 rgba(26, 31, 55, 255));
+            }
+        """
+        speed_info_style = """
+            QLabel {
+                background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: medium;
+                font-size: 20px;
+                text-align: left;
             }
         """
 
@@ -733,18 +742,10 @@ class ControlPanelController(QWidget):
         # Speed preset buttons
         self.labelSpeed = QLabel("Hız Seçimi", self.cuttingModeFrame)
         self.labelSpeed.setGeometry(27, 170, 371, 34)
-        self.labelSpeed.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-                color: #F4F6FC;
-                font-family: 'Plus Jakarta Sans';
-                font-weight: medium;
-                font-size: 18px;
-            }
-        """)
+        self.labelSpeed.setStyleSheet(label_title_style)
 
         self.btnSlowSpeed = QPushButton("Yavaş", self.cuttingModeFrame)
-        self.btnSlowSpeed.setGeometry(19, 222, 120, 45)
+        self.btnSlowSpeed.setGeometry(19, 231, 120, 65)
         self.btnSlowSpeed.setStyleSheet(button_speed_style)
         self.btnSlowSpeed.setCheckable(True)
         self.btnSlowSpeed.clicked.connect(
@@ -752,7 +753,7 @@ class ControlPanelController(QWidget):
         )
 
         self.btnNormalSpeed = QPushButton("Normal", self.cuttingModeFrame)
-        self.btnNormalSpeed.setGeometry(160, 222, 120, 45)
+        self.btnNormalSpeed.setGeometry(160, 231, 120, 65)
         self.btnNormalSpeed.setStyleSheet(button_speed_style)
         self.btnNormalSpeed.setCheckable(True)
         self.btnNormalSpeed.clicked.connect(
@@ -760,7 +761,7 @@ class ControlPanelController(QWidget):
         )
 
         self.btnFastSpeed = QPushButton("Hızlı", self.cuttingModeFrame)
-        self.btnFastSpeed.setGeometry(300, 222, 120, 45)
+        self.btnFastSpeed.setGeometry(300, 231, 120, 65)
         self.btnFastSpeed.setStyleSheet(button_speed_style)
         self.btnFastSpeed.setCheckable(True)
         self.btnFastSpeed.clicked.connect(
@@ -926,6 +927,13 @@ class ControlPanelController(QWidget):
             }
         """)
 
+        self.labelBandCuttingSpeedInfo = QLabel(
+            "Hız Değeri Girmek İçin Tıklayınız.",
+            self.bandCuttingSpeedFrame
+        )
+        self.labelBandCuttingSpeedInfo.setGeometry(31, 90, 491, 34)
+        self.labelBandCuttingSpeedInfo.setStyleSheet(speed_info_style)
+
         # Large speed value display
         self.labelBandCuttingSpeedValue = QLabel("0", self.bandCuttingSpeedFrame)
         self.labelBandCuttingSpeedValue.setGeometry(300, 70, 241, 111)
@@ -942,14 +950,14 @@ class ControlPanelController(QWidget):
 
         # Sent speed label
         self.labelSentCuttingSpeed = QLabel("0.0", self.bandCuttingSpeedFrame)
-        self.labelSentCuttingSpeed.setGeometry(31, 87, 200, 80)
+        self.labelSentCuttingSpeed.setGeometry(31, 115, 200, 80)
         self.labelSentCuttingSpeed.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: medium;
-                font-size: 42px;
+                font-weight: light;
+                font-size: 25px;
             }
         """)
 
@@ -1041,6 +1049,13 @@ class ControlPanelController(QWidget):
             }
         """)
 
+        self.labelBandDescentSpeedInfo = QLabel(
+            "Hız Değeri Girmek İçin Tıklayınız.",
+            self.bandDescentSpeedFrame
+        )
+        self.labelBandDescentSpeedInfo.setGeometry(31, 90, 491, 34)
+        self.labelBandDescentSpeedInfo.setStyleSheet(speed_info_style)
+
         # Large speed value display
         self.labelBandDescentSpeedValue = QLabel("0", self.bandDescentSpeedFrame)
         self.labelBandDescentSpeedValue.setGeometry(300, 70, 241, 111)
@@ -1057,14 +1072,14 @@ class ControlPanelController(QWidget):
 
         # Sent speed label
         self.labelSentDescentSpeed = QLabel("0.0", self.bandDescentSpeedFrame)
-        self.labelSentDescentSpeed.setGeometry(31, 87, 200, 80)
+        self.labelSentDescentSpeed.setGeometry(31, 115, 200, 80)
         self.labelSentDescentSpeed.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: medium;
-                font-size: 42px;
+                font-weight: light;
+                font-size: 25px;
             }
         """)
 
@@ -1136,7 +1151,7 @@ class ControlPanelController(QWidget):
 
         # === LOG VIEWER FRAME (1176, 384, 321, 480) ===
         self.logViewerFrame = QFrame(self)
-        self.logViewerFrame.setGeometry(1176, 384, 321, 480)
+        self.logViewerFrame.setGeometry(1176, 384, 321, 460)
         self.logViewerFrame.setStyleSheet(frame_style)
 
         self.labelLogViewer = QLabel("Çalışma Günlüğü", self.logViewerFrame)
@@ -1145,7 +1160,7 @@ class ControlPanelController(QWidget):
 
         # Log text widget
         self.log_text = QTextEdit(self.logViewerFrame)
-        self.log_text.setGeometry(30, 70, 261, 380)
+        self.log_text.setGeometry(30, 70, 261, 360)
         self.log_text.setReadOnly(True)
         self.log_text.setStyleSheet("""
             QTextEdit {
@@ -1178,73 +1193,90 @@ class ControlPanelController(QWidget):
         self.cuttingControlFrame.setStyleSheet(frame_style)
 
         self.labelCuttingControl = QLabel("Kesim Kontrol", self.cuttingControlFrame)
-        self.labelCuttingControl.setGeometry(27, 26, 271, 34)
+        self.labelCuttingControl.setGeometry(27, 16, 271, 34)
         self.labelCuttingControl.setStyleSheet(label_title_style)
 
         # Button style for control buttons
         control_button_style = """
-            QPushButton {
-                background-color: rgba(26, 31, 55, 200);
+            QToolButton {
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(45, 54, 95, 200), stop:1 rgba(26, 31, 55, 200));
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
-                font-size: 20px;
-                text-align: center;
+                font-size: 22px;
+                text-align: top-center;
                 border-radius: 25px;
                 border: 2px solid #F4F6FC;
+                padding-top: 10px;
             }
-            QPushButton:hover {
+            QToolButton:hover {
                 background-color: rgba(255, 255, 255, 0.1);
             }
-            QPushButton:checked {
-                background-color: #950952;
+            QToolButton:checked {
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(149, 9, 82, 255), stop:1 rgba(26, 31, 55, 255));
             }
-            QPushButton:disabled {
+            QToolButton:disabled {
                 background-color: rgba(26, 31, 55, 100);
                 color: rgba(244, 246, 252, 100);
             }
         """
 
         # Coolant button
-        self.toolBtnCoolant = QPushButton("Soğutma Sıvısı", self.cuttingControlFrame)
-        self.toolBtnCoolant.setGeometry(35, 85, 190, 100)
+        self.toolBtnCoolant = QToolButton(self.cuttingControlFrame)
+        self.toolBtnCoolant.setText("Soğutma Sıvısı")
+        self.toolBtnCoolant.setGeometry(35, 63, 248, 135)
         self.toolBtnCoolant.setStyleSheet(control_button_style)
         self.toolBtnCoolant.setCheckable(True)
+        self.toolBtnCoolant.setIcon(self._load_icon("coolant-liquid-icon.svg"))
+        self.toolBtnCoolant.setIconSize(QSize(90, 90))
+        self.toolBtnCoolant.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.toolBtnCoolant.toggled.connect(self._on_coolant_toggled)
 
         # Sawdust cleaning button
-        self.toolBtnSawdustCleaning = QPushButton("Talaş Temizliği", self.cuttingControlFrame)
-        self.toolBtnSawdustCleaning.setGeometry(247, 85, 190, 100)
+        self.toolBtnSawdustCleaning = QToolButton(self.cuttingControlFrame)
+        self.toolBtnSawdustCleaning.setText("Talaş Temizliği")
+        self.toolBtnSawdustCleaning.setGeometry(305, 63, 248, 135)
         self.toolBtnSawdustCleaning.setStyleSheet(control_button_style)
         self.toolBtnSawdustCleaning.setCheckable(True)
+        self.toolBtnSawdustCleaning.setIcon(self._load_icon("sawdust-cleaning-icon.svg"))
+        self.toolBtnSawdustCleaning.setIconSize(QSize(90, 90))
+        self.toolBtnSawdustCleaning.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.toolBtnSawdustCleaning.toggled.connect(self._on_chip_cleaning_toggled)
 
         # Cutting start button
-        self.toolBtnCuttingStart = QPushButton("Kesim Başlat", self.cuttingControlFrame)
-        self.toolBtnCuttingStart.setGeometry(459, 85, 190, 100)
+        self.toolBtnCuttingStart = QToolButton(self.cuttingControlFrame)
+        self.toolBtnCuttingStart.setText("Kesim Başlat")
+        self.toolBtnCuttingStart.setGeometry(575, 63, 248, 135)
         self.toolBtnCuttingStart.setStyleSheet(control_button_style)
+        self.toolBtnCuttingStart.setIcon(self._load_icon("cutting-start-icon.svg"))
+        self.toolBtnCuttingStart.setIconSize(QSize(90, 90))
+        self.toolBtnCuttingStart.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.toolBtnCuttingStart.clicked.connect(self._on_cutting_start_clicked)
 
         # Cutting stop button
-        self.toolBtnCuttingStop = QPushButton("Kesim Durdur", self.cuttingControlFrame)
-        self.toolBtnCuttingStop.setGeometry(671, 85, 190, 100)
+        self.toolBtnCuttingStop = QToolButton(self.cuttingControlFrame)
+        self.toolBtnCuttingStop.setText("Kesim Durdur")
+        self.toolBtnCuttingStop.setGeometry(845, 63, 248, 135)
         self.toolBtnCuttingStop.setStyleSheet(control_button_style)
+        self.toolBtnCuttingStop.setIcon(self._load_icon("cutting-stop-icon.svg"))
+        self.toolBtnCuttingStop.setIconSize(QSize(90, 90))
+        self.toolBtnCuttingStop.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.toolBtnCuttingStop.clicked.connect(self._on_cutting_stop_clicked)
 
         # Cutting time display (in control frame)
-        self.cuttingTimeFrame = QFrame(self.cuttingControlFrame)
-        self.cuttingTimeFrame.setGeometry(883, 10, 220, 198)
+        self.cuttingTimeFrame = QFrame(self)
+        self.cuttingTimeFrame.setGeometry(1176, 845, 321, 221)
         self.cuttingTimeFrame.setStyleSheet(nested_frame_style)
 
         self.labelCuttingTime = QLabel("Kesim Zamanı", self.cuttingTimeFrame)
-        self.labelCuttingTime.setGeometry(10, 6, 200, 22)
+        self.labelCuttingTime.setGeometry(27, 16, 200, 22)
         self.labelCuttingTime.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
-                font-size: 16px;
+                font-size: 24px;
             }
         """)
 
@@ -1254,7 +1286,7 @@ class ControlPanelController(QWidget):
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: medium;
-                font-size: 13px;
+                font-size: 19px;
             }
         """
         time_value_style = """
@@ -1262,76 +1294,76 @@ class ControlPanelController(QWidget):
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 13px;
+                font-weight: medium;
+                font-size: 19px;
             }
         """
 
-        row_height = 22
-        row_start = 30
+        row_height = 31
+        row_start = 47
 
         # Start time
         self.labelStartTime = QLabel("Başlangıç:", self.cuttingTimeFrame)
-        self.labelStartTime.setGeometry(10, row_start, 90, row_height)
+        self.labelStartTime.setGeometry(30, row_start, 90, row_height)
         self.labelStartTime.setStyleSheet(time_label_style)
 
         self.labelStartTimeValue = QLabel("--:--:--", self.cuttingTimeFrame)
-        self.labelStartTimeValue.setGeometry(100, row_start, 110, row_height)
+        self.labelStartTimeValue.setGeometry(184, row_start, 110, row_height)
         self.labelStartTimeValue.setStyleSheet(time_value_style)
         self.labelStartTimeValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Duration time (live counter)
         self.labelDurationTime = QLabel("Süre:", self.cuttingTimeFrame)
-        self.labelDurationTime.setGeometry(10, row_start + row_height, 90, row_height)
+        self.labelDurationTime.setGeometry(30, row_start + row_height, 90, row_height)
         self.labelDurationTime.setStyleSheet(time_label_style)
 
         self.labelDurationTimeValue = QLabel("--:--:--", self.cuttingTimeFrame)
-        self.labelDurationTimeValue.setGeometry(100, row_start + row_height, 110, row_height)
+        self.labelDurationTimeValue.setGeometry(184, row_start + row_height, 110, row_height)
         self.labelDurationTimeValue.setStyleSheet(time_value_style)
         self.labelDurationTimeValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Remaining time (estimated)
         self.labelRemainingTime = QLabel("Kalan:", self.cuttingTimeFrame)
-        self.labelRemainingTime.setGeometry(10, row_start + row_height * 2, 90, row_height)
+        self.labelRemainingTime.setGeometry(30, row_start + row_height * 2, 90, row_height)
         self.labelRemainingTime.setStyleSheet(time_label_style)
 
         self.labelRemainingTimeValue = QLabel("--:--:--", self.cuttingTimeFrame)
-        self.labelRemainingTimeValue.setGeometry(100, row_start + row_height * 2, 110, row_height)
+        self.labelRemainingTimeValue.setGeometry(184, row_start + row_height * 2, 110, row_height)
         self.labelRemainingTimeValue.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #4CAF50;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 13px;
+                font-weight: medium;
+                font-size: 19px;
             }
         """)
         self.labelRemainingTimeValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Stop time
         self.labelStopTime = QLabel("Bitiş:", self.cuttingTimeFrame)
-        self.labelStopTime.setGeometry(10, row_start + row_height * 3, 90, row_height)
+        self.labelStopTime.setGeometry(30, row_start + row_height * 3, 90, row_height)
         self.labelStopTime.setStyleSheet(time_label_style)
 
         self.labelStopTimeValue = QLabel("--:--:--", self.cuttingTimeFrame)
-        self.labelStopTimeValue.setGeometry(100, row_start + row_height * 3, 110, row_height)
+        self.labelStopTimeValue.setGeometry(184, row_start + row_height * 3, 110, row_height)
         self.labelStopTimeValue.setStyleSheet(time_value_style)
         self.labelStopTimeValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Previous cutting duration
         self.labelPrevDuration = QLabel("Önceki:", self.cuttingTimeFrame)
-        self.labelPrevDuration.setGeometry(10, row_start + row_height * 4, 90, row_height)
+        self.labelPrevDuration.setGeometry(30, row_start + row_height * 4, 90, row_height)
         self.labelPrevDuration.setStyleSheet(time_label_style)
 
         self.labelPrevDurationValue = QLabel("--:--:--", self.cuttingTimeFrame)
-        self.labelPrevDurationValue.setGeometry(100, row_start + row_height * 4, 110, row_height)
+        self.labelPrevDurationValue.setGeometry(184, row_start + row_height * 4, 110, row_height)
         self.labelPrevDurationValue.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #FFA726;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 13px;
+                font-weight: medium;
+                font-size: 19px;
             }
         """)
         self.labelPrevDurationValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -2258,3 +2290,33 @@ class ControlPanelController(QWidget):
             logger.debug("ControlPanelController timers stopped")
         except Exception as e:
             logger.error(f"Error stopping control panel timers: {e}")
+
+
+    # ========================================================================
+    # Load Icon Method
+    # ========================================================================
+
+    def _load_icon(self, icon_filename: str) -> QIcon:
+        """
+        Load icon from images directory.
+
+        Args:
+            icon_filename: Icon filename
+
+        Returns:
+            QIcon object
+        """
+        try:
+            # Get base path (gui/images/)
+            base_path = os.path.dirname(os.path.dirname(__file__))
+            icon_path = os.path.join(base_path, "images", icon_filename)
+
+            if os.path.exists(icon_path):
+                return QIcon(icon_path)
+            else:
+                logger.warning(f"Icon not found: {icon_path}")
+                return QIcon()
+
+        except Exception as e:
+            logger.error(f"Icon load error ({icon_filename}): {e}")
+            return QIcon()
