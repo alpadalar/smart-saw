@@ -205,6 +205,8 @@ CREATE TABLE IF NOT EXISTS ml_predictions (
     sapma_input REAL,
     kesme_hizi_input REAL,
     inme_hizi_input REAL,
+    serit_motor_tork REAL,  -- Band motor torque (%)
+    kafa_yuksekligi REAL,   -- Head height (mm)
 
     -- Output speeds
     yeni_kesme_hizi REAL,
