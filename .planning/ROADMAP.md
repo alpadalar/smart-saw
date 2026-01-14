@@ -42,11 +42,11 @@ Plans:
 **Goal**: Yeni alanların veri yazma mantığına entegrasyonu
 **Depends on**: Phase 2
 **Research**: Unlikely (data already available in RawSensorData/ProcessedData)
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave (parallel)
 
 Plans:
-- [ ] 03-01: Update ML data writing logic
-- [ ] 03-02: Update anomaly data writing logic
+- [ ] 03-01: Update ML data writing logic (ml_controller.py)
+- [ ] 03-02: Update anomaly data writing logic (anomaly_tracker.py, data_processor.py)
 
 ## Progress
 
@@ -57,4 +57,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. ML Schema Update | 1/1 | Complete | 2026-01-15 |
 | 2. Anomaly Schema Update | 1/1 | Complete | 2026-01-15 |
-| 3. Data Population | 0/2 | Not started | - |
+| 3. Data Population | 0/2 | Planned | - |
