@@ -229,7 +229,8 @@ CREATE TABLE IF NOT EXISTS anomaly_events (
     sensor_name TEXT NOT NULL,
     sensor_value REAL,
     detection_method TEXT,
-    kesim_id INTEGER
+    kesim_id INTEGER,
+    kafa_yuksekligi REAL  -- Head height at anomaly detection (mm)
 );
 
 CREATE INDEX IF NOT EXISTS idx_anomaly_timestamp ON anomaly_events(timestamp);
