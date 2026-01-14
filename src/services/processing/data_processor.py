@@ -287,7 +287,8 @@ class DataProcessingPipeline:
                     sensor_name=sensor_name,
                     sensor_value=sensor_value,
                     detection_method=self.anomaly_manager.get_method_for_sensor(sensor_name),
-                    kesim_id=kesim_id
+                    kesim_id=kesim_id,
+                    kafa_yuksekligi=raw_data.kafa_yuksekligi_mm
                 )
 
         # Convert anomaly results to list format for ProcessedData
