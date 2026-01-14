@@ -76,7 +76,8 @@ class AnomalyTracker:
         sensor_name: str,
         sensor_value: float,
         detection_method: str = "unknown",
-        kesim_id: Optional[int] = None
+        kesim_id: Optional[int] = None,
+        kafa_yuksekligi: Optional[float] = None
     ):
         """
         Record a new anomaly event.
@@ -86,6 +87,7 @@ class AnomalyTracker:
             sensor_value: Current value of the sensor
             detection_method: Detection method used (z_score, iqr, etc.)
             kesim_id: Current cutting session ID (if cutting)
+            kafa_yuksekligi: Head height at time of anomaly (mm)
         """
         with self._state_lock:
             now = datetime.now()
@@ -111,7 +113,8 @@ class AnomalyTracker:
                     sensor_name=sensor_name,
                     sensor_value=sensor_value,
                     detection_method=detection_method,
-                    kesim_id=kesim_id
+                    kesim_id=kesim_id,
+                    kafa_yuksekligi=kafa_yuksekligi
                 )
 
     def _save_anomaly_to_db(
@@ -120,7 +123,8 @@ class AnomalyTracker:
         sensor_name: str,
         sensor_value: float,
         detection_method: str,
-        kesim_id: Optional[int]
+        kesim_id: Optional[int],
+        kafa_yuksekligi: Optional[float]
     ):
         """Save anomaly event to database."""
         try:
@@ -130,15 +134,17 @@ class AnomalyTracker:
                     sensor_name,
                     sensor_value,
                     detection_method,
-                    kesim_id
-                ) VALUES (?, ?, ?, ?, ?)
+                    kesim_id,
+                    kafa_yuksekligi
+                ) VALUES (?, ?, ?, ?, ?, ?)
             """
             params = (
                 timestamp.isoformat(),
                 sensor_name,
                 sensor_value,
                 detection_method,
-                kesim_id
+                kesim_id,
+                kafa_yuksekligi
             )
             self.db.write_async(sql, params)
         except Exception as e:
