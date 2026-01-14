@@ -192,7 +192,7 @@ class MLController:
                         return torque_guard_command
 
                 # 6. Normal ML prediction
-                coefficient = self._predict_coefficient()
+                coefficient = self._predict_coefficient(raw_data)
                 if coefficient is None:
                     logger.error("ML prediction failed")
                     self._stats['errors'] += 1
@@ -244,7 +244,7 @@ class MLController:
                 self._stats['errors'] += 1
                 return None
 
-    def _predict_coefficient(self) -> Optional[float]:
+    def _predict_coefficient(self, raw_data) -> Optional[float]:
         """
         ML model inference.
 
@@ -254,7 +254,10 @@ class MLController:
         3. Predict coefficient
         4. Clamp to [-1, 1]
         5. Apply global KATSAYI
-        6. Log to database
+        6. Log to database (with torque and head height)
+
+        Args:
+            raw_data: RawSensorData with current sensor readings
 
         Returns:
             Coefficient in [-1.0, 1.0] range, or None on error
@@ -277,8 +280,13 @@ class MLController:
             # Apply global multiplier
             coefficient *= self.katsayi
 
-            # Log to database
-            self._log_ml_prediction(input_df, coefficient)
+            # Log to database with torque and head height values
+            self._log_ml_prediction(
+                input_df,
+                coefficient,
+                raw_data.serit_motor_tork_percentage,
+                raw_data.kafa_yuksekligi_mm
+            )
 
             self._stats['predictions'] += 1
 
