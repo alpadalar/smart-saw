@@ -14,7 +14,7 @@ None
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: ML Schema Update** - Add tork and kafa yüksekliği fields to ML predictions table
+- [x] **Phase 1: ML Schema Update** - Add tork and kafa yüksekliği fields to ML predictions table
 - [ ] **Phase 2: Anomaly Schema Update** - Add kafa yüksekliği field to anomaly events table
 - [ ] **Phase 3: Data Population** - Update data writing logic to populate new fields
 
@@ -27,7 +27,7 @@ None
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: Schema migration for ML database
+- [x] 01-01: Schema migration for ML database
 
 ### Phase 2: Anomaly Schema Update
 **Goal**: Anomaly events tablosuna kafa_yuksekligi alanını eklemek
@@ -55,6 +55,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. ML Schema Update | 0/1 | Not started | - |
+| 1. ML Schema Update | 1/1 | Complete | 2026-01-15 |
 | 2. Anomaly Schema Update | 0/1 | Not started | - |
 | 3. Data Population | 0/2 | Not started | - |

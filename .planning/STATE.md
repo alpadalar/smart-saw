@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 1 of 3 (ML Schema Update)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-15 — Project initialized
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-15 — Completed 01-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █░░░░░░░░░ 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 1 min
+- Total execution time: 1 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| — | — | — | — |
+| 01-ml-schema-update | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: —
-- Trend: —
+- Last 5 plans: 01-01 (1 min)
+- Trend: Starting
 
 ## Accumulated Context
 
@@ -40,7 +40,9 @@ Progress: ░░░░░░░░░░ 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-(None yet)
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+| 01-01 | Place new ML columns in input features group | Logical ordering: input features together, output fields together |
 
 ### Deferred Issues
 
@@ -53,5 +55,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Project initialization complete
+Stopped at: Completed 01-01-PLAN.md (Phase 1 complete)
 Resume file: None
