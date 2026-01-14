@@ -617,13 +617,21 @@ class MLController:
 
         logger.info("Cutting stopped - ML state reset")
 
-    def _log_ml_prediction(self, input_df, coefficient: float):
+    def _log_ml_prediction(
+        self,
+        input_df,
+        coefficient: float,
+        serit_motor_tork: float,
+        kafa_yuksekligi: float
+    ):
         """
         Log ML prediction to database for analysis.
 
         Args:
             input_df: Input DataFrame with features
             coefficient: Predicted coefficient
+            serit_motor_tork: Band motor torque percentage at prediction time
+            kafa_yuksekligi: Head height in mm at prediction time
         """
         try:
             sql = """
@@ -633,8 +641,10 @@ class MLController:
                     sapma_input,
                     kesme_hizi_input,
                     inme_hizi_input,
+                    serit_motor_tork,
+                    kafa_yuksekligi,
                     ml_output
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
 
             params = (
@@ -643,6 +653,8 @@ class MLController:
                 float(input_df['sapma_input'].iloc[0]),
                 float(input_df['kesme_hizi'].iloc[0]),
                 float(input_df['inme_hizi'].iloc[0]),
+                float(serit_motor_tork),
+                float(kafa_yuksekligi),
                 float(coefficient)
             )
 
