@@ -90,8 +90,37 @@ class CuttingGraphWidget(QWidget):
                 self.y_axis_type = y_axis
                 # Clear data when axis changes
                 self.data_points.clear()
+            # Update axis title labels
+            self.update_axis_titles(x_axis, y_axis)
         except Exception as e:
             logger.error(f"Error setting axis types: {e}")
+
+    def update_axis_titles(self, x_axis: str, y_axis: str):
+        """Update axis title labels based on selected axis types"""
+        try:
+            # Y-axis title mapping (Turkish with proper characters)
+            y_titles = {
+                "serit_kesme_hizi": "Kesme Hızı (m/min)",
+                "serit_inme_hizi": "İlerleme Hızı (mm/s)",
+                "serit_motor_akim_a": "Şerit Akım (A)",
+                "serit_sapmasi": "Şerit Sapması (mm)",
+                "serit_motor_tork_percentage": "Şerit Tork (%)",
+            }
+            # X-axis title mapping (Turkish with proper characters)
+            x_titles = {
+                "timestamp": "Zaman (s)",
+                "kafa_yuksekligi_mm": "Yükseklik (mm)",
+            }
+            # Update Y-axis title
+            if hasattr(self, 'y_axis_title') and self.y_axis_title:
+                y_text = y_titles.get(y_axis, "")
+                self.y_axis_title.setText(y_text)
+            # Update X-axis title
+            if hasattr(self, 'x_axis_title') and self.x_axis_title:
+                x_text = x_titles.get(x_axis, "")
+                self.x_axis_title.setText(x_text)
+        except Exception as e:
+            logger.error(f"Error updating axis titles: {e}")
 
     def add_data_point(self, x_value: float, y_value: float):
         """Add new data point (thread-safe)"""
@@ -275,6 +304,24 @@ class CuttingGraphWidget(QWidget):
             }
         """
 
+        # Axis title style (bold, 16px)
+        axis_title_style = """
+            QLabel {
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 16px;
+                background-color: transparent;
+                border: none;
+            }
+        """
+
+        # Y-axis title label (rotated text on left side)
+        self.y_axis_title = QLabel(self.parent())
+        self.y_axis_title.setStyleSheet(axis_title_style)
+        self.y_axis_title.setText("Kesme Hızı (m/min)")  # Default
+        self.y_axis_title.setAlignment(Qt.AlignCenter)
+
         # Left side labels (Y axis) - in kesimGrafigiFrame
         self.yust = QLabel(self.parent())
         self.yust.setStyleSheet(label_style)
@@ -314,6 +361,7 @@ class CuttingGraphWidget(QWidget):
         self.xust.show()
         self.xorta.show()
         self.xalt.show()
+        self.y_axis_title.show()
 
         # Update label positions
         self._update_label_positions()
@@ -388,6 +436,15 @@ class CuttingGraphWidget(QWidget):
             self.xorta.setGeometry(graph_x + (graph_width // 2) - (label_width // 2), graph_y + graph_height + 5, label_width, label_height)
             # Right
             self.xalt.setGeometry(graph_x + graph_width - label_width - 20, graph_y + graph_height + 5, label_width, label_height)
+
+            # Y-axis title label (positioned to left of Y-axis value labels, centered vertically)
+            # Using horizontal text since Qt rotation is complex
+            y_title_width = 180
+            y_title_height = 25
+            y_title_x = graph_x - label_width - y_title_width - 10  # Left of value labels
+            y_title_y = graph_y + (graph_height // 2) - (y_title_height // 2)  # Centered vertically
+            if hasattr(self, 'y_axis_title') and self.y_axis_title:
+                self.y_axis_title.setGeometry(y_title_x, y_title_y, y_title_width, y_title_height)
 
         except Exception as e:
             logger.error(f"Error updating label positions: {e}")
