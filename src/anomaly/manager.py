@@ -133,15 +133,13 @@ class AnomalyManager:
         try:
             results = {}
 
-            # Process each sensor
+            # Process each sensor (no manager lock needed - detectors have own locks)
             # Band deviation
             if 'serit_sapmasi' in data:
                 value = data.get('serit_sapmasi', 0.0)
                 self.detectors['serit_sapmasi'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['serit_sapmasi'].detect()
                 results['SeritSapmasi'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['SeritSapmasi'] = is_anomaly
 
             # Band motor current
             if 'serit_motor_akim_a' in data:
@@ -149,8 +147,6 @@ class AnomalyManager:
                 self.detectors['serit_motor_akim'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['serit_motor_akim'].detect()
                 results['SeritAkim'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['SeritAkim'] = is_anomaly
 
             # Band motor torque
             if 'serit_motor_tork_percentage' in data:
@@ -158,8 +154,6 @@ class AnomalyManager:
                 self.detectors['serit_motor_tork'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['serit_motor_tork'].detect()
                 results['SeritTork'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['SeritTork'] = is_anomaly
 
             # Cutting speed
             if 'serit_kesme_hizi' in data:
@@ -167,8 +161,6 @@ class AnomalyManager:
                 self.detectors['serit_kesme_hizi'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['serit_kesme_hizi'].detect()
                 results['KesmeHizi'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['KesmeHizi'] = is_anomaly
 
             # Feed rate
             if 'serit_inme_hizi' in data:
@@ -176,8 +168,6 @@ class AnomalyManager:
                 self.detectors['serit_inme_hizi'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['serit_inme_hizi'].detect()
                 results['IlerlemeHizi'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['IlerlemeHizi'] = is_anomaly
 
             # Vibration X
             if 'ivme_olcer_x_hz' in data:
@@ -185,8 +175,6 @@ class AnomalyManager:
                 self.detectors['titresim_x'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['titresim_x'].detect()
                 results['TitresimX'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['TitresimX'] = is_anomaly
 
             # Vibration Y
             if 'ivme_olcer_y_hz' in data:
@@ -194,8 +182,6 @@ class AnomalyManager:
                 self.detectors['titresim_y'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['titresim_y'].detect()
                 results['TitresimY'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['TitresimY'] = is_anomaly
 
             # Vibration Z
             if 'ivme_olcer_z_hz' in data:
@@ -203,8 +189,6 @@ class AnomalyManager:
                 self.detectors['titresim_z'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['titresim_z'].detect()
                 results['TitresimZ'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['TitresimZ'] = is_anomaly
 
             # Band tension
             if 'serit_gerginligi_bar' in data:
@@ -212,10 +196,12 @@ class AnomalyManager:
                 self.detectors['serit_gerginligi'].add_data_point(value, is_cutting)
                 is_anomaly = self.detectors['serit_gerginligi'].detect()
                 results['SeritGerginligi'] = is_anomaly
-                with self._lock:
-                    self.anomaly_states['SeritGerginligi'] = is_anomaly
 
-            # Call callback for each result
+            # Update all anomaly states atomically (single lock acquisition)
+            with self._lock:
+                self.anomaly_states.update(results)
+
+            # Call callback for each result (outside lock)
             if self._update_callback:
                 for key, is_anomaly in results.items():
                     try:
