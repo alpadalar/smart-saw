@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** Planning next milestone
+**Current focus:** v1.3 Processing Performance — lock contention ve algoritma optimizasyonları
 
 ## Current Position
 
-Phase: All phases complete
-Plan: N/A
-Status: Milestone v1.2 shipped
-Last activity: 2026-01-15 — v1.2 milestone complete
+Phase: 7 of 9 (MQTT Lock-Free Queue)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v1.3 created
 
-Progress: ██████████ 100% (v1.2)
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -43,15 +43,12 @@ Progress: ██████████ 100% (v1.2)
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-All decisions from v1.0 and v1.1 milestones captured.
+All decisions from v1.0, v1.1, and v1.2 milestones captured.
 
-**v1.2 Decisions:**
-- Speed restoration triggers on KESIME_HAZIR state (not YUKARI)
-- Only kesme and inme speeds need to be saved/restored
-- ModbusWriter created in ControlManager and passed to MLController via dependency injection
-- Speed restoration is async to support Modbus write operations
-- Axis title labels use horizontal text (Qt rotation is complex)
-- Y-axis title positioned left of value labels, X-axis title below value labels
+**v1.3 Decisions:**
+- MQTT: Lock-free asyncio.Queue kullanılacak (not threading queue)
+- Vibration: IQR method'a geçiş (DBSCAN O(n²) → IQR O(n))
+- Config'deki method ayarları (iqr, z_score, dbscan) çalışmaya devam edecek
 
 ### Deferred Issues
 
@@ -68,12 +65,11 @@ None.
 - Milestone v1.1 created: Modbus connection resilience, 1 phase (Phase 4)
 - Milestone v1.1 COMPLETE: 2026-01-15
 - Milestone v1.2 created: ML speed memory & chart UX, 2 phases (Phase 5-6)
-- Phase 5: ML Speed Restoration — COMPLETE 2026-01-15
-- Phase 6: Dynamic Chart Axis Labels — COMPLETE 2026-01-15
-- Milestone v1.2 — ALL PHASES COMPLETE 2026-01-15
+- Milestone v1.2 COMPLETE: 2026-01-15
+- Milestone v1.3 created: Processing performance, 3 phases (Phase 7-9)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: v1.2 milestone archived and tagged
+Stopped at: Milestone v1.3 initialization
 Resume file: None

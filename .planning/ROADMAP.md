@@ -13,6 +13,7 @@ None
 - [v1.0 Database Field Additions](milestones/v1.0-ROADMAP.md) (Phases 1-3) — SHIPPED 2026-01-15
 - [v1.1 Modbus Connection Resilience](milestones/v1.1-ROADMAP.md) (Phase 4) — SHIPPED 2026-01-15
 - [v1.2 ML Speed Memory & Chart UX](milestones/v1.2-ROADMAP.md) (Phases 5-6) — SHIPPED 2026-01-15
+- 🚧 **v1.3 Processing Performance** — Phases 7-9 (in progress)
 
 ## Phases
 
@@ -63,6 +64,40 @@ Plans:
 
 </details>
 
+### 🚧 v1.3 Processing Performance (In Progress)
+
+**Milestone Goal:** Data processor cycle time'ı 100ms hedefine düşürmek için lock contention ve algoritma optimizasyonları
+
+#### Phase 7: MQTT Lock-Free Queue
+
+**Goal**: Lock-free asyncio.Queue ile queue_telemetry decoupling
+**Depends on**: Phase 6 (previous milestone complete)
+**Research**: Unlikely (internal patterns — asyncio.Queue, producer-consumer pattern)
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: TBD (run /gsd:plan-phase 7 to break down)
+
+#### Phase 8: Vibration DBSCAN to IQR
+
+**Goal**: Vibration anomaly detektörlerini IQR method'a geçir
+**Depends on**: Phase 7
+**Research**: Unlikely (internal patterns — IQR already implemented for other detectors)
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: TBD (run /gsd:plan-phase 8 to break down)
+
+#### Phase 9: AnomalyManager Lock Consolidation
+
+**Goal**: Tek lock acquisition ile tüm detektör işleme
+**Depends on**: Phase 8
+**Research**: Unlikely (internal patterns — threading lock refactoring)
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD (run /gsd:plan-phase 9 to break down)
+
 ## Progress
 
 **Execution Order:**
@@ -76,3 +111,6 @@ Phases execute in numeric order: 1 → 2 → 3
 | 4. Modbus Connection Timeout Handling | v1.1 | 1/1 | Complete | 2026-01-15 |
 | 5. ML Speed Restoration | v1.2 | 1/1 | Complete | 2026-01-15 |
 | 6. Dynamic Chart Axis Labels | v1.2 | 1/1 | Complete | 2026-01-15 |
+| 7. MQTT Lock-Free Queue | v1.3 | 0/? | Not started | - |
+| 8. Vibration DBSCAN to IQR | v1.3 | 0/? | Not started | - |
+| 9. AnomalyManager Lock Consolidation | v1.3 | 0/? | Not started | - |
