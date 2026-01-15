@@ -31,7 +31,7 @@ class AsyncModbusService:
 
         # Connection cooldown (prevents repeated connection attempts when PLC is unreachable)
         self._last_connect_attempt: float = 0
-        self._connect_cooldown: float = config.get('connect_cooldown', 10.0)
+        self._connect_cooldown: float = config.get('connect_cooldown', 1.0)
 
         # Health monitoring
         self._last_read_time: Optional[float] = None

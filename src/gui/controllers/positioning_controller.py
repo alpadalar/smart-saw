@@ -542,8 +542,10 @@ class PositioningController(QWidget):
     def _update_button_states(self):
         """Update button states from machine feedback (synchronous)."""
         try:
-            # Skip if no machine_control
+            # Skip if no machine_control or not connected (avoid blocking reconnection attempts)
             if self.machine_control is None:
+                return
+            if not self.machine_control.is_connected:
                 return
 
             # Mengene status

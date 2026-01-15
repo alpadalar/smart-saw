@@ -1968,7 +1968,10 @@ class ControlPanelController(QWidget):
     def _update_control_button_states(self):
         """Update coolant and chip cleaning button states from Modbus."""
         try:
+            # Skip if not connected (avoid blocking reconnection attempts)
             if not self.machine_control:
+                return
+            if not self.machine_control.is_connected:
                 return
 
             # Read coolant state

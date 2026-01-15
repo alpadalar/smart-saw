@@ -7,11 +7,16 @@ Uses SYNCHRONOUS Modbus calls (like old project) for reliable Qt integration.
 
 import logging
 import threading
+import time
 from typing import Optional
 
 from pymodbus.client import ModbusTcpClient
 
 logger = logging.getLogger(__name__)
+
+# Connection settings
+CONNECT_TIMEOUT = 1.0  # Connection timeout in seconds
+CONNECT_COOLDOWN = 1.0  # Minimum seconds between connection attempts
 
 
 class MachineControl:
@@ -66,11 +71,19 @@ class MachineControl:
 
             self.host = host
             self.port = port
-            self.client = ModbusTcpClient(host=host, port=port)
+            self.client = ModbusTcpClient(
+                host=host,
+                port=port,
+                timeout=CONNECT_TIMEOUT
+            )
             self.connected = False
 
-            # Try to connect
+            # Connection cooldown tracking
+            self._last_connect_attempt: float = 0
+
+            # Try to connect (with cooldown tracking)
             try:
+                self._last_connect_attempt = time.monotonic()
                 self.connected = self.client.connect()
                 if self.connected:
                     logger.info(f"MachineControl connected to {host}:{port}")
@@ -90,10 +103,24 @@ class MachineControl:
         except Exception:
             return False
 
+    def _should_attempt_connect(self) -> bool:
+        """Check if enough time has passed since last connection attempt."""
+        elapsed = time.monotonic() - self._last_connect_attempt
+        if elapsed >= CONNECT_COOLDOWN:
+            return True
+        logger.debug(
+            f"MachineControl: Skipping connection attempt, cooldown active ({elapsed:.1f}s / {CONNECT_COOLDOWN:.1f}s)"
+        )
+        return False
+
     def _ensure_connected(self) -> bool:
         """Ensure Modbus connection is active."""
         try:
             if not self.client.is_socket_open():
+                # Check cooldown before attempting reconnection
+                if not self._should_attempt_connect():
+                    return False  # Skip during cooldown
+                self._last_connect_attempt = time.monotonic()
                 self.connected = self.client.connect()
                 if self.connected:
                     logger.info("MachineControl reconnected")
