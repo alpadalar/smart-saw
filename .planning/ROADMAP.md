@@ -11,7 +11,7 @@ None
 ## Milestones
 
 - [v1.0 Database Field Additions](milestones/v1.0-ROADMAP.md) (Phases 1-3) — SHIPPED 2026-01-15
-- 🚧 **v1.1 Modbus Connection Resilience** - Phase 4 (in progress)
+- [v1.1 Modbus Connection Resilience](milestones/v1.1-ROADMAP.md) (Phase 4) — SHIPPED 2026-01-15
 
 ## Phases
 
@@ -28,19 +28,12 @@ None
 
 </details>
 
-### 🚧 v1.1 Modbus Connection Resilience (In Progress)
+<details>
+<summary>v1.1 Modbus Connection Resilience (Phase 4) — SHIPPED 2026-01-15</summary>
 
-**Milestone Goal:** Modbus bağlantısı olmadığında uygulamanın donmasını engellemek, proper timeout handling ile graceful error handling sağlamak.
+- [x] Phase 4: Modbus Connection Timeout Handling (1/1 plans) — completed 2026-01-15
 
-#### Phase 4: Modbus Connection Timeout Handling
-
-**Goal**: Fix blocking calls when Modbus connection unavailable - add proper timeout handling so application responds gracefully instead of freezing
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns - fixing timeout in existing code)
-**Plans**: 1
-
-Plans:
-- [ ] 04-01: Connection cooldown and operation timeouts
+</details>
 
 ## Progress
 
@@ -52,4 +45,4 @@ Phases execute in numeric order: 1 → 2 → 3
 | 1. ML Schema Update | v1.0 | 1/1 | Complete | 2026-01-15 |
 | 2. Anomaly Schema Update | v1.0 | 1/1 | Complete | 2026-01-15 |
 | 3. Data Population | v1.0 | 2/2 | Complete | 2026-01-15 |
-| 4. Modbus Connection Timeout Handling | v1.1 | 0/1 | Planned | - |
+| 4. Modbus Connection Timeout Handling | v1.1 | 1/1 | Complete | 2026-01-15 |
