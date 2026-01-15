@@ -1,5 +1,32 @@
 # Project Milestones: Smart Saw Database Field Additions
 
+## v1.2 ML Speed Memory & Chart UX (Shipped: 2026-01-15)
+
+**Delivered:** ML kesim sonrası otomatik hız restorasyonu ve grafik eksenlerinde dinamik etiketler ile kullanıcı deneyimi iyileştirildi.
+
+**Phases completed:** 5-6 (2 plans total)
+
+**Key accomplishments:**
+
+- Automatic save/restore of operator-set speeds around ML cutting sessions
+- ModbusWriter integration via dependency injection for async speed writes
+- Dynamic Y-axis title labels showing current metric name and unit (Kesme Hizi, Ilerleme Hizi, etc.)
+- Dynamic X-axis title labels (Zaman, Yukseklik) with Turkish character support
+- Auto schema mismatch detection and database recreation with backup
+
+**Stats:**
+
+- 5 files modified (ml_controller.py, manager.py, config.yaml, sensor_controller.py, sqlite_service.py)
+- ~14,000 lines Python (existing codebase)
+- 2 phases, 2 plans, 5 tasks
+- Same-day completion (2026-01-15)
+
+**Git range:** `feat(05-01)` → `feat(06-01)`
+
+**What's next:** Monitor speed restoration behavior in production
+
+---
+
 ## v1.1 Modbus Connection Resilience (Shipped: 2026-01-15)
 
 **Delivered:** AsyncModbusService'e connection cooldown ve operation timeout eklenerek PLC erişilemez olduğunda uygulama donması önlendi.
