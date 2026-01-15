@@ -40,15 +40,15 @@ None
 
 **Milestone Goal:** ML kesim sonrası hız restorasyonu ve grafik kullanılabilirliği
 
-#### Phase 5: ML Speed Restoration
+#### Phase 5: ML Speed Restoration — COMPLETE
 
 **Goal**: Save/restore kesme and inme speeds around ML cuts
 **Depends on**: Phase 4 (previous milestone complete)
 **Research**: Unlikely (internal patterns — state machine logic, Modbus writes)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 05-01: TBD (run /gsd:plan-phase 5 to break down)
+- [x] 05-01: Implement save/restore of cutting speeds around ML cuts — completed 2026-01-15
 
 #### Phase 6: Dynamic Chart Axis Labels
 
@@ -71,5 +71,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 2. Anomaly Schema Update | v1.0 | 1/1 | Complete | 2026-01-15 |
 | 3. Data Population | v1.0 | 2/2 | Complete | 2026-01-15 |
 | 4. Modbus Connection Timeout Handling | v1.1 | 1/1 | Complete | 2026-01-15 |
-| 5. ML Speed Restoration | v1.2 | 0/? | Not started | - |
+| 5. ML Speed Restoration | v1.2 | 1/1 | Complete | 2026-01-15 |
 | 6. Dynamic Chart Axis Labels | v1.2 | 0/? | Not started | - |
