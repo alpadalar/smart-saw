@@ -6,8 +6,10 @@ Architecture:
 - Reads use thread-local connections (query_only=ON)
 - Batch commits every 100 writes or 1 second
 - WAL mode for concurrent read/write
+- Auto-detects schema mismatches and recreates database with backup
 """
 
+import shutil
 import sqlite3
 import threading
 import time
@@ -18,6 +20,14 @@ from typing import List, Tuple, Optional, Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Error patterns indicating schema mismatch
+SCHEMA_MISMATCH_PATTERNS = [
+    "has no column named",
+    "no such column",
+    "no such table",
+    "table .* has no column",
+]
 
 
 class SQLiteService:
@@ -53,6 +63,10 @@ class SQLiteService:
             "reads_completed": 0,
             "queue_full_count": 0
         }
+
+        # Schema migration tracking
+        self._schema_recreated = False
+        self._recreate_lock = threading.Lock()
 
     def start(self):
         """Start the database service."""
@@ -111,6 +125,73 @@ class SQLiteService:
         finally:
             conn.close()
 
+    def _is_schema_mismatch_error(self, error: Exception) -> bool:
+        """Check if error indicates schema mismatch."""
+        import re
+        error_msg = str(error).lower()
+        for pattern in SCHEMA_MISMATCH_PATTERNS:
+            if re.search(pattern, error_msg):
+                return True
+        return False
+
+    def _backup_and_recreate_database(self) -> bool:
+        """
+        Backup existing database and create fresh one with current schema.
+
+        Returns:
+            True if successful, False otherwise
+        """
+        with self._recreate_lock:
+            # Prevent multiple recreations
+            if self._schema_recreated:
+                return False
+
+            try:
+                # Create backup filename with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = self.db_path.with_suffix(f".{timestamp}.backup")
+
+                # Close any thread-local connections
+                if hasattr(self._thread_local, 'conn'):
+                    try:
+                        self._thread_local.conn.close()
+                    except:
+                        pass
+                    delattr(self._thread_local, 'conn')
+
+                # Backup existing database
+                if self.db_path.exists():
+                    shutil.copy2(self.db_path, backup_path)
+                    logger.warning(f"Database backed up to: {backup_path}")
+
+                    # Also backup WAL and SHM files if they exist
+                    for ext in ['-wal', '-shm']:
+                        wal_path = Path(str(self.db_path) + ext)
+                        if wal_path.exists():
+                            shutil.copy2(wal_path, Path(str(backup_path) + ext))
+
+                    # Remove old database files
+                    self.db_path.unlink()
+                    for ext in ['-wal', '-shm']:
+                        wal_path = Path(str(self.db_path) + ext)
+                        if wal_path.exists():
+                            wal_path.unlink()
+
+                # Recreate database with current schema
+                self._initialize_database()
+
+                self._schema_recreated = True
+                logger.warning(
+                    f"Database recreated with new schema: {self.db_path}. "
+                    f"Old data preserved in: {backup_path}"
+                )
+
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to backup and recreate database: {e}", exc_info=True)
+                return False
+
     def _get_read_connection(self) -> sqlite3.Connection:
         """Get thread-local read connection."""
         if not hasattr(self._thread_local, 'conn'):
@@ -153,14 +234,18 @@ class SQLiteService:
                 )
 
                 if should_commit:
-                    self._execute_batch(conn, batch)
+                    new_conn = self._execute_batch(conn, batch)
+                    if new_conn is not None:
+                        conn = new_conn  # Use new connection after db recreate
                     batch.clear()
                     last_commit = time.time()
 
             except Empty:
                 # Timeout - commit any pending batch
                 if batch:
-                    self._execute_batch(conn, batch)
+                    new_conn = self._execute_batch(conn, batch)
+                    if new_conn is not None:
+                        conn = new_conn  # Use new connection after db recreate
                     batch.clear()
                     last_commit = time.time()
 
@@ -173,8 +258,13 @@ class SQLiteService:
 
         conn.close()
 
-    def _execute_batch(self, conn: sqlite3.Connection, batch: List[Dict]):
-        """Execute batch write operations."""
+    def _execute_batch(self, conn: sqlite3.Connection, batch: List[Dict]) -> Optional[sqlite3.Connection]:
+        """
+        Execute batch write operations.
+
+        Returns:
+            New connection if database was recreated, None otherwise
+        """
         try:
             for item in batch:
                 sql = item['sql']
@@ -186,12 +276,57 @@ class SQLiteService:
             with self._stats_lock:
                 self._stats['writes_completed'] += len(batch)
 
+            return None
+
         except Exception as e:
+            # Check if this is a schema mismatch error
+            if self._is_schema_mismatch_error(e) and not self._schema_recreated:
+                logger.warning(
+                    f"Schema mismatch detected: {e}. "
+                    f"Backing up and recreating database..."
+                )
+
+                # Close current connection before recreating
+                try:
+                    conn.close()
+                except:
+                    pass
+
+                # Backup old database and create new one
+                if self._backup_and_recreate_database():
+                    # Create new connection for writer thread
+                    new_conn = sqlite3.connect(str(self.db_path))
+                    new_conn.execute("PRAGMA journal_mode=WAL")
+                    new_conn.execute("PRAGMA synchronous=NORMAL")
+
+                    # Retry the batch with new connection
+                    try:
+                        for item in batch:
+                            new_conn.execute(item['sql'], item['params'])
+                        new_conn.commit()
+
+                        with self._stats_lock:
+                            self._stats['writes_completed'] += len(batch)
+
+                        return new_conn
+                    except Exception as retry_error:
+                        logger.error(f"Batch retry failed after recreate: {retry_error}")
+                        new_conn.rollback()
+                        with self._stats_lock:
+                            self._stats['writes_failed'] += len(batch)
+                        return new_conn
+
+            # Regular error handling
             logger.error(f"Batch execution error: {e}", exc_info=True)
-            conn.rollback()
+            try:
+                conn.rollback()
+            except:
+                pass
 
             with self._stats_lock:
                 self._stats['writes_failed'] += len(batch)
+
+            return None
 
     # Public API
 
@@ -254,4 +389,5 @@ class SQLiteService:
         with self._stats_lock:
             stats = self._stats.copy()
             stats['queue_size'] = self._write_queue.qsize()
+            stats['schema_recreated'] = self._schema_recreated
             return stats
