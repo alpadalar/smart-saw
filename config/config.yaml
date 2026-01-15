@@ -256,8 +256,8 @@ iot:
       retry_backoff_seconds: 2.0
 
       # Batch sending to reduce network traffic
-      batch_size: 10                    # Send batch every 10 messages
-      batch_interval_seconds: 5.0       # Or every 5 seconds
+      batch_size: 100                   # Send batch every 100 messages
+      batch_interval_seconds: 1.0       # Or every 1 second
 
     # HTTP settings (alternative to MQTT)
     http:
