@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** v1.3 Processing Performance — lock contention ve algoritma optimizasyonlari
+**Current focus:** v1.4 Control Mode Fixes — AI mode switch hatası ve manuel mod initial delay düzeltmeleri
 
 ## Current Position
 
-Phase: 9 of 9 (AnomalyManager Lock Consolidation)
-Plan: 1 of 1 in current phase
-Status: Phase complete, Milestone complete
-Last activity: 2026-01-15 — Completed 09-01-PLAN.md
+Phase: 10 of 11 (AI Mode Switch Fix)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v1.4 created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -72,9 +72,10 @@ None.
 - Milestone v1.2 COMPLETE: 2026-01-15
 - Milestone v1.3 created: Processing performance, 3 phases (Phase 7-9)
 - Milestone v1.3 COMPLETE: 2026-01-15
+- Milestone v1.4 created: Control mode fixes, 2 phases (Phase 10-11)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 09-01-PLAN.md (Phase 9 complete, Milestone v1.3 complete)
+Stopped at: Milestone v1.4 initialization
 Resume file: None

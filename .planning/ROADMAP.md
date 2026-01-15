@@ -14,6 +14,7 @@ None
 - [v1.1 Modbus Connection Resilience](milestones/v1.1-ROADMAP.md) (Phase 4) — SHIPPED 2026-01-15
 - [v1.2 ML Speed Memory & Chart UX](milestones/v1.2-ROADMAP.md) (Phases 5-6) — SHIPPED 2026-01-15
 - [v1.3 Processing Performance](milestones/v1.3-ROADMAP.md) (Phases 7-9) — SHIPPED 2026-01-15
+- 🚧 **v1.4 Control Mode Fixes** — Phases 10-11 (in progress)
 
 ## Phases
 
@@ -101,6 +102,30 @@ Plans:
 
 </details>
 
+### 🚧 v1.4 Control Mode Fixes (In Progress)
+
+**Milestone Goal:** Kontrol modu geçişleri ve başlangıç davranışı düzeltmeleri — AI mode switch hatası ve manuel mod initial delay sorunu
+
+#### Phase 10: AI Mode Switch Fix
+
+**Goal**: GUI thread'den asyncio çağrısı için cross-thread coordination
+**Depends on**: Phase 9 (previous milestone complete)
+**Research**: Unlikely (internal patterns — asyncio/threading coordination)
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01: TBD (run /gsd:plan-phase 10 to break down)
+
+#### Phase 11: Initial Delay Logic
+
+**Goal**: Manuel mod için `initial_delay=False` default, ML mod için mevcut davranış korunsun
+**Depends on**: Phase 10
+**Research**: Unlikely (internal patterns — simple flag logic)
+**Plans**: TBD
+
+Plans:
+- [ ] 11-01: TBD (run /gsd:plan-phase 11 to break down)
+
 ## Progress
 
 **Execution Order:**
@@ -117,3 +142,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 7. MQTT Lock-Free Queue | v1.3 | 1/1 | Complete | 2026-01-15 |
 | 8. Vibration DBSCAN to IQR | v1.3 | 1/1 | Complete | 2026-01-15 |
 | 9. AnomalyManager Lock Consolidation | v1.3 | 1/1 | Complete | 2026-01-15 |
+| 10. AI Mode Switch Fix | v1.4 | 0/? | Not started | - |
+| 11. Initial Delay Logic | v1.4 | 0/? | Not started | - |
