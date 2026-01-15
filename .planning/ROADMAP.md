@@ -37,10 +37,10 @@ None
 **Goal**: Fix blocking calls when Modbus connection unavailable - add proper timeout handling so application responds gracefully instead of freezing
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal patterns - fixing timeout in existing code)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] 04-01: TBD (run /gsd:plan-phase 4 to break down)
+- [ ] 04-01: Connection cooldown and operation timeouts
 
 ## Progress
 
@@ -52,4 +52,4 @@ Phases execute in numeric order: 1 → 2 → 3
 | 1. ML Schema Update | v1.0 | 1/1 | Complete | 2026-01-15 |
 | 2. Anomaly Schema Update | v1.0 | 1/1 | Complete | 2026-01-15 |
 | 3. Data Population | v1.0 | 2/2 | Complete | 2026-01-15 |
-| 4. Modbus Connection Timeout Handling | v1.1 | 0/? | Not started | - |
+| 4. Modbus Connection Timeout Handling | v1.1 | 0/1 | Planned | - |
