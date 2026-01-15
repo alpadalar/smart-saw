@@ -12,7 +12,7 @@ None
 
 - [v1.0 Database Field Additions](milestones/v1.0-ROADMAP.md) (Phases 1-3) — SHIPPED 2026-01-15
 - [v1.1 Modbus Connection Resilience](milestones/v1.1-ROADMAP.md) (Phase 4) — SHIPPED 2026-01-15
-- 🚧 **v1.2 ML Speed Memory & Chart UX** — Phases 5-6 (in progress)
+- [v1.2 ML Speed Memory & Chart UX](milestones/v1.2-ROADMAP.md) (Phases 5-6) — SHIPPED 2026-01-15
 
 ## Phases
 
@@ -36,7 +36,8 @@ None
 
 </details>
 
-### 🚧 v1.2 ML Speed Memory & Chart UX (In Progress)
+<details>
+<summary>v1.2 ML Speed Memory & Chart UX (Phases 5-6) — SHIPPED 2026-01-15</summary>
 
 **Milestone Goal:** ML kesim sonrası hız restorasyonu ve grafik kullanılabilirliği
 
@@ -50,15 +51,17 @@ None
 Plans:
 - [x] 05-01: Implement save/restore of cutting speeds around ML cuts — completed 2026-01-15
 
-#### Phase 6: Dynamic Chart Axis Labels
+#### Phase 6: Dynamic Chart Axis Labels — COMPLETE
 
 **Goal**: Add dynamic axis labels to sensor data charts
 **Depends on**: Phase 5
 **Research**: Unlikely (internal patterns — PyQtGraph axis configuration)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 06-01: TBD (run /gsd:plan-phase 6 to break down)
+- [x] 06-01: Add dynamic Y-axis and X-axis title labels to cutting graph — completed 2026-01-15
+
+</details>
 
 ## Progress
 
@@ -72,4 +75,4 @@ Phases execute in numeric order: 1 → 2 → 3
 | 3. Data Population | v1.0 | 2/2 | Complete | 2026-01-15 |
 | 4. Modbus Connection Timeout Handling | v1.1 | 1/1 | Complete | 2026-01-15 |
 | 5. ML Speed Restoration | v1.2 | 1/1 | Complete | 2026-01-15 |
-| 6. Dynamic Chart Axis Labels | v1.2 | 0/? | Not started | - |
+| 6. Dynamic Chart Axis Labels | v1.2 | 1/1 | Complete | 2026-01-15 |
