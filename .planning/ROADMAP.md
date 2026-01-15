@@ -78,15 +78,15 @@ Plans:
 Plans:
 - [x] 07-01: Replace deque + Lock with lock-free asyncio.Queue — completed 2026-01-15
 
-#### Phase 8: Vibration DBSCAN to IQR
+#### Phase 8: Vibration DBSCAN to IQR — COMPLETE
 
 **Goal**: Vibration anomaly detektörlerini IQR method'a geçir
 **Depends on**: Phase 7
 **Research**: Unlikely (internal patterns — IQR already implemented for other detectors)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 08-01: TBD (run /gsd:plan-phase 8 to break down)
+- [x] 08-01: Replace DBSCAN with IQR for vibration detectors — completed 2026-01-15
 
 #### Phase 9: AnomalyManager Lock Consolidation
 
@@ -112,5 +112,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 5. ML Speed Restoration | v1.2 | 1/1 | Complete | 2026-01-15 |
 | 6. Dynamic Chart Axis Labels | v1.2 | 1/1 | Complete | 2026-01-15 |
 | 7. MQTT Lock-Free Queue | v1.3 | 1/1 | Complete | 2026-01-15 |
-| 8. Vibration DBSCAN to IQR | v1.3 | 0/? | Not started | - |
+| 8. Vibration DBSCAN to IQR | v1.3 | 1/1 | Complete | 2026-01-15 |
 | 9. AnomalyManager Lock Consolidation | v1.3 | 0/? | Not started | - |
