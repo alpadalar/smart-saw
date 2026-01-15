@@ -106,15 +106,15 @@ Plans:
 
 **Milestone Goal:** Kontrol modu geçişleri ve başlangıç davranışı düzeltmeleri — AI mode switch hatası ve manuel mod initial delay sorunu
 
-#### Phase 10: AI Mode Switch Fix
+#### Phase 10: AI Mode Switch Fix — COMPLETE
 
 **Goal**: GUI thread'den asyncio çağrısı için cross-thread coordination
 **Depends on**: Phase 9 (previous milestone complete)
 **Research**: Unlikely (internal patterns — asyncio/threading coordination)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 10-01: TBD (run /gsd:plan-phase 10 to break down)
+- [x] 10-01: Cross-thread asyncio scheduling fix — completed 2026-01-15
 
 #### Phase 11: Initial Delay Logic
 
@@ -142,5 +142,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 7. MQTT Lock-Free Queue | v1.3 | 1/1 | Complete | 2026-01-15 |
 | 8. Vibration DBSCAN to IQR | v1.3 | 1/1 | Complete | 2026-01-15 |
 | 9. AnomalyManager Lock Consolidation | v1.3 | 1/1 | Complete | 2026-01-15 |
-| 10. AI Mode Switch Fix | v1.4 | 0/? | Not started | - |
+| 10. AI Mode Switch Fix | v1.4 | 1/1 | Complete | 2026-01-15 |
 | 11. Initial Delay Logic | v1.4 | 0/? | Not started | - |

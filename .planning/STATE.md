@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 10 of 11 (AI Mode Switch Fix)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-15 — Milestone v1.4 created
+Plan: 1 of 1 in current phase (complete)
+Status: Phase complete
+Last activity: 2026-01-15 — Completed 10-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████████░ 91%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 2 min
-- Total execution time: ~19 min
+- Total execution time: ~22 min
 
 **By Phase:**
 
@@ -36,9 +36,10 @@ Progress: ░░░░░░░░░░ 0%
 | 07-mqtt-lock-free-queue | 1 | 2 min | 2 min |
 | 08-vibration-dbscan-to-iqr | 1 | 1 min | 1 min |
 | 09-anomaly-manager-lock-consolidation | 1 | 2 min | 2 min |
+| 10-ai-mode-switch-fix | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (4 min), 06-01 (3 min), 07-01 (2 min), 08-01 (1 min), 09-01 (2 min)
+- Last 5 plans: 06-01 (3 min), 07-01 (2 min), 08-01 (1 min), 09-01 (2 min), 10-01 (3 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -53,6 +54,10 @@ All decisions from v1.0, v1.1, v1.2, and v1.3 milestones captured.
 - Vibration: IQR method'a gecis (DBSCAN O(n^2) -> IQR O(n))
 - Config'deki method ayarlari (iqr, z_score, dbscan) calismaya devam edecek
 - AnomalyManager: dict.update() ile atomic state update (9 lock -> 1 lock)
+
+**v1.4 Decisions:**
+- GUI->main thread async: asyncio.run_coroutine_threadsafe() kullanilacak
+- Event loop propagation: Optional parameter ile backward compatibility korundu
 
 ### Deferred Issues
 
@@ -77,5 +82,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Milestone v1.4 initialization
+Stopped at: Completed 10-01-PLAN.md (Phase 10 complete)
 Resume file: None
