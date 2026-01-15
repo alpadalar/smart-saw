@@ -4,6 +4,7 @@ Async Modbus TCP client with rate limiting and health monitoring.
 
 import asyncio
 import logging
+import time
 from typing import Optional, List, Dict, Any
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
@@ -28,6 +29,10 @@ class AsyncModbusService:
         self._read_semaphore = asyncio.Semaphore(config.get('read_rate', 10))
         self._write_semaphore = asyncio.Semaphore(config.get('write_rate', 5))
 
+        # Connection cooldown (prevents repeated connection attempts when PLC is unreachable)
+        self._last_connect_attempt: float = 0
+        self._connect_cooldown: float = config.get('connect_cooldown', 10.0)
+
         # Health monitoring
         self._last_read_time: Optional[float] = None
         self._last_write_time: Optional[float] = None
@@ -35,9 +40,22 @@ class AsyncModbusService:
         self._write_count = 0
         self._error_count = 0
 
+    def _should_attempt_connect(self) -> bool:
+        """Check if enough time has passed since last connection attempt."""
+        elapsed = time.monotonic() - self._last_connect_attempt
+        if elapsed >= self._connect_cooldown:
+            return True
+        logger.debug(
+            f"Skipping connection attempt: cooldown active ({elapsed:.1f}s / {self._connect_cooldown:.1f}s)"
+        )
+        return False
+
     async def connect(self) -> bool:
         """Establish Modbus connection."""
         async with self._lock:
+            # Record attempt time BEFORE connecting
+            self._last_connect_attempt = time.monotonic()
+
             try:
                 self._client = AsyncModbusTcpClient(
                     host=self.host,
@@ -45,7 +63,12 @@ class AsyncModbusService:
                     timeout=self.config.get('timeout', 5.0)
                 )
 
-                self._connected = await self._client.connect()
+                # Wrap connection with explicit timeout
+                connect_timeout = self.config.get('timeout', 5.0)
+                self._connected = await asyncio.wait_for(
+                    self._client.connect(),
+                    timeout=connect_timeout
+                )
 
                 if self._connected:
                     logger.info(f"Modbus connected: {self.host}:{self.port}")
@@ -53,6 +76,13 @@ class AsyncModbusService:
                     logger.error(f"Modbus connection failed: {self.host}:{self.port}")
 
                 return self._connected
+
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f"Modbus connection timeout after {self.config.get('timeout', 5.0)}s: {self.host}:{self.port}"
+                )
+                self._connected = False
+                return False
 
             except Exception as e:
                 logger.error(f"Modbus connection error: {e}", exc_info=True)
@@ -87,11 +117,21 @@ class AsyncModbusService:
         async with self._read_semaphore:
             try:
                 if not self._connected:
+                    # Check cooldown before attempting reconnection
+                    if not self._should_attempt_connect():
+                        return None  # Skip operation during cooldown
                     await self.connect()
+                    if not self._connected:
+                        return None  # Connection failed
 
-                result = await self._client.read_holding_registers(
-                    address=address,
-                    count=count
+                # Wrap read operation with explicit timeout
+                read_timeout = self.config.get('timeout', 5.0)
+                result = await asyncio.wait_for(
+                    self._client.read_holding_registers(
+                        address=address,
+                        count=count
+                    ),
+                    timeout=read_timeout
                 )
 
                 if result.isError():
@@ -104,6 +144,11 @@ class AsyncModbusService:
 
                 return result.registers
 
+            except asyncio.TimeoutError:
+                logger.debug(f"Modbus read timeout at {address}")
+                self._error_count += 1
+                self._connected = False
+                return None
             except ModbusException as e:
                 # Log without traceback to keep logs clean
                 logger.debug(f"Modbus read exception: {e}")
@@ -137,11 +182,21 @@ class AsyncModbusService:
         async with self._write_semaphore:
             try:
                 if not self._connected:
+                    # Check cooldown before attempting reconnection
+                    if not self._should_attempt_connect():
+                        return False  # Skip operation during cooldown
                     await self.connect()
+                    if not self._connected:
+                        return False  # Connection failed
 
-                result = await self._client.write_register(
-                    address=address,
-                    value=value
+                # Wrap write operation with explicit timeout
+                write_timeout = self.config.get('timeout', 5.0)
+                result = await asyncio.wait_for(
+                    self._client.write_register(
+                        address=address,
+                        value=value
+                    ),
+                    timeout=write_timeout
                 )
 
                 if result.isError():
@@ -154,6 +209,11 @@ class AsyncModbusService:
 
                 return True
 
+            except asyncio.TimeoutError:
+                logger.debug(f"Modbus write timeout at {address}")
+                self._error_count += 1
+                self._connected = False
+                return False
             except ModbusException as e:
                 # Log without traceback to keep logs clean
                 logger.debug(f"Modbus write exception: {e}")
