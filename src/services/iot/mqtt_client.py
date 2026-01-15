@@ -13,7 +13,6 @@ import json
 import os
 from datetime import datetime
 from typing import Optional, List
-from collections import deque
 from pathlib import Path
 
 try:
@@ -78,9 +77,8 @@ class MQTTService:
         self._running = False
         self._initial_connection_failed = False
 
-        # Batch queue
-        self._batch_queue: deque = deque(maxlen=1000)
-        self._batch_lock = asyncio.Lock()
+        # Batch queue (lock-free asyncio.Queue)
+        self._batch_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
 
         # Background tasks
         self._batch_sender_task: Optional[asyncio.Task] = None
@@ -316,46 +314,54 @@ class MQTTService:
 
     async def _flush_queue(self):
         """Flush remaining queue - send if connected, store offline if not."""
-        async with self._batch_lock:
-            while len(self._batch_queue) > 0:
-                if self._connected:
-                    await self._send_batch_internal()
-                else:
-                    # Store all remaining to offline
-                    item = self._batch_queue.popleft()
+        while not self._batch_queue.empty():
+            if self._connected:
+                await self._send_batch_internal()
+            else:
+                # Store all remaining to offline
+                try:
+                    item = self._batch_queue.get_nowait()
                     self._store_offline(item)
+                except asyncio.QueueEmpty:
+                    break
 
     async def queue_telemetry(self, processed_data):
         """
         Queue telemetry data for batch sending.
 
+        Lock-free: Uses asyncio.Queue.put_nowait() - O(1), never blocks.
+
         Args:
             processed_data: ProcessedData instance
         """
-        async with self._batch_lock:
-            try:
-                # Format for ThingsBoard
-                telemetry = self.formatter.format_telemetry(processed_data)
+        try:
+            # Format for ThingsBoard
+            telemetry = self.formatter.format_telemetry(processed_data)
 
-                if telemetry:
-                    # Add timestamp
-                    telemetry['ts'] = int(datetime.now().timestamp() * 1000)
+            if telemetry:
+                # Add timestamp
+                telemetry['ts'] = int(datetime.now().timestamp() * 1000)
 
-                    if self._connected:
-                        self._batch_queue.append(telemetry)
+                if self._connected:
+                    try:
+                        self._batch_queue.put_nowait(telemetry)
                         self._stats['messages_queued'] += 1
 
                         logger.debug(
                             f"Telemetry queued: "
-                            f"queue_size={len(self._batch_queue)}"
+                            f"queue_size={self._batch_queue.qsize()}"
                         )
-                    else:
-                        # Store offline
+                    except asyncio.QueueFull:
+                        # Queue full, store offline (same as previous overflow behavior)
                         self._store_offline(telemetry)
+                        logger.warning("Batch queue full, storing offline")
+                else:
+                    # Store offline
+                    self._store_offline(telemetry)
 
-            except Exception as e:
-                logger.debug(f"Error queuing telemetry: {e}")
-                self._stats['errors'] += 1
+        except Exception as e:
+            logger.debug(f"Error queuing telemetry: {e}")
+            self._stats['errors'] += 1
 
     async def _batch_sender_loop(self):
         """
@@ -369,8 +375,8 @@ class MQTTService:
                 await asyncio.sleep(self.batch_interval)
 
                 # Send batch if connected and queue not empty
-                if self._connected and len(self._batch_queue) > 0:
-                    await self._send_batch()
+                if self._connected and not self._batch_queue.empty():
+                    await self._send_batch_internal()
 
             except asyncio.CancelledError:
                 logger.info("Batch sender loop cancelled")
@@ -382,20 +388,27 @@ class MQTTService:
 
         logger.info("Batch sender loop ended")
 
-    async def _send_batch(self):
-        """Send accumulated telemetry batch to ThingsBoard."""
-        async with self._batch_lock:
-            await self._send_batch_internal()
-
     async def _send_batch_internal(self):
-        """Internal batch send (must be called with lock held)."""
-        if not self._connected or len(self._batch_queue) == 0:
+        """
+        Send accumulated telemetry batch to ThingsBoard.
+
+        Lock-free: Collects items using get_nowait() in a non-blocking loop.
+        """
+        if not self._connected or self._batch_queue.empty():
             return
 
+        batch = []
         try:
-            # Get batch
-            batch_size = min(len(self._batch_queue), self.batch_size)
-            batch = [self._batch_queue.popleft() for _ in range(batch_size)]
+            # Collect batch items using get_nowait() - non-blocking
+            while len(batch) < self.batch_size:
+                try:
+                    item = self._batch_queue.get_nowait()
+                    batch.append(item)
+                except asyncio.QueueEmpty:
+                    break
+
+            if not batch:
+                return
 
             # ThingsBoard accepts array of telemetry objects
             payload = json.dumps(batch)
@@ -407,13 +420,13 @@ class MQTTService:
                 qos=self.qos
             )
 
-            self._stats['messages_sent'] += batch_size
+            self._stats['messages_sent'] += len(batch)
             self._stats['batches_sent'] += 1
 
             logger.info(
                 f"Telemetry batch sent: "
-                f"size={batch_size}, "
-                f"remaining={len(self._batch_queue)}"
+                f"size={len(batch)}, "
+                f"remaining={self._batch_queue.qsize()}"
             )
 
         except Exception as e:
@@ -501,8 +514,8 @@ class MQTTService:
             'connected': self._connected,
             'running': self._running,
             'offline_mode': self.offline_mode,
-            'queue_size': len(self._batch_queue),
-            'queue_max': self._batch_queue.maxlen,
+            'queue_size': self._batch_queue.qsize(),
+            'queue_max': self._batch_queue.maxsize,
             'offline_file': str(self._offline_file) if self._offline_file else None,
             'offline_count': self._offline_count
         }
