@@ -498,7 +498,8 @@ class ControlPanelController(QWidget):
         self,
         control_manager=None,
         data_pipeline=None,
-        parent=None
+        parent=None,
+        event_loop=None
     ):
         """
         Initialize control panel controller.
@@ -507,12 +508,14 @@ class ControlPanelController(QWidget):
             control_manager: Control manager instance for machine control
             data_pipeline: Data pipeline instance for data access
             parent: Parent widget
+            event_loop: asyncio event loop for cross-thread scheduling (optional)
         """
         super().__init__(parent)
 
         # Dependencies
         self.control_manager = control_manager
         self.data_pipeline = data_pipeline
+        self.event_loop = event_loop
 
         # Legacy compatibility attributes
         self.controller_factory = control_manager
@@ -1426,12 +1429,15 @@ class ControlPanelController(QWidget):
         """Switch control mode via control manager."""
         try:
             if self.control_manager and hasattr(self.control_manager, 'set_mode'):
-                # Use asyncio to call async method
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.ensure_future(self.control_manager.set_mode(mode))
+                if self.event_loop:
+                    # Thread-safe scheduling from GUI thread to asyncio loop
+                    asyncio.run_coroutine_threadsafe(
+                        self.control_manager.set_mode(mode),
+                        self.event_loop
+                    )
                 else:
-                    asyncio.run(self.control_manager.set_mode(mode))
+                    # Fallback if no event loop (standalone testing)
+                    logger.warning("No event loop - mode switch may not work")
                 logger.info(f"Control mode switched to: {mode.value}")
         except Exception as e:
             logger.error(f"Error switching controller: {e}")
@@ -1497,16 +1503,15 @@ class ControlPanelController(QWidget):
             # Try to send via control_manager's manual_set_speeds
             if self.control_manager and hasattr(self.control_manager, 'manual_set_speeds'):
                 try:
-                    # Use asyncio to call async method
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        asyncio.ensure_future(
-                            self.control_manager.manual_set_speeds(cutting_speed, descent_speed)
+                    if self.event_loop:
+                        # Thread-safe scheduling from GUI thread to asyncio loop
+                        asyncio.run_coroutine_threadsafe(
+                            self.control_manager.manual_set_speeds(cutting_speed, descent_speed),
+                            self.event_loop
                         )
                     else:
-                        asyncio.run(
-                            self.control_manager.manual_set_speeds(cutting_speed, descent_speed)
-                        )
+                        # Fallback if no event loop (standalone testing)
+                        logger.warning("No event loop - speed command may not work")
                     self.add_log(
                         f"Kesme hızı {cutting_speed:.1f} m/dk olarak ayarlandı",
                         "INFO"
