@@ -22,6 +22,7 @@ modbus:
   timeout: 5.0  # Connection timeout (seconds)
   retry_count: 3
   retry_delay: 1.0  # Delay between retries (seconds)
+  connect_cooldown: 10.0  # Minimum seconds between reconnection attempts (prevents blocking during PLC outage)
 
   # Read/Write Rates (Hz)
   read_rate: 10  # 10 reads per second
