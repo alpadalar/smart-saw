@@ -43,12 +43,13 @@ class MainController(QMainWindow):
 
     data_updated = Signal(dict)
 
-    def __init__(self, control_manager, data_pipeline):
+    def __init__(self, control_manager, data_pipeline, event_loop=None):
         """Initialize main controller."""
         super().__init__()
 
         self.control_manager = control_manager
         self.data_pipeline = data_pipeline
+        self.event_loop = event_loop
 
         # Setup UI
         self._setup_ui()
@@ -255,7 +256,8 @@ class MainController(QMainWindow):
         self.control_panel_page = ControlPanelController(
             self.control_manager,
             self.data_pipeline,
-            parent=self.stackedWidget
+            parent=self.stackedWidget,
+            event_loop=self.event_loop
         )
         self.positioning_page = PositioningController(
             self.control_manager,

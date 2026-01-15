@@ -372,10 +372,14 @@ class ApplicationLifecycle:
                 logger.info("  GUI disabled in configuration")
                 return
 
-            # Create GUI app instance
+            # Capture event loop for cross-thread async scheduling
+            event_loop = asyncio.get_running_loop()
+
+            # Create GUI app instance with event loop reference
             self.gui_app = GUIApplication(
                 self.control_manager,
-                self.data_pipeline
+                self.data_pipeline,
+                event_loop=event_loop
             )
 
             # Start GUI in separate thread (non-daemon so it keeps app alive)

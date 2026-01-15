@@ -30,19 +30,21 @@ class GUIApplication:
     Clean implementation with proper Qt object lifecycle.
     """
 
-    def __init__(self, control_manager, data_pipeline):
+    def __init__(self, control_manager, data_pipeline, event_loop=None):
         """
         Initialize GUI application.
 
         Args:
             control_manager: ControlManager instance
             data_pipeline: DataProcessingPipeline instance
+            event_loop: asyncio event loop for cross-thread scheduling (optional)
         """
         if QApplication is None:
             raise RuntimeError("PySide6 not installed - cannot use GUI")
 
         self.control_manager = control_manager
         self.data_pipeline = data_pipeline
+        self.event_loop = event_loop
 
         # Qt application (created in GUI thread)
         self._app: Optional[QApplication] = None
@@ -114,10 +116,11 @@ class GUIApplication:
             self._app.setApplicationName("Smart Band Saw Control")
             self._app.setOrganizationName("Smart Saw Inc")
 
-            # Create main window
+            # Create main window with event loop reference
             self._main_window = MainController(
                 self.control_manager,
-                self.data_pipeline
+                self.data_pipeline,
+                event_loop=self.event_loop
             )
             self._main_window.showFullScreen()
 
