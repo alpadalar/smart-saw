@@ -266,25 +266,82 @@ iot:
       access_token: "vtpo7p1jo8mnzln1kdhz"
       timeout_seconds: 10.0
 
-    # Telemetry fields to send (ProcessedData fields)
+    # Telemetry fields to send (all fields from total.db sensor_data table)
     telemetry_fields:
+      # Cutting session
+      - kesim_id
+
+      # Motor measurements
       - serit_motor_akim_a
       - serit_motor_tork_percentage
       - inme_motor_akim_a
       - inme_motor_tork_percentage
+
+      # Speed values
       - serit_kesme_hizi
       - serit_inme_hizi
+      - kesme_hizi_hedef
+      - inme_hizi_hedef
+
+      # Mechanical measurements
       - kafa_yuksekligi_mm
       - serit_sapmasi
       - serit_gerginligi_bar
       - mengene_basinc_bar
+
+      # Environmental measurements
       - ortam_sicakligi_c
       - ortam_nem_percentage
+      - sogutma_sivi_sicakligi_c
+      - hidrolik_yag_sicakligi_c
+
+      # Vibration measurements
+      - ivme_olcer_x
+      - ivme_olcer_y
+      - ivme_olcer_z
+      - ivme_olcer_x_hz
+      - ivme_olcer_y_hz
+      - ivme_olcer_z_hz
+      - max_titresim_hz
+
+      # State information
       - testere_durumu
+      - alarm_status
+      - alarm_bilgisi
+
+      # Identification
+      - makine_id
+      - serit_id
+
+      # Material information
+      - malzeme_cinsi
+      - malzeme_sertlik
+      - kesit_yapisi
+      - malzeme_a_mm
+      - malzeme_b_mm
+      - malzeme_c_mm
+      - malzeme_d_mm
+      - malzeme_genisligi
+
+      # Band information
+      - serit_tip
+      - serit_marka
+      - serit_malz
+      - serit_dis_mm
+
+      # Statistics
+      - kesilen_parca_adeti
+      - guc_kwh
+
+      # ML control outputs
       - ml_output
       - kesme_hizi_degisim
       - inme_hizi_degisim
       - torque_guard_active
+      - controller_type
+
+      # Anomaly detection
+      - anomalies
 
 # Anomaly Detection Settings
 anomaly_detection:
