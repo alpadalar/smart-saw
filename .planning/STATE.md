@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** Planning next milestone (v1.1 shipped)
+**Current focus:** v1.2 ML Speed Memory & Chart UX
 
 ## Current Position
 
-Phase: 4 of 4 (Modbus Connection Timeout Handling)
-Plan: 1 of 1 in current phase
-Status: Phase complete - Milestone complete
-Last activity: 2026-01-15 — Completed 04-01-PLAN.md
+Phase: 5 of 6 (ML Speed Restoration)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v1.2 created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -41,11 +41,11 @@ Progress: ██████████ 100%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-All decisions from v1.0 milestone captured.
+All decisions from v1.0 and v1.1 milestones captured.
 
-**v1.1 Decisions:**
-- 10 second default cooldown matches typical PLC recovery time
-- Reuse existing timeout config for operation wrappers
+**v1.2 Decisions:**
+- Speed restoration triggers on KESIME_HAZIR state (not YUKARI)
+- Only kesme and inme speeds need to be saved/restored
 
 ### Deferred Issues
 
@@ -57,11 +57,14 @@ None.
 
 ### Roadmap Evolution
 
+- Milestone v1.0 created: Database schema updates, 3 phases (Phase 1-3)
+- Milestone v1.0 COMPLETE: 2026-01-15
 - Milestone v1.1 created: Modbus connection resilience, 1 phase (Phase 4)
 - Milestone v1.1 COMPLETE: 2026-01-15
+- Milestone v1.2 created: ML speed memory & chart UX, 2 phases (Phase 5-6)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 04-01-PLAN.md — Milestone v1.1 complete
+Stopped at: Milestone v1.2 initialization
 Resume file: None

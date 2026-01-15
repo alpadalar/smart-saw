@@ -12,6 +12,7 @@ None
 
 - [v1.0 Database Field Additions](milestones/v1.0-ROADMAP.md) (Phases 1-3) — SHIPPED 2026-01-15
 - [v1.1 Modbus Connection Resilience](milestones/v1.1-ROADMAP.md) (Phase 4) — SHIPPED 2026-01-15
+- 🚧 **v1.2 ML Speed Memory & Chart UX** — Phases 5-6 (in progress)
 
 ## Phases
 
@@ -35,6 +36,30 @@ None
 
 </details>
 
+### 🚧 v1.2 ML Speed Memory & Chart UX (In Progress)
+
+**Milestone Goal:** ML kesim sonrası hız restorasyonu ve grafik kullanılabilirliği
+
+#### Phase 5: ML Speed Restoration
+
+**Goal**: Save/restore kesme and inme speeds around ML cuts
+**Depends on**: Phase 4 (previous milestone complete)
+**Research**: Unlikely (internal patterns — state machine logic, Modbus writes)
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: TBD (run /gsd:plan-phase 5 to break down)
+
+#### Phase 6: Dynamic Chart Axis Labels
+
+**Goal**: Add dynamic axis labels to sensor data charts
+**Depends on**: Phase 5
+**Research**: Unlikely (internal patterns — PyQtGraph axis configuration)
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: TBD (run /gsd:plan-phase 6 to break down)
+
 ## Progress
 
 **Execution Order:**
@@ -46,3 +71,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 2. Anomaly Schema Update | v1.0 | 1/1 | Complete | 2026-01-15 |
 | 3. Data Population | v1.0 | 2/2 | Complete | 2026-01-15 |
 | 4. Modbus Connection Timeout Handling | v1.1 | 1/1 | Complete | 2026-01-15 |
+| 5. ML Speed Restoration | v1.2 | 0/? | Not started | - |
+| 6. Dynamic Chart Axis Labels | v1.2 | 0/? | Not started | - |
