@@ -162,6 +162,13 @@ ml:
       enabled: false      # Enable threshold (false = write immediately every cycle)
       threshold: 0.9      # Write when accumulated change >= 0.9 mm/min
 
+  # Speed restoration after ML cuts
+  # Purpose: Saves original operator-set speeds before ML starts adjusting,
+  # and restores them when cutting completes so next cut starts from operator values
+  speed_restore:
+    enabled: true                    # Enable save/restore feature
+    restore_on_cutting_end: true     # Restore original speeds when cutting ends
+
   # ML Inference settings
   inference:
     batch_size: 1
