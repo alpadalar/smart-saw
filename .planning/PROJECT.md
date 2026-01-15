@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Smart Saw endüstriyel testere kontrol sistemi için database şema güncellemesi. ML ve anomali veritabanlarına ek alanlar eklenerek veri kaydı zenginleştirilecek.
+Smart Saw endüstriyel testere kontrol sistemi için database şema güncellemesi. ML predictions tablosuna serit_motor_tork ve kafa_yuksekligi, anomaly events tablosuna kafa_yuksekligi alanları eklenerek geçmişe dönük analiz için veri kaydı zenginleştirildi.
 
 ## Core Value
 
@@ -20,12 +20,13 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 - ✓ PySide6 desktop GUI — existing
 - ✓ ThingsBoard IoT telemetri — existing
 - ✓ PostgreSQL uzak veritabanı desteği — existing
+- ✓ ML database'ine tork (serit_motor_tork) alanı eklenmesi — v1.0
+- ✓ ML database'ine kafa yüksekliği (kafa_yuksekligi) alanı eklenmesi — v1.0
+- ✓ Anomali database'ine kafa yüksekliği (kafa_yuksekligi) alanı eklenmesi — v1.0
 
 ### Active
 
-- [ ] ML database'ine tork (serit_motor_tork) alanı eklenmesi
-- [ ] ML database'ine kafa yüksekliği (kafa_yuksekligi) alanı eklenmesi
-- [ ] Anomali database'ine kafa yüksekliği (kafa_yuksekligi) alanı eklenmesi
+(None — v1.0 milestone complete)
 
 ### Out of Scope
 
@@ -35,13 +36,13 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 
 ## Context
 
-**Mevcut Durum:**
-- ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`
-- Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`
+**Current State (v1.0 shipped):**
+- ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`
+- Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`
 
-**Eklenecek Veriler:**
-- Tork ve kafa yüksekliği verileri zaten `RawSensorData` ve `ProcessedData` modellerinde mevcut
-- Bu veriler sadece ML ve anomali tablolarına ek olarak kaydedilecek
+**Tech Stack:**
+- ~14,000 LOC Python
+- 4 source files modified: schemas.py, ml_controller.py, anomaly_tracker.py, data_processor.py
 
 ## Constraints
 
@@ -52,8 +53,12 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Sadece kayıt amaçlı ekleme | ML model inputu değişmeyecek, geriye dönük analiz için | — Pending |
-| ALTER TABLE kullanımı | Mevcut veri kaybı önlenmeli | — Pending |
+| Sadece kayıt amaçlı ekleme | ML model inputu değişmeyecek, geriye dönük analiz için | ✓ Good |
+| ALTER TABLE kullanımı | Mevcut veri kaybı önlenmeli | ✓ Good |
+| Place ML columns in input features group | Logical ordering: input features together, output fields together | ✓ Good |
+| Place kafa_yuksekligi after kesim_id | kesim_id is a reference while kafa_yuksekligi is measurement data | ✓ Good |
+| Use instantaneous torque value | Direct raw_data.serit_motor_tork_percentage rather than buffer average | ✓ Good |
+| Pass kafa_yuksekligi from raw_data directly | Value already available in scope at anomaly recording location | ✓ Good |
 
 ---
-*Last updated: 2026-01-15 after initialization*
+*Last updated: 2026-01-15 after v1.0 milestone*
