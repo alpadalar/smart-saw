@@ -23,10 +23,12 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 - ✓ ML database'ine tork (serit_motor_tork) alanı eklenmesi — v1.0
 - ✓ ML database'ine kafa yüksekliği (kafa_yuksekligi) alanı eklenmesi — v1.0
 - ✓ Anomali database'ine kafa yüksekliği (kafa_yuksekligi) alanı eklenmesi — v1.0
+- ✓ Modbus connection cooldown mekanizması — v1.1
+- ✓ Modbus operation timeout wrappers — v1.1
 
 ### Active
 
-(None — v1.0 milestone complete)
+(None — v1.1 milestone complete)
 
 ### Out of Scope
 
@@ -36,13 +38,15 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 
 ## Context
 
-**Current State (v1.0 shipped):**
+**Current State (v1.1 shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`
+- AsyncModbusService: Connection cooldown (10s default), operation timeouts via asyncio.wait_for
 
 **Tech Stack:**
 - ~14,000 LOC Python
-- 4 source files modified: schemas.py, ml_controller.py, anomaly_tracker.py, data_processor.py
+- v1.0: schemas.py, ml_controller.py, anomaly_tracker.py, data_processor.py
+- v1.1: client.py, config.yaml
 
 ## Constraints
 
@@ -59,6 +63,8 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 | Place kafa_yuksekligi after kesim_id | kesim_id is a reference while kafa_yuksekligi is measurement data | ✓ Good |
 | Use instantaneous torque value | Direct raw_data.serit_motor_tork_percentage rather than buffer average | ✓ Good |
 | Pass kafa_yuksekligi from raw_data directly | Value already available in scope at anomaly recording location | ✓ Good |
+| 10 second default cooldown | Matches typical PLC recovery time, good balance between responsiveness and blocking prevention | ✓ Good |
+| Reuse existing timeout config | No new config complexity, existing timeout value (5.0s) sufficient for operation wrappers | ✓ Good |
 
 ---
-*Last updated: 2026-01-15 after v1.0 milestone*
+*Last updated: 2026-01-15 after v1.1 milestone*

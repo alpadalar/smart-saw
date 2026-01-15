@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** v1.1 Modbus Connection Resilience — Modbus bağlantısı olmadığında uygulamanın donmasını engellemek
+**Current focus:** Planning next milestone (v1.1 shipped)
 
 ## Current Position
 
