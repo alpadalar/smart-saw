@@ -86,8 +86,8 @@ class ControlManager:
 
         Decision tree:
         1. Check cutting state
-        2. Calculate/check initial delay
-        3. Delegate to active controller
+        2. If ML mode: check initial delay, then calculate speeds
+        3. If Manual mode: no action (operator controls directly)
 
         Args:
             processed_data: ProcessedData with sensor readings
@@ -124,7 +124,10 @@ class ControlManager:
 
     def _check_initial_delay(self, raw_data) -> bool:
         """
-        Check if initial delay period has passed.
+        Check if ML mode initial delay period has passed.
+
+        Note: This is only called for ML mode. Manual mode bypasses
+        this entirely for immediate operator control response.
 
         Logic:
         - Record start time and head height on first cutting iteration
