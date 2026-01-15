@@ -43,7 +43,7 @@ class MLController:
     - RLock for shared state access
     """
 
-    def __init__(self, config: dict, modbus_service, db_service):
+    def __init__(self, config: dict, modbus_service, db_service, modbus_writer=None):
         """
         Initialize ML controller.
 
@@ -51,10 +51,12 @@ class MLController:
             config: Full system configuration dictionary
             modbus_service: AsyncModbusService instance
             db_service: SQLiteService instance for ml.db
+            modbus_writer: ModbusWriter instance for writing speeds (optional)
         """
         self.config = config
         self.modbus = modbus_service
         self.db = db_service
+        self.writer = modbus_writer
 
         # ML components
         model_path = Path(config['ml']['model_path'])
@@ -97,6 +99,15 @@ class MLController:
         self.last_update_time: Optional[float] = None
         self.min_update_interval = config['ml'].get('min_speed_update_interval', 0.1)
 
+        # Speed restore configuration
+        speed_restore_config = config['ml'].get('speed_restore', {})
+        self.speed_restore_enabled = speed_restore_config.get('enabled', False)
+        self.restore_on_cutting_end = speed_restore_config.get('restore_on_cutting_end', True)
+
+        # Saved speeds for restoration
+        self._saved_kesme_hizi: Optional[float] = None
+        self._saved_inme_hizi: Optional[float] = None
+
         # Global coefficient multiplier
         self.katsayi = config['ml'].get('katsayi', 1.0)
 
@@ -121,7 +132,8 @@ class MLController:
             f"inme_threshold={'enabled' if self.inme_threshold_enabled else 'disabled'} "
             f"({self.inme_threshold if self.inme_threshold_enabled else 'immediate write'}), "
             f"kesme_threshold={'enabled' if self.kesme_threshold_enabled else 'disabled'} "
-            f"({self.kesme_threshold if self.kesme_threshold_enabled else 'immediate write'})"
+            f"({self.kesme_threshold if self.kesme_threshold_enabled else 'immediate write'}), "
+            f"speed_restore={self.speed_restore_enabled}"
         )
 
     async def calculate_speeds(
@@ -155,13 +167,19 @@ class MLController:
                 # 1. Check cutting state
                 if raw_data.testere_durumu != 3:  # Not cutting
                     if self.is_cutting:
-                        self._reset_cutting_state()
+                        await self._reset_cutting_state()
                     return None
 
                 # Mark as cutting
                 if not self.is_cutting:
                     self.is_cutting = True
                     logger.info("Cutting started - ML controller activated")
+                    # Save original speeds before ML starts adjusting
+                    if self.speed_restore_enabled:
+                        self._save_original_speeds(
+                            raw_data.serit_kesme_hizi,
+                            raw_data.serit_inme_hizi
+                        )
 
                 # 2. Check update interval (rate limiting)
                 if not self._should_update():
@@ -610,10 +628,16 @@ class MLController:
         # Write if either speed needs writing
         return inme_should_write or kesme_should_write
 
-    def _reset_cutting_state(self):
+    async def _reset_cutting_state(self):
         """
         Reset all state when cutting stops.
+
+        Restores original speeds if speed_restore is enabled.
         """
+        # Restore original speeds before resetting state
+        if self.speed_restore_enabled:
+            await self._restore_original_speeds()
+
         self.is_cutting = False
         self.ml_activation_time = None
         self.torque_guard_triggered = False
@@ -623,7 +647,54 @@ class MLController:
         self.inme_hizi_degisim_buffer = 0.0
         self.preprocessor.reset_buffers()
 
+        # Clear saved speeds
+        self._saved_kesme_hizi = None
+        self._saved_inme_hizi = None
+
         logger.info("Cutting stopped - ML state reset")
+
+    def _save_original_speeds(self, kesme_hizi: float, inme_hizi: float):
+        """
+        Save original speeds before ML starts adjusting.
+
+        Args:
+            kesme_hizi: Current cutting speed (mm/min)
+            inme_hizi: Current descent speed (mm/min)
+        """
+        self._saved_kesme_hizi = kesme_hizi
+        self._saved_inme_hizi = inme_hizi
+        logger.info(
+            f"Original speeds saved: kesme={kesme_hizi:.1f}, inme={inme_hizi:.1f}"
+        )
+
+    async def _restore_original_speeds(self):
+        """
+        Restore original speeds after cutting ends.
+
+        Uses ModbusWriter to write saved speeds back to PLC.
+        """
+        if not self.restore_on_cutting_end:
+            return
+        if self._saved_kesme_hizi is None or self._saved_inme_hizi is None:
+            return
+        if self.writer is None:
+            logger.warning("Cannot restore speeds: ModbusWriter not available")
+            return
+
+        try:
+            success = await self.writer.write_speeds(
+                self._saved_kesme_hizi,
+                self._saved_inme_hizi
+            )
+            if success:
+                logger.info(
+                    f"Original speeds restored: kesme={self._saved_kesme_hizi:.1f}, "
+                    f"inme={self._saved_inme_hizi:.1f}"
+                )
+            else:
+                logger.warning("Failed to restore original speeds")
+        except Exception as e:
+            logger.error(f"Error restoring speeds: {e}")
 
     def _log_ml_prediction(
         self,
