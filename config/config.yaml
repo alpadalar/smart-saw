@@ -245,9 +245,9 @@ iot:
 
     # MQTT settings
     mqtt:
-      broker: "${TB_MQTT_BROKER}"
+      broker: "185.87.252.58"
       port: 1883
-      username: "${TB_ACCESS_TOKEN}"  # Device token
+      username: "vtpo7p1jo8mnzln1kdhz"  # Device access token
       keepalive: 60
       qos: 1  # 0, 1, or 2
 
@@ -258,6 +258,13 @@ iot:
       # Batch sending to reduce network traffic
       batch_size: 10                    # Send batch every 10 messages
       batch_interval_seconds: 5.0       # Or every 5 seconds
+
+    # HTTP settings (alternative to MQTT)
+    http:
+      host: "185.87.252.58"
+      port: 8081
+      access_token: "vtpo7p1jo8mnzln1kdhz"
+      timeout_seconds: 10.0
 
     # Telemetry fields to send (ProcessedData fields)
     telemetry_fields:
