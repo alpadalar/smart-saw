@@ -11,6 +11,7 @@ from ...domain.enums import ControlMode
 from ...domain.models import ControlCommand, ProcessedData
 from .manual import ManualController
 from .ml_controller import MLController
+from ..modbus.writer import ModbusWriter
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +53,18 @@ class ControlManager:
         self._current_mode = ControlMode(default_mode)
         self._lock = threading.RLock()
 
+        # Create ModbusWriter for MLController speed restoration
+        self.modbus_writer = ModbusWriter(
+            modbus_service,
+            config['modbus']['registers'],
+            config['control']['speed_limits']
+        )
+
         # Controllers
         self.manual_controller = ManualController(config)
-        self.ml_controller = MLController(config, modbus_service, ml_db_service)
+        self.ml_controller = MLController(
+            config, modbus_service, ml_db_service, self.modbus_writer
+        )
 
         # State tracking
         self._cutting_started_time: Optional[float] = None
