@@ -354,6 +354,12 @@ class CuttingGraphWidget(QWidget):
         self.xalt.setText("0.00")
         self.xalt.setAlignment(Qt.AlignCenter)
 
+        # X-axis title label (below X-axis value labels, centered)
+        self.x_axis_title = QLabel(self.parent())
+        self.x_axis_title.setStyleSheet(axis_title_style)
+        self.x_axis_title.setText("Zaman (s)")  # Default
+        self.x_axis_title.setAlignment(Qt.AlignCenter)
+
         # Show labels
         self.yust.show()
         self.yorta.show()
@@ -362,6 +368,7 @@ class CuttingGraphWidget(QWidget):
         self.xorta.show()
         self.xalt.show()
         self.y_axis_title.show()
+        self.x_axis_title.show()
 
         # Update label positions
         self._update_label_positions()
@@ -445,6 +452,14 @@ class CuttingGraphWidget(QWidget):
             y_title_y = graph_y + (graph_height // 2) - (y_title_height // 2)  # Centered vertically
             if hasattr(self, 'y_axis_title') and self.y_axis_title:
                 self.y_axis_title.setGeometry(y_title_x, y_title_y, y_title_width, y_title_height)
+
+            # X-axis title label (below X-axis value labels, centered horizontally)
+            x_title_width = 180
+            x_title_height = 25
+            x_title_x = graph_x + (graph_width // 2) - (x_title_width // 2)  # Centered horizontally
+            x_title_y = graph_y + graph_height + 35  # Below value labels (5 + 30 for label height)
+            if hasattr(self, 'x_axis_title') and self.x_axis_title:
+                self.x_axis_title.setGeometry(x_title_x, x_title_y, x_title_width, x_title_height)
 
         except Exception as e:
             logger.error(f"Error updating label positions: {e}")
