@@ -103,16 +103,15 @@ class ControlManager:
                 is_cutting = (raw_data.testere_durumu == 3)
 
                 if is_cutting:
-                    # Check initial delay
-                    if not self._check_initial_delay(raw_data):
-                        # Still in initial delay period
-                        return None
-
                     # Delegate to active controller
                     if self._current_mode == ControlMode.ML:
+                        # Check initial delay (only for ML mode)
+                        if not self._check_initial_delay(raw_data):
+                            # Still in initial delay period
+                            return None
                         return await self.ml_controller.calculate_speeds(processed_data)
                     else:
-                        # Manual mode - no automatic speed changes
+                        # Manual mode - no automatic speed changes, no delay needed
                         return None
                 else:
                     # Not cutting - reset state
