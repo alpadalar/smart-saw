@@ -109,7 +109,7 @@ control:
     default_delay_ms: 30000    # Default 30 seconds
     min_delay_ms: 5000         # Minimum 5 seconds
     max_delay_ms: 60000        # Maximum 60 seconds
-    target_distance_mm: 20     # Or activate after 20mm descent
+    target_distance_mm: 10     # Activate after 10mm descent
 
   # Data buffering for control decisions
   buffer:
