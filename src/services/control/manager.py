@@ -70,6 +70,7 @@ class ControlManager:
         self._cutting_started_time: Optional[float] = None
         self._initial_head_height: Optional[float] = None
         self._initial_delay_passed = False
+        self._last_countdown_log: Optional[int] = None  # Last logged countdown (multiples of 5)
 
         logger.info(
             f"ControlManager initialized: "
@@ -124,15 +125,16 @@ class ControlManager:
 
     def _check_initial_delay(self, raw_data) -> bool:
         """
-        Check if ML mode initial delay period has passed.
+        Check if ML mode initial delay period has passed (distance-based only).
 
         Note: This is only called for ML mode. Manual mode bypasses
         this entirely for immediate operator control response.
 
         Logic:
         - Record start time and head height on first cutting iteration
-        - Calculate expected delay based on descent to target distance
-        - ML control disabled until delay passes
+        - Wait until head descends target_distance_mm from initial height
+        - No timeout fallback - delay is purely distance-based
+        - Delay duration = target_distance_mm / current_inme_hizi
 
         Args:
             raw_data: RawSensorData with current readings
@@ -148,16 +150,28 @@ class ControlManager:
 
         now = asyncio.get_event_loop().time()
 
-        # Record initial state
+        # Record initial state and calculate expected delay
         if self._cutting_started_time is None:
             self._cutting_started_time = now
             self._initial_head_height = raw_data.kafa_yuksekligi_mm
-            logger.info(
-                f"Cutting started: "
-                f"initial_height={self._initial_head_height:.1f}mm"
-            )
 
-        # Calculate expected delay based on current height
+            # Calculate expected delay: target_distance_mm / inme_hizi (mm/min -> seconds)
+            inme_hizi = raw_data.serit_inme_hizi
+            if inme_hizi > 0:
+                expected_delay_sec = (self.target_distance_mm / inme_hizi) * 60
+                self._last_countdown_log = int(expected_delay_sec)
+                logger.info(
+                    f"Cutting started: initial_height={self._initial_head_height:.1f}mm, "
+                    f"AI aktivasyonuna {self._last_countdown_log}s kaldı "
+                    f"(hedef={self.target_distance_mm}mm, inme_hizi={inme_hizi:.1f}mm/min)"
+                )
+            else:
+                self._last_countdown_log = None
+                logger.info(
+                    f"Cutting started: initial_height={self._initial_head_height:.1f}mm"
+                )
+
+        # Calculate delay based on distance descended (no timeout)
         if self._initial_head_height is not None:
             current_height = raw_data.kafa_yuksekligi_mm
             descended_distance = self._initial_head_height - current_height
@@ -173,16 +187,23 @@ class ControlManager:
                 )
                 return True
 
-        # Check default timeout (fallback)
-        elapsed_ms = (now - self._cutting_started_time) * 1000
-        if elapsed_ms >= self.default_delay_ms:
-            self._initial_delay_passed = True
-            logger.warning(
-                f"Initial delay passed by timeout: "
-                f"elapsed={elapsed_ms:.0f}ms (default={self.default_delay_ms}ms)"
-            )
-            return True
+            # Log countdown every 5 seconds (in multiples of 5)
+            if self._last_countdown_log is not None:
+                remaining_distance = self.target_distance_mm - descended_distance
+                inme_hizi = raw_data.serit_inme_hizi
+                if inme_hizi > 0:
+                    remaining_sec = (remaining_distance / inme_hizi) * 60
+                    # Round down to nearest multiple of 5
+                    remaining_5s = (int(remaining_sec) // 5) * 5
 
+                    # Log when we cross a 5-second boundary
+                    if remaining_5s < self._last_countdown_log and remaining_5s >= 0:
+                        self._last_countdown_log = remaining_5s
+                        if remaining_5s > 0:
+                            logger.info(f"AI aktivasyonuna {remaining_5s}s kaldı")
+
+        # No timeout fallback - delay is purely distance-based
+        # The delay duration is determined by: target_distance_mm / inme_hizi
         return False
 
     def _reset_cutting_state(self):
@@ -193,6 +214,7 @@ class ControlManager:
             self._cutting_started_time = None
             self._initial_head_height = None
             self._initial_delay_passed = False
+            self._last_countdown_log = None
             logger.debug("Cutting state reset")
 
     async def set_mode(self, mode: ControlMode) -> bool:

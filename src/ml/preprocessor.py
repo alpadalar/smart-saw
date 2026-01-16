@@ -230,16 +230,15 @@ class MLPreprocessor:
 
     def is_ready(self) -> bool:
         """
-        Check if preprocessor has sufficient data for prediction.
+        Check if preprocessor has any data for prediction.
 
         Returns:
-            True if all buffers have at least 5 samples (50% of standard buffer)
+            True if all buffers have at least 1 sample (like old project behavior)
         """
-        min_samples = 5  # Require at least 50% of buffer filled
-
+        # Match old project behavior: proceed with even 1 sample
         return (
-            len(self.akim_buffer) >= min_samples and
-            len(self.sapma_buffer) >= min_samples and
-            len(self.kesme_hizi_buffer) >= min_samples and
-            len(self.inme_hizi_buffer) >= min_samples
+            len(self.akim_buffer) >= 1 and
+            len(self.sapma_buffer) >= 1 and
+            len(self.kesme_hizi_buffer) >= 1 and
+            len(self.inme_hizi_buffer) >= 1
         )
