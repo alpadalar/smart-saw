@@ -1931,8 +1931,9 @@ class ControlPanelController(QWidget):
 
             self.labelBandDeviationValue.setText(f"{deviation_value:.2f}")
 
-            self.labelSentCuttingSpeed.setText(f"{cutting_speed:.1f}")
-            self.labelSentDescentSpeed.setText(f"{descent_speed:.1f}")
+            # Small indicators show target values from write addresses (2066, 2041)
+            self.labelSentCuttingSpeed.setText(f"{kesme_hizi_hedef:.2f}")
+            self.labelSentDescentSpeed.setText(f"{inme_hizi_hedef:.2f}")
 
             # Update target speed labels (big displays)
             self.labelBandCuttingSpeedValue.setText(f"{kesme_hizi_hedef:.0f}")
