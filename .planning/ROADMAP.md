@@ -115,15 +115,15 @@ Plans:
 
 **Milestone Goal:** Critical ML behavior fix ensuring new code matches old code predictions + comprehensive GUI labeling improvements
 
-#### Phase 12: ML Prediction Parity Investigation & Fix
+#### Phase 12: ML Prediction Parity Investigation & Fix — COMPLETE
 
 **Goal**: Deep comparison with /media/workspace/eskiimas/smart-saw/src/control/ml to find why same model gives different results; make new code behave identically
 **Depends on**: Phase 11 (previous milestone complete)
 **Research**: Unlikely (internal patterns — comparing two codebases, same model)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 12-01: TBD (run /gsd:plan-phase 12 to break down)
+- [x] 12-01: ML prediction parity fix — completed 2026-01-28
 
 #### Phase 13: Unit Labels & Naming Fixes
 
@@ -163,6 +163,6 @@ Phases execute in numeric order: 1 → 2 → 3
 | 9. AnomalyManager Lock Consolidation | v1.3 | 1/1 | Complete | 2026-01-15 |
 | 10. AI Mode Switch Fix | v1.4 | 1/1 | Complete | 2026-01-15 |
 | 11. Initial Delay Logic | v1.4 | 1/1 | Complete | 2026-01-15 |
-| 12. ML Prediction Parity Investigation & Fix | v1.5 | 0/? | Not started | - |
+| 12. ML Prediction Parity Investigation & Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 13. Unit Labels & Naming Fixes | v1.5 | 0/? | Not started | - |
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 0/? | Not started | - |

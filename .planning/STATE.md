@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 ## Current Position
 
 Phase: 12 of 14 (ML Prediction Parity Investigation & Fix)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-28 — Milestone v1.5 created
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-28 — Completed 12-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████████░ 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 2 min
-- Total execution time: ~23 min
+- Total execution time: ~24 min
 
 **By Phase:**
 
@@ -38,9 +38,10 @@ Progress: ░░░░░░░░░░ 0%
 | 09-anomaly-manager-lock-consolidation | 1 | 2 min | 2 min |
 | 10-ai-mode-switch-fix | 1 | 3 min | 3 min |
 | 11-initial-delay-logic | 1 | 1 min | 1 min |
+| 12-ml-prediction-parity | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-01 (2 min), 08-01 (1 min), 09-01 (2 min), 10-01 (3 min), 11-01 (1 min)
+- Last 5 plans: 08-01 (1 min), 09-01 (2 min), 10-01 (3 min), 11-01 (1 min), 12-01 (1 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -59,6 +60,10 @@ All decisions from v1.0, v1.1, v1.2, and v1.3 milestones captured.
 **v1.4 Decisions:**
 - GUI->main thread async: asyncio.run_coroutine_threadsafe() kullanilacak
 - Event loop propagation: Optional parameter ile backward compatibility korundu
+
+**v1.5 Decisions:**
+- ML Speed Calculation: Use averaged buffer values instead of raw current values (matches old code)
+- Torque Conversion: No input clamping in torque_to_current() (matches old code polynomial behavior)
 
 ### Deferred Issues
 
@@ -85,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Milestone v1.5 initialization
+Stopped at: Completed 12-01-PLAN.md (Phase 12 complete)
 Resume file: None
