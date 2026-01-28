@@ -315,6 +315,22 @@ class BandDeviationGraphWidget(QWidget):
             logger.error(f"Error getting min value: {e}")
             return 0.0
 
+    def get_axis_max(self) -> float:
+        """Return maximum value of axis range (includes 0)."""
+        with self._data_lock:
+            if not self.data_points:
+                return 0.0
+            values = [point[1] for point in self.data_points]
+            return max(max(values), 0)  # Ensure 0 is included
+
+    def get_axis_min(self) -> float:
+        """Return minimum value of axis range (includes 0)."""
+        with self._data_lock:
+            if not self.data_points:
+                return 0.0
+            values = [point[1] for point in self.data_points]
+            return min(min(values), 0)  # Ensure 0 is included
+
     def paintEvent(self, event):
         """Draw the graph."""
         try:
@@ -1969,8 +1985,8 @@ class ControlPanelController(QWidget):
                 self.band_deviation_graph.add_data_point(deviation_value)
                 self.band_deviation_graph.clear_old_data()
 
-                max_value = self.band_deviation_graph.get_max_value()
-                min_value = self.band_deviation_graph.get_min_value()
+                max_value = self.band_deviation_graph.get_axis_max()
+                min_value = self.band_deviation_graph.get_axis_min()
 
                 self.ustdegerlabel.setText(f" {max_value:.2f}")
                 if min_value >= 0:
