@@ -30,10 +30,12 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 - ✓ Lock-free asyncio.Queue for MQTT batching — v1.3
 - ✓ Vibration DBSCAN to IQR algorithm optimization — v1.3
 - ✓ AnomalyManager lock consolidation (9 → 1 per cycle) — v1.3
+- ✓ Thread-safe GUI→main thread asyncio scheduling — v1.4
+- ✓ Mode-aware initial delay (ML-only) — v1.4
 
 ### Active
 
-(None — v1.3 milestone complete)
+(None — v1.4 milestone complete)
 
 ### Out of Scope
 
@@ -43,7 +45,7 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 
 ## Context
 
-**Current State (v1.3 shipped):**
+**Current State (v1.4 shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`
 - AsyncModbusService: Connection cooldown (10s default), operation timeouts via asyncio.wait_for
@@ -53,13 +55,16 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 - MQTTClient: Lock-free asyncio.Queue for telemetry batching (O(1) queue_telemetry)
 - AnomalyDetectors: IQR method for all vibration sensors (TitresimX/Y/Z)
 - AnomalyManager: Single atomic lock acquisition per process_data() cycle
+- GUI→Async: Event loop propagation through GUI init chain, run_coroutine_threadsafe() for mode switching
+- ControlManager: Mode-aware initial delay (ML-only, manual mode bypasses)
 
 **Tech Stack:**
-- ~14,000 LOC Python
+- ~14,400 LOC Python
 - v1.0: schemas.py, ml_controller.py, anomaly_tracker.py, data_processor.py
 - v1.1: client.py, config.yaml
 - v1.2: ml_controller.py, manager.py, sensor_controller.py, sqlite_service.py
 - v1.3: mqtt_client.py, detectors.py, manager.py
+- v1.4: lifecycle.py, app.py, main_controller.py, control_panel_controller.py, manager.py
 
 ## Constraints
 
@@ -85,6 +90,9 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 | asyncio.Queue for MQTT batching | Native asyncio, no GIL concerns, O(1) put_nowait | ✓ Good |
 | IQR for vibration detectors | O(n) vs DBSCAN O(n²), consistent with other detectors | ✓ Good |
 | dict.update() for atomic state update | Simpler than individual key assignments, equally thread-safe | ✓ Good |
+| asyncio.run_coroutine_threadsafe() for GUI→main | Proper cross-thread async scheduling, avoids ensure_future race conditions | ✓ Good |
+| Event loop as optional parameter | Backward compatibility for standalone testing, None default | ✓ Good |
+| Initial delay inside ML branch only | Cleaner separation — manual mode never needs delay check | ✓ Good |
 
 ---
-*Last updated: 2026-01-15 after v1.3 milestone*
+*Last updated: 2026-01-28 after v1.4 milestone*

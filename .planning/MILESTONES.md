@@ -1,5 +1,31 @@
 # Project Milestones: Smart Saw Database Field Additions
 
+## v1.4 Control Mode Fixes (Shipped: 2026-01-28)
+
+**Delivered:** AI mode switch hatası ve manuel mod initial delay düzeltmeleri ile kontrol modu geçişleri güvenilir hale getirildi.
+
+**Phases completed:** 10-11 (2 plans total)
+
+**Key accomplishments:**
+
+- Thread-safe asyncio scheduling via asyncio.run_coroutine_threadsafe() for GUI→main thread mode switching
+- Event loop propagation through GUI initialization chain (lifecycle → app → controllers)
+- Mode-aware initial delay logic — ML mode retains delay, manual mode gets immediate response
+- Cross-thread async infrastructure established for future GUI→async needs
+
+**Stats:**
+
+- 5 source files modified (lifecycle.py, app.py, main_controller.py, control_panel_controller.py, manager.py)
+- ~14,400 lines Python (existing codebase)
+- 2 phases, 2 plans, 5 tasks
+- Same-day completion (2026-01-15)
+
+**Git range:** `feat(10-01)` → `docs(11-01)`
+
+**What's next:** Production validation of mode switching behavior
+
+---
+
 ## v1.3 Processing Performance (Shipped: 2026-01-15)
 
 **Delivered:** Lock contention ve algoritma optimizasyonları ile 10 Hz data processing loop performansı iyileştirildi.
