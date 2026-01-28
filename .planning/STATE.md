@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** All milestones complete (v1.0-v1.4 shipped)
+**Current focus:** ML prediction parity investigation — making new code behave identically to old code
 
 ## Current Position
 
-Phase: 11 of 11 (Initial Delay Logic)
-Plan: 1 of 1 in current phase (complete)
-Status: PROJECT COMPLETE — All milestones shipped
-Last activity: 2026-01-28 — v1.4 milestone archived
+Phase: 12 of 14 (ML Prediction Parity Investigation & Fix)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-28 — Milestone v1.5 created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -80,9 +80,10 @@ None.
 - Milestone v1.3 COMPLETE: 2026-01-15
 - Milestone v1.4 created: Control mode fixes, 2 phases (Phase 10-11)
 - Milestone v1.4 COMPLETE: 2026-01-28
+- Milestone v1.5 created: ML parity & UX polish, 3 phases (Phase 12-14)
 
 ## Session Continuity
 
-Last session: 2026-01-15
-Stopped at: Completed 11-01-PLAN.md (Milestone v1.4 COMPLETE)
+Last session: 2026-01-28
+Stopped at: Milestone v1.5 initialization
 Resume file: None
