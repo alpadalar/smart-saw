@@ -216,11 +216,18 @@ class MLController:
                     self._stats['errors'] += 1
                     return None
 
-                # 7. Calculate new speeds
+                # 7. Calculate new speeds using AVERAGED values (matches old codebase)
+                avg_kesme, avg_inme = self.preprocessor.get_averaged_speeds()
+                # Fall back to raw values if buffers empty (shouldn't happen after is_ready check)
+                if avg_kesme == 0.0 and avg_inme == 0.0:
+                    avg_kesme = raw_data.serit_kesme_hizi
+                    avg_inme = raw_data.serit_inme_hizi
+                    logger.warning("Using raw speed values - buffers empty")
+
                 speed_changes = self._calculate_new_speeds(
                     coefficient,
-                    raw_data.serit_kesme_hizi,
-                    raw_data.serit_inme_hizi
+                    avg_kesme,
+                    avg_inme
                 )
 
                 # 8. Accumulate changes in buffers
