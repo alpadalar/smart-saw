@@ -839,6 +839,31 @@ class ControlPanelController(QWidget):
         self.band_deviation_graph.setGeometry(0, 0, 278, 144)
         self.band_deviation_graph.show()
 
+        # Axis title labels (matching CuttingGraphWidget style)
+        axis_title_style = """
+            QLabel {
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 16px;
+                background-color: transparent;
+            }
+        """
+
+        # Y-axis title label (left of graph, vertical position centered)
+        self.band_deviation_y_axis_title = QLabel("Sapma (mm)", self.bandDeviationFrame)
+        self.band_deviation_y_axis_title.setGeometry(5, 130, 80, 25)
+        self.band_deviation_y_axis_title.setStyleSheet(axis_title_style)
+        self.band_deviation_y_axis_title.setAlignment(Qt.AlignCenter)
+        self.band_deviation_y_axis_title.show()
+
+        # X-axis title label (below graph, centered horizontally)
+        self.band_deviation_x_axis_title = QLabel("Zaman (s)", self.bandDeviationFrame)
+        self.band_deviation_x_axis_title.setGeometry(105, 225, 100, 25)
+        self.band_deviation_x_axis_title.setStyleSheet(axis_title_style)
+        self.band_deviation_x_axis_title.setAlignment(Qt.AlignCenter)
+        self.band_deviation_x_axis_title.show()
+
         # Min/max labels
         self.ustdegerlabel = QLabel(" 0.00", self.bandDeviationFrame)
         self.ustdegerlabel.setGeometry(320, 78, 70, 30)
