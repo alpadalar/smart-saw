@@ -125,15 +125,15 @@ Plans:
 Plans:
 - [x] 12-01: ML prediction parity fix — completed 2026-01-28
 
-#### Phase 13: Unit Labels & Naming Fixes
+#### Phase 13: Unit Labels & Naming Fixes — COMPLETE
 
 **Goal**: Add units (mm, mm/s, Nm, etc.) to all numerical values across all pages + rename İnme Hızı → İlerleme Hızı throughout
 **Depends on**: Phase 12
 **Research**: Unlikely (internal patterns — GUI text changes)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 13-01: TBD (run /gsd:plan-phase 13 to break down)
+- [x] 13-01: Add units and rename labels in GUI controllers — completed 2026-01-28
 
 #### Phase 14: Chart Axis Labels & Sapma Gauge Fix
 
@@ -164,5 +164,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 10. AI Mode Switch Fix | v1.4 | 1/1 | Complete | 2026-01-15 |
 | 11. Initial Delay Logic | v1.4 | 1/1 | Complete | 2026-01-15 |
 | 12. ML Prediction Parity Investigation & Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
-| 13. Unit Labels & Naming Fixes | v1.5 | 0/? | Not started | - |
+| 13. Unit Labels & Naming Fixes | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 0/? | Not started | - |

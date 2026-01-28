@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** ML prediction parity investigation — making new code behave identically to old code
+**Current focus:** Unit labels & naming fixes — adding units to numerical values and consistent terminology
 
 ## Current Position
 
-Phase: 12 of 14 (ML Prediction Parity Investigation & Fix)
+Phase: 13 of 14 (Unit Labels & Naming Fixes)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-01-28 — Completed 12-01-PLAN.md
+Last activity: 2026-01-28 — Completed 13-01-PLAN.md
 
 Progress: █████████░ 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 2 min
-- Total execution time: ~24 min
+- Total execution time: ~25 min
 
 **By Phase:**
 
@@ -39,9 +39,10 @@ Progress: █████████░ 93%
 | 10-ai-mode-switch-fix | 1 | 3 min | 3 min |
 | 11-initial-delay-logic | 1 | 1 min | 1 min |
 | 12-ml-prediction-parity | 1 | 1 min | 1 min |
+| 13-unit-labels-naming | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 08-01 (1 min), 09-01 (2 min), 10-01 (3 min), 11-01 (1 min), 12-01 (1 min)
+- Last 5 plans: 09-01 (2 min), 10-01 (3 min), 11-01 (1 min), 12-01 (1 min), 13-01 (1 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -64,6 +65,7 @@ All decisions from v1.0, v1.1, v1.2, and v1.3 milestones captured.
 **v1.5 Decisions:**
 - ML Speed Calculation: Use averaged buffer values instead of raw current values (matches old code)
 - Torque Conversion: No input clamping in torque_to_current() (matches old code polynomial behavior)
+- GUI Labels: Only change visible label text, keep variable names unchanged (minimal code churn)
 
 ### Deferred Issues
 
@@ -90,5 +92,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 12-01-PLAN.md (Phase 12 complete)
+Stopped at: Completed 13-01-PLAN.md (Phase 13 complete)
 Resume file: None
