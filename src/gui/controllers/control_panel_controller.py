@@ -916,7 +916,7 @@ class ControlPanelController(QWidget):
         self.bandCuttingSpeedFrame.mousePressEvent = self._handle_cutting_speed_frame_click
 
         self.labelBandCuttingSpeed = QLabel(
-            "Şerit Kesme Hızı",
+            "Şerit Kesme Hızı (m/dk)",
             self.bandCuttingSpeedFrame
         )
         self.labelBandCuttingSpeed.setGeometry(31, 27, 491, 45)
@@ -970,7 +970,7 @@ class ControlPanelController(QWidget):
         self.BandCuttingCurrentFrame.setStyleSheet(nested_frame_style)
 
         self.labelBandCuttingCurrent = QLabel(
-            "Şerit Motor Akım",
+            "Şerit Motor Akımı (A)",
             self.BandCuttingCurrentFrame
         )
         self.labelBandCuttingCurrent.setGeometry(23, 20, 181, 20)
@@ -1003,7 +1003,7 @@ class ControlPanelController(QWidget):
         self.BandCuttingTorqueFrame.setStyleSheet(nested_frame_style)
 
         self.labelBandCuttingTorque = QLabel(
-            "Şerit Motor Tork",
+            "Şerit Motor Torku (%)",
             self.BandCuttingTorqueFrame
         )
         self.labelBandCuttingTorque.setGeometry(23, 20, 181, 20)
@@ -1038,7 +1038,7 @@ class ControlPanelController(QWidget):
         self.bandDescentSpeedFrame.mousePressEvent = self._handle_descent_speed_frame_click
 
         self.labelBandDescentSpeed = QLabel(
-            "Şerit İnme Hızı",
+            "Şerit İlerleme Hızı (mm/dk)",
             self.bandDescentSpeedFrame
         )
         self.labelBandDescentSpeed.setGeometry(31, 27, 491, 45)
@@ -1092,7 +1092,7 @@ class ControlPanelController(QWidget):
         self.BandDescentCurrentFrame.setStyleSheet(nested_frame_style)
 
         self.labelBandDescentCurrent = QLabel(
-            "İnme Motor Akım",
+            "İlerleme Motor Akımı (A)",
             self.BandDescentCurrentFrame
         )
         self.labelBandDescentCurrent.setGeometry(23, 20, 181, 20)
@@ -1125,7 +1125,7 @@ class ControlPanelController(QWidget):
         self.BandDescentTorqueFrame.setStyleSheet(nested_frame_style)
 
         self.labelBandDescentTorque = QLabel(
-            "İnme Motor Tork",
+            "İlerleme Motor Torku (%)",
             self.BandDescentTorqueFrame
         )
         self.labelBandDescentTorque.setGeometry(23, 20, 181, 20)
