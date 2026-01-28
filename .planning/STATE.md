@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** Unit labels & naming fixes — adding units to numerical values and consistent terminology
+**Current focus:** Chart axis labels & sapma gauge fix — axis titles and zero-inclusive range
 
 ## Current Position
 
-Phase: 13 of 14 (Unit Labels & Naming Fixes)
+Phase: 14 of 14 (Chart Axis Labels & Sapma Gauge Fix)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-01-28 — Completed 13-01-PLAN.md
+Last activity: 2026-01-28 — Completed 14-01-PLAN.md
 
-Progress: █████████░ 93%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 2 min
-- Total execution time: ~25 min
+- Total execution time: ~27 min
 
 **By Phase:**
 
@@ -40,9 +40,10 @@ Progress: █████████░ 93%
 | 11-initial-delay-logic | 1 | 1 min | 1 min |
 | 12-ml-prediction-parity | 1 | 1 min | 1 min |
 | 13-unit-labels-naming | 1 | 1 min | 1 min |
+| 14-chart-axis-sapma-gauge | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 09-01 (2 min), 10-01 (3 min), 11-01 (1 min), 12-01 (1 min), 13-01 (1 min)
+- Last 5 plans: 10-01 (3 min), 11-01 (1 min), 12-01 (1 min), 13-01 (1 min), 14-01 (2 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -66,6 +67,7 @@ All decisions from v1.0, v1.1, v1.2, and v1.3 milestones captured.
 - ML Speed Calculation: Use averaged buffer values instead of raw current values (matches old code)
 - Torque Conversion: No input clamping in torque_to_current() (matches old code polynomial behavior)
 - GUI Labels: Only change visible label text, keep variable names unchanged (minimal code churn)
+- BandDeviationGraph: New get_axis_max/get_axis_min methods to preserve existing get_max_value/get_min_value behavior
 
 ### Deferred Issues
 
@@ -92,5 +94,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 13-01-PLAN.md (Phase 13 complete)
+Stopped at: Completed 14-01-PLAN.md (Phase 14 complete, Milestone v1.5 complete)
 Resume file: None

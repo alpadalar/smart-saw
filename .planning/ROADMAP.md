@@ -135,15 +135,15 @@ Plans:
 Plans:
 - [x] 13-01: Add units and rename labels in GUI controllers — completed 2026-01-28
 
-#### Phase 14: Chart Axis Labels & Sapma Gauge Fix
+#### Phase 14: Chart Axis Labels & Sapma Gauge Fix — COMPLETE
 
 **Goal**: Add axis names/titles to all chart axes + modify deviation gauge so 0 is always visible
 **Depends on**: Phase 13
 **Research**: Unlikely (internal patterns — PyQtGraph configuration)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 14-01: TBD (run /gsd:plan-phase 14 to break down)
+- [x] 14-01: Add axis titles to band deviation graph and fix Y-axis zero range — completed 2026-01-28
 
 ## Progress
 
@@ -165,4 +165,4 @@ Phases execute in numeric order: 1 → 2 → 3
 | 11. Initial Delay Logic | v1.4 | 1/1 | Complete | 2026-01-15 |
 | 12. ML Prediction Parity Investigation & Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 13. Unit Labels & Naming Fixes | v1.5 | 1/1 | Complete | 2026-01-28 |
-| 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 0/? | Not started | - |
+| 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
