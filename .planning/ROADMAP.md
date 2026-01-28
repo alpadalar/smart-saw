@@ -15,7 +15,7 @@ None
 - [v1.2 ML Speed Memory & Chart UX](milestones/v1.2-ROADMAP.md) (Phases 5-6) — SHIPPED 2026-01-15
 - [v1.3 Processing Performance](milestones/v1.3-ROADMAP.md) (Phases 7-9) — SHIPPED 2026-01-15
 - [v1.4 Control Mode Fixes](milestones/v1.4-ROADMAP.md) (Phases 10-11) — SHIPPED 2026-01-28
-- 🚧 **v1.5 ML Parity & UX Polish** — Phases 12-14 (in progress)
+- [v1.5 ML Parity & UX Polish](milestones/v1.5-ROADMAP.md) (Phases 12-14) — SHIPPED 2026-01-28
 
 ## Phases
 
@@ -111,39 +111,16 @@ Plans:
 
 </details>
 
-### 🚧 v1.5 ML Parity & UX Polish (In Progress)
+<details>
+<summary>v1.5 ML Parity & UX Polish (Phases 12-14) — SHIPPED 2026-01-28</summary>
 
 **Milestone Goal:** Critical ML behavior fix ensuring new code matches old code predictions + comprehensive GUI labeling improvements
 
-#### Phase 12: ML Prediction Parity Investigation & Fix — COMPLETE
+- [x] Phase 12: ML Prediction Parity Investigation & Fix (1/1 plans) — completed 2026-01-28
+- [x] Phase 13: Unit Labels & Naming Fixes (1/1 plans) — completed 2026-01-28
+- [x] Phase 14: Chart Axis Labels & Sapma Gauge Fix (1/1 plans) — completed 2026-01-28
 
-**Goal**: Deep comparison with /media/workspace/eskiimas/smart-saw/src/control/ml to find why same model gives different results; make new code behave identically
-**Depends on**: Phase 11 (previous milestone complete)
-**Research**: Unlikely (internal patterns — comparing two codebases, same model)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 12-01: ML prediction parity fix — completed 2026-01-28
-
-#### Phase 13: Unit Labels & Naming Fixes — COMPLETE
-
-**Goal**: Add units (mm, mm/s, Nm, etc.) to all numerical values across all pages + rename İnme Hızı → İlerleme Hızı throughout
-**Depends on**: Phase 12
-**Research**: Unlikely (internal patterns — GUI text changes)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 13-01: Add units and rename labels in GUI controllers — completed 2026-01-28
-
-#### Phase 14: Chart Axis Labels & Sapma Gauge Fix — COMPLETE
-
-**Goal**: Add axis names/titles to all chart axes + modify deviation gauge so 0 is always visible
-**Depends on**: Phase 13
-**Research**: Unlikely (internal patterns — PyQtGraph configuration)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 14-01: Add axis titles to band deviation graph and fix Y-axis zero range — completed 2026-01-28
+</details>
 
 ## Progress
 

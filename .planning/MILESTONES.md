@@ -1,5 +1,33 @@
 # Project Milestones: Smart Saw Database Field Additions
 
+## v1.5 ML Parity & UX Polish (Shipped: 2026-01-28)
+
+**Delivered:** ML tahmin hesaplamalarında eski kod ile tam eşitlik sağlandı ve GUI etiketlerinde birim/terminoloji düzeltmeleri yapıldı.
+
+**Phases completed:** 12-14 (3 plans total)
+
+**Key accomplishments:**
+
+- ML speed calculations aligned with old codebase (averaged buffer values instead of raw current values)
+- Torque-to-current conversion without clamping (matches old code polynomial behavior)
+- GUI labels with units (mm/dk, m/dk, A, %) across control panel and monitoring pages
+- Consistent "İlerleme" terminology replacing "İnme" throughout the interface
+- Band deviation graph axis title labels (Sapma (mm), Zaman (s))
+- Y-axis range always includes zero reference point for deviation gauge
+
+**Stats:**
+
+- 4 source files modified (preprocessor.py, ml_controller.py, control_panel_controller.py, monitoring_controller.py)
+- ~14,432 lines Python (existing codebase)
+- 3 phases, 3 plans, 9 tasks
+- Same-day completion (2026-01-28)
+
+**Git range:** `feat(12-01)` → `feat(14-01)`
+
+**What's next:** Production validation of ML predictions matching old system behavior
+
+---
+
 ## v1.4 Control Mode Fixes (Shipped: 2026-01-28)
 
 **Delivered:** AI mode switch hatası ve manuel mod initial delay düzeltmeleri ile kontrol modu geçişleri güvenilir hale getirildi.

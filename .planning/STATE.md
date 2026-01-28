@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** Chart axis labels & sapma gauge fix — axis titles and zero-inclusive range
+**Current focus:** v1.5 milestone complete — planning next milestone
 
 ## Current Position
 
 Phase: 14 of 14 (Chart Axis Labels & Sapma Gauge Fix)
 Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-01-28 — Completed 14-01-PLAN.md
+Status: Milestone v1.5 complete
+Last activity: 2026-01-28 — v1.5 milestone archived
 
 Progress: ██████████ 100%
 
@@ -90,9 +90,10 @@ None.
 - Milestone v1.4 created: Control mode fixes, 2 phases (Phase 10-11)
 - Milestone v1.4 COMPLETE: 2026-01-28
 - Milestone v1.5 created: ML parity & UX polish, 3 phases (Phase 12-14)
+- Milestone v1.5 COMPLETE: 2026-01-28
 
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 14-01-PLAN.md (Phase 14 complete, Milestone v1.5 complete)
+Stopped at: v1.5 milestone archived
 Resume file: None

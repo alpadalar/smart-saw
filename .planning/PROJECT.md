@@ -32,10 +32,16 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 - ✓ AnomalyManager lock consolidation (9 → 1 per cycle) — v1.3
 - ✓ Thread-safe GUI→main thread asyncio scheduling — v1.4
 - ✓ Mode-aware initial delay (ML-only) — v1.4
+- ✓ ML prediction parity with old codebase (averaged buffer values) — v1.5
+- ✓ Torque-to-current without clamping (old code polynomial behavior) — v1.5
+- ✓ GUI labels with units (mm/dk, m/dk, A, %) — v1.5
+- ✓ Consistent "İlerleme" terminology (replacing "İnme") — v1.5
+- ✓ Band deviation graph axis title labels — v1.5
+- ✓ Y-axis range always includes zero reference — v1.5
 
 ### Active
 
-(None — v1.4 milestone complete)
+(None — v1.5 milestone complete)
 
 ### Out of Scope
 
@@ -45,26 +51,29 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 
 ## Context
 
-**Current State (v1.4 shipped):**
+**Current State (v1.5 shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`
 - AsyncModbusService: Connection cooldown (10s default), operation timeouts via asyncio.wait_for
-- MLController: Automatic speed save/restore around ML cuts via ModbusWriter injection
+- MLController: Automatic speed save/restore around ML cuts via ModbusWriter injection; uses averaged buffer speeds for calculations (old code parity)
 - CuttingGraphWidget: Dynamic axis title labels with Turkish character support
+- BandDeviationGraphWidget: Axis title labels (Sapma/Zaman), Y-axis always includes zero
 - SQLiteService: Automatic schema mismatch detection and database recreation with backup
 - MQTTClient: Lock-free asyncio.Queue for telemetry batching (O(1) queue_telemetry)
 - AnomalyDetectors: IQR method for all vibration sensors (TitresimX/Y/Z)
 - AnomalyManager: Single atomic lock acquisition per process_data() cycle
 - GUI→Async: Event loop propagation through GUI init chain, run_coroutine_threadsafe() for mode switching
 - ControlManager: Mode-aware initial delay (ML-only, manual mode bypasses)
+- GUI Labels: Units (mm/dk, m/dk, A, %) on all numerical values; "İlerleme" terminology
 
 **Tech Stack:**
-- ~14,400 LOC Python
+- ~14,432 LOC Python
 - v1.0: schemas.py, ml_controller.py, anomaly_tracker.py, data_processor.py
 - v1.1: client.py, config.yaml
 - v1.2: ml_controller.py, manager.py, sensor_controller.py, sqlite_service.py
 - v1.3: mqtt_client.py, detectors.py, manager.py
 - v1.4: lifecycle.py, app.py, main_controller.py, control_panel_controller.py, manager.py
+- v1.5: preprocessor.py, ml_controller.py, control_panel_controller.py, monitoring_controller.py
 
 ## Constraints
 
@@ -93,6 +102,10 @@ ML ve anomali kayıtlarında tork ve kafa yüksekliği verilerinin saklanması �
 | asyncio.run_coroutine_threadsafe() for GUI→main | Proper cross-thread async scheduling, avoids ensure_future race conditions | ✓ Good |
 | Event loop as optional parameter | Backward compatibility for standalone testing, None default | ✓ Good |
 | Initial delay inside ML branch only | Cleaner separation — manual mode never needs delay check | ✓ Good |
+| Use averaged buffer speeds for ML calculations | Matches old code behavior for speed percentage calculations | ✓ Good |
+| Remove torque clamping in torque_to_current | Old code polynomial behavior preserved, no input bounds | ✓ Good |
+| Only change visible label text, keep variable names | Minimal code churn, backward compatibility | ✓ Good |
+| New get_axis_max/get_axis_min methods | Preserve existing get_max_value/get_min_value behavior | ✓ Good |
 
 ---
-*Last updated: 2026-01-28 after v1.4 milestone*
+*Last updated: 2026-01-28 after v1.5 milestone*
