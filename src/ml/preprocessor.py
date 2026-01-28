@@ -74,27 +74,25 @@ class MLPreprocessor:
         Model: f(x) = A2*x^2 + A1*x + A0
         Coefficients calibrated from motor datasheet and field measurements.
 
+        Note: No clamping applied to match old codebase behavior.
+        The polynomial handles any input value.
+
         Args:
-            torque_percentage: Motor torque as percentage (0-100)
+            torque_percentage: Motor torque as percentage (typically 0-100)
 
         Returns:
             Estimated current in Amperes
-
-        Example:
-            >>> preprocessor.torque_to_current(45.2)
-            21.647  # Amperes
         """
-        # Clamp to valid range
-        torque_percentage = max(0.0, min(torque_percentage, 100.0))
-
-        # Apply polynomial
-        current = (
-            self.poly_a2 * (torque_percentage ** 2) +
-            self.poly_a1 * torque_percentage +
-            self.poly_a0
-        )
-
-        return current
+        try:
+            # Apply polynomial (no clamping - matches old code)
+            current = (
+                self.poly_a2 * (torque_percentage ** 2) +
+                self.poly_a1 * torque_percentage +
+                self.poly_a0
+            )
+            return current
+        except Exception:
+            return 0.0
 
     def add_data_point(self, raw_data) -> bool:
         """
