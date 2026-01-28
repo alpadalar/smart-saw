@@ -11,7 +11,7 @@ import logging
 import numpy as np
 import pandas as pd
 from collections import deque
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -198,6 +198,24 @@ class MLPreprocessor:
         except Exception as e:
             logger.error(f"Error generating model input: {e}", exc_info=True)
             return None
+
+    def get_averaged_speeds(self) -> Tuple[float, float]:
+        """
+        Get averaged speed values from buffers.
+
+        This matches old codebase behavior where speed calculations
+        use averaged values, not raw current values.
+
+        Returns:
+            Tuple of (avg_kesme_hizi, avg_inme_hizi), or (0.0, 0.0) if buffers empty
+        """
+        if len(self.kesme_hizi_buffer) == 0 or len(self.inme_hizi_buffer) == 0:
+            return (0.0, 0.0)
+
+        avg_kesme = np.mean(list(self.kesme_hizi_buffer))
+        avg_inme = np.mean(list(self.inme_hizi_buffer))
+
+        return (avg_kesme, avg_inme)
 
     def reset_buffers(self):
         """
