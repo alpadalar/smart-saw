@@ -16,6 +16,7 @@ None
 - [v1.3 Processing Performance](milestones/v1.3-ROADMAP.md) (Phases 7-9) — SHIPPED 2026-01-15
 - [v1.4 Control Mode Fixes](milestones/v1.4-ROADMAP.md) (Phases 10-11) — SHIPPED 2026-01-28
 - [v1.5 ML Parity & UX Polish](milestones/v1.5-ROADMAP.md) (Phases 12-14) — SHIPPED 2026-01-28
+- [v1.6 Touch UX & Data Traceability](milestones/v1.6-ROADMAP.md) (Phases 15-18) — IN PROGRESS
 
 ## Phases
 
@@ -122,6 +123,70 @@ Plans:
 
 </details>
 
+<details open>
+<summary>v1.6 Touch UX & Data Traceability (Phases 15-18) — IN PROGRESS</summary>
+
+**Milestone Goal:** Dokunmatik ekran kullanılabilirliği ve veritabanı veri izlenebilirliği
+
+#### Phase 15: Touch Long Press Fix — PENDING
+
+**Goal**: Fix touch event handling on positioning buttons
+**Depends on**: Phase 14 (previous milestone complete)
+**Requirements**: TOUCH-01, TOUCH-02, TOUCH-03
+**Research**: Unlikely (Qt touch events — well-documented pattern)
+**Plans**: 0/? planned
+
+**Success Criteria:**
+1. User can long press positioning buttons with touch input and jog action activates
+2. User can release touch press and jog action stops immediately
+3. Visual feedback (button pressed state) appears during touch press
+4. Mouse long press on positioning buttons continues to work without regression
+
+#### Phase 16: ML DB None Values Investigation — PENDING
+
+**Goal**: Investigate and fix None values in ML database fields
+**Depends on**: Phase 15
+**Requirements**: MLDB-05
+**Research**: LIKELY (root cause analysis for None values in yeni_kesme_hizi, yeni_inme_hizi, katsayi)
+**Plans**: 0/? planned
+
+**Success Criteria:**
+1. User can query ML predictions table and see actual numeric values in yeni_kesme_hizi field (not None)
+2. User can query ML predictions table and see actual numeric values in yeni_inme_hizi field (not None)
+3. User can query ML predictions table and see actual numeric values in katsayi field (not None)
+4. Root cause of None values documented in investigation report
+
+#### Phase 17: ML DB Schema Update — PENDING
+
+**Goal**: Add traceability fields to ML predictions table
+**Depends on**: Phase 16
+**Requirements**: MLDB-01, MLDB-02, MLDB-03, MLDB-04
+**Research**: Unlikely (established v1.0 ALTER TABLE pattern)
+**Plans**: 0/? planned
+
+**Success Criteria:**
+1. User can query ML predictions table and see kesim_id field linking each prediction to cut session
+2. User can query ML predictions table and see makine_id field identifying machine for each prediction
+3. User can query ML predictions table and see serit_id field identifying blade for each prediction
+4. User can query ML predictions table and see malzeme_cinsi field identifying material for each prediction
+5. Existing ML prediction records preserved after schema migration (no data loss)
+
+#### Phase 18: Anomaly DB Schema Update — PENDING
+
+**Goal**: Add traceability fields to anomaly events table
+**Depends on**: Phase 17
+**Requirements**: ANDB-01, ANDB-02, ANDB-03
+**Research**: Unlikely (repeat Phase 17 pattern for anomaly database)
+**Plans**: 0/? planned
+
+**Success Criteria:**
+1. User can query anomaly events table and see makine_id field identifying machine for each anomaly
+2. User can query anomaly events table and see serit_id field identifying blade for each anomaly
+3. User can query anomaly events table and see malzeme_cinsi field identifying material for each anomaly
+4. Existing anomaly records preserved after schema migration (no data loss)
+
+</details>
+
 ## Progress
 
 **Execution Order:**
@@ -143,3 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3
 | 12. ML Prediction Parity Investigation & Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 13. Unit Labels & Naming Fixes | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
+| 15. Touch Long Press Fix | v1.6 | 0/? | Pending | — |
+| 16. ML DB None Values Investigation | v1.6 | 0/? | Pending | — |
+| 17. ML DB Schema Update | v1.6 | 0/? | Pending | — |
+| 18. Anomaly DB Schema Update | v1.6 | 0/? | Pending | — |

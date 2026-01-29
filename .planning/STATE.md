@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-28)
+See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** v1.6 Touch UX & Data Traceability — defining requirements
+**Current focus:** v1.6 Touch UX & Data Traceability — planning Phase 15
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-01-29 — Milestone v1.6 started
+Phase: 15 - Touch Long Press Fix
+Plan: Not yet planned
+Status: Roadmap defined, awaiting phase planning
+Last activity: 2026-01-29 — v1.6 roadmap created
 
-Progress: ██████████ 100%
+Progress: [------------] 0% (Phase 15 of 18)
 
 ## Performance Metrics
 
@@ -51,7 +51,7 @@ Progress: ██████████ 100%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-All decisions from v1.0, v1.1, v1.2, and v1.3 milestones captured.
+All decisions from v1.0, v1.1, v1.2, v1.3, v1.4, and v1.5 milestones captured.
 
 **v1.3 Decisions:**
 - MQTT: Lock-free asyncio.Queue kullanilacak (not threading queue)
@@ -91,9 +91,10 @@ None.
 - Milestone v1.4 COMPLETE: 2026-01-28
 - Milestone v1.5 created: ML parity & UX polish, 3 phases (Phase 12-14)
 - Milestone v1.5 COMPLETE: 2026-01-28
+- Milestone v1.6 created: Touch UX & data traceability, 4 phases (Phase 15-18)
 
 ## Session Continuity
 
-Last session: 2026-01-28
-Stopped at: v1.5 milestone archived
+Last session: 2026-01-29
+Stopped at: v1.6 roadmap created, ready for Phase 15 planning
 Resume file: None

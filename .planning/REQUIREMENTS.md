@@ -58,23 +58,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOUCH-01 | — | Pending |
-| TOUCH-02 | — | Pending |
-| TOUCH-03 | — | Pending |
-| MLDB-01 | — | Pending |
-| MLDB-02 | — | Pending |
-| MLDB-03 | — | Pending |
-| MLDB-04 | — | Pending |
-| MLDB-05 | — | Pending |
-| ANDB-01 | — | Pending |
-| ANDB-02 | — | Pending |
-| ANDB-03 | — | Pending |
+| TOUCH-01 | Phase 15 | Pending |
+| TOUCH-02 | Phase 15 | Pending |
+| TOUCH-03 | Phase 15 | Pending |
+| MLDB-01 | Phase 17 | Pending |
+| MLDB-02 | Phase 17 | Pending |
+| MLDB-03 | Phase 17 | Pending |
+| MLDB-04 | Phase 17 | Pending |
+| MLDB-05 | Phase 16 | Pending |
+| ANDB-01 | Phase 18 | Pending |
+| ANDB-02 | Phase 18 | Pending |
+| ANDB-03 | Phase 18 | Pending |
 
 **Coverage:**
 - v1.6 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-29*
-*Last updated: 2026-01-29 after initial definition*
+*Last updated: 2026-01-29 after roadmap creation*
