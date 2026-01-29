@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 15 - Touch Long Press Fix
-Plan: Not yet planned
-Status: Roadmap defined, awaiting phase planning
-Last activity: 2026-01-29 — v1.6 roadmap created
+Plan: 1 of 1
+Status: Phase complete
+Last activity: 2026-01-29 — Completed 15-01-PLAN.md
 
-Progress: [------------] 0% (Phase 15 of 18)
+Progress: [█-----------] 5.6% (Phase 15 of 18)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 2 min
-- Total execution time: ~27 min
+- Total execution time: ~30 min
 
 **By Phase:**
 
@@ -41,9 +41,10 @@ Progress: [------------] 0% (Phase 15 of 18)
 | 12-ml-prediction-parity | 1 | 1 min | 1 min |
 | 13-unit-labels-naming | 1 | 1 min | 1 min |
 | 14-chart-axis-sapma-gauge | 1 | 2 min | 2 min |
+| 15-touch-long-press-fix | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 10-01 (3 min), 11-01 (1 min), 12-01 (1 min), 13-01 (1 min), 14-01 (2 min)
+- Last 5 plans: 11-01 (1 min), 12-01 (1 min), 13-01 (1 min), 14-01 (2 min), 15-01 (3 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -68,6 +69,13 @@ All decisions from v1.0, v1.1, v1.2, v1.3, v1.4, and v1.5 milestones captured.
 - Torque Conversion: No input clamping in torque_to_current() (matches old code polynomial behavior)
 - GUI Labels: Only change visible label text, keep variable names unchanged (minimal code churn)
 - BandDeviationGraph: New get_axis_max/get_axis_min methods to preserve existing get_max_value/get_min_value behavior
+
+**v1.6 Decisions:**
+- Touch activation: Instant (0ms delay) - industrial users expect immediate response
+- Touch bounds: Strict, no tolerance zone - prevents accidental adjacent button activation
+- Multi-touch: First button wins - prevents conflicting jog commands
+- Emergency stop: Always responsive to any finger - safety feature must be accessible
+- App focus loss: Stop jog on focusOutEvent - safety mechanism for backgrounded app
 
 ### Deferred Issues
 
@@ -96,5 +104,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: v1.6 roadmap created, ready for Phase 15 planning
+Stopped at: Completed 15-01-PLAN.md (Touch Long Press Fix)
 Resume file: None
