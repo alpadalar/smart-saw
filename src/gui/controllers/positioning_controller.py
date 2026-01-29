@@ -33,6 +33,7 @@ except ImportError:
     QIcon = object
 
 from ...services.control.machine_control import MachineControl
+from ..widgets.touch_button import TouchButton
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,9 @@ class PositioningController(QWidget):
 
         # UI suppression flag for mengene close button
         self._suppress_close_autocheck_until: float = 0.0
+
+        # Track active jog state for emergency stop
+        self._active_jog_button: Optional[TouchButton] = None
 
         # Setup UI
         self._setup_ui()
@@ -250,30 +254,46 @@ class PositioningController(QWidget):
         self.labelMalzemeKonumlandirma.setAlignment(Qt.AlignCenter)
 
         # Malzeme Geri button (top)
-        self.btnMalzemeGeri = QPushButton(self.malzemeKonumlandirmaFrame)
+        self.btnMalzemeGeri = TouchButton(self.malzemeKonumlandirmaFrame)
         self.btnMalzemeGeri.setGeometry(50, 104, 382, 378)
         self.btnMalzemeGeri.setStyleSheet(positioning_button_style)
         self.btnMalzemeGeri.setCheckable(True)
         self.btnMalzemeGeri.setIcon(self._load_icon("malzeme-geri-icon.png"))
         self.btnMalzemeGeri.setIconSize(QSize(265, 265))
+        # Mouse events
         self.btnMalzemeGeri.pressed.connect(
             lambda: self._on_hold_button(self.btnMalzemeGeri, "malzeme_geri", True)
         )
         self.btnMalzemeGeri.released.connect(
             lambda: self._on_hold_button(self.btnMalzemeGeri, "malzeme_geri", False)
         )
+        # Touch events
+        self.btnMalzemeGeri.touch_pressed.connect(
+            lambda: self._on_hold_button(self.btnMalzemeGeri, "malzeme_geri", True)
+        )
+        self.btnMalzemeGeri.touch_released.connect(
+            lambda: self._on_hold_button(self.btnMalzemeGeri, "malzeme_geri", False)
+        )
 
         # Malzeme İleri button (bottom)
-        self.btnMalzemeIleri = QPushButton(self.malzemeKonumlandirmaFrame)
+        self.btnMalzemeIleri = TouchButton(self.malzemeKonumlandirmaFrame)
         self.btnMalzemeIleri.setGeometry(50, 526, 382, 378)
         self.btnMalzemeIleri.setStyleSheet(positioning_button_style)
         self.btnMalzemeIleri.setCheckable(True)
         self.btnMalzemeIleri.setIcon(self._load_icon("malzeme-ileri-icon.png"))
         self.btnMalzemeIleri.setIconSize(QSize(265, 265))
+        # Mouse events
         self.btnMalzemeIleri.pressed.connect(
             lambda: self._on_hold_button(self.btnMalzemeIleri, "malzeme_ileri", True)
         )
         self.btnMalzemeIleri.released.connect(
+            lambda: self._on_hold_button(self.btnMalzemeIleri, "malzeme_ileri", False)
+        )
+        # Touch events
+        self.btnMalzemeIleri.touch_pressed.connect(
+            lambda: self._on_hold_button(self.btnMalzemeIleri, "malzeme_ileri", True)
+        )
+        self.btnMalzemeIleri.touch_released.connect(
             lambda: self._on_hold_button(self.btnMalzemeIleri, "malzeme_ileri", False)
         )
 
@@ -292,32 +312,79 @@ class PositioningController(QWidget):
         self.labelTestereKonumlandirma.setAlignment(Qt.AlignCenter)
 
         # Testere Yukarı button (top)
-        self.btnTestereYukari = QPushButton(self.testereKonumlandirmaFrame)
+        self.btnTestereYukari = TouchButton(self.testereKonumlandirmaFrame)
         self.btnTestereYukari.setGeometry(41, 104, 382, 378)
         self.btnTestereYukari.setStyleSheet(positioning_button_style)
         self.btnTestereYukari.setCheckable(True)
         self.btnTestereYukari.setIcon(self._load_icon("saw-up-icon.png"))
         self.btnTestereYukari.setIconSize(QSize(265, 265))
+        # Mouse events
         self.btnTestereYukari.pressed.connect(
             lambda: self._on_hold_button(self.btnTestereYukari, "testere_yukari", True)
         )
         self.btnTestereYukari.released.connect(
             lambda: self._on_hold_button(self.btnTestereYukari, "testere_yukari", False)
         )
+        # Touch events
+        self.btnTestereYukari.touch_pressed.connect(
+            lambda: self._on_hold_button(self.btnTestereYukari, "testere_yukari", True)
+        )
+        self.btnTestereYukari.touch_released.connect(
+            lambda: self._on_hold_button(self.btnTestereYukari, "testere_yukari", False)
+        )
 
         # Testere Aşağı button (bottom)
-        self.btnTestereAsagi = QPushButton(self.testereKonumlandirmaFrame)
+        self.btnTestereAsagi = TouchButton(self.testereKonumlandirmaFrame)
         self.btnTestereAsagi.setGeometry(41, 526, 382, 378)
         self.btnTestereAsagi.setStyleSheet(positioning_button_style)
         self.btnTestereAsagi.setCheckable(True)
         self.btnTestereAsagi.setIcon(self._load_icon("saw-down-icon.png"))
         self.btnTestereAsagi.setIconSize(QSize(265, 265))
+        # Mouse events
         self.btnTestereAsagi.pressed.connect(
             lambda: self._on_hold_button(self.btnTestereAsagi, "testere_asagi", True)
         )
         self.btnTestereAsagi.released.connect(
             lambda: self._on_hold_button(self.btnTestereAsagi, "testere_asagi", False)
         )
+        # Touch events
+        self.btnTestereAsagi.touch_pressed.connect(
+            lambda: self._on_hold_button(self.btnTestereAsagi, "testere_asagi", True)
+        )
+        self.btnTestereAsagi.touch_released.connect(
+            lambda: self._on_hold_button(self.btnTestereAsagi, "testere_asagi", False)
+        )
+
+        # === EMERGENCY STOP BUTTON (OVERLAY) ===
+        # Centered horizontally at bottom of screen, initially hidden
+        emergency_stop_style = """
+            QPushButton {
+                background-color: #DC2626;
+                color: #FFFFFF;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 32px;
+                text-align: center;
+                border-radius: 25px;
+                border: 5px solid #B91C1C;
+            }
+            QPushButton:hover {
+                background-color: #B91C1C;
+                border: 5px solid #991B1B;
+            }
+            QPushButton:pressed {
+                background-color: #991B1B;
+            }
+        """
+
+        self.btnEmergencyStop = QPushButton("ACIL DURDUR", self)
+        # Centered horizontally: (1528 - 300) / 2 = 614
+        # Bottom of screen with margin: 1080 - 150 - 50 = 880
+        self.btnEmergencyStop.setGeometry(614, 880, 300, 150)
+        self.btnEmergencyStop.setStyleSheet(emergency_stop_style)
+        self.btnEmergencyStop.setVisible(False)
+        self.btnEmergencyStop.clicked.connect(self._on_emergency_stop)
+        self.btnEmergencyStop.raise_()  # Ensure it's on top
 
     def _setup_timers(self):
         """Setup all Qt timers for periodic updates."""
@@ -477,6 +544,18 @@ class PositioningController(QWidget):
             state_text = "BASILI" if is_pressed else "BOSALDI"
             logger.info(f"{command} => {state_text}")
 
+            # Track active jog state
+            if is_pressed:
+                self._active_jog_button = button
+                # Show emergency stop button when jog starts
+                if hasattr(self, 'btnEmergencyStop'):
+                    self.btnEmergencyStop.setVisible(True)
+            else:
+                self._active_jog_button = None
+                # Hide emergency stop button when jog stops
+                if hasattr(self, 'btnEmergencyStop'):
+                    self.btnEmergencyStop.setVisible(False)
+
             # Handle material positioning (synchronous calls)
             if command == "malzeme_geri":
                 if is_pressed:
@@ -507,6 +586,10 @@ class PositioningController(QWidget):
             logger.error(f"Hold button error ({command}): {e}")
             # Reset button visual state
             button.setChecked(False)
+            # Reset jog state
+            self._active_jog_button = None
+            if hasattr(self, 'btnEmergencyStop'):
+                self.btnEmergencyStop.setVisible(False)
 
     # ========================================================================
     # Data Update Methods
@@ -602,6 +685,59 @@ class PositioningController(QWidget):
 
         except Exception as e:
             logger.debug(f"Button state update error: {e}")
+
+    def _on_emergency_stop(self) -> None:
+        """
+        Handle emergency stop button click.
+        Stops any active jog operation immediately.
+        """
+        try:
+            logger.warning("Emergency stop activated")
+
+            # Stop all jog operations
+            if self.machine_control is not None:
+                self.machine_control.stop_material_backward()
+                self.machine_control.stop_material_forward()
+                self.machine_control.stop_saw_up()
+                self.machine_control.stop_saw_down()
+
+            # Reset all positioning button states
+            for btn in [self.btnMalzemeGeri, self.btnMalzemeIleri,
+                       self.btnTestereYukari, self.btnTestereAsagi]:
+                if hasattr(btn, 'blockSignals'):
+                    btn.blockSignals(True)
+                    btn.setChecked(False)
+                    btn.blockSignals(False)
+
+            # Clear active jog state
+            self._active_jog_button = None
+
+            # Hide emergency stop button
+            if hasattr(self, 'btnEmergencyStop'):
+                self.btnEmergencyStop.setVisible(False)
+
+        except Exception as e:
+            logger.error(f"Emergency stop error: {e}")
+
+    def focusOutEvent(self, event) -> None:
+        """
+        Handle focus loss event.
+        Stops any active jog operation when app loses focus.
+
+        Args:
+            event: Focus event object
+        """
+        try:
+            # Stop any active jog when app loses focus
+            if self._active_jog_button is not None:
+                logger.warning("App focus lost - stopping active jog")
+                self._on_emergency_stop()
+
+        except Exception as e:
+            logger.error(f"Focus out event error: {e}")
+
+        # Call parent implementation
+        super().focusOutEvent(event)
 
     # ========================================================================
     # Utility Methods
