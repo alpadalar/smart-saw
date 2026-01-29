@@ -9,9 +9,9 @@ Requirements for v1.6 Touch UX & Data Traceability milestone. Each maps to roadm
 
 ### Touch UX
 
-- [ ] **TOUCH-01**: User can long press positioning buttons with touch input (testere konumlandirma, malzeme konumlandirma)
-- [ ] **TOUCH-02**: Mouse long press continues to work on positioning buttons (no regression)
-- [ ] **TOUCH-03**: Visual feedback appears when touch press is detected on positioning buttons
+- [x] **TOUCH-01**: User can long press positioning buttons with touch input (testere konumlandirma, malzeme konumlandirma) — completed 2026-01-30
+- [x] **TOUCH-02**: Mouse long press continues to work on positioning buttons (no regression) — completed 2026-01-30
+- [x] **TOUCH-03**: Visual feedback appears when touch press is detected on positioning buttons — completed 2026-01-30
 
 ### ML Database
 

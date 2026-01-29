@@ -128,16 +128,16 @@ Plans:
 
 **Milestone Goal:** Dokunmatik ekran kullanılabilirliği ve veritabanı veri izlenebilirliği
 
-#### Phase 15: Touch Long Press Fix — PLANNED
+#### Phase 15: Touch Long Press Fix — COMPLETE
 
 **Goal**: Fix touch event handling on positioning buttons
 **Depends on**: Phase 14 (previous milestone complete)
 **Requirements**: TOUCH-01, TOUCH-02, TOUCH-03
 **Research**: Unlikely (Qt touch events — well-documented pattern)
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 15-01: TouchButton widget and emergency stop overlay
+- [x] 15-01: TouchButton widget and emergency stop overlay — completed 2026-01-30
 
 **Success Criteria:**
 1. User can long press positioning buttons with touch input and jog action activates
@@ -211,7 +211,7 @@ Phases execute in numeric order: 1 → 2 → 3
 | 12. ML Prediction Parity Investigation & Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 13. Unit Labels & Naming Fixes | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
-| 15. Touch Long Press Fix | v1.6 | 0/1 | Planned | — |
+| 15. Touch Long Press Fix | v1.6 | 1/1 | Complete | 2026-01-30 |
 | 16. ML DB None Values Investigation | v1.6 | 0/? | Pending | — |
 | 17. ML DB Schema Update | v1.6 | 0/? | Pending | — |
 | 18. Anomaly DB Schema Update | v1.6 | 0/? | Pending | — |
