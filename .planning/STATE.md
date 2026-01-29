@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** v1.5 milestone complete — planning next milestone
+**Current focus:** v1.6 Touch UX & Data Traceability — defining requirements
 
 ## Current Position
 
-Phase: 14 of 14 (Chart Axis Labels & Sapma Gauge Fix)
-Plan: 1 of 1 in current phase
-Status: Milestone v1.5 complete
-Last activity: 2026-01-28 — v1.5 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-29 — Milestone v1.6 started
 
 Progress: ██████████ 100%
 
