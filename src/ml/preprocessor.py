@@ -53,9 +53,10 @@ class MLPreprocessor:
 
         # Polynomial coefficients for torque → current conversion
         # f(x) = A2*x^2 + A1*x + A0
-        self.poly_a2 = config.get('torque_to_current', {}).get('a2', 0.0001)
-        self.poly_a1 = config.get('torque_to_current', {}).get('a1', 0.285)
-        self.poly_a0 = config.get('torque_to_current', {}).get('a0', 8.5)
+        # Defaults match old working project: A2=0.015, A1=-0.278, A0=15.656
+        self.poly_a2 = config.get('torque_to_current', {}).get('a2', 0.015)
+        self.poly_a1 = config.get('torque_to_current', {}).get('a1', -0.278)
+        self.poly_a0 = config.get('torque_to_current', {}).get('a0', 15.656)
 
         # Statistics
         self._samples_processed = 0

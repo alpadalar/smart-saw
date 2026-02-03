@@ -152,14 +152,14 @@ ml:
 
   # Speed change accumulation thresholds (before writing to Modbus)
   # Purpose: Reduces Modbus traffic by accumulating small changes
-  # When enabled: Speed changes accumulate until threshold is reached, then written
-  # When disabled: Every ML output immediately written to Modbus (like old project)
+  # When enabled: Speed changes accumulate until threshold is reached, then written (matches old project)
+  # When disabled: Every ML output immediately written to Modbus (causes excessive traffic)
   write_thresholds:
     inme_hizi:
-      enabled: false      # Enable threshold (false = write immediately every cycle)
+      enabled: true       # Enable threshold (matches old project behavior)
       threshold: 1.0      # Write when accumulated change >= 1.0 mm/min
     kesme_hizi:
-      enabled: false      # Enable threshold (false = write immediately every cycle)
+      enabled: true       # Enable threshold (matches old project behavior)
       threshold: 0.9      # Write when accumulated change >= 0.9 mm/min
 
   # Speed restoration after ML cuts
