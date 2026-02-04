@@ -145,13 +145,16 @@ Plans:
 3. Visual feedback (button pressed state) appears during touch press
 4. Mouse long press on positioning buttons continues to work without regression
 
-#### Phase 16: ML DB None Values Investigation — PENDING
+#### Phase 16: ML DB None Values Investigation — PLANNED
 
-**Goal**: Investigate and fix None values in ML database fields
+**Goal**: Fix None values in ML database fields by populating yeni_kesme_hizi, yeni_inme_hizi, katsayi
 **Depends on**: Phase 15
 **Requirements**: MLDB-05
-**Research**: LIKELY (root cause analysis for None values in yeni_kesme_hizi, yeni_inme_hizi, katsayi)
-**Plans**: 0/? planned
+**Research**: Complete (root cause identified: schema-code mismatch, logging before speed calculation)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 16-01-PLAN.md — Fix ML prediction logging to include missing fields
 
 **Success Criteria:**
 1. User can query ML predictions table and see actual numeric values in yeni_kesme_hizi field (not None)
@@ -212,6 +215,6 @@ Phases execute in numeric order: 1 → 2 → 3
 | 13. Unit Labels & Naming Fixes | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 15. Touch Long Press Fix | v1.6 | 1/1 | Complete | 2026-01-30 |
-| 16. ML DB None Values Investigation | v1.6 | 0/? | Pending | — |
+| 16. ML DB None Values Investigation | v1.6 | 0/1 | Planned | — |
 | 17. ML DB Schema Update | v1.6 | 0/? | Pending | — |
 | 18. Anomaly DB Schema Update | v1.6 | 0/? | Pending | — |
