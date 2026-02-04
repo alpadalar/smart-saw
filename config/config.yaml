@@ -104,11 +104,12 @@ control:
       max: 60.0
 
   # Dynamic Initial Delay (delay control activation after cutting starts)
+  # Logic: Calculate delay = target_distance / inme_hizi, apply MIN limit only
+  # Both conditions must be met: time >= calculated delay AND distance >= target
   initial_delay:
     enabled: true
-    default_delay_ms: 30000    # Default 30 seconds
-    min_delay_ms: 5000         # Minimum 5 seconds
-    max_delay_ms: 60000        # Maximum 60 seconds
+    default_delay_ms: 30000    # Default 30 seconds (when inme_hizi=0)
+    min_delay_ms: 5000         # Minimum 5 seconds (no max limit)
     target_distance_mm: 10     # Activate after 10mm descent
 
   # Data buffering for control decisions
@@ -243,11 +244,15 @@ iot:
     enabled: true
     protocol: "mqtt"  # mqtt or http
 
+    # Device identification (for reference)
+    device_id: "5a326080-f203-11f0-b6b6-4987006f8c33"
+    access_token: "vtpo7p1jo8mnzln1kdhz"
+
     # MQTT settings
     mqtt:
       broker: "185.87.252.58"
       port: 1883
-      username: "vtpo7p1jo8mnzln1kdhz"  # Device access token
+      username: "vtpo7p1jo8mnzln1kdhz"  # Device access token (same as access_token above)
       keepalive: 60
       qos: 1  # 0, 1, or 2
 

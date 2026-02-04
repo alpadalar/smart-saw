@@ -268,25 +268,25 @@ class MLController:
                     self.kesme_hizi_degisim_buffer = 0.0  # Reset only this buffer
 
                 # Return command if either speed needs writing
+                # IMPORTANT: Only include speeds that exceeded threshold (None = don't write)
+                # This matches old project behavior and prevents oscillation
                 if inme_target is not None or kesme_target is not None:
-                    # Use current values for speeds that didn't exceed threshold
-                    final_inme = inme_target if inme_target is not None else current_inme_hizi
-                    final_kesme = kesme_target if kesme_target is not None else current_kesme_hizi
-
                     command = ControlCommand(
                         timestamp=datetime.now(),
-                        kesme_hizi_target=final_kesme,
-                        inme_hizi_target=final_inme,
-                        source="ml"
+                        source="ml",
+                        kesme_hizi_target=kesme_target,  # None if threshold not exceeded
+                        inme_hizi_target=inme_target     # None if threshold not exceeded
                     )
 
                     self._stats['speed_commands_sent'] += 1
 
-                    logger.info(
-                        f"Speed command: "
-                        f"kesme={command.kesme_hizi_target:.1f}, "
-                        f"inme={command.inme_hizi_target:.1f}"
-                    )
+                    # Log only the speeds being written
+                    log_parts = []
+                    if kesme_target is not None:
+                        log_parts.append(f"kesme={kesme_target:.1f}")
+                    if inme_target is not None:
+                        log_parts.append(f"inme={inme_target:.1f}")
+                    logger.info(f"Speed command: {', '.join(log_parts)}")
 
                     return command
 
@@ -608,9 +608,9 @@ class MLController:
 
         return ControlCommand(
             timestamp=datetime.now(),
+            source="torque_guard",
             kesme_hizi_target=new_kesme,
-            inme_hizi_target=new_inme,
-            source="torque_guard"
+            inme_hizi_target=new_inme
         )
 
     def _should_update(self) -> bool:

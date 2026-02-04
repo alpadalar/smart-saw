@@ -70,9 +70,9 @@ class ManualController:
             # Create command
             command = ControlCommand(
                 timestamp=datetime.now(),
+                source="manual",
                 kesme_hizi_target=kesme_hizi,
-                inme_hizi_target=inme_hizi,
-                source="manual"
+                inme_hizi_target=inme_hizi
             )
 
             logger.info(

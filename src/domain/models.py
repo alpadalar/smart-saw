@@ -133,11 +133,15 @@ class ProcessedData:
 class ControlCommand:
     """
     Control command to be sent to machine (Modbus write).
+
+    Note: kesme_hizi_target and inme_hizi_target can be None.
+    When None, that speed should NOT be written to Modbus.
+    This matches old project behavior where each speed was written independently.
     """
     timestamp: datetime
-    kesme_hizi_target: float                     # Target cutting speed (mm/min)
-    inme_hizi_target: float                      # Target descent speed (mm/min)
-    source: str                                  # "manual", "ml", or "torque_guard"
+    source: str                                          # "manual", "ml", or "torque_guard"
+    kesme_hizi_target: Optional[float] = None            # Target cutting speed (mm/min), None = don't write
+    inme_hizi_target: Optional[float] = None             # Target descent speed (mm/min), None = don't write
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
