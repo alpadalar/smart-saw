@@ -210,11 +210,13 @@ class MLController:
                         return torque_guard_command
 
                 # 6. Normal ML prediction
-                coefficient = self._predict_coefficient(raw_data)
-                if coefficient is None:
+                prediction_result = self._predict_coefficient(raw_data)
+                if prediction_result is None:
                     logger.error("ML prediction failed")
                     self._stats['errors'] += 1
                     return None
+
+                coefficient, input_df = prediction_result
 
                 # 7. Calculate new speeds using CURRENT sensor values (matches old project exactly)
                 # Old project uses: processed_data.get('serit_kesme_hizi') directly
@@ -226,6 +228,17 @@ class MLController:
                     coefficient,
                     current_kesme_hizi,
                     current_inme_hizi
+                )
+
+                # Log ML prediction with complete data (after speed calculation)
+                self._log_ml_prediction(
+                    input_df,
+                    coefficient,
+                    raw_data.serit_motor_tork_percentage,
+                    raw_data.kafa_yuksekligi_mm,
+                    speed_changes['kesme_hizi'],
+                    speed_changes['inme_hizi'],
+                    self.katsayi
                 )
 
                 # 8. Accumulate changes in buffers
@@ -297,7 +310,7 @@ class MLController:
                 self._stats['errors'] += 1
                 return None
 
-    def _predict_coefficient(self, raw_data) -> Optional[float]:
+    def _predict_coefficient(self, raw_data) -> Optional[Tuple[float, 'pd.DataFrame']]:
         """
         ML model inference.
 
@@ -307,13 +320,17 @@ class MLController:
         3. Predict coefficient
         4. Clamp to [-1, 1]
         5. Apply global KATSAYI
-        6. Log to database (with torque and head height)
+
+        Note: Database logging is deferred to calculate_speeds() after
+        speed calculation, so this method returns both the coefficient
+        and input_df for use in logging.
 
         Args:
             raw_data: RawSensorData with current sensor readings
 
         Returns:
-            Coefficient in [-1.0, 1.0] range, or None on error
+            Tuple of (coefficient, input_df) or None on error
+            Coefficient is in [-1.0, 1.0] range (after katsayi applied)
         """
         try:
             # Get model input
@@ -333,19 +350,11 @@ class MLController:
             # Apply global multiplier
             coefficient *= self.katsayi
 
-            # Log to database with torque and head height values
-            self._log_ml_prediction(
-                input_df,
-                coefficient,
-                raw_data.serit_motor_tork_percentage,
-                raw_data.kafa_yuksekligi_mm
-            )
-
             self._stats['predictions'] += 1
 
             logger.debug(f"ML coefficient: {coefficient:.4f}")
 
-            return coefficient
+            return (coefficient, input_df)
 
         except Exception as e:
             logger.error(f"ML prediction error: {e}", exc_info=True)
@@ -736,16 +745,22 @@ class MLController:
         input_df,
         coefficient: float,
         serit_motor_tork: float,
-        kafa_yuksekligi: float
+        kafa_yuksekligi: float,
+        yeni_kesme_hizi: float,
+        yeni_inme_hizi: float,
+        katsayi: float
     ):
         """
         Log ML prediction to database for analysis.
 
         Args:
             input_df: Input DataFrame with features
-            coefficient: Predicted coefficient
+            coefficient: Predicted coefficient (already has katsayi applied)
             serit_motor_tork: Band motor torque percentage at prediction time
             kafa_yuksekligi: Head height in mm at prediction time
+            yeni_kesme_hizi: Calculated new cutting speed (mm/min)
+            yeni_inme_hizi: Calculated new descent speed (mm/min)
+            katsayi: Global coefficient multiplier from config
         """
         try:
             sql = """
@@ -757,8 +772,11 @@ class MLController:
                     inme_hizi_input,
                     serit_motor_tork,
                     kafa_yuksekligi,
+                    yeni_kesme_hizi,
+                    yeni_inme_hizi,
+                    katsayi,
                     ml_output
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
             params = (
@@ -769,6 +787,9 @@ class MLController:
                 float(input_df['inme_hizi'].iloc[0]),
                 float(serit_motor_tork),
                 float(kafa_yuksekligi),
+                float(yeni_kesme_hizi),
+                float(yeni_inme_hizi),
+                float(katsayi),
                 float(coefficient)
             )
 
