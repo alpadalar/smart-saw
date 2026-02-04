@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** v1.6 Touch UX & Data Traceability — Phase 15 complete
+**Current focus:** v1.6 Touch UX & Data Traceability — Phase 16 complete
 
 ## Current Position
 
-Phase: 15 - Touch Long Press Fix
+Phase: 16 - ML DB None Values Investigation
 Plan: 1/1 complete
-Status: Phase complete, ready for Phase 16
-Last activity: 2026-01-30 — Phase 15 executed
+Status: Phase complete, ready for Phase 17
+Last activity: 2026-02-04 — Completed 16-01-PLAN.md
 
-Progress: [###---------] 25% (Phase 15 of 18 complete)
+Progress: [####--------] 33% (Phase 16 of 18 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
+- Total plans completed: 17
 - Average duration: 2 min
-- Total execution time: ~30 min
+- Total execution time: ~33 min
 
 **By Phase:**
 
@@ -42,9 +42,10 @@ Progress: [###---------] 25% (Phase 15 of 18 complete)
 | 13-unit-labels-naming | 1 | 1 min | 1 min |
 | 14-chart-axis-sapma-gauge | 1 | 2 min | 2 min |
 | 15-touch-long-press-fix | 1 | 3 min | 3 min |
+| 16-ml-db-none-values-investigation | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 11-01 (1 min), 12-01 (1 min), 13-01 (1 min), 14-01 (2 min), 15-01 (3 min)
+- Last 5 plans: 12-01 (1 min), 13-01 (1 min), 14-01 (2 min), 15-01 (3 min), 16-01 (3 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -76,6 +77,8 @@ All decisions from v1.0, v1.1, v1.2, v1.3, v1.4, and v1.5 milestones captured.
 - Multi-touch: First button wins - prevents conflicting jog commands
 - Emergency stop: Always responsive to any finger - safety feature must be accessible
 - App focus loss: Stop jog on focusOutEvent - safety mechanism for backgrounded app
+- ML logging: Log calculated speeds (speed_changes), not threshold-dependent targets - captures all ML decisions
+- ML logging: Deferred logging pattern - log after calculation, not before
 
 ### Deferred Issues
 
@@ -101,9 +104,10 @@ None.
 - Milestone v1.5 COMPLETE: 2026-01-28
 - Milestone v1.6 created: Touch UX & data traceability, 4 phases (Phase 15-18)
 - Phase 15 COMPLETE: 2026-01-30
+- Phase 16 COMPLETE: 2026-02-04
 
 ## Session Continuity
 
-Last session: 2026-01-30
-Stopped at: Phase 15 complete, ready for Phase 16 planning
+Last session: 2026-02-04
+Stopped at: Phase 16 complete, ready for Phase 17 planning
 Resume file: None
