@@ -216,18 +216,16 @@ class MLController:
                     self._stats['errors'] += 1
                     return None
 
-                # 7. Calculate new speeds using AVERAGED values (matches old codebase)
-                avg_kesme, avg_inme = self.preprocessor.get_averaged_speeds()
-                # Fall back to raw values if buffers empty (shouldn't happen after is_ready check)
-                if avg_kesme == 0.0 and avg_inme == 0.0:
-                    avg_kesme = raw_data.serit_kesme_hizi
-                    avg_inme = raw_data.serit_inme_hizi
-                    logger.warning("Using raw speed values - buffers empty")
+                # 7. Calculate new speeds using CURRENT sensor values (matches old project exactly)
+                # Old project uses: processed_data.get('serit_kesme_hizi') directly
+                # NOT averaged values from buffer
+                current_kesme_hizi = raw_data.serit_kesme_hizi
+                current_inme_hizi = raw_data.serit_inme_hizi
 
                 speed_changes = self._calculate_new_speeds(
                     coefficient,
-                    avg_kesme,
-                    avg_inme
+                    current_kesme_hizi,
+                    current_inme_hizi
                 )
 
                 # 8. Accumulate changes in buffers
@@ -240,18 +238,48 @@ class MLController:
                     f"inme={self.inme_hizi_degisim_buffer:.2f}"
                 )
 
-                # 9. Check if thresholds exceeded
-                if self._should_write_to_modbus():
+                # 9. Check thresholds and write speeds (matching old project logic)
+                # Each speed is checked independently, buffer accumulation is used
+                inme_target = None
+                kesme_target = None
+
+                # Check inme threshold (independent)
+                if not self.inme_threshold_enabled or abs(self.inme_hizi_degisim_buffer) >= self.inme_threshold:
+                    # Use BUFFER accumulation, not just last coefficient (OLD PROJECT FIX)
+                    inme_target = current_inme_hizi + self.inme_hizi_degisim_buffer
+                    inme_target = validate_speed(
+                        inme_target,
+                        self.limits['inme_hizi']['min'],
+                        self.limits['inme_hizi']['max'],
+                        'inme_hizi'
+                    )
+                    self.inme_hizi_degisim_buffer = 0.0  # Reset only this buffer
+
+                # Check kesme threshold (independent)
+                if not self.kesme_threshold_enabled or abs(self.kesme_hizi_degisim_buffer) >= self.kesme_threshold:
+                    # Use BUFFER accumulation, not just last coefficient (OLD PROJECT FIX)
+                    kesme_target = current_kesme_hizi + self.kesme_hizi_degisim_buffer
+                    kesme_target = validate_speed(
+                        kesme_target,
+                        self.limits['kesme_hizi']['min'],
+                        self.limits['kesme_hizi']['max'],
+                        'kesme_hizi'
+                    )
+                    self.kesme_hizi_degisim_buffer = 0.0  # Reset only this buffer
+
+                # Return command if either speed needs writing
+                if inme_target is not None or kesme_target is not None:
+                    # Use current values for speeds that didn't exceed threshold
+                    final_inme = inme_target if inme_target is not None else current_inme_hizi
+                    final_kesme = kesme_target if kesme_target is not None else current_kesme_hizi
+
                     command = ControlCommand(
                         timestamp=datetime.now(),
-                        kesme_hizi_target=speed_changes['kesme_hizi'],
-                        inme_hizi_target=speed_changes['inme_hizi'],
+                        kesme_hizi_target=final_kesme,
+                        inme_hizi_target=final_inme,
                         source="ml"
                     )
 
-                    # Reset accumulators
-                    self.kesme_hizi_degisim_buffer = 0.0
-                    self.inme_hizi_degisim_buffer = 0.0
                     self._stats['speed_commands_sent'] += 1
 
                     logger.info(
