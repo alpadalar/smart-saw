@@ -1,12 +1,27 @@
-# Smart Saw - Database Field Additions
+# Smart Saw
 
 ## What This Is
 
-Smart Saw endustriyel testere kontrol sistemi icin database sema guncellemesi ve dokunmatik ekran iyilestirmeleri. ML predictions ve anomaly events tablolarina tork, kafa yuksekligi ve izlenebilirlik alanlari (kesim_id, makine_id, serit_id, malzeme_cinsi) eklenerek gecmise donuk kesim bazli analiz mumkun hale getirildi. Dokunmatik ekran long press destegi ile endustriyel HMI kullanilabilirligi saglanildi.
+Smart Saw endustriyel testere kontrol ve goruntu isleme sistemi. PLC uzerinden Modbus TCP ile 10 Hz veri okuma, ML tabanli kesim kontrolu, 9 anomali dedektoru, dokunmatik ekran destegi ve IoT telemetri ozelliklerinin yaninda, kamera tabanli yapay zeka ile serit testere dis kirigi, catlak ve asinma tespiti yaparak testere saglik durumunu izler.
 
 ## Core Value
 
-ML ve anomali kayitlarinda tork, kafa yuksekligi ve izlenebilirlik verilerinin saklanmasi — gecmise donuk kesim bazli analiz icin kritik verinin eksik kalmamasi.
+Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi — kesim kalitesi ve operator guvenligi icin kritik.
+
+## Current Milestone: v2.0 Camera Vision & AI Detection
+
+**Goal:** Eski projedeki kamera/AI vision sistemini moduler ve config-driven olarak entegre ederek serit testere dis kirigi, catlak ve asinma tespiti yetenegi kazandirmak.
+
+**Target features:**
+- Kamera modulu (OpenCV frame capture + JPEG recording)
+- Kirik dis tespiti (RT-DETR model)
+- Catlak tespiti (RT-DETR model)
+- Asinma tespiti (LDC edge detection + wear calculation)
+- Testere saglik hesaplayicisi (kirik + asinma bazli)
+- Kamera GUI sayfasi (canli goruntu, tespit sonuclari, asinma %, saglik durumu)
+- Config-driven modulerlik (camera.enabled=false → sifir kamera kodu yuklenir)
+- DB entegrasyonu (tespit sonuclari SQLite'a kaydedilir)
+- IoT entegrasyonu (tespit sonuclari ThingsBoard'a gonderilir)
 
 ## Requirements
 
@@ -45,7 +60,17 @@ ML ve anomali kayitlarinda tork, kafa yuksekligi ve izlenebilirlik verilerinin s
 
 ### Active
 
-(None — all milestones complete. Start next milestone with `/gsd:new-milestone`)
+- [ ] Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir)
+- [ ] OpenCV frame capture ve JPEG recording sistemi
+- [ ] RT-DETR kirik dis tespiti (best.pt model)
+- [ ] RT-DETR catlak tespiti (catlak-best.pt model)
+- [ ] LDC edge detection + asinma hesaplama pipeline
+- [ ] Testere saglik hesaplayicisi (kirik %70 + asinma %30)
+- [ ] PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik)
+- [ ] GUI sidebar'a kamera navigasyon butonu eklenmesi
+- [ ] Tespit sonuclarinin SQLite'a kaydedilmesi
+- [ ] Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi
+- [ ] Lifecycle'da kamera servislerinin config-driven baslatilmasi
 
 ### Out of Scope
 
@@ -123,4 +148,4 @@ ML ve anomali kayitlarinda tork, kafa yuksekligi ve izlenebilirlik verilerinin s
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-16 after v1.6 milestone*
+*Last updated: 2026-03-16 after v2.0 milestone start*

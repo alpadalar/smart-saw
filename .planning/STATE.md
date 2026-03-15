@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Touch UX & Data Traceability
-status: completed
-stopped_at: Milestone v1.6 complete
+milestone: v2.0
+milestone_name: Camera Vision & AI Detection
+status: in_progress
+stopped_at: null
 last_updated: "2026-03-16"
-last_activity: 2026-03-16 — Milestone v1.6 archived
+last_activity: 2026-03-16 — Milestone v2.0 started
 progress:
-  total_phases: 18
-  completed_phases: 18
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,16 +20,15 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-03-16)
 
-**Core value:** ML ve anomali kayitlarinda tork, kafa yuksekligi ve izlenebilirlik verilerinin saklanmasi — gecmise donuk kesim bazli analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** All milestones complete — planning next milestone
+**Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
+**Current focus:** v2.0 Camera Vision & AI Detection
 
 ## Current Position
 
-Phase: All 18 phases complete (v1.0-v1.6)
-Status: Milestone v1.6 archived
-Last activity: 2026-03-16 — Milestone v1.6 complete
-
-Progress: [############] 100% (18/18 phases complete)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-16 — Milestone v2.0 started
 
 ## Performance Metrics
 
