@@ -186,7 +186,10 @@ Plans:
 **Depends on**: Phase 17
 **Requirements**: ANDB-01, ANDB-02, ANDB-03
 **Research**: Unlikely (repeat Phase 17 pattern for anomaly database)
-**Plans**: 0/? planned
+**Plans**: 1 plan
+
+Plans:
+- [ ] 18-01-PLAN.md — Add traceability columns (makine_id, serit_id, malzeme_cinsi) to anomaly schema and populate in anomaly recording
 
 **Success Criteria:**
 1. User can query anomaly events table and see makine_id field identifying machine for each anomaly
@@ -220,4 +223,4 @@ Phases execute in numeric order: 1 → 2 → 3
 | 15. Touch Long Press Fix | v1.6 | 1/1 | Complete | 2026-01-30 |
 | 16. ML DB None Values Investigation | v1.6 | 1/1 | Complete | 2026-02-04 |
 | 17. ML DB Schema Update | v1.6 | Complete    | 2026-03-15 | 2026-03-16 |
-| 18. Anomaly DB Schema Update | v1.6 | 0/? | Pending | — |
+| 18. Anomaly DB Schema Update | v1.6 | 0/1 | Planned | — |
