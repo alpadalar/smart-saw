@@ -55,14 +55,14 @@ class DataProcessingPipeline:
             control_manager: ControlManager instance
             db_services: Dictionary of SQLiteService instances
                 {'raw': raw_db, 'total': total_db, 'log': log_db}
-            mqtt_service: MQTTService instance (optional)
+            mqtt_service: IoT service instance (MQTT or HTTP, optional)
         """
         self.config = config
         self.modbus_reader = modbus_reader
         self.modbus_writer = modbus_writer
         self.control_manager = control_manager
         self.db_services = db_services
-        self.mqtt_service = mqtt_service
+        self.iot_service = mqtt_service  # Can be MQTT or HTTP service
 
         # Processing components
         self.cutting_tracker = CuttingTracker(db_services.get('total'))
@@ -185,20 +185,18 @@ class DataProcessingPipeline:
 
                     if success:
                         self._stats['speed_commands_sent'] += 1
-                        logger.debug(
-                            f"Speeds written: "
-                            f"kesme={command.kesme_hizi_target:.1f}, "
-                            f"inme={command.inme_hizi_target:.1f}"
-                        )
+                        kesme_str = f"{command.kesme_hizi_target:.1f}" if command.kesme_hizi_target is not None else "None"
+                        inme_str = f"{command.inme_hizi_target:.1f}" if command.inme_hizi_target is not None else "None"
+                        logger.debug(f"Speeds written: kesme={kesme_str}, inme={inme_str}")
                     else:
                         logger.error("Failed to write speeds to Modbus")
 
                 # 5. Save to databases
                 self._save_to_databases(raw_data, processed_data, command)
 
-                # 6. Queue for MQTT
-                if self.mqtt_service:
-                    await self.mqtt_service.queue_telemetry(processed_data)
+                # 6. Queue for IoT (MQTT or HTTP)
+                if self.iot_service:
+                    await self.iot_service.queue_telemetry(processed_data)
                     self._stats['mqtt_queued'] += 1
 
                 # Update statistics
@@ -288,7 +286,10 @@ class DataProcessingPipeline:
                     sensor_value=sensor_value,
                     detection_method=self.anomaly_manager.get_method_for_sensor(sensor_name),
                     kesim_id=kesim_id,
-                    kafa_yuksekligi=raw_data.kafa_yuksekligi_mm
+                    kafa_yuksekligi=raw_data.kafa_yuksekligi_mm,
+                    makine_id=raw_data.makine_id if raw_data.makine_id else None,
+                    serit_id=raw_data.serit_id if raw_data.serit_id else None,
+                    malzeme_cinsi=raw_data.malzeme_cinsi if raw_data.malzeme_cinsi else None
                 )
 
         # Convert anomaly results to list format for ProcessedData

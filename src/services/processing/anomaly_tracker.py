@@ -77,7 +77,10 @@ class AnomalyTracker:
         sensor_value: float,
         detection_method: str = "unknown",
         kesim_id: Optional[int] = None,
-        kafa_yuksekligi: Optional[float] = None
+        kafa_yuksekligi: Optional[float] = None,
+        makine_id: Optional[int] = None,
+        serit_id: Optional[int] = None,
+        malzeme_cinsi: Optional[str] = None
     ):
         """
         Record a new anomaly event.
@@ -88,6 +91,9 @@ class AnomalyTracker:
             detection_method: Detection method used (z_score, iqr, etc.)
             kesim_id: Current cutting session ID (if cutting)
             kafa_yuksekligi: Head height at time of anomaly (mm)
+            makine_id: Machine ID for traceability
+            serit_id: Blade ID for traceability
+            malzeme_cinsi: Material type for traceability
         """
         with self._state_lock:
             now = datetime.now()
@@ -114,7 +120,10 @@ class AnomalyTracker:
                     sensor_value=sensor_value,
                     detection_method=detection_method,
                     kesim_id=kesim_id,
-                    kafa_yuksekligi=kafa_yuksekligi
+                    kafa_yuksekligi=kafa_yuksekligi,
+                    makine_id=makine_id,
+                    serit_id=serit_id,
+                    malzeme_cinsi=malzeme_cinsi
                 )
 
     def _save_anomaly_to_db(
@@ -124,7 +133,10 @@ class AnomalyTracker:
         sensor_value: float,
         detection_method: str,
         kesim_id: Optional[int],
-        kafa_yuksekligi: Optional[float]
+        kafa_yuksekligi: Optional[float],
+        makine_id: Optional[int] = None,
+        serit_id: Optional[int] = None,
+        malzeme_cinsi: Optional[str] = None
     ):
         """Save anomaly event to database."""
         try:
@@ -135,8 +147,11 @@ class AnomalyTracker:
                     sensor_value,
                     detection_method,
                     kesim_id,
-                    kafa_yuksekligi
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    kafa_yuksekligi,
+                    makine_id,
+                    serit_id,
+                    malzeme_cinsi
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             params = (
                 timestamp.isoformat(),
@@ -144,7 +159,10 @@ class AnomalyTracker:
                 sensor_value,
                 detection_method,
                 kesim_id,
-                kafa_yuksekligi
+                kafa_yuksekligi,
+                makine_id,
+                serit_id,
+                malzeme_cinsi
             )
             self.db.write_async(sql, params)
         except Exception as e:
