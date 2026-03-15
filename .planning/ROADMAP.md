@@ -219,5 +219,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 15. Touch Long Press Fix | v1.6 | 1/1 | Complete | 2026-01-30 |
 | 16. ML DB None Values Investigation | v1.6 | 1/1 | Complete | 2026-02-04 |
-| 17. ML DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
+| 17. ML DB Schema Update | v1.6 | Complete    | 2026-03-15 | 2026-03-16 |
 | 18. Anomaly DB Schema Update | v1.6 | 0/? | Pending | — |
