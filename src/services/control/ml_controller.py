@@ -238,7 +238,11 @@ class MLController:
                     raw_data.kafa_yuksekligi_mm,
                     speed_changes['kesme_hizi'],
                     speed_changes['inme_hizi'],
-                    self.katsayi
+                    self.katsayi,
+                    kesim_id=processed_data.cutting_session_id,
+                    makine_id=raw_data.makine_id if raw_data.makine_id else None,
+                    serit_id=raw_data.serit_id if raw_data.serit_id else None,
+                    malzeme_cinsi=raw_data.malzeme_cinsi if raw_data.malzeme_cinsi else None
                 )
 
                 # 8. Accumulate changes in buffers
@@ -748,7 +752,11 @@ class MLController:
         kafa_yuksekligi: float,
         yeni_kesme_hizi: float,
         yeni_inme_hizi: float,
-        katsayi: float
+        katsayi: float,
+        kesim_id: Optional[int] = None,
+        makine_id: Optional[int] = None,
+        serit_id: Optional[int] = None,
+        malzeme_cinsi: Optional[str] = None
     ):
         """
         Log ML prediction to database for analysis.
@@ -761,6 +769,10 @@ class MLController:
             yeni_kesme_hizi: Calculated new cutting speed (mm/min)
             yeni_inme_hizi: Calculated new descent speed (mm/min)
             katsayi: Global coefficient multiplier from config
+            kesim_id: Cut session ID for traceability (NULL if not cutting)
+            makine_id: Machine ID for traceability
+            serit_id: Blade ID for traceability
+            malzeme_cinsi: Material type for traceability
         """
         try:
             sql = """
@@ -775,8 +787,12 @@ class MLController:
                     yeni_kesme_hizi,
                     yeni_inme_hizi,
                     katsayi,
-                    ml_output
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ml_output,
+                    kesim_id,
+                    makine_id,
+                    serit_id,
+                    malzeme_cinsi
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
             params = (
@@ -790,7 +806,11 @@ class MLController:
                 float(yeni_kesme_hizi),
                 float(yeni_inme_hizi),
                 float(katsayi),
-                float(coefficient)
+                float(coefficient),
+                kesim_id,
+                makine_id,
+                serit_id,
+                malzeme_cinsi
             )
 
             self.db.write_async(sql, params)
