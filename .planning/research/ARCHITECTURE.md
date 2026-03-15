@@ -1,726 +1,794 @@
-# Architecture Patterns: Touch Event Handling & Database Schema Updates
+# Architecture Research: Camera Vision & AI Detection Integration
 
-**Project:** Smart Saw Industrial Control System
-**Researched:** 2026-01-29
+**Domain:** Industrial IoT + Computer Vision + Embedded Qt Desktop
+**Researched:** 2026-03-16
 **Confidence:** HIGH
-
-## Executive Summary
-
-This research covers two architectural domains for the v1.6 milestone:
-
-1. **Touch Event Handling**: How Qt/PySide6 touch events integrate with existing QPushButton-based widget architecture
-2. **Database Schema Migration**: How to safely add traceability fields to existing SQLite databases
-
-Both integrations must work within the existing MVC-like architecture without disrupting the production system.
+**Milestone:** v2.0 — Camera Vision & AI Detection
 
 ---
 
-## Part 1: Qt Touch Event Architecture
+## Standard Architecture
 
-### Current Widget Architecture
-
-The positioning page uses standard PySide6 components in a controller pattern:
-
-**Component Structure:**
-```
-PositioningController (QWidget)
-├── QPushButton widgets (mengene, malzeme, testere controls)
-├── Event handlers: pressed.connect(), released.connect()
-├── MachineControl for business logic
-└── QTimer for periodic state updates
-```
-
-**Current Event Flow:**
-```
-User interaction → Mouse/Touch hardware
-                 → OS driver
-                 → Qt synthesized mouse events
-                 → QPushButton.pressed()/released() signals
-                 → Lambda handlers in PositioningController
-                 → MachineControl methods
-```
-
-### Qt Touch Event System
-
-#### Event Types & Propagation
-
-Qt provides four touch event types:
-- **TouchBegin**: First touch point detected
-- **TouchUpdate**: Touch point moved
-- **TouchEnd**: Touch point released
-- **TouchCancel**: Touch sequence cancelled
-
-**Default Behavior:** Qt automatically synthesizes mouse events from touch events. The first touch point becomes a QMouseEvent, allowing existing mouse-based code to work with touch screens.
-
-**Key Timing Issue:** Touch events may have significant delays (~1 second) before being delivered as mouse press events. This is OS-level behavior to distinguish taps from long-presses and gestures.
-
-#### Touch-to-Mouse Event Synthesis
-
-Qt's synthesis mechanism:
+### System Overview
 
 ```
-Touch Event Flow:
-1. Hardware touch detected
-2. OS creates touch event
-3. Qt receives QTouchEvent
-4. If not handled → synthesize QMouseEvent
-5. Deliver to widget (QPushButton receives MousePress/Release)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            GUI Thread (Qt Event Loop)                        │
+│  ┌──────────────┐  ┌────────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │ControlPanel  │  │  Positioning   │  │    Sensor    │  │  CameraPage   │  │
+│  │ Controller   │  │  Controller    │  │  Controller  │  │  Controller   │  │
+│  └──────────────┘  └────────────────┘  └──────────────┘  └───────┬───────┘  │
+│                                                                   │ QTimers  │
+├───────────────────────────────────────────────────────────────────┼──────────┤
+│                       asyncio Event Loop (Main Thread)            │          │
+│  ┌────────────────────────────────────────────────────────────┐   │          │
+│  │                  DataProcessingPipeline (10 Hz)             │   │          │
+│  │  read → process → control → write → save → IoT             │   │          │
+│  └────────────────────────────────────────────────────────────┘   │          │
+│                                                                    │          │
+│  ┌───────────────────────────┐  ┌─────────────────────────────┐   │          │
+│  │    CameraService          │  │   VisionService              │   │          │
+│  │  (background threads)     │  │  (background threads)        │   │          │
+│  │  ┌──────────────────┐     │  │  ┌──────────────────────┐   │   │          │
+│  │  │ CaptureThread    │     │  │  │ DetectionWorker      │   │   │          │
+│  │  │ (OpenCV, ~30fps) │     │  │  │ (RT-DETR models)     │   │   │          │
+│  │  └──────────────────┘     │  │  └──────────────────────┘   │   │          │
+│  │  ┌──────────────────┐     │  │  ┌──────────────────────┐   │   │          │
+│  │  │ EncoderThreads   │     │  │  │ LDCWorker (wear)     │   │   │          │
+│  │  │ (JPEG to disk)   │     │  │  └──────────────────────┘   │   │          │
+│  │  └──────────────────┘     │  └─────────────────────────────┘   │          │
+│  └───────────────────────────┘                                     │          │
+│                                                                    │          │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐   │          │
+│  │ModbusReader  │  │ControlManager│  │CameraResultsStore      │◄──┘          │
+│  │ModbusWriter  │  │ControlManager│  │(thread-safe singleton) │              │
+│  └──────────────┘  └──────────────┘  └────────────────────────┘              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                            Storage Layer                                      │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌──────────┐  │
+│  │  raw.db   │  │ total.db  │  │   ml.db   │  │anomaly.db │  │camera.db │  │
+│  └───────────┘  └───────────┘  └───────────┘  └───────────┘  └──────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Control Flags:**
-- `Qt::AA_SynthesizeTouchForUnhandledMouseEvents`: Convert mouse → touch
-- `Qt::AA_SynthesizeMouseForUnhandledTouchEvents`: Convert touch → mouse (default ON)
+### Component Responsibilities
 
-**Source Detection:**
-- `QMouseEvent.source()` (Qt 5) or `pointingDevice()` (Qt 6) distinguishes synthesized vs real mouse events
-
-### Integration Points with Existing Architecture
-
-#### Option 1: Application-Level Touch Configuration (RECOMMENDED)
-
-**Location:** `src/gui/app.py` in `GUIApplication.__init__()` or `_run_gui()`
-
-**Implementation:**
-```python
-# In GUIApplication._run_gui() after QApplication creation
-self._app.setAttribute(Qt.AA_SynthesizeMouseForUnhandledTouchEvents, True)
-```
-
-**Pros:**
-- Global configuration, affects all widgets
-- No per-widget code changes needed
-- Leverages existing pressed/released signal architecture
-- Works with current button event handlers
-
-**Cons:**
-- Still subject to OS-level touch delay (~1 second)
-- No touch-specific optimizations
-
-**Confidence:** HIGH - This is the standard Qt approach for touch-enabled applications
-
-#### Option 2: Widget-Level Touch Event Handling
-
-**Location:** Create custom `TouchButton(QPushButton)` widget class in `src/gui/widgets/touch_button.py`
-
-**Implementation:**
-```python
-class TouchButton(QPushButton):
-    """QPushButton with explicit touch event handling."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setAttribute(Qt.WA_AcceptTouchEvents)
-
-    def event(self, e: QEvent) -> bool:
-        if e.type() == QEvent.TouchBegin:
-            # Immediately emit pressed signal
-            self.pressed.emit()
-            return True
-        elif e.type() == QEvent.TouchEnd:
-            self.released.emit()
-            return True
-        return super().event(e)
-```
-
-**Usage:** Replace `QPushButton` with `TouchButton` in positioning controller.
-
-**Pros:**
-- Direct touch handling, bypasses synthesis delay
-- Fine-grained control over touch behavior
-- Can optimize for industrial touch screen response
-
-**Cons:**
-- Requires widget code changes in positioning_controller.py
-- Must maintain both touch and mouse code paths
-- More complex testing (touch screen required)
-
-**Confidence:** MEDIUM - Works but adds complexity
-
-#### Option 3: Controller-Level Event Filtering (NOT RECOMMENDED)
-
-**Location:** `PositioningController` class with `eventFilter()` method
-
-**Why Avoid:**
-- Event filters add complexity to controller logic
-- Controllers should handle business logic, not low-level events
-- Violates single responsibility principle
-- Harder to test and maintain
-
-### Touch Event Handling Best Practices
-
-Based on Qt documentation and community patterns:
-
-1. **Enable touch at application level** unless per-widget customization needed
-2. **Reuse existing signals** (pressed/released) rather than reimplementing logic
-3. **Test on actual hardware** - touch timing varies by device/OS
-4. **Avoid `exec()` in touch handlers** - causes recursion issues
-5. **Be aware of multi-touch** - multiple buttons can receive events simultaneously
-
-### Problem: Touch Long Press Delay
-
-**Root Cause:** Operating system interprets long touch as right-click (context menu trigger). Qt waits ~1 second to distinguish tap from long-press before delivering MousePress event.
-
-**Solutions:**
-
-| Solution | Effectiveness | Complexity | Impact |
-|----------|--------------|------------|--------|
-| Disable OS press-and-hold | HIGH | LOW | System-wide setting change |
-| Handle QTouchEvent directly | HIGH | MEDIUM | Requires custom widget |
-| Accept the delay | LOW | NONE | Poor UX for hold-to-activate buttons |
-
-**Recommended Solution:** Custom `TouchButton` widget that handles `QTouchEvent` directly, bypassing mouse synthesis delay.
+| Component | Responsibility | Location |
+|-----------|----------------|----------|
+| `ApplicationLifecycle` | Startup/shutdown orchestration; conditionally initializes CameraService | `src/core/lifecycle.py` — MODIFIED |
+| `CameraService` | OpenCV frame capture, JPEG encoding to disk; thread-safe singleton; lazy-loaded | `src/services/camera/camera_service.py` — NEW |
+| `VisionService` | Schedules detection workers; coordinates RT-DETR and LDC results | `src/services/camera/vision_service.py` — NEW |
+| `DetectionWorker` | Runs RT-DETR inference (broken + crack) on JPEG frames | `src/services/camera/detection_worker.py` — NEW |
+| `LDCWorker` | LDC edge detection pipeline; computes wear percentage | `src/services/camera/ldc_worker.py` — NEW |
+| `HealthCalculator` | Combines broken% (70%) + wear% (30%) into saw health score | `src/services/camera/health_calculator.py` — NEW |
+| `CameraResultsStore` | Thread-safe in-memory store: latest frame, detection results, wear %, health | `src/services/camera/results_store.py` — NEW |
+| `CameraPage` | Qt widget; QTimers poll CameraResultsStore; renders live frame + stats | `src/gui/controllers/camera_controller.py` — NEW |
+| `MainController` | Adds 5th nav button + page; conditionally shows camera nav button | `src/gui/controllers/main_controller.py` — MODIFIED |
+| `DataProcessingPipeline` | Optionally pulls latest vision results to include in IoT telemetry | `src/services/processing/data_processor.py` — MODIFIED |
+| `schemas.py` | Adds `camera.db` schema for detection event history | `src/services/database/schemas.py` — MODIFIED |
+| `config.yaml` | Adds `camera:` section with enabled flag, device, paths, model paths | `config/config.yaml` — MODIFIED |
 
 ---
 
-## Part 2: Database Schema Migration Architecture
+## Config-Driven Modularity: The Core Constraint
 
-### Current Database Architecture
+The single most important architectural constraint: `camera.enabled: false` must mean **zero camera code is imported or executed**. This prevents import errors on machines without camera hardware, without OpenCV, or without model files.
 
-**Existing Structure:**
-```
-SQLiteService
-├── Thread-safe write queue (single writer pattern)
-├── Thread-local read connections
-├── WAL mode for concurrent read/write
-├── Auto schema mismatch detection
-└── Backup-and-recreate on schema errors
-```
+### Implementation Pattern: Lazy Import Guard
 
-**Schema Management:**
-- Schema defined in `schemas.py` as SQL strings
-- No explicit versioning (no PRAGMA user_version)
-- Error-based detection: catches "no such column" errors
-- Recovery: backup old DB, create new with current schema
-
-### Schema Migration Patterns
-
-#### Pattern 1: Backup-and-Recreate (CURRENT)
-
-**How it works:**
-```
-1. Write operation fails with "no such column"
-2. Detect schema mismatch error pattern
-3. Backup existing database with timestamp
-4. Create fresh database with new schema
-5. Retry operation
-```
-
-**Pros:**
-- Simple implementation
-- No migration scripts needed
-- Data loss acceptable for logs/metrics
-
-**Cons:**
-- **DATA LOSS** - old data not migrated to new schema
-- Not suitable for critical data preservation
-
-**Current Usage:** Acceptable for `raw.db`, `log.db` where data is ephemeral.
-
-#### Pattern 2: ALTER TABLE Migration (RECOMMENDED for v1.6)
-
-**Use Case:** Adding new nullable columns to existing tables without data loss.
-
-**Implementation Location:** `src/services/database/sqlite_service.py`
-
-**Migration Strategy:**
 ```python
-def _apply_migrations(self, conn: sqlite3.Connection) -> None:
-    """Apply schema migrations using PRAGMA user_version."""
-    current_version = conn.execute("PRAGMA user_version").fetchone()[0]
+# In ApplicationLifecycle.start()
+async def _init_camera(self):
+    camera_config = self.config.get('camera', {})
+    if not camera_config.get('enabled', False):
+        logger.info("Camera disabled in config — skipping")
+        return   # No further imports, no imports triggered
 
-    migrations = [
-        # Version 1: Add ML traceability fields
-        (1, """
-            ALTER TABLE ml_predictions ADD COLUMN kesim_id INTEGER;
-            ALTER TABLE ml_predictions ADD COLUMN makine_id INTEGER;
-            ALTER TABLE ml_predictions ADD COLUMN serit_id INTEGER;
-            ALTER TABLE ml_predictions ADD COLUMN malzeme_cinsi INTEGER;
-        """),
-        # Version 2: Add anomaly traceability fields
-        (2, """
-            ALTER TABLE anomaly_events ADD COLUMN makine_id INTEGER;
-            ALTER TABLE anomaly_events ADD COLUMN serit_id INTEGER;
-            ALTER TABLE anomaly_events ADD COLUMN malzeme_cinsi INTEGER;
-        """),
+    # Lazy import: only executed when camera.enabled=true
+    from ..services.camera.camera_service import CameraService
+    from ..services.camera.vision_service import VisionService
+
+    self.camera_service = CameraService(camera_config)
+    self.vision_service = VisionService(camera_config, self.camera_service)
+    await self.camera_service.start()
+    await self.vision_service.start()
+```
+
+```python
+# In MainController._setup_ui()
+camera_config = self.config.get('camera', {}) if self.config else {}
+if camera_config.get('enabled', False):
+    from .camera_controller import CameraController   # Lazy import
+    self.camera_page = CameraController(
+        self.camera_results_store,  # Passed via constructor
+        parent=self.stackedWidget
+    )
+    self.stackedWidget.addWidget(self.camera_page)
+    self._add_camera_nav_button()   # Add 5th sidebar button
+```
+
+This pattern ensures `import cv2`, `import torch`, `from ultralytics import RTDETR` are never executed unless `camera.enabled: true`.
+
+### What "camera.enabled=false" Must Guarantee
+
+- `import cv2` never runs
+- `import torch` / `from ultralytics import RTDETR` never run
+- `camera_controller.py` module never imported
+- No camera database created
+- No camera-related QTimers created
+- GUI sidebar shows 4 buttons (unchanged)
+
+---
+
+## Recommended Project Structure
+
+```
+src/
+├── services/
+│   ├── camera/                   # NEW — entire module conditionally loaded
+│   │   ├── __init__.py
+│   │   ├── camera_service.py     # OpenCV capture thread + JPEG encoder threads
+│   │   ├── vision_service.py     # Orchestrates detection + LDC workers
+│   │   ├── detection_worker.py   # RT-DETR inference (broken + crack)
+│   │   ├── ldc_worker.py         # LDC edge detection + wear calculation
+│   │   ├── health_calculator.py  # Health score: broken*0.7 + wear*0.3
+│   │   └── results_store.py      # Thread-safe singleton for latest results
+│   ├── database/
+│   │   └── schemas.py            # MODIFIED: add SCHEMA_CAMERA_DB
+│   ├── processing/
+│   │   └── data_processor.py     # MODIFIED: optionally attach vision results to IoT
+│   └── iot/
+│       └── (unchanged)
+├── gui/
+│   └── controllers/
+│       ├── main_controller.py    # MODIFIED: conditional 5th page + nav button
+│       └── camera_controller.py  # NEW — CameraPage Qt widget
+├── core/
+│   └── lifecycle.py              # MODIFIED: _init_camera() step
+└── ml/
+    └── (unchanged — existing models for Modbus-based detection)
+
+config/
+└── config.yaml                   # MODIFIED: camera: section added
+
+data/
+└── models/
+    ├── Bagging_dataset_v17_20250509.pkl  # existing
+    ├── best.pt                           # NEW: RT-DETR broken tooth model
+    └── catlak-best.pt                    # NEW: RT-DETR crack model
+```
+
+### Structure Rationale
+
+- **`services/camera/`:** Self-contained module. Everything camera lives here. If `camera.enabled=false`, this entire directory is never imported. Keeps camera concerns out of core pipeline.
+- **`results_store.py`:** Decouples producer (camera threads) from consumers (GUI, IoT pipeline). Thread-safe read from any context without blocking.
+- **`camera_controller.py`:** Separate from other controllers so it can be entirely skipped. Does not receive `data_pipeline` — it only reads `CameraResultsStore`.
+- **No modification to `DataProcessingPipeline` hot path:** Vision results are appended as an optional field; the 10 Hz loop does not block on camera.
+
+---
+
+## Architectural Patterns
+
+### Pattern 1: Thread-Safe Results Store (Read-Many, Write-Few)
+
+**What:** A singleton dict protected by `threading.Lock()`, written by background camera/vision threads, read by GUI QTimers and optionally the data pipeline.
+
+**When to use:** Multiple producers (detection, LDC, capture) write infrequently; multiple consumers (GUI timers, IoT) read frequently.
+
+**Trade-offs:** Simple, low-latency reads. Lock contention is negligible because writes are rare (detection runs at 0.5–2 Hz, reads at 2–5 Hz).
+
+```python
+class CameraResultsStore:
+    """Thread-safe store for latest camera/vision results."""
+    _instance = None
+    _lock = threading.Lock()
+
+    def __init__(self):
+        self._results = {
+            'latest_frame': None,          # bytes (JPEG)
+            'broken_detected': False,
+            'crack_detected': False,
+            'broken_confidence': 0.0,
+            'crack_confidence': 0.0,
+            'wear_percentage': 0.0,
+            'health_score': 100.0,
+            'last_detection_ts': None,
+            'last_wear_ts': None,
+        }
+
+    def update(self, key: str, value) -> None:
+        with self._lock:
+            self._results[key] = value
+
+    def update_batch(self, updates: dict) -> None:
+        with self._lock:
+            self._results.update(updates)
+
+    def get(self, key: str, default=None):
+        with self._lock:
+            return self._results.get(key, default)
+
+    def snapshot(self) -> dict:
+        """Return complete copy for GUI rendering."""
+        with self._lock:
+            return dict(self._results)
+```
+
+### Pattern 2: Background Thread Workers (Camera & Vision)
+
+**What:** Long-running threads for capture and inference, controlled by `threading.Event` for stop signaling.
+
+**When to use:** CPU/GPU-bound work (OpenCV capture, model inference) that must not block the asyncio event loop.
+
+**Trade-offs:** Threads are appropriate here because cv2/torch are not async-compatible. The main asyncio loop is never involved — camera is truly parallel.
+
+```python
+class CameraService:
+    def __init__(self, config: dict):
+        self._stop_event = threading.Event()
+        self._capture_thread = None
+        self._frame_queue = queue.Queue(maxsize=5)  # Drop old frames
+
+    async def start(self):
+        """Called from asyncio context but spawns threads."""
+        self._capture_thread = threading.Thread(
+            target=self._capture_loop,
+            daemon=True,
+            name="Camera-Capture"
+        )
+        self._capture_thread.start()
+
+    async def stop(self):
+        self._stop_event.set()
+        if self._capture_thread:
+            self._capture_thread.join(timeout=5.0)
+
+    def _capture_loop(self):
+        cap = cv2.VideoCapture(self._device_id)
+        while not self._stop_event.is_set():
+            ret, frame = cap.read()
+            if ret:
+                try:
+                    self._frame_queue.put_nowait(frame)
+                except queue.Full:
+                    pass  # Drop oldest frame — real-time preferred over buffering
+        cap.release()
+```
+
+### Pattern 3: GUI Polling via QTimers (Camera Page)
+
+**What:** CameraPage does not subscribe to events from background threads. Instead, it uses QTimers at different intervals to poll CameraResultsStore.
+
+**When to use:** Qt UI updates must happen in the Qt thread. QTimers are the correct mechanism. Polling at different rates for different data types prevents over-rendering.
+
+**Trade-offs:** Slight latency (up to one timer interval) before display updates. Acceptable for camera health display. Live frame can be polled at 500ms (2 Hz) — plenty for a health monitor, not a video stream.
+
+```python
+class CameraController(QWidget):
+    def __init__(self, results_store: CameraResultsStore, parent=None):
+        super().__init__(parent)
+        self.results_store = results_store
+
+        # Different update rates for different data
+        self._frame_timer = QTimer(self)
+        self._frame_timer.timeout.connect(self._update_frame)
+        self._frame_timer.start(500)      # 2 Hz — live frame preview
+
+        self._stats_timer = QTimer(self)
+        self._stats_timer.timeout.connect(self._update_stats)
+        self._stats_timer.start(1000)     # 1 Hz — detection results, wear %
+
+        self._health_timer = QTimer(self)
+        self._health_timer.timeout.connect(self._update_health)
+        self._health_timer.start(2000)    # 0.5 Hz — health score, history
+
+    def stop_timers(self):
+        """Called from MainController.closeEvent()."""
+        self._frame_timer.stop()
+        self._stats_timer.stop()
+        self._health_timer.stop()
+```
+
+### Pattern 4: Lifecycle Integration (Conditional Step)
+
+**What:** `ApplicationLifecycle.start()` gains a `_init_camera()` step inserted after `_init_mqtt()` and before `_init_data_pipeline()`. The camera service must exist before the pipeline so the pipeline can optionally reference `CameraResultsStore`.
+
+**When to use:** Any optional subsystem that requires startup/shutdown lifecycle hooks.
+
+```python
+# In ApplicationLifecycle.start()
+# 4. Initialize MQTT (optional)
+await self._init_mqtt()
+
+# 4.5 Initialize camera (optional, config-driven)
+await self._init_camera()     # NEW STEP
+
+# 5. Initialize data pipeline
+await self._init_data_pipeline()
+```
+
+---
+
+## Data Flow
+
+### Camera Data Flow (Independent from 10 Hz Loop)
+
+```
+OpenCV device
+    ↓ (~30 fps)
+CaptureThread
+    ↓ (queue.put_nowait — drops if full)
+_frame_queue
+    ↓
+EncoderThread (JPEG)
+    ├─→ JPEG bytes to disk (recordings/)
+    └─→ CameraResultsStore.update('latest_frame', jpeg_bytes)
+
+DetectionWorker (triggered every N frames or on schedule)
+    ← reads JPEG from disk or frame_queue
+    ↓ RT-DETR inference (best.pt + catlak-best.pt)
+    └─→ CameraResultsStore.update_batch({
+            'broken_detected': True/False,
+            'crack_detected': True/False,
+            'broken_confidence': 0.87,
+            'crack_confidence': 0.0,
+            'last_detection_ts': datetime.now()
+        })
+
+LDCWorker (triggered on schedule, e.g. every 5s)
+    ← reads frame from CameraResultsStore or disk
+    ↓ LDC edge detection → wear calculation
+    └─→ CameraResultsStore.update_batch({
+            'wear_percentage': 23.5,
+            'last_wear_ts': datetime.now()
+        })
+
+HealthCalculator (triggered after detection or wear update)
+    ← reads broken_detected + wear_percentage from store
+    ↓ health = (1 - broken_weight) * 100 if not broken else 0
+       combined with wear weighting
+    └─→ CameraResultsStore.update('health_score', 76.5)
+```
+
+### GUI Camera Page Data Flow
+
+```
+QTimer (500ms) → CameraResultsStore.get('latest_frame')
+    → QLabel.setPixmap(QPixmap.fromImage(...))
+
+QTimer (1000ms) → CameraResultsStore.snapshot()
+    → Update detection labels (broken/crack status + confidence)
+    → Update wear % label
+
+QTimer (2000ms) → CameraResultsStore.get('health_score')
+    → Update health indicator widget
+    → (Optionally) read history from camera.db for trend graph
+```
+
+### IoT Integration Data Flow
+
+```
+DataProcessingPipeline._processing_loop() (10 Hz)
+    ↓ (Step 6 — queue IoT)
+    if self.camera_results_store:
+        vision_snapshot = self.camera_results_store.snapshot()
+        # Merge into ProcessedData or attach as extra fields
+    await self.iot_service.queue_telemetry(processed_data, vision_data)
+```
+
+### DB Write Flow (Camera Events)
+
+```
+DetectionWorker (on positive detection)
+    → SQLiteService('camera').write_async(
+        INSERT INTO detection_events (timestamp, event_type, confidence, ...)
+    )
+
+LDCWorker (on wear update)
+    → SQLiteService('camera').write_async(
+        INSERT INTO wear_events (timestamp, wear_percentage, ...)
+    )
+```
+
+---
+
+## Integration Points: New vs Modified
+
+### New Components (no existing code touched)
+
+| Component | File | Notes |
+|-----------|------|-------|
+| CameraService | `src/services/camera/camera_service.py` | OpenCV threads, JPEG encoding |
+| VisionService | `src/services/camera/vision_service.py` | Orchestrates workers |
+| DetectionWorker | `src/services/camera/detection_worker.py` | RT-DETR models |
+| LDCWorker | `src/services/camera/ldc_worker.py` | Wear detection |
+| HealthCalculator | `src/services/camera/health_calculator.py` | Health score |
+| CameraResultsStore | `src/services/camera/results_store.py` | Thread-safe store |
+| CameraController | `src/gui/controllers/camera_controller.py` | Qt camera page |
+
+### Modified Components (minimal, surgical changes)
+
+| Component | File | What Changes |
+|-----------|------|-------------|
+| ApplicationLifecycle | `src/core/lifecycle.py` | Add `_init_camera()` step; add `camera_service`, `vision_service` attributes; add camera to stop sequence |
+| MainController | `src/gui/controllers/main_controller.py` | Conditional 5th nav button + page; pass `results_store` to CameraController; add camera page to `stop_timers()` |
+| DataProcessingPipeline | `src/services/processing/data_processor.py` | Optional `camera_results_store` parameter (defaults None); if present, attach vision snapshot to IoT telemetry — no hot-path changes |
+| schemas.py | `src/services/database/schemas.py` | Add `SCHEMA_CAMERA_DB` constant; add `'camera'` key to `SCHEMAS` dict |
+| config.yaml | `config/config.yaml` | Add `camera:` section at end |
+
+### Integration Boundary: CameraResultsStore
+
+`CameraResultsStore` is the sole integration boundary between the camera subsystem and everything else. Neither `DataProcessingPipeline` nor `CameraController` import from `services/camera/` modules directly — they only hold a reference to the store. This means:
+
+- If camera is disabled: `CameraResultsStore` is never instantiated, both consumers receive `None` and skip gracefully.
+- If camera crashes: Store holds stale data; consumers continue without blocking.
+- Adding future camera features: only `CameraResultsStore` interface needs to expand, not all consumers.
+
+---
+
+## Build Order
+
+Dependency analysis drives this order. Each step is independently testable.
+
+### Step 1: Config Schema + Database Schema
+
+**Files:** `config/config.yaml`, `src/services/database/schemas.py`
+
+**Why first:** Everything else depends on config structure and DB schema. Zero code risk — only additive.
+
+```yaml
+# config.yaml addition
+camera:
+  enabled: false          # Default off — safe on machines without camera
+  device_id: 0            # OpenCV device index
+  fps: 30
+  resolution: [1280, 720]
+  jpeg_quality: 85
+  recordings_path: "data/recordings"
+
+  detection:
+    enabled: true
+    broken_model_path: "data/models/best.pt"
+    crack_model_path: "data/models/catlak-best.pt"
+    interval_seconds: 2.0   # Run detection every 2 seconds
+    confidence_threshold: 0.5
+
+  wear:
+    enabled: true
+    interval_seconds: 5.0
+
+  health:
+    broken_weight: 0.70
+    wear_weight: 0.30
+```
+
+```python
+# schemas.py addition
+SCHEMA_CAMERA_DB = """
+CREATE TABLE IF NOT EXISTS detection_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    event_type TEXT NOT NULL,  -- 'broken_tooth', 'crack', 'wear_update'
+    confidence REAL,
+    wear_percentage REAL,
+    health_score REAL,
+    kesim_id INTEGER,          -- Link to active cutting session
+    image_path TEXT            -- Path to JPEG that triggered detection
+);
+CREATE INDEX IF NOT EXISTS idx_detection_ts ON detection_events(timestamp);
+CREATE INDEX IF NOT EXISTS idx_detection_type ON detection_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_detection_kesim ON detection_events(kesim_id);
+
+CREATE TABLE IF NOT EXISTS wear_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    wear_percentage REAL,
+    health_score REAL
+);
+CREATE INDEX IF NOT EXISTS idx_wear_ts ON wear_history(timestamp);
+"""
+```
+
+### Step 2: CameraResultsStore
+
+**Files:** `src/services/camera/__init__.py`, `src/services/camera/results_store.py`
+
+**Why second:** All other camera components and both consumers depend on this. Pure Python, no external deps, fully testable in isolation.
+
+**Test criteria:** Unit test that two threads write concurrently while one thread reads — no deadlock, reads return consistent snapshots.
+
+### Step 3: CameraService (Capture + Encoding)
+
+**Files:** `src/services/camera/camera_service.py`
+
+**Dependencies:** Step 2 (results_store), `cv2`, `config.yaml`
+
+**Why third:** Vision workers need frames from this service. Camera hardware can be tested independently before models are involved.
+
+**Test criteria:** Start service, verify frames appear in results_store within 2 seconds. Test `stop()` cleans up threads.
+
+### Step 4: DetectionWorker + LDCWorker + HealthCalculator
+
+**Files:** `src/services/camera/detection_worker.py`, `src/services/camera/ldc_worker.py`, `src/services/camera/health_calculator.py`
+
+**Dependencies:** Step 3, model files (best.pt, catlak-best.pt)
+
+**Why fourth:** Pure processing — can be developed/tested with test images before full integration.
+
+**Test criteria:** Feed a test JPEG, verify detection results appear in results_store. Verify health_score updates after detection.
+
+### Step 5: VisionService (Orchestration)
+
+**Files:** `src/services/camera/vision_service.py`
+
+**Dependencies:** Steps 3 and 4
+
+**Why fifth:** Wires the workers together with scheduling. Verifiable once workers exist.
+
+**Test criteria:** Start full camera stack (service + vision), verify detection_events write to camera.db.
+
+### Step 6: Lifecycle Integration
+
+**Files:** `src/core/lifecycle.py`
+
+**Dependencies:** Step 5
+
+**Why sixth:** Lifecycle wires everything into the startup sequence. At this point the camera subsystem is complete and tested in isolation.
+
+**Changes:**
+```python
+# Add attribute declarations in __init__
+self.camera_service: Optional['CameraService'] = None
+self.vision_service: Optional['VisionService'] = None
+self.camera_results_store: Optional['CameraResultsStore'] = None
+
+# Add _init_camera() method with lazy imports
+async def _init_camera(self):
+    camera_config = self.config.get('camera', {})
+    if not camera_config.get('enabled', False):
+        logger.info("Camera disabled — skipping")
+        return
+    from ..services.camera.results_store import CameraResultsStore
+    from ..services.camera.camera_service import CameraService
+    from ..services.camera.vision_service import VisionService
+    self.camera_results_store = CameraResultsStore()
+    self.camera_service = CameraService(camera_config, self.camera_results_store)
+    self.vision_service = VisionService(camera_config, self.camera_results_store,
+                                        self.db_services.get('camera'))
+    await self.camera_service.start()
+    await self.vision_service.start()
+
+# Add to stop() sequence (before data pipeline stop)
+if self.vision_service:
+    await self.vision_service.stop()
+if self.camera_service:
+    await self.camera_service.stop()
+```
+
+### Step 7: Data Pipeline IoT Integration
+
+**Files:** `src/services/processing/data_processor.py`
+
+**Dependencies:** Step 2
+
+**Why seventh:** Pipeline integration is optional and low-risk. The pipeline simply checks if `camera_results_store` is not None.
+
+**Changes:**
+```python
+# Constructor — add optional parameter (defaults None, backward-compatible)
+def __init__(self, config, modbus_reader, modbus_writer,
+             control_manager, db_services, mqtt_service=None,
+             camera_results_store=None):   # NEW — optional
+    ...
+    self.camera_results_store = camera_results_store
+
+# In _processing_loop(), in IoT step
+if self.iot_service:
+    vision_data = (self.camera_results_store.snapshot()
+                   if self.camera_results_store else None)
+    await self.iot_service.queue_telemetry(processed_data, vision_data)
+```
+
+### Step 8: GUI CameraController
+
+**Files:** `src/gui/controllers/camera_controller.py`
+
+**Dependencies:** Step 2 (results_store)
+
+**Why eighth:** UI can now be built against the real results_store. All backend is ready.
+
+**Key constraints:**
+- Receives `CameraResultsStore` by constructor injection — never imports `CameraService` or `VisionService`
+- Uses `QLabel` with `setPixmap()` for frame display (QPixmap.fromImage from JPEG bytes)
+- QTimers: 500ms frame, 1000ms stats, 2000ms health
+- `stop_timers()` method required (called from `MainController.closeEvent()`)
+
+### Step 9: MainController Integration
+
+**Files:** `src/gui/controllers/main_controller.py`
+
+**Dependencies:** Step 8
+
+**Why last:** MainController wiring is the final assembly step. Risk is purely in layout changes (sidebar button geometry).
+
+**Changes:**
+```python
+def _setup_ui(self):
+    # ... existing 4 pages ...
+    self.nav_buttons = [
+        self.btnControlPanel,
+        self.btnPositioning,
+        self.btnSensor,
+        self.btnTracking
     ]
 
-    for version, sql in migrations:
-        if current_version < version:
-            logger.info(f"Applying migration to version {version}")
-            conn.executescript(sql)
-            conn.execute(f"PRAGMA user_version = {version}")
-            conn.commit()
+    # NEW: Conditionally add camera page
+    self.camera_page = None
+    camera_config = getattr(self, 'config', {}).get('camera', {})
+    if camera_config.get('enabled', False) and self.camera_results_store:
+        from .camera_controller import CameraController
+        self.camera_page = CameraController(
+            self.camera_results_store,
+            parent=self.stackedWidget
+        )
+        self.stackedWidget.addWidget(self.camera_page)   # Index 4
+        self._add_camera_nav_button()
+
+def closeEvent(self, event):
+    # ... existing timer stops ...
+    if self.camera_page and hasattr(self.camera_page, 'stop_timers'):
+        self.camera_page.stop_timers()
+    event.accept()
 ```
 
-**Pros:**
-- **Preserves existing data**
-- Incremental, versioned migrations
-- Industry standard pattern
-- Safe for production
+**Sidebar button geometry:** Current buttons are at y=165, 286, 407, 528 (spacing 121px). Camera button at y=649. Verify this does not overlap with any existing element.
 
-**Cons:**
-- More complex than backup-and-recreate
-- Requires migration tracking
-- SQLite limitations (can't drop columns easily)
+---
 
-**Confidence:** HIGH - Standard production approach
+## Scaling Considerations
 
-#### Pattern 3: Declarative Schema (ALTERNATIVE)
+This is a single-machine embedded system, not a multi-user web service. "Scaling" here means resource management on the industrial panel PC.
 
-**How it works:** Define schema in code, application auto-creates missing tables/columns on startup.
+| Concern | Current | With Camera Added | Mitigation |
+|---------|---------|-------------------|------------|
+| CPU load | Low (10 Hz async) | +1 capture thread, +1-2 detection threads | Detection runs on schedule (2s interval), not every frame |
+| Memory | Modest (~200 MB) | +JPEG buffer (~2 MB), +model weights (RT-DETR ~60 MB each) | Models loaded once; JPEG queue bounded (maxsize=5) |
+| Disk (recordings) | N/A | ~1 MB/min at 85% JPEG quality, 30fps | Implement rotation/cleanup; configurable recording policy |
+| asyncio loop | 10 Hz, <5ms/cycle | Unchanged — camera runs in separate threads | No camera code in asyncio hot path |
+| Qt thread | 5 Hz GUI update | +3 QTimers at 0.5-2 Hz | These are lightweight polls — negligible |
 
-**Example:**
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Importing Camera Modules at Module Level
+
+**What people do:**
 ```python
-def _ensure_schema(self, conn: sqlite3.Connection) -> None:
-    """Ensure all tables and columns exist."""
-    # Check if column exists
-    cursor = conn.execute("PRAGMA table_info(ml_predictions)")
-    columns = {row[1] for row in cursor.fetchall()}
-
-    if 'kesim_id' not in columns:
-        conn.execute("ALTER TABLE ml_predictions ADD COLUMN kesim_id INTEGER")
+# In lifecycle.py (top of file)
+from ..services.camera.camera_service import CameraService  # BAD
 ```
 
-**Pros:**
-- No migration scripts
-- Self-healing schema
-- Simple deployment
+**Why it's wrong:** Even if camera is disabled in config, Python imports the module and all its transitive dependencies (`import cv2`, `import torch`). On machines without these packages, the application crashes at startup with `ModuleNotFoundError`.
 
-**Cons:**
-- Hidden schema changes (no explicit migration history)
-- Hard to track what changed when
-- Can't handle column renames/deletions
-
-**Confidence:** MEDIUM - Works but less maintainable
-
-### Integration with Existing SQLiteService
-
-#### Recommended Migration Integration Points
-
-**File:** `src/services/database/sqlite_service.py`
-
-**Locations to modify:**
-
-1. **Schema version tracking:**
-   ```python
-   # In __init__
-   self.target_schema_version = 2  # Current schema version
-   ```
-
-2. **Migration application:**
-   ```python
-   # In _initialize_database(), after schema creation
-   def _initialize_database(self):
-       # ... existing code ...
-       conn.executescript(self.schema_sql)
-
-       # NEW: Apply migrations
-       self._apply_migrations(conn)
-
-       conn.commit()
-   ```
-
-3. **Version checking:**
-   ```python
-   # NEW method
-   def get_schema_version(self) -> int:
-       """Get current database schema version."""
-       conn = self._get_read_connection()
-       return conn.execute("PRAGMA user_version").fetchone()[0]
-   ```
-
-**File:** `src/services/database/schemas.py`
-
-**Add migration definitions:**
+**Do this instead:** Lazy import inside the guard:
 ```python
-# After SCHEMA_ML_DB definition
-MIGRATIONS_ML_DB = [
-    (1, """
-        -- v1.6: Add traceability fields to ml_predictions
-        ALTER TABLE ml_predictions ADD COLUMN kesim_id INTEGER;
-        ALTER TABLE ml_predictions ADD COLUMN makine_id INTEGER;
-        ALTER TABLE ml_predictions ADD COLUMN serit_id INTEGER;
-        ALTER TABLE ml_predictions ADD COLUMN malzeme_cinsi INTEGER;
-    """),
-]
-
-MIGRATIONS_ANOMALY_DB = [
-    (1, """
-        -- v1.6: Add traceability fields to anomaly_events
-        ALTER TABLE anomaly_events ADD COLUMN makine_id INTEGER;
-        ALTER TABLE anomaly_events ADD COLUMN serit_id INTEGER;
-        ALTER TABLE anomaly_events ADD COLUMN malzeme_cinsi INTEGER;
-    """),
-]
+async def _init_camera(self):
+    if not self.config.get('camera', {}).get('enabled', False):
+        return
+    from ..services.camera.camera_service import CameraService  # GOOD
 ```
 
-### SQLite ALTER TABLE Limitations
+### Anti-Pattern 2: Running Detection in the asyncio Loop
 
-**Supported Operations:**
-- ✓ ADD COLUMN (new columns must be nullable or have DEFAULT)
-- ✓ RENAME TABLE
-- ✓ RENAME COLUMN (SQLite 3.25.0+)
-
-**Unsupported Operations (require table recreation):**
-- ✗ DROP COLUMN (prior to SQLite 3.35.0)
-- ✗ ALTER COLUMN type
-- ✗ ADD CONSTRAINT (except via table recreation)
-
-**Workaround for unsupported operations:**
-```sql
--- Create new table with desired schema
-CREATE TABLE new_table (...);
-
--- Copy data
-INSERT INTO new_table SELECT ... FROM old_table;
-
--- Replace old table
-DROP TABLE old_table;
-ALTER TABLE new_table RENAME TO old_table;
-```
-
-### Safety Mechanisms
-
-**Pre-Migration Backup:**
+**What people do:**
 ```python
-def _apply_migrations(self, conn):
-    # Backup before migrations
-    backup_path = self.db_path.with_suffix(f'.db.pre-migration-{datetime.now():%Y%m%d%H%M%S}')
-    shutil.copy2(self.db_path, backup_path)
-    logger.info(f"Created pre-migration backup: {backup_path}")
-
-    # Apply migrations...
+# In DataProcessingPipeline._processing_loop()
+raw_data = await modbus_reader.read_all_sensors()
+result = await run_rtdetr_inference(frame)   # BAD — blocks for 200-500ms
 ```
 
-**Transaction Safety:**
+**Why it's wrong:** RT-DETR inference takes 200–500ms on CPU (even longer). Blocking the asyncio loop drops it below the 10 Hz target, causing Modbus read failures and control loop degradation.
+
+**Do this instead:** Detection runs in a dedicated thread via `ThreadPoolExecutor` or a daemon thread. Results are placed in `CameraResultsStore`. The asyncio loop only reads the store (microseconds).
+
+### Anti-Pattern 3: Blocking QTimer Callbacks with Inference
+
+**What people do:**
 ```python
-# Migrations already run inside _initialize_database transaction
-# conn.commit() only called after all migrations succeed
-# On error, entire initialization fails and database remains unchanged
+def _update_frame(self):
+    frame = self.camera_service.capture()    # BAD — could block
+    result = self.model.predict(frame)       # BAD — 200ms blocks Qt
+    self.label.setPixmap(...)
 ```
 
-**Version Verification:**
+**Why it's wrong:** QTimer callbacks run in the Qt thread. Any blocking call freezes the entire GUI.
+
+**Do this instead:** QTimer callbacks only read from `CameraResultsStore` — they never call blocking operations:
 ```python
-def verify_schema_version(self) -> bool:
-    """Verify database is at expected version."""
-    current = self.get_schema_version()
-    if current != self.target_schema_version:
-        logger.error(f"Schema version mismatch: {current} != {self.target_schema_version}")
-        return False
-    return True
+def _update_frame(self):
+    jpeg = self.results_store.get('latest_frame')   # GOOD — microsecond lock
+    if jpeg:
+        self.label.setPixmap(self._jpeg_to_pixmap(jpeg))
+```
+
+### Anti-Pattern 4: Tight Coupling Between CameraController and CameraService
+
+**What people do:**
+```python
+class CameraController(QWidget):
+    def __init__(self, camera_service, vision_service, ...):
+        self.camera_service = camera_service  # BAD — knows too much
+        self.vision_service = vision_service
+```
+
+**Why it's wrong:** Camera controller becomes unable to be instantiated (or tested) without real camera hardware and loaded models.
+
+**Do this instead:** CameraController only receives `CameraResultsStore`. It cannot restart capture, trigger detection, or control the camera — it only reads results:
+```python
+class CameraController(QWidget):
+    def __init__(self, results_store: CameraResultsStore, parent=None):
+        self.results_store = results_store   # GOOD — single dependency
+```
+
+### Anti-Pattern 5: Creating camera.db When Camera is Disabled
+
+**What people do:**
+```python
+# In _init_databases() — always
+for db_name in ['raw', 'total', 'log', 'ml', 'anomaly', 'camera']:
+    service = SQLiteService(db_file, SCHEMAS[db_name])
+```
+
+**Why it's wrong:** Creates an empty database file even when camera is disabled. Wastes inodes, confuses operators inspecting the data directory.
+
+**Do this instead:** Add `'camera'` to db_services only inside `_init_camera()`:
+```python
+async def _init_camera(self):
+    if not camera_config.get('enabled', False):
+        return
+    # Create camera.db only when enabled
+    camera_db = SQLiteService(db_path / 'camera.db', SCHEMA_CAMERA_DB)
+    camera_db.start()
+    self.db_services['camera'] = camera_db
 ```
 
 ---
 
-## Recommended Architecture & Build Order
+## Integration Points Summary
 
-### Phase Structure Recommendations
+### External Services
 
-**Phase 1: Touch Event Infrastructure**
-- **Why first:** Independent of database changes, can be tested immediately
-- **What:** Application-level touch configuration OR custom TouchButton widget
-- **Where:** `src/gui/app.py` (Option 1) or `src/gui/widgets/touch_button.py` (Option 2)
-- **Testing:** Requires physical touch screen device
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| OpenCV (cv2) | Capture thread calls `cv2.VideoCapture()` | Lazy-imported; fails gracefully if not installed when camera disabled |
+| Ultralytics / RT-DETR | `model = RTDETR('best.pt')` in `DetectionWorker.__init__()` | Models loaded once on startup; CUDA/CPU auto-detected |
+| ThingsBoard IoT | `vision_data` dict passed alongside `processed_data` to `queue_telemetry()` | Optional field — IoT service skips if `None` |
 
-**Phase 2: Database Migration Framework**
-- **Why second:** Foundation for schema changes
-- **What:** Add migration infrastructure to SQLiteService
-- **Where:** `src/services/database/sqlite_service.py`, `schemas.py`
-- **Testing:** Unit tests with temporary databases
+### Internal Boundaries
 
-**Phase 3: ML Database Schema Updates**
-- **Why third:** Apply migration framework to ML database
-- **What:** Add kesim_id, makine_id, serit_id, malzeme_cinsi to ml_predictions
-- **Where:** `src/services/database/schemas.py` (migrations), `src/services/processing/ml_controller.py` (data insertion)
-- **Testing:** Verify migration, check data writes
-
-**Phase 4: Anomaly Database Schema Updates**
-- **Why fourth:** Same pattern as Phase 3, separate database
-- **What:** Add makine_id, serit_id, malzeme_cinsi to anomaly_events
-- **Where:** `src/services/database/schemas.py`, `src/services/processing/anomaly_tracker.py`
-- **Testing:** Verify migration, check data writes
-
-**Phase 5: Integration Testing**
-- **Why last:** Validate all changes work together
-- **What:** End-to-end testing on production-like environment
-- **Where:** Full system test with touch screen + database operations
-- **Testing:** Manual QA on industrial hardware
-
-### Component Dependency Map
-
-```
-Touch Events:
-  app.py (application-level config)
-    ↓
-  positioning_controller.py (existing button handlers)
-    ↓
-  MachineControl (existing business logic)
-
-Database Migrations:
-  schemas.py (migration definitions)
-    ↓
-  sqlite_service.py (migration engine)
-    ↓
-  ml_controller.py / anomaly_tracker.py (data insertion)
-```
-
-**No circular dependencies.** Touch and database changes are independent.
-
-### Risk Assessment
-
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Touch delay persists after fix | MEDIUM | Test on actual hardware early; implement custom widget if needed |
-| Migration fails on production DB | HIGH | Pre-migration backup; test on DB copies first |
-| SQLite version too old for features | LOW | Check SQLite version in production (likely 3.35+) |
-| Data loss during migration | HIGH | Use ALTER TABLE (not recreate); backup before migration |
-| Multi-touch interference | LOW | Hold-to-activate buttons unlikely to be pressed simultaneously |
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| CameraService → CameraResultsStore | `results_store.update('latest_frame', jpeg)` | Lock-protected write; non-blocking |
+| DetectionWorker → CameraResultsStore | `results_store.update_batch({...})` | Batch write for atomicity |
+| CameraController → CameraResultsStore | `results_store.snapshot()` in QTimer callback | Read-only; millisecond-range lock |
+| DataProcessingPipeline → CameraResultsStore | `results_store.snapshot()` once per 10 Hz cycle | Optional; None-guarded |
+| VisionService → SQLiteService('camera') | `db.write_async(sql, params)` | Same non-blocking write pattern as all other DBs |
+| ApplicationLifecycle → CameraService/VisionService | `await service.start()` / `await service.stop()` | Async interface matches existing service pattern |
+| MainController → CameraResultsStore | Constructor injection via lifecycle | store passed: `lifecycle.camera_results_store` |
 
 ---
 
-## Technology-Specific Patterns
+## Sources
 
-### Qt Touch Event Handling Pattern
-
-```python
-# Application-level (simple approach)
-class GUIApplication:
-    def _run_gui(self):
-        self._app = QApplication(sys.argv)
-        self._app.setAttribute(Qt.AA_SynthesizeMouseForUnhandledTouchEvents, True)
-        # Existing code continues...
-```
-
-```python
-# Widget-level (low-latency approach)
-class TouchButton(QPushButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setAttribute(Qt.WA_AcceptTouchEvents)
-
-    def event(self, e: QEvent) -> bool:
-        if e.type() == QEvent.TouchBegin:
-            self.pressed.emit()
-            e.accept()
-            return True
-        elif e.type() == QEvent.TouchEnd:
-            self.released.emit()
-            e.accept()
-            return True
-        elif e.type() == QEvent.TouchCancel:
-            self.released.emit()
-            e.accept()
-            return True
-        return super().event(e)
-```
-
-### SQLite Migration Pattern
-
-```python
-class SQLiteService:
-    def __init__(self, db_path: Path, schema_sql: str, migrations: List[Tuple[int, str]] = None):
-        self.db_path = db_path
-        self.schema_sql = schema_sql
-        self.migrations = migrations or []
-        self.target_version = max([v for v, _ in migrations], default=0)
-
-    def _apply_migrations(self, conn: sqlite3.Connection) -> None:
-        current_version = conn.execute("PRAGMA user_version").fetchone()[0]
-
-        for version, sql in sorted(self.migrations):
-            if current_version < version:
-                logger.info(f"Applying migration to v{version}")
-                conn.executescript(sql)
-                conn.execute(f"PRAGMA user_version = {version}")
-                conn.commit()
-                current_version = version
-
-        logger.info(f"Database at version {current_version}")
-```
+- Existing codebase: `src/core/lifecycle.py`, `src/gui/app.py`, `src/gui/controllers/main_controller.py`, `src/services/processing/data_processor.py` — direct inspection, HIGH confidence
+- Existing patterns: `src/services/iot/mqtt_client.py` (optional service pattern), `src/services/database/sqlite_service.py` (queue-based async writes) — HIGH confidence
+- Project requirements: `.planning/PROJECT.md` — config-driven modularity constraint, camera feature list — HIGH confidence
+- Thread safety pattern: Python `threading.Lock()` + `dict.update()` — established pattern from v1.3 AnomalyManager refactor — HIGH confidence
+- OpenCV thread safety: OpenCV VideoCapture is not thread-safe for the capture object itself; single capture thread is the correct pattern — MEDIUM confidence (community consensus, aligns with old project design described in milestone_context)
+- RT-DETR/Ultralytics: Model inference is not thread-safe with shared model objects; separate worker per model or sequential inference in single thread — MEDIUM confidence (standard ML serving pattern)
 
 ---
 
-## Anti-Patterns to Avoid
-
-### Touch Event Anti-Patterns
-
-**Anti-Pattern 1: Reimplementing Button Logic**
-```python
-# BAD: Reimplementing pressed/released state tracking
-class TouchButton(QPushButton):
-    def event(self, e):
-        if e.type() == QEvent.TouchBegin:
-            # Manually track state, change visuals, etc.
-            self._is_pressed = True
-            self.update_visuals()
-```
-**Why bad:** QPushButton already handles state, visuals, signals. Duplication causes bugs.
-
-**Instead:** Reuse existing signals:
-```python
-# GOOD: Emit existing signals, let QPushButton handle state
-self.pressed.emit()  # QPushButton handles the rest
-```
-
-**Anti-Pattern 2: Blocking in Touch Handlers**
-```python
-# BAD: Blocking event handler
-def event(self, e):
-    if e.type() == QEvent.TouchBegin:
-        self.long_running_operation()  # BLOCKS UI
-```
-**Why bad:** Qt event loop blocks, UI freezes.
-
-**Instead:** Use existing async controller pattern:
-```python
-# GOOD: Controller handles async operations
-self.pressed.emit()  # Signal to controller
-# Controller uses MachineControl (already async-safe)
-```
-
-### Database Migration Anti-Patterns
-
-**Anti-Pattern 1: Schema Recreation for Additive Changes**
-```python
-# BAD: Recreate database for new column
-def add_column(self):
-    backup_db()
-    delete_db()
-    create_new_db_with_extra_column()
-```
-**Why bad:** Loses all historical data unnecessarily.
-
-**Instead:** Use ALTER TABLE for additive changes:
-```python
-# GOOD: Add column, keep data
-conn.execute("ALTER TABLE t ADD COLUMN new_col INTEGER")
-```
-
-**Anti-Pattern 2: No Version Tracking**
-```python
-# BAD: Apply migration without checking version
-conn.execute("ALTER TABLE t ADD COLUMN c INTEGER")  # Might fail if already exists
-```
-**Why bad:** Can't tell if migration already applied; fails on retry.
-
-**Instead:** Track version:
-```python
-# GOOD: Check version first
-if current_version < 1:
-    conn.execute("ALTER TABLE t ADD COLUMN c INTEGER")
-    conn.execute("PRAGMA user_version = 1")
-```
-
-**Anti-Pattern 3: No Backup Before Migration**
-```python
-# BAD: Migrate without backup
-def migrate():
-    apply_migrations()  # If this fails, data corrupted
-```
-**Why bad:** Migration errors can corrupt database.
-
-**Instead:** Backup first:
-```python
-# GOOD: Backup before migration
-backup_path = create_backup()
-try:
-    apply_migrations()
-except:
-    restore_from_backup(backup_path)
-    raise
-```
-
----
-
-## Sources & Confidence Assessment
-
-### Touch Event Handling Sources
-
-**HIGH Confidence:**
-- [QTouchEvent Class - Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html) - Official Qt documentation
-- [PySide6.QtGui.QTouchEvent](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QTouchEvent.html) - Official PySide6 docs
-- [PySide6 Signals, Slots and Events Tutorial](https://www.pythonguis.com/tutorials/pyside6-signals-slots-events/) - Comprehensive guide
-- [Create custom GUI Widgets for PySide6](https://www.pythonguis.com/tutorials/pyside6-creating-your-own-custom-widgets/) - Widget customization
-
-**MEDIUM Confidence:**
-- [Qt Forum: QPushButton touch vs mouse events](https://forum.qt.io/topic/136576/how-does-qt-synthesize-mouse-events-from-touch-events) - Community discussion
-- [Qt Forum: Touch event latency](https://forum.qt.io/topic/103085/how-to-get-rid-of-latency-on-touchscreen-press-events) - Performance issues
-- [Qt Forum: QPushButton released() not emitted on touchscreen](https://forum.qt.io/topic/151749/touchscreen-qpushbutton-does-not-emit-released) - Known issue
-
-### Database Migration Sources
-
-**HIGH Confidence:**
-- [Managing Database Versions and Migrations in SQLite](https://www.sqliteforum.com/p/managing-database-versions-and-migrations) - Official SQLite forum
-- [Simple declarative schema migration for SQLite](https://david.rothlis.net/declarative-schema-migration-for-sqlite/) - Industry pattern
-- [SQLite Versioning and Migration Strategies](https://www.sqliteforum.com/p/sqlite-versioning-and-migration-strategies) - Best practices
-
-**MEDIUM Confidence:**
-- [suckless SQLite schema migrations in python](https://eskerda.com/sqlite-schema-migrations-python/) - Blog post with code examples
-- [Yoyo-migrations PyPI](https://pypi.org/project/yoyo-migrations/) - Python migration library
-- [GitHub: simonw/sqlite-migrate](https://github.com/simonw/sqlite-migrate) - Lightweight migration tool
-
-### Verification Status
-
-| Finding | Source Type | Verified With |
-|---------|------------|---------------|
-| Touch synthesis delay (~1s) | Community reports | Multiple Qt Forum threads |
-| WA_AcceptTouchEvents required | Official docs | Qt 6.10.1 documentation |
-| PRAGMA user_version for tracking | Official SQLite | SQLite forum, multiple sources |
-| ALTER TABLE limitations | Official SQLite | SQLite documentation |
-| QPushButton signals work with touch | Official docs | PySide6 documentation |
-
-**Overall Research Confidence: HIGH**
-
-All critical architectural patterns verified with official documentation. Community-reported issues (touch delay) corroborated by multiple sources. Migration patterns are industry-standard.
-
----
-
-## Gaps & Open Questions
-
-### Touch Event Handling Gaps
-
-1. **Touch delay exact timing**: Community reports vary (0.8s - 4s). Needs hardware testing to measure actual delay on industrial touch panel.
-
-2. **Multi-touch button conflicts**: Documentation says multiple buttons can receive touch simultaneously, but unclear if this causes issues with hold-to-activate pattern. Needs testing.
-
-3. **Touch calibration**: No research on whether industrial touch panels require calibration or driver configuration for optimal response.
-
-**Recommendation:** Phase-specific research during implementation with actual hardware.
-
-### Database Migration Gaps
-
-1. **SQLite version in production**: Assume 3.35+ (released 2021) for modern features. Need to verify actual version.
-
-2. **Database file sizes**: Migration timing depends on DB size. No research on current ml.db / anomaly.db sizes in production.
-
-3. **Concurrent access during migration**: Current architecture prevents this (single writer thread), but not explicitly verified.
-
-**Recommendation:** Check production environment during Phase 2 (migration framework).
-
-### Integration Gaps
-
-1. **None field research**: PROJECT.md mentions "ML DB None değerler araştırma" but no research done here. Separate investigation needed.
-
-2. **Rollback strategy**: Backup-and-restore documented, but no automated rollback on migration failure. Consider adding.
-
-**Recommendation:** Address in implementation phase planning.
-
----
-
-## Ready for Roadmap
-
-**Research Complete.** This architecture research provides:
-
-✓ Touch event integration patterns with existing widget architecture
-✓ Database migration strategy preserving existing data
-✓ Component integration points clearly identified
-✓ Build order based on dependencies
-✓ Risk assessment with mitigation strategies
-✓ Anti-patterns to avoid during implementation
-
-**Recommended approach:**
-- **Touch handling:** Start with application-level config (simple), upgrade to custom widget if delay unacceptable
-- **Database migration:** Use ALTER TABLE with PRAGMA user_version tracking
-- **Build order:** Touch events → Migration framework → ML schema → Anomaly schema → Integration testing
-
-Proceeding to roadmap creation with confidence in architectural foundation.
+*Architecture research for: Smart Saw v2.0 Camera Vision & AI Detection Integration*
+*Researched: 2026-03-16*

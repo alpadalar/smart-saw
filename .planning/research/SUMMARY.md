@@ -1,209 +1,240 @@
 # Project Research Summary
 
-**Project:** Smart Saw Control System v1.6
-**Domain:** Industrial HMI touch event handling & database traceability
-**Researched:** 2026-01-29
+**Project:** Smart Saw Control System v2.0 — Camera Vision & AI Detection
+**Domain:** Industrial camera-based band saw tooth inspection integrated into existing async Qt desktop
+**Researched:** 2026-03-16
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The v1.6 milestone addresses two distinct technical domains: fixing touch long-press functionality for positioning page buttons and adding database traceability fields to ML/anomaly databases. Research reveals that both can be accomplished using existing infrastructure—**no new dependencies required**.
+This milestone ports and modernizes a working camera vision system from a legacy codebase (`eskiimas/smart-saw`) into the current industrial control system. The scope is clear: add camera capture (OpenCV), RT-DETR object detection (broken teeth and cracks), LDC-based blade wear calculation, and a camera GUI page — all behind a `camera.enabled` config flag that guarantees zero camera code runs on machines without the hardware. The source implementation already exists and has been directly analyzed, which gives this research unusually high confidence. The primary challenge is not building novel algorithms — it is clean integration into an existing asyncio + Qt6 system without disrupting the critical 10 Hz Modbus control loop.
 
-The touch event issue stems from Qt's event synthesis system. Qt automatically converts touch events to mouse events, but this synthesis has timing delays (~1 second) and can fail when parent widgets accept touch events directly. The recommended approach is to implement explicit touch event handling at the widget level using PySide6's built-in `QTouchEvent` classes, bypassing the unreliable synthesis system. This requires overriding the `event()` method on positioning controller or creating custom `TouchButton` widgets that emit existing `pressed()`/`released()` signals from touch events.
+The recommended architecture is a fully isolated `services/camera/` module that never touches the asyncio event loop. All OpenCV capture and AI inference runs in dedicated `threading.Thread` workers. Results flow through a single `CameraResultsStore` singleton — a thread-safe dict that serves as the sole integration boundary between camera subsystem and everything else (GUI, IoT pipeline, database). The GUI polls this store via QTimers; the asyncio data pipeline reads it once per 10 Hz cycle as an optional attachment. This keeps the camera subsystem independent, testable in isolation, and incapable of degrading the control loop.
 
-The database traceability requirement is straightforward: add four fields (kesim_id, makine_id, serit_id, malzeme_cinsi) to ml_predictions and three fields (makine_id, serit_id, malzeme_cinsi) to anomaly_events tables. SQLite's `ALTER TABLE ADD COLUMN` handles this without data loss. The critical risk is Qt's touch event propagation breaking existing button functionality—if a parent widget accepts `TouchBegin`, child buttons won't receive synthesized mouse events. Testing on actual touchscreen hardware is mandatory, as mouse simulation doesn't expose multi-touch issues or synthesis failures.
+The most significant risk is the numpy version transition. The existing `requirements.txt` caps numpy below 2.0, but `opencv-python-headless >= 4.11.0` requires numpy 2.x on Python 3.9+. This cap must be removed before any other library work begins. Secondary risks are all threading/import-time pitfalls well-documented in the research: blocking `cv2.VideoCapture.read()` in asyncio context, sharing PyTorch model instances across threads, and importing camera modules unconditionally at module level. Each of these has a clear, verified prevention strategy.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-**No new dependencies needed.** PySide6 (already in requirements.txt) includes complete touch event infrastructure. SQLite (Python stdlib) supports adding columns to existing tables without migration frameworks.
+Four new library families are needed. The PySide6 GUI toolkit (already installed) handles camera frame display natively via `QImage`/`QPixmap` — no additional Qt packages required.
 
 **Core technologies:**
-- **PySide6 >=6.4.0**: Qt6 Python bindings with QTouchEvent, QEvent, touch event attributes — already installed
-- **SQLite with ALTER TABLE**: Schema migration using PRAGMA user_version tracking — built into Python stdlib
-- **aiosqlite >=0.19.0**: Async database access for schema migrations — already installed
+- `opencv-python-headless >= 4.11.0`: Camera capture and JPEG encoding — headless variant mandatory to avoid Qt5/Qt6 symbol conflict on Linux; headless and full have identical `cv2` API for VideoCapture/imencode/cvtColor
+- `ultralytics >= 8.3.70`: RT-DETR inference via `RTDETR("best.pt")` — unified API for custom weights, structured `Results` objects, numpy 2.x compatible since 8.3.70
+- `torch >= 2.6.0` + `torchvision >= 0.21.0`: PyTorch runtime for both ultralytics and LDC — CPU-only deploy from PyTorch CPU index to reduce install size from ~2GB to ~200MB
+- `kornia >= 0.7.0`: Differentiable image ops used by LDC model preprocessing — requires PyTorch (already added)
+- **LDC model:** Vendored source code (not a pip package) — copy `modelB4.py` from [xavysp/LDC](https://github.com/xavysp/LDC) into `src/services/camera/`; weights file path set via `config.yaml`
 
-**What NOT to add:**
-- Touch event libraries (pyqt-touch-scroll) — Qt has built-in touch support
-- Migration frameworks (Alembic, Flask-Migrate) — overkill for 2-3 column additions
-- Gesture libraries — Qt gesture framework already included in PySide6
+**Critical version change:** Remove the `numpy<2.0` cap from `requirements.txt`. Change to `numpy>=1.24.0` (no upper bound). `opencv-python-headless 4.13.x` requires numpy 2.x on Python 3.9+. Not doing this blocks all new dependencies.
 
-**Key stack decision:** Use Qt's built-in event system rather than external touch libraries. The issue is implementation pattern (how to handle events), not missing functionality. External libraries add maintenance burden without solving the core problem.
+**What NOT to add:** `opencv-python` (Qt5 conflict), `onnxruntime`, `tensorrt`, `Pillow`, `supervision`, `qimage2ndarray`, `torchaudio`.
+
+See [STACK.md](./STACK.md) for full dependency table, version pairing table, and updated `requirements.txt`.
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Touch long press works like mouse long press — Core functionality fix, safety requirement for industrial machinery
-- Touch release stops action immediately — Safety requirement, must reliably detect TouchEnd
-- Visual feedback during press — QPushButton provides via `:pressed` stylesheet state
-- Traceability fields in all database records — kesim_id, makine_id, serit_id, malzeme_cinsi for audit compliance
-- Timestamp and user identification in logs — Basic auditability for multi-operator environments
+This is a migration, not greenfield. The source system has a complete implementation; the task is porting and integrating it correctly.
 
-**Should have (competitive):**
-- Configurable long press threshold — Use QStyleHints.mousePressAndHoldInterval() for platform-appropriate timing
-- Touch target size validation — 44×44px (9mm) minimum for industrial gloves, current 120x62px buttons exceed this
-- Audit trail with success/failure status — Helps diagnose system issues during debugging
+**Must have (table stakes) — v2.0 launch:**
+- `camera.enabled` config flag — zero camera code runs when false; entire module conditionally loaded
+- OpenCV frame capture + JPEG recording — CameraModule with 1920x1200, configurable FPS, multi-thread JPEG encoder
+- RT-DETR broken tooth detection — `best.pt` model, batch post-processing after recording, results to `detection_stats.json`
+- RT-DETR crack detection — `catlak-best.pt` model, same batch pattern, separate crack count
+- LDC wear pipeline — VisionService watchdog, concurrent with recording, outputs `wear.csv`
+- SawHealthCalculator — `health = 100 - (broken_pct * 0.7 + wear_pct * 0.3)`; status text
+- Camera GUI page — live feed, detection stats, wear %, health score, sequential image thumbnails (4 frames)
+- Sidebar navigation button — 5th button in existing sidebar; only appears when `camera.enabled=true`
+- Detection results to SQLite — new `camera.db` with `detection_events` and `wear_history` tables
+- Detection results to ThingsBoard IoT — camera telemetry fields added to existing HTTP send cycle
 
-**Defer (v2+):**
-- Haptic feedback on touch — Requires hardware investigation, high effort for uncertain value
-- Multi-touch support — Not needed for current single-button-at-a-time jog operations
-- Immutable audit storage — Not required unless regulatory compliance demands it
-- Retention policy automation — Handle when storage becomes a concern
+**Should have (differentiators) — port from old project, low risk:**
+- Sequential image thumbnails panel (4 frames, 240x150px) — already in source; direct port
+- Detection status OK/alert icons per category — single-glance defect status
+- Wear visualization overlay (red boundary lines) — makes LDC measurement visible to operator
+- Health status color coding — red/yellow/green comprehension without reading numbers
+- Serit_id correlation on detection results — `serit_id` available from Modbus register 2230 in existing system
 
-**Anti-features (explicitly avoid):**
-- Right-click context menu on long press — Confuses industrial operators, interferes with hold-to-jog pattern
-- Relying solely on WA_AcceptTouchEvents on parent widget — Breaks QPushButton pressed/released signals
-- Synchronous database writes for every touch event — Floods database with TouchUpdate events
-- Fixed long press threshold — Use platform-appropriate value from QStyleHints
+**Defer to v2.x+:**
+- Per-recording history panel — UI redesign required; trigger: operator request
+- Configurable confidence threshold via UI — trigger: false positive complaints
+- Recording retention policy (auto-delete old recordings) — trigger: disk space alerts
+
+**Anti-features (do not implement):**
+- Real-time AI inference during recording — CPU cannot handle RT-DETR at frame rate; record-then-detect is the correct pattern
+- Continuous video recording (MP4/AVI) — disk space: ~54GB/30min session; JPEG sequence with selective retention is intentional
+- Multi-camera support — single `device_id` integer in config; document extension point, don't implement
+
+See [FEATURES.md](./FEATURES.md) for full feature dependency graph, prioritization matrix, and file format specs.
 
 ### Architecture Approach
 
-Two independent architectural changes: touch event handling and database schema migration. No circular dependencies between them.
+The camera subsystem is a self-contained module (`src/services/camera/`) loaded entirely via lazy imports behind the `camera.enabled` config guard. The sole integration boundary is `CameraResultsStore` — a thread-safe singleton that producers (camera/vision threads) write to and consumers (GUI QTimers, IoT pipeline) read from. Neither `CameraController` nor `DataProcessingPipeline` import any camera module directly; they only hold a reference to the store.
 
-**Touch event integration:** Qt's default touch-to-mouse synthesis has ~1 second delay (OS-level behavior to distinguish taps from long-presses). Two options: (1) Application-level configuration using Qt.AA_SynthesizeMouseForUnhandledTouchEvents, or (2) Custom TouchButton widget that handles QTouchEvent directly and emits existing pressed/released signals. Option 2 recommended for low-latency industrial HMI. Integration point: positioning_controller.py buttons, reusing existing _on_hold_button() handler.
+**Major components (build order = dependency order):**
+1. **Config schema + DB schema** — additive-only changes to `config.yaml` and `schemas.py`; zero code risk; everything else depends on this
+2. **CameraResultsStore** (`results_store.py`) — thread-safe dict with `threading.Lock`; no external deps; fully unit-testable in isolation
+3. **CameraService** (`camera_service.py`) — OpenCV capture thread + JPEG encoder threads; fills store with `latest_frame`; testable with real hardware before models exist
+4. **DetectionWorker + LDCWorker + HealthCalculator** — RT-DETR inference and LDC edge detection; models instantiated inside their own threads (not shared); testable with static test images
+5. **VisionService** (`vision_service.py`) — orchestrates workers with scheduling (detection every 2s, LDC every 5s); wires DB writes via existing SQLiteService queue pattern
+6. **Lifecycle integration** (`lifecycle.py`) — adds `_init_camera()` step after `_init_mqtt()`; lazy imports inside the config guard; camera DB created only when enabled
+7. **Data pipeline IoT integration** (`data_processor.py`) — optional `camera_results_store` constructor parameter (defaults None); one `snapshot()` call per 10 Hz cycle; no hot-path changes
+8. **CameraController** (`camera_controller.py`) — Qt widget; receives only `CameraResultsStore`; three QTimers at 500ms/1000ms/2000ms; never calls camera service directly
+9. **MainController integration** (`main_controller.py`) — conditional 5th nav button + page; last because it's final assembly
 
-**Database migration architecture:** Current SQLiteService uses backup-and-recreate on schema errors (acceptable for ephemeral logs, not for ML/anomaly data). Add migration framework using PRAGMA user_version for tracking. Migrations defined in schemas.py, applied during database initialization. ALTER TABLE ADD COLUMN is O(1) metadata-only operation, safe for production without downtime.
+**Key patterns:**
+- Lazy import guard in `lifecycle.py` and `main_controller.py` — no `import cv2`/`import torch` unless `camera.enabled=true`
+- Background threading for all camera/AI work — asyncio event loop never touched by camera code
+- QTimer polling (not Qt signals from threads) — GUI reads store; store is the queue
+- SQLiteService queue pattern for DB writes — detection thread calls `db_service.queue_write()`, never direct `sqlite3`
 
-**Major components:**
-1. **TouchButton widget** (new) — Extends QPushButton, handles QTouchEvent, emits existing signals
-2. **SQLiteService migration engine** (enhance) — Applies versioned migrations using PRAGMA user_version
-3. **Schema migration definitions** (new) — MIGRATIONS_ML_DB and MIGRATIONS_ANOMALY_DB in schemas.py
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system diagram, data flow diagrams, code patterns, and build order with test criteria.
 
 ### Critical Pitfalls
 
-Research identified 10 pitfalls ranging from critical to minor. Top 5 critical/moderate pitfalls:
+Six critical/moderate pitfalls with verified prevention strategies:
 
-1. **Event Synthesis Blocking (Critical)** — Setting Qt.WA_AcceptTouchEvents on parent widget causes child buttons to stop receiving touch events entirely. Qt's touch-to-mouse synthesis only happens if touch events are NOT accepted by parent. Silent failure, works with mouse but not touch. **Prevention:** Accept touch only at specific widgets, call event.ignore() for unhandled touch, test all buttons with touch after implementation.
+1. **cv2.VideoCapture.read() blocking asyncio (Critical)** — Run all capture in a dedicated `threading.Thread`; asyncio side only reads the latest frame from the results store. Warning sign: Modbus read rate drops below 8 Hz when camera is enabled.
 
-2. **Long Press → Right Click Conversion (Critical)** — Qt converts touchscreen long-press into right-button mouse event on some platforms (Windows). Context menus appear instead of intended action. **Prevention:** Handle touch events explicitly before they become mouse events, filter right-click events using QMouseEvent.source() to detect synthesis.
+2. **Shared PyTorch/Ultralytics model instances across threads (Critical)** — Each detection pipeline instantiates its own model object inside its own thread's `run()` method. The broken and crack models run sequentially in a single detection thread. Warning sign: random `RuntimeError` during `.predict()` calls.
 
-3. **TouchBegin Propagation Stops Future Events (Critical)** — If TouchBegin is ignored (not accepted), Qt sends NO TouchUpdate or TouchEnd events. Touch gesture never completes, widget stuck in "touch active" state. **Prevention:** Accept TouchBegin if you need TouchUpdate/TouchEnd, use TouchUpdate to validate gesture, always handle TouchEnd/TouchCancel for cleanup.
+3. **torch.load() blocking asyncio at startup (Critical)** — Load all models inside `DetectionThread.run()`, not in `lifecycle._init_camera()`. Signal readiness via `asyncio.Event.set()` called with `call_soon_threadsafe`. Warning sign: startup takes 5+ seconds longer when camera is enabled.
 
-4. **Intermittent Touch Event Synthesis Failure (Moderate)** — Qt's mouse synthesis system has documented failures where it stops working after arbitrary runtime. Production HMI becomes unusable mid-shift. **Prevention:** Implement explicit touch handlers instead of relying on synthesis, add watchdog to detect synthesis failure and prompt restart.
+4. **QLabel.setPixmap() called from camera thread (Critical)** — Camera page uses QTimer polling of `CameraResultsStore`, not direct calls from background threads. QTimer callbacks run in the Qt thread. Warning sign: segfaults when navigating to camera page.
 
-5. **Event Loop Recursion with Touch Events (Moderate)** — Calling QDialog.exec() from touch event handler causes freezes/crashes due to multi-touch event delivery during nested event loop. **Prevention:** Use non-blocking dialogs (dialog.show()) or QTimer.singleShot(0, ...) to defer dialog opening until after event handling completes.
+5. **Unconditional camera module imports (Critical)** — Camera imports live inside `if camera_config.get('enabled', False):` guards in `lifecycle.py` and `main_controller.py`. Use `from __future__ import annotations` in camera module files to defer type annotation evaluation. Verify by running on a machine without OpenCV installed. Warning sign: `ModuleNotFoundError: No module named 'cv2'` at startup with camera disabled.
+
+6. **BGR vs RGB color space corruption (Moderate)** — Define one canonical format (RGB) at the camera capture boundary. CameraService exposes `get_frame_rgb()` and `save_jpeg_bgr()` — convert once, never again downstream. Warning sign: orange/blue-tinted display or systematically low detection confidence.
+
+See [PITFALLS.md](./PITFALLS.md) for full pitfall list including technical debt patterns, integration gotchas, performance traps, and a "looks done but isn't" checklist.
+
+---
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure with clear dependency ordering:
+Based on combined research, the dependency order from ARCHITECTURE.md directly maps to roadmap phase structure. Each phase is independently testable.
 
-### Phase 1: Touch Event Infrastructure
-**Rationale:** Independent of database changes, can be tested immediately. Foundation for remaining touch UX work.
-**Delivers:** TouchButton widget or application-level touch configuration, touch event handling without synthesis delay
-**Addresses:** Must-have table stakes feature (touch long press works like mouse)
-**Avoids:** Pitfall #1 (synthesis blocking) by implementing explicit touch handlers
-**Stack:** PySide6 QTouchEvent, QEvent.TouchBegin/TouchUpdate/TouchEnd
-**Complexity:** MEDIUM — 50-100 lines of code, requires actual touchscreen for testing
-**Research needs:** Standard Qt pattern, no additional research needed
+### Phase 1: Foundation — numpy Unblock + Config + DB Schema
+**Rationale:** The numpy<2.0 cap blocks all new dependencies. Config schema and DB schema are additive-only with zero code risk. Nothing else can proceed until these exist. Do this first.
+**Delivers:** Updated `requirements.txt` (numpy cap removed, 4 new libs added), `camera:` section in `config.yaml`, `SCHEMA_CAMERA_DB` in `schemas.py`, `camera.db` created conditionally in lifecycle
+**Features from FEATURES.md:** `camera.enabled` config flag (entire feature gated on this)
+**Avoids:** Pitfall 5 (unconditional import) — the `camera.enabled` flag is established here and gates everything downstream
+**Research flag:** Standard patterns — no additional research needed
 
-### Phase 2: Database Migration Framework
-**Rationale:** Foundation for schema changes, independent of touch events. Needed before adding traceability fields.
-**Delivers:** Migration infrastructure in SQLiteService using PRAGMA user_version tracking
-**Addresses:** Infrastructure for must-have traceability fields
-**Avoids:** Data loss during schema updates, migration re-application errors
-**Stack:** SQLite ALTER TABLE, PRAGMA user_version, Python shutil for backups
-**Complexity:** LOW — 10-20 lines of migration engine code
-**Research needs:** Standard database migration pattern, no additional research needed
+### Phase 2: CameraResultsStore + CameraService (Capture + Recording)
+**Rationale:** All camera producers and consumers depend on CameraResultsStore. CameraService can be tested with real hardware before any AI models are involved. This is the infrastructure layer.
+**Delivers:** `CameraResultsStore` (thread-safe singleton), `CameraService` (OpenCV capture + JPEG encoder threads), JPEG frame recording to `recordings/` directory
+**Features from FEATURES.md:** OpenCV frame capture + JPEG recording, recordings directory structure
+**Avoids:** Pitfall 1 (cap.read() in asyncio) — capture thread design established here; Pitfall 6 (BGR/RGB) — canonical frame format contract established in CameraService
+**Architecture:** Pattern 1 (thread-safe results store) + Pattern 2 (background thread workers)
+**Research flag:** Standard patterns — QThread worker with OpenCV is well-documented
 
-### Phase 3: ML Database Traceability Fields
-**Rationale:** Apply migration framework to ML database. Separate from anomaly DB to isolate risk.
-**Delivers:** kesim_id, makine_id, serit_id, malzeme_cinsi fields in ml_predictions table
-**Addresses:** Must-have traceability requirement for ML data audit compliance
-**Uses:** Migration framework from Phase 2
-**Stack:** ALTER TABLE ADD COLUMN, aiosqlite for async migration
-**Complexity:** LOW — Schema definition + migration script
-**Research needs:** May need investigation of ML DB None values (mentioned in PROJECT.md, not researched here)
+### Phase 3: AI Detection Pipeline (RT-DETR + LDC + HealthCalculator)
+**Rationale:** Depends on Phase 2 (needs frames). Models can be developed against test images. All three components (broken detect, crack detect, LDC wear) run in the same detection thread to avoid model sharing.
+**Delivers:** `DetectionWorker` (broken + crack RT-DETR), `LDCWorker` (LDC edge detection + wear%), `HealthCalculator` (composite health score), results written to `CameraResultsStore` and `camera.db`
+**Features from FEATURES.md:** RT-DETR broken tooth detection, RT-DETR crack detection, LDC wear pipeline, SawHealthCalculator
+**Avoids:** Pitfall 2 (shared model instances) — models instantiated inside single detection thread; Pitfall 3 (torch.load() blocking startup) — models loaded in thread's run() method; Pitfall: torch.no_grad() missing — wrap all inference
+**Architecture:** Pattern 2 (background thread workers); models owned by single thread
+**Research flag:** Standard ML inference pattern — well-documented via Ultralytics thread-safe inference guide
 
-### Phase 4: Anomaly Database Traceability Fields
-**Rationale:** Same pattern as Phase 3, separate database to reduce scope per phase
-**Delivers:** makine_id, serit_id, malzeme_cinsi fields in anomaly_events table
-**Addresses:** Must-have traceability requirement for anomaly data audit compliance
-**Uses:** Migration framework from Phase 2
-**Stack:** ALTER TABLE ADD COLUMN
-**Complexity:** LOW — Repeat Phase 3 pattern for anomaly database
-**Research needs:** Standard pattern, no additional research needed
+### Phase 4: VisionService Orchestration + Lifecycle Integration
+**Rationale:** VisionService wires Phase 3 workers with scheduling and the SQLiteService queue. Lifecycle integration connects everything to the application startup/shutdown sequence. These are tightly coupled — do together.
+**Delivers:** `VisionService` (orchestrates detection + LDC scheduling), `lifecycle.py` `_init_camera()` step with lazy imports, camera stop in shutdown sequence before SQLite flush
+**Features from FEATURES.md:** Detection results to SQLite (via queue pattern)
+**Avoids:** Pitfall 3 (startup blocking) — `_init_camera()` only starts threads, models load in threads; integration gotcha: SQLite writes must go through queue, not direct sqlite3
+**Architecture:** Pattern 4 (lifecycle integration conditional step)
+**Research flag:** Standard patterns — follows existing MQTT service lifecycle pattern exactly
 
-### Phase 5: Integration & Verification
-**Rationale:** Validate all changes work together, test on production-like environment with actual hardware
-**Delivers:** End-to-end testing on industrial touchscreen, 8+ hour stability test
-**Addresses:** Must-have safety requirements (touch release stops immediately)
-**Avoids:** Pitfall #7 (intermittent synthesis failure), Pitfall #3 (right-click conversion on Windows)
-**Testing:** Requires physical touchscreen device, multi-touch scenarios, glove testing if applicable
-**Research needs:** No additional research, focus on verification testing
+### Phase 5: Data Pipeline IoT Integration
+**Rationale:** Optional attachment to the 10 Hz loop. Zero risk to existing functionality — `camera_results_store=None` is the default and all consumers are None-guarded.
+**Delivers:** `DataProcessingPipeline` optional `camera_results_store` parameter, vision snapshot included in ThingsBoard telemetry at each 10 Hz cycle
+**Features from FEATURES.md:** Detection results to ThingsBoard IoT
+**Avoids:** Integration gotcha: IoT send must go through existing batching, not direct from detection thread
+**Architecture:** Optional field attachment — no hot-path changes to existing 10 Hz loop
+**Research flag:** Standard patterns — follows existing IoT telemetry pattern
+
+### Phase 6: Camera GUI Page + Sidebar Integration
+**Rationale:** GUI can now be built against the fully functional backend (Phases 1-5). CameraController only reads `CameraResultsStore` — it is decoupled from the camera hardware and models.
+**Delivers:** `CameraController` Qt widget (live feed at 500ms, stats at 1000ms, health at 2000ms), sequential image thumbnails panel, detection status icons, wear visualization overlay, health color coding, 5th sidebar navigation button in MainController
+**Features from FEATURES.md:** Camera GUI page, sidebar nav button, sequential thumbnails (P2), status icons (P2), wear vis overlay (P2)
+**Avoids:** Pitfall 4 (setPixmap from wrong thread) — QTimers poll store in Qt thread, never call camera service directly; Pitfall: QLabel with QTimer not 0ms interval
+**Architecture:** Pattern 3 (GUI polling via QTimers); CameraController receives only store
+**Research flag:** Standard Qt patterns; sidebar button geometry is concrete (y=649 based on 121px spacing), verify no layout overlap
 
 ### Phase Ordering Rationale
 
-**Why touch first:** Touch infrastructure is independent and can be tested immediately. Provides immediate value (fixes broken button functionality). Database work has no touch dependencies.
-
-**Why migration framework before schema changes:** Prevents data loss. Allows incremental migrations (ML first, then anomaly). Provides rollback capability via backups.
-
-**Why separate ML and anomaly phases:** Isolates risk—if ML migration has issues, anomaly DB unaffected. Allows testing each database migration independently. Each phase is smaller and less risky.
-
-**Why integration last:** Can't validate touch + database interaction until both implemented. Needs actual hardware that may not be available during early development. Long-running stability tests (8+ hours) require working system.
+- **Foundation first:** numpy cap removal is a hard blocker — no pip install succeeds until this is fixed. Config and DB schema are pure additions with no risk.
+- **Infrastructure before workers:** CameraResultsStore must exist before any component writes to or reads from it. CameraService must exist before DetectionWorker needs frames.
+- **Detection before lifecycle:** Workers are independently testable. Lifecycle integration only makes sense once the whole camera stack works.
+- **Lifecycle before IoT:** IoT integration references `camera_results_store` which is created in `_init_camera()`.
+- **Backend before GUI:** CameraController reads from CameraResultsStore; building the GUI last means it can be developed against real results from the real pipeline.
+- **Separating GUI from lifecycle:** GUI integration (Phase 6) is separated from lifecycle integration (Phase 4) because GUI work can proceed in parallel once the store exists, and it carries the most layout/UX iteration risk.
 
 ### Research Flags
 
 **Phases needing deeper research during planning:**
-- **Phase 3 (ML Database):** May need investigation of ML DB None values mentioned in PROJECT.md active requirements ("ML DB None değerler araştırma"). This wasn't researched here and may affect schema decisions.
+- **Phase 3 (AI Detection):** LDC model integration requires vendoring source code (`modelB4.py`) from [xavysp/LDC](https://github.com/xavysp/LDC). The BIPED checkpoint path and LDC preprocessing pipeline need to be matched to the existing source project's implementation. Review `eskiimas/smart-saw/src/vision/wear_detection/` before implementation.
+- **Phase 3 (AI Detection):** CPU-only PyTorch inference at 2 Hz on 1280x720 frames — validate on actual panel PC hardware before committing to this scheduling interval. RT-DETR at 2 Hz and LDC at 0.2 Hz are estimates; measure and adjust.
 
 **Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Touch Events):** Well-documented Qt pattern, official Qt 6.10.1 documentation covers all needed classes
-- **Phase 2 (Migration Framework):** Industry-standard SQLite migration pattern using PRAGMA user_version
-- **Phase 4 (Anomaly Database):** Repeat of Phase 3 pattern
-- **Phase 5 (Integration):** Verification testing, no research needed
+- **Phase 1 (Foundation):** requirements.txt edits and additive YAML/schema changes — no research needed
+- **Phase 2 (Capture):** OpenCV VideoCapture in a thread with queue — well-documented; existing source project has working implementation to reference
+- **Phase 4 (Lifecycle):** Follows existing MQTT service pattern exactly — `_init_mqtt()` is the template
+- **Phase 5 (IoT):** Adding optional fields to existing telemetry dict — trivial
+- **Phase 6 (GUI):** CameraPage port from `eskiimas/smart-saw/src/gui/controllers/pyside_camera.py` — direct reference implementation exists
 
-**Additional research considerations:**
-- Touch hardware specifications: Capacitive vs resistive touchscreen affects glove compatibility (research during Phase 1 hardware testing)
-- SQLite version in production: Assumed 3.35+ for modern features, verify during Phase 2 setup
-- Glove testing requirements: If operators wear protective gloves, research palm rejection and pressure sensitivity during Phase 5
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official Qt 6.10.1 docs + PySide6 docs confirm all needed classes present. SQLite ALTER TABLE documented in official SQLite.org docs. |
-| Features | HIGH | Industrial HMI best practices well-documented. Traceability requirements match ISO 9001/GS1 manufacturing standards. |
-| Architecture | HIGH | Qt event system architecture verified with official docs. SQLite migration patterns are industry-standard. Multiple community sources corroborate findings. |
-| Pitfalls | HIGH | 10 pitfalls verified with official Qt docs and multiple Qt Forum discussions. Touch synthesis issues confirmed by community bug reports. |
+| Stack | HIGH | All library versions verified on PyPI as of 2026-03-16; numpy 2.x transition issue confirmed via GitHub issues and PyPI metadata; only CPU-only inference performance is MEDIUM (measure on real hardware) |
+| Features | HIGH | Direct source code analysis of working legacy system; all features are ports, not novel implementations; feature dependencies mapped with exact data formats (JSON schema, CSV format, directory structure) |
+| Architecture | HIGH | Existing codebase patterns directly inspected (`lifecycle.py`, `mqtt_client.py`, `sqlite_service.py`); patterns verified against official Qt and Python docs; build order derived from strict dependency analysis |
+| Pitfalls | HIGH | All six critical pitfalls verified against official documentation (OpenCV GitHub, Ultralytics docs, PyTorch issue tracker, Qt for Python docs); each pitfall has a confirmed prevention strategy |
 
 **Overall confidence:** HIGH
 
-All critical architectural patterns verified with official documentation. Community-reported issues (touch delay, synthesis failures) corroborated by multiple independent sources. Migration patterns match industry best practices.
-
 ### Gaps to Address
 
-**Touch event timing precision:** Community reports vary (0.8s - 4s delay for touch-to-mouse synthesis). Actual delay depends on OS, drivers, hardware. **Action:** Measure during Phase 1 testing on production touchscreen hardware.
+- **CPU inference timing:** RT-DETR and LDC inference times on the actual industrial panel PC CPU are not measured. The 2 Hz detection interval and 0.2 Hz LDC interval are conservative estimates. Validate during Phase 3 implementation and adjust `config.yaml` `interval_seconds` values accordingly.
 
-**Multi-touch button conflicts:** Documentation says multiple buttons can receive touch simultaneously, unclear if this causes issues with hold-to-activate pattern. **Action:** Test during Phase 5 with intentional multi-touch scenarios (palm rejection testing).
+- **LDC weights and source compatibility:** The LDC model source (`modelB4.py`) and BIPED weights must be confirmed against the version used in `eskiimas/smart-saw`. The LDC GitHub has multiple model variants. Match exactly to avoid behavioral differences in wear calculation.
 
-**SQLite version verification:** Research assumes SQLite 3.35+ (2021) for modern ALTER TABLE features. **Action:** Check production environment during Phase 2 migration framework setup.
+- **Sidebar button geometry:** The 5th sidebar button is projected at y=649 based on the existing 121px spacing pattern. Verify against the actual `.ui` file or `main_controller.py` layout before implementing.
 
-**ML DB None values investigation:** Mentioned in PROJECT.md as separate active requirement, not researched here. May affect schema design or migration strategy. **Action:** Research during Phase 3 planning if None values impact traceability field decisions.
+- **Wear baseline calibration:** The wear calculation requires a `baseline_edge_count` (edge pixel count on a new blade). This value is machine-specific and must be calibrated per installation. Document this as a required setup step, not a software default.
 
-**Glove compatibility:** Industrial environments may require protective gloves. Capacitive touchscreens may not work with gloves. **Action:** Research touchscreen hardware type and test with operator gloves during Phase 5.
+- **serit_id and makine_id at camera page:** The camera page needs `serit_id` (Modbus register 2230) and `makine_id` (register 2251) for linking detection results to blade sessions. These are already captured in the existing system. Confirm the data path from `raw_data` to `CameraResultsStore` or camera page constructor during Phase 4 implementation.
 
-**Traceability data sources:** Where do kesim_id, makine_id, serit_id, malzeme_cinsi values come from in existing system? Manual input, configuration file, RFID, barcode? **Action:** Identify data sources during Phase 3/4 implementation to populate new fields correctly.
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [QTouchEvent Class | Qt GUI | Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html) — Official Qt6 touch event documentation, event types, propagation rules
-- [PySide6.QtGui.QTouchEvent](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QTouchEvent.html) — Official PySide6 Python bindings for touch events
-- [ALTER TABLE | SQLite.org](https://sqlite.org/lang_altertable.html) — Official SQLite ALTER TABLE documentation, supported operations
-- [Managing Database Versions and Migrations in SQLite](https://www.sqliteforum.com/p/managing-database-versions-and-migrations) — Official SQLite forum migration patterns
+- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/` — complete working camera implementation (camera.py, broken_detect.py, crack_detect.py, vision/service.py, saw_health_calculator.py, gui/controllers/pyside_camera.py)
+- [ultralytics PyPI](https://pypi.org/project/ultralytics/) — v8.4.22, 2026-03-14
+- [Ultralytics RT-DETR docs](https://docs.ultralytics.com/models/rtdetr/) + [predict docs](https://docs.ultralytics.com/modes/predict/)
+- [Ultralytics Thread-Safe Inference Guide](https://docs.ultralytics.com/guides/yolo-thread-safe-inference/)
+- [opencv-python PyPI](https://pypi.org/project/opencv-python/) — v4.13.0.92, 2026-02-05
+- [PyTorch Versions wiki](https://github.com/pytorch/pytorch/wiki/PyTorch-Versions) — official compatibility table
+- [torch PyPI](https://pypi.org/project/torch/) — v2.10.0, 2026-01-21
+- [kornia PyPI](https://pypi.org/project/kornia/) — v0.8.2, 2025-11-08
+- [LDC GitHub xavysp/LDC](https://github.com/xavysp/LDC) — ~0.7M params, PyTorch >=1.6
+- [Qt for Python QThread docs](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QThread.html)
+- [PySide6 QImage docs](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QImage.html)
+- Existing codebase: `src/core/lifecycle.py`, `src/services/iot/mqtt_client.py`, `src/services/database/sqlite_service.py`
 
 ### Secondary (MEDIUM confidence)
-- [How does Qt synthesize Mouse Events from Touch Events? | Qt Forum](https://forum.qt.io/topic/136576/how-does-qt-synthesize-mouse-events-from-touch-events) — Community explanation of synthesis mechanism
-- [Touchscreen QPushButton does not emit released() | Qt Forum](https://forum.qt.io/topic/151749/touchscreen-qpushbutton-does-not-emit-released) — Bug report confirming pressed/released signal issues with touch
-- [QT Widgets not responding to touch event sometimes](https://forum.qt.io/topic/96780/qt-widgets-not-responding-to-touch-event-sometimes) — Intermittent synthesis failure reports
-- [Simple declarative schema migration for SQLite](https://david.rothlis.net/declarative-schema-migration-for-sqlite/) — Industry migration pattern
-
-### Tertiary (context and validation)
-- [Built to Last: Five Best Practices for Building Reliable Industrial HMIs | Qt Blog](https://www.qt.io/blog/five-best-practices-for-building-reliable-hmi) — Industrial HMI guidelines (July 2025)
-- [Traceability In Manufacturing: What Is It & How You Can… | Tulip](https://tulip.co/blog/traceability-in-manufacturing/) — Manufacturing traceability standards
-- [Jog Button on Touchscreen HMI in Perspective - Ignition Forum](https://forum.inductiveautomation.com/t/jog-button-on-touchscreen-hmi-in-perspective/87295) — Industrial HMI touch button patterns
+- [pytorch/pytorch Issue #5879: torch.load blocks asyncio](https://github.com/pytorch/pytorch/issues/5879)
+- [opencv/opencv Issue #24229: VideoCapture thread safety](https://github.com/opencv/opencv/issues/24229)
+- [numpy 2.x ecosystem tracking](https://github.com/numpy/numpy/issues/26191)
+- [How to display OpenCV video in PyQt apps (gist)](https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
+- [PyTorch CUDA semantics docs](https://docs.pytorch.org/docs/stable/notes/cuda.html)
 
 ---
-*Research completed: 2026-01-29*
+*Research completed: 2026-03-16*
 *Ready for roadmap: yes*

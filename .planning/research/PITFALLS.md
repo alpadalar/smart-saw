@@ -1,601 +1,344 @@
-# Touch Event Handling Pitfalls
+# Pitfalls Research
 
-**Domain:** Adding touch long-press to Qt/PySide6 industrial HMI with existing mouse handling
-**Researched:** 2026-01-29
-**Confidence:** HIGH (verified with official Qt documentation and community reports)
-
-## Executive Summary
-
-Adding touch event support to an existing Qt/PySide6 application with working mouse events is **architecturally treacherous**. Qt's event synthesis system creates subtle interactions between touch and mouse events that can break existing functionality. The industrial HMI context (fullscreen, single-interaction point) reduces multi-touch complexity but amplifies the impact of synthesis failures.
-
-**Key insight:** Touch events have precedence over mouse events in Qt's delivery system. If a parent widget accepts a touch event, child widgets relying on mouse synthesis will not receive mouse events.
+**Domain:** Adding camera vision & AI detection to an existing industrial async control system
+**Researched:** 2026-03-16
+**Confidence:** HIGH (OpenCV threading, PyTorch CUDA, Qt display patterns verified via official docs and community issue trackers)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites or major issues.
+Mistakes that cause rewrites, data loss, or safety failures.
 
-### Pitfall 1: Event Synthesis Blocking - The Parent/Child Trap
+---
+
+### Pitfall 1: cv2.VideoCapture.read() Blocks the Asyncio Event Loop
 
 **What goes wrong:**
-You add `setAttribute(Qt.WA_AcceptTouchEvents)` to a parent widget to handle touch long-press. Existing mouse-based child widgets (buttons, controls) suddenly stop responding to touch input entirely. Users can't press buttons with touch, only with mouse.
+A developer calls `cap.read()` directly inside an `async def` coroutine or anywhere reachable from the 10 Hz asyncio processing loop. The call blocks for 30–100ms waiting for a USB/V4L2 frame. The asyncio event loop stalls. Modbus reads start missing their 100ms slot, IoT telemetry backs up, and the SQLite write queue grows. The effect looks like intermittent Modbus timeouts or database queue alarms — nothing in the camera code shows an obvious error.
 
 **Why it happens:**
-Qt's event delivery is: Touch event propagates → if accepted, **stop** → if ignored, synthesize mouse event. When a parent widget accepts `QEvent.TouchBegin`, Qt stops propagation and **never synthesizes the mouse event** that child widgets expect.
+`cv2.VideoCapture.read()` is a synchronous, blocking C extension call. Although it releases the GIL while waiting in V4L2 or GStreamer, it still occupies the OS thread that asyncio is running on. Asyncio cannot schedule other coroutines while the thread is blocked.
 
-**Consequences:**
-- Buttons/controls become non-functional on touchscreen
-- Works perfectly with mouse, fails completely with touch
-- No error messages - silent failure
-- Hard to debug because mouse testing shows everything working
+**How to avoid:**
+Run all camera capture in a dedicated `threading.Thread` (never in the asyncio event loop thread). The capture thread fills a `queue.Queue(maxsize=1)` or a `threading.Event` + shared frame reference using a lock. The asyncio side only reads the latest frame — never waits for capture.
 
-**Prevention:**
-1. **Never accept touch events at parent level** unless you handle all child interactions in touch handlers
-2. If parent needs touch events, explicitly call `event.ignore()` for touch events you don't handle
-3. Use event filters instead of accepting touch events at parent level
-4. Test with `QTouchDevice` simulation, not just mouse
-
-**Detection:**
-- Buttons work with mouse but not touch
-- Check if any ancestor widget has `WA_AcceptTouchEvents` set
-- Add logging to `event()` override: log when `TouchBegin` is accepted
-
-**Code smell:**
 ```python
-# BAD - Parent accepts touch, blocks mouse synthesis for children
-class ParentWidget(QWidget):
+# WRONG: called from asyncio context
+async def update_display():
+    ret, frame = cap.read()  # Blocks event loop for 30-100ms
+
+# RIGHT: camera runs in its own thread
+class CameraCapture(threading.Thread):
+    def run(self):
+        while self._running:
+            ret, frame = self._cap.read()
+            if ret:
+                with self._lock:
+                    self._latest_frame = frame
+```
+
+**Warning signs:**
+- Modbus read rate drops below 8 Hz when camera is enabled
+- `data_pipeline.get_stats()['errors']` increases after camera start
+- Health monitor logs database queue warnings shortly after camera init
+
+**Phase to address:** Camera module phase (frame capture implementation). The capture thread must be designed before the detection pipeline is connected.
+
+---
+
+### Pitfall 2: Sharing a Single PyTorch/Ultralytics Model Across Multiple Threads
+
+**What goes wrong:**
+Three detection models (RT-DETR broken, RT-DETR crack, LDC edge) are loaded once at startup and called from different threads or at different times in the same detection loop. Internally, YOLO/Ultralytics models maintain per-call state (result buffers, preprocessing state). Concurrent or interleaved access causes `RuntimeError` during inference, silent wrong predictions, or CUDA context corruption requiring a process restart.
+
+**Why it happens:**
+Ultralytics documents explicitly that sharing a single model instance across threads causes race conditions on internal state. This is especially dangerous with two RT-DETR models that use the same Ultralytics predictor base class — their shared underlying C++ state is not re-entrant.
+
+**How to avoid:**
+Each detection pipeline gets its own model instance, loaded in the thread or context that will use it. For the sequential detection approach (broken → crack → LDC, one per frame), all three models load into the same detection thread and are called sequentially without sharing.
+
+```python
+# WRONG: one model, called from multiple call paths
+class VisionService:
     def __init__(self):
-        super().__init__()
-        self.setAttribute(Qt.WA_AcceptTouchEvents)  # Blocks children!
+        self.broken_model = YOLO("broken_best.pt")  # Shared instance
 
-    def event(self, event):
-        if event.type() == QEvent.TouchBegin:
-            # Handle touch...
-            return True  # PROBLEM: Children won't get mouse events
+# RIGHT: models owned by the single detection thread
+class DetectionThread(threading.Thread):
+    def run(self):
+        # Models instantiated inside the thread that uses them
+        broken_model = YOLO("broken_best.pt")
+        crack_model = YOLO("crack_best.pt")
+        ldc_model = ...
+        while self._running:
+            frame = self._get_frame()
+            broken_result = broken_model(frame)
+            crack_result = crack_model(frame)
 ```
 
-**Fix pattern:**
-```python
-# GOOD - Parent only handles specific touch, ignores others
-class ParentWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setAttribute(Qt.WA_AcceptTouchEvents)
+**Warning signs:**
+- `RuntimeError` during `.predict()` calls that appears randomly
+- Predictions differ between runs on the same frame
+- CUDA errors after model is called from more than one call site
 
-    def event(self, event):
-        if event.type() == QEvent.TouchBegin:
-            # Check if this is for a specific child/region
-            if self._should_handle_long_press(event):
-                # Handle long press...
-                return True
-            else:
-                event.ignore()  # Let it propagate for mouse synthesis
-                return False
-        return super().event(event)
-```
-
-**Phase impact:** Phase 14-01 (Touch Event Implementation) must verify button functionality doesn't regress.
-
-**Sources:**
-- [How does Qt synthesize Mouse Events from Touch Events?](https://forum.qt.io/topic/136576/how-does-qt-synthesize-mouse-events-from-touch-events)
-- [Touch event synthesis conflicts](https://groups.google.com/g/qt-project-list-development/c/J8G9KkFVkCM/m/iim6Ts4itiwJ)
-- [QTouchEvent Class | Qt GUI | Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html)
+**Phase to address:** AI detection pipeline phase. The detection thread architecture must be settled before model loading code is written.
 
 ---
 
-### Pitfall 2: Viewport Attribute Blindness
+### Pitfall 3: torch.load() and CUDA Context Initialization Blocks Asyncio at Startup
 
 **What goes wrong:**
-You set `setAttribute(Qt.WA_AcceptTouchEvents)` on a scroll area or container widget. Touch events never arrive. No errors, no warnings - just silence.
+Model loading (`torch.load()` or `YOLO("model.pt")`) is placed in `ApplicationLifecycle._init_camera()` and called with `await asyncio.get_event_loop().run_in_executor(None, ...)` — or worse, called synchronously. CUDA context initialization on first load takes 2–6 seconds. During this window, the asyncio event loop is frozen or the executor threadpool is saturated, delaying the rest of the startup sequence (Modbus connect, data pipeline start). If models are loaded synchronously they fully block the event loop.
 
 **Why it happens:**
-For `QAbstractScrollArea`-based widgets (scroll areas, text edits, list views), the touch event attribute **must be set on the viewport**, not the widget itself. The viewport is the internal child widget that actually receives events.
+`torch.load()` is CPU-bound and performs CUDA driver initialization on first call. There is a confirmed PyTorch issue (`torch.load block asyncio loop · Issue #5879`) documenting that PyTorch holds the GIL and blocks the event loop. CUDA context init is an additional 1–3 second hit on first model load.
 
-**Consequences:**
-- Touch events silently ignored
-- Developers assume touch doesn't work and give up
-- Mouse works fine, masking the problem during mouse-based testing
+**How to avoid:**
+Load all models in the detection thread's `run()` method after the thread starts, not in the lifecycle `start()` sequence. Lifecycle only starts the thread; the thread loads its own models asynchronously from the asyncio perspective. Signal readiness via an `asyncio.Event` set with `call_soon_threadsafe` when loading completes.
 
-**Prevention:**
 ```python
-# For ANY QAbstractScrollArea-based widget:
-scroll_area.viewport().setAttribute(Qt.WA_AcceptTouchEvents)  # viewport!
-# NOT: scroll_area.setAttribute(Qt.WA_AcceptTouchEvents)  # Wrong target
+class DetectionThread(threading.Thread):
+    def run(self):
+        # All model loading happens here, off the event loop thread
+        self._broken_model = YOLO("broken_best.pt")
+        self._crack_model = YOLO("crack_best.pt")
+        self._ready_event.set()  # Signal lifecycle that models are ready
+        self._detection_loop()
 ```
 
-**Detection:**
-- Touch events never trigger `event()` callback
-- Widget inherits from `QAbstractScrollArea` (or `QTextEdit`, `QListView`, etc.)
-- Check where attribute is set: widget or viewport?
+**Warning signs:**
+- Startup takes 5+ seconds longer when camera is enabled
+- Modbus "initial connection failed" logs on hardware that previously connected immediately
+- Lifecycle startup sequence hangs on camera init step
 
-**Phase impact:** Phase 14-01 must audit all widgets - any scroll areas need viewport attribute.
-
-**Sources:**
-- [QTouchEvent Class | Qt GUI 5.7](https://stuff.mit.edu/afs/athena/software/texmaker_v5.0.2/qt57/doc/qtgui/qtouchevent.html)
-- [QGraphicsView and Qt::WA_AcceptTouchEvents](https://forum.qt.io/topic/150098/qgraphicsview-and-qt-wa_accepttouchevents)
+**Phase to address:** Lifecycle integration phase (camera services startup/shutdown). Define the async-boundary contract between lifecycle and detection thread before model loading is implemented.
 
 ---
 
-### Pitfall 3: Long Press → Right Click Conversion
+### Pitfall 4: QLabel.setPixmap() Called from Camera Thread (Not GUI Thread)
 
 **What goes wrong:**
-User performs touch long-press. Your handler never fires. Instead, Qt fires a **right-click mouse event** (`QMouseEvent` with `Qt.RightButton`). Context menus appear unexpectedly, or handlers receive wrong event type.
+The camera display code calls `self.camera_label.setPixmap(...)` from a camera capture thread or detection thread. Qt silently queues the paint event on some platforms but crashes on others with "QObject: Cannot create children for a parent that is in a different thread." Even when it does not crash, the display update races with Qt's own repaint cycle, causing tearing, missed frames, or occasional segfaults on Linux.
 
 **Why it happens:**
-Qt automatically converts touchscreen hold (long press) into a right-button press in some configurations, particularly on Windows. This is a platform-level behavior that bypasses your touch handlers.
+Qt enforces that all GUI operations happen on the thread that created the `QApplication`. `QLabel` and `QPixmap` are not thread-safe. Any cross-thread pixmap update bypasses Qt's object ownership model.
 
-**Consequences:**
-- Context menus appear on long press instead of intended action
-- Long-press handlers never trigger
-- Different behavior on different platforms (Windows vs Linux)
-- User confusion: "Why does holding show a menu?"
+**How to avoid:**
+Camera thread emits a Qt signal (`frame_ready = Signal(QImage)`) connected to a slot on the `CameraPage` widget. The signal carries a `QImage` (not `np.ndarray` or `QPixmap` — those are not safe to cross thread boundaries). The slot converts to `QPixmap` and calls `setPixmap` — all in the GUI thread.
 
-**Prevention:**
-1. **Handle touch events explicitly** before they become mouse events
-2. Set `Qt.AA_SynthesizeMouseForUnhandledTouchEvents = False` if you handle all touch yourself
-3. Filter right-click events in mouse handlers when touch is active
-4. Use `QMouseEvent.source()` or `pointingDevice()` to detect if event was synthesized from touch
-
-**Detection:**
-- Right-click menus appear on touch long-press
-- Log event sources: `event.source() == Qt.MouseEventSynthesizedBySystem`
-- Test on actual touchscreen hardware (not mouse simulation)
-
-**Code pattern:**
 ```python
-def mousePressEvent(self, event):
-    # Detect synthesized touch-to-mouse conversion
-    if event.source() == Qt.MouseEventSynthesizedBySystem:
-        if event.button() == Qt.RightButton:
-            # This is touch long-press → right-click conversion
-            # Either ignore or handle as touch long-press
-            event.ignore()
-            return
-    # Normal mouse handling
-    super().mousePressEvent(event)
+# Camera capture thread
+class CameraThread(QThread):  # or threading.Thread with signal emission
+    frame_ready = Signal(QImage)
+
+    def _emit_frame(self, bgr_frame):
+        rgb = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb.shape
+        image = QImage(rgb.data, w, h, ch * w, QImage.Format_RGB888)
+        self.frame_ready.emit(image.copy())  # .copy() detaches from numpy buffer
+
+# GUI widget slot
+class CameraPage(QWidget):
+    @Slot(QImage)
+    def _on_frame_ready(self, image: QImage):
+        self.camera_label.setPixmap(QPixmap.fromImage(image))
 ```
 
-**Phase impact:** Phase 14-01 must test on Windows touchscreen hardware, not just Linux development machine.
+**Warning signs:**
+- Application crashes when navigating to the camera page
+- Occasional segfaults that only occur when the camera is running
+- "QObject::setParent" or "timers cannot be stopped" error messages on shutdown
 
-**Sources:**
-- [Touchscreen "HOLD" (long-press) event gets converted to a right-mouse-button press](https://forum.qt.io/topic/157910/touchscreen-hold-long-press-event-gets-converted-to-a-right-mouse-button-press)
-- [Long press from touch screen is handled different from long mouse press](https://forum.qt.io/topic/111658/long-press-from-touch-screen-is-handled-different-from-long-mouse-press)
+**Phase to address:** Camera GUI page phase. The signal/slot frame delivery pattern must be established before any display code is written.
 
 ---
 
-### Pitfall 4: TouchBegin Propagation Stops All Future Touch Events
+### Pitfall 5: Config-Driven Optional Import Breaks at Runtime When camera.enabled=false
 
 **What goes wrong:**
-You call `event.ignore()` on `TouchBegin` thinking it will propagate like mouse events. Instead, **all future touch events stop** - no `TouchUpdate`, no `TouchEnd`. The touch sequence is dead.
+The camera module file is imported unconditionally by `lifecycle.py` even when `camera.enabled: false`. Inside that file, `import cv2`, `import torch`, or `from ultralytics import YOLO` fail with `ModuleNotFoundError` if those packages are not installed. The application crashes at startup on machines without the vision stack, even though the feature is disabled in config.
+
+A related failure: the try/except guard wraps the import but the module variable is set to `None`, and later code that checks `if cv2 is None: return` misses a call site. One unguarded reference to `cv2` (e.g., in a type annotation evaluated at import time) causes `NameError`.
 
 **Why it happens:**
-Qt touch event propagation rules are different from mouse:
-- `TouchBegin` propagates up the parent chain until accepted or filtered
-- If `TouchBegin` is **not accepted and not filtered**, Qt sends **no further touch events** for that sequence
-- Only the widget that accepted `TouchBegin` receives `TouchUpdate` and `TouchEnd`
+Python evaluates module-level imports and type annotations at import time, not at use time. A `try: import cv2 except ImportError: cv2 = None` guard is bypassed by any `def foo(frame: cv2.Mat)` annotation in the same file.
 
-**Consequences:**
-- Touch gesture never completes
-- No `TouchEnd` event to clean up state
-- Widget stuck in "touch active" state
-- Memory leaks if you allocated resources expecting `TouchEnd`
+**How to avoid:**
+- The lifecycle uses `if config['camera']['enabled']` before importing anything camera-related
+- Camera module files use `from __future__ import annotations` to defer annotation evaluation
+- All camera imports live inside `if TYPE_CHECKING:` blocks or inside function bodies that are only called when the feature is enabled
+- Use a boolean flag, not module-as-None: `CAMERA_AVAILABLE = False` then check the flag
 
-**Prevention:**
-1. **Accept `TouchBegin`** if you might want `TouchUpdate`/`TouchEnd` - even if you're not sure yet
-2. Use `TouchUpdate` to decide if gesture is valid, not `TouchBegin`
-3. Always handle `TouchEnd` and `TouchCancel` for cleanup
-4. Don't use `event.ignore()` pattern from mouse event handling
-
-**Detection:**
-- `TouchUpdate` and `TouchEnd` never fire after `TouchBegin`
-- Add logging: count TouchBegin vs TouchEnd - should be equal
-- Check for resource leaks (timers, allocated objects)
-
-**Code pattern:**
 ```python
-def event(self, event):
-    if event.type() == QEvent.TouchBegin:
-        # MUST accept to get future events
-        self.touch_start_pos = event.touchPoints()[0].startPos()
-        self.touch_timer.start()
-        event.accept()  # Critical!
-        return True
+# lifecycle.py
+async def _init_camera(self):
+    if not self.config.get('camera', {}).get('enabled', False):
+        logger.info("Camera disabled in config - skipping")
+        return
 
-    elif event.type() == QEvent.TouchUpdate:
-        # Now we can check if gesture is valid
-        if self._is_long_press_gesture(event):
-            # Continue
-            event.accept()
-            return True
-        else:
-            # Cancel our handling, but event sequence continues
-            self.touch_timer.stop()
-            event.ignore()
-            return False
-
-    elif event.type() in (QEvent.TouchEnd, QEvent.TouchCancel):
-        # Always handle cleanup
-        self.touch_timer.stop()
-        event.accept()
-        return True
-
-    return super().event(event)
+    # Import ONLY after the config check passes
+    from ..services.vision.camera_service import CameraService
+    self.camera_service = CameraService(self.config)
 ```
 
-**Phase impact:** Phase 14-01 must implement full TouchBegin/Update/End cycle, not just TouchBegin.
+**Warning signs:**
+- `ModuleNotFoundError: No module named 'cv2'` in traceback that includes lifecycle startup
+- Application that worked without camera suddenly fails after adding camera module files
+- Type annotations referencing `cv2` or `torch` appear at module level
 
-**Sources:**
-- [QTouchEvent Class | Qt 4.8](https://doc.qt.io/archives/qt-4.8/qtouchevent.html)
-- [Touch event accept ignore event propagation](https://stuff.mit.edu/afs/athena/software/texmaker_v5.0.2/qt57/doc/qtgui/qtouchevent.html)
-- [The 'Accepted' Flag: Understanding QEvent::accept() and ignore() in Qt](https://runebook.dev/en/docs/qt/qevent/accept)
+**Phase to address:** Camera module foundation phase (the very first camera phase). The import guard pattern must be established before any other camera code is written.
 
 ---
 
-## Moderate Pitfalls
-
-Mistakes that cause delays or technical debt.
-
-### Pitfall 5: Event Loop Recursion with Touch Events
+### Pitfall 6: BGR vs RGB Color Space Corruption in the Detection-Display Pipeline
 
 **What goes wrong:**
-You call `QDialog.exec()` or `QMenu.exec()` from within a touch event handler (e.g., show numpad on long-press). Application freezes, crashes, or exhibits undefined behavior.
+OpenCV reads frames in BGR. The detection model (RT-DETR) expects RGB (standard PyTorch/torchvision convention). The display path (QImage) also expects RGB. A missing `cvtColor` conversion at one stage causes: (a) wrong colors in the live display — the image looks orange/blue-tinted, or (b) reduced detection accuracy because the model sees swapped channels that don't match training data color statistics, causing lower confidence scores on real detections.
+
+The worst case: a conversion is applied twice (once before detection, once before display), causing a double-swap that looks correct in the display but feeds corrupted data to the model.
 
 **Why it happens:**
-Touch events can have multiple active recipients simultaneously (multi-touch). Recursing into the event loop (via `exec()`) while touch events are active causes undefined behavior - events may be lost, delivered to wrong widgets, or cause infinite recursion.
+The BGR/RGB distinction is a constant source of confusion when multiple consumers (model inference, recording, display) each touch the same frame. Each consumer has a different expectation, and the format is invisible at runtime — a `np.ndarray` carries no channel order metadata.
 
-**Consequences:**
-- Application hangs or crashes
-- Touch events delivered to wrong widgets after dialog closes
-- Unpredictable behavior (works sometimes, fails others)
+**How to avoid:**
+Define one canonical frame format for the internal pipeline (choose RGB for model compatibility) and convert once at the camera capture boundary. Document this explicitly in the camera service.
 
-**Prevention:**
-1. **Use non-blocking dialogs**: `dialog.show()` instead of `dialog.exec()`
-2. Use `QTimer.singleShot(0, ...)` to defer dialog opening until after event handling completes
-3. If you must use `exec()`, ensure touch event is fully completed (`TouchEnd` processed)
-
-**Detection:**
-- Crashes when showing dialogs from touch handlers
-- `exec()` called from `TouchBegin` or `TouchUpdate` handler
-- Inconsistent dialog behavior between mouse and touch
-
-**Code pattern:**
 ```python
-# BAD
-def event(self, event):
-    if event.type() == QEvent.TouchBegin:
-        # This can cause recursion
-        dialog = NumpadDialog(self)
-        result = dialog.exec()  # Blocks event loop - DANGER
-        return True
+class CameraCapture:
+    def get_frame_rgb(self) -> np.ndarray:
+        """Returns frame in RGB format. Convert once here, never again downstream."""
+        with self._lock:
+            if self._latest_frame_bgr is None:
+                return None
+            return cv2.cvtColor(self._latest_frame_bgr, cv2.COLOR_BGR2RGB)
 
-# GOOD
-def event(self, event):
-    if event.type() == QEvent.TouchBegin:
-        # Defer dialog opening
-        QTimer.singleShot(0, self._show_numpad_dialog)
-        event.accept()
-        return True
-
-def _show_numpad_dialog(self):
-    dialog = NumpadDialog(self)
-    dialog.exec()  # Safe - no active touch events
+    def save_jpeg_bgr(self, path: str):
+        """cv2.imwrite expects BGR — use raw frame, not converted."""
+        with self._lock:
+            if self._latest_frame_bgr is not None:
+                cv2.imwrite(path, self._latest_frame_bgr)
 ```
 
-**Phase impact:** Phase 14-01 - Numpad dialogs on long-press must be deferred.
+**Warning signs:**
+- Live display shows orange skin tones or blue sky that should appear red/normal
+- Detection confidence scores are systematically lower than expected from the model's training metrics
+- A "color looks correct" check passes in isolation but fails end-to-end
 
-**Sources:**
-- [QTouchEvent Class | Qt GUI | Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html)
-- [Mastering Touch Events in Qt: From Rookie Mistakes to Pro Techniques](https://runebook.dev/en/docs/qt/qtouchevent/QTouchEvent)
-
----
-
-### Pitfall 6: Mouse Grab and Pop-up Interactions
-
-**What goes wrong:**
-User initiates touch interaction. While touch is active, a pop-up appears or mouse is grabbed by another widget. Touch events continue to original widget, mouse events go to pop-up - undefined behavior.
-
-**Why it happens:**
-`QTouchEvent` is **not affected** by mouse grabs or active pop-ups. Touch events continue to their original recipient even when modal dialogs or pop-ups should be capturing input.
-
-**Consequences:**
-- Widgets receive touch input when they shouldn't (e.g., behind modal dialog)
-- State corruption - widget thinks it's being interacted with when dialog is open
-- Race conditions between touch and modal UI
-
-**Prevention:**
-1. **Track modal state** - ignore touch events when modals are active
-2. Call `event.ignore()` for touch events when dialogs/menus are open
-3. Clear touch state when showing modal dialogs
-
-**Detection:**
-- Touch events fire on background widgets when dialog is open
-- Unexpected state changes when modals are active
-- Check `QApplication.activeModalWidget()` during touch events
-
-**Code pattern:**
-```python
-def event(self, event):
-    if event.type() in (QEvent.TouchBegin, QEvent.TouchUpdate):
-        # Check if modal dialog is active
-        if QApplication.activeModalWidget() is not None:
-            event.ignore()
-            return False
-        # Normal handling
-        return self._handle_touch(event)
-    return super().event(event)
-```
-
-**Phase impact:** Phase 14-01 must handle modal numpad dialog interactions.
-
-**Sources:**
-- [QTouchEvent Class | Qt GUI | Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html)
+**Phase to address:** Camera module phase (frame capture and format contract). Establish the canonical format decision in the camera service before the display or detection pipelines touch any frames.
 
 ---
 
-### Pitfall 7: Intermittent Touch Event Synthesis Failure
+## Technical Debt Patterns
 
-**What goes wrong:**
-Application works fine with touch for minutes/hours/days, then suddenly touch stops working. Mouse events are no longer synthesized from touch. Only app restart fixes it. Other applications continue working fine.
+Shortcuts that seem reasonable but create long-term problems.
 
-**Why it happens:**
-Qt's mouse event synthesis system has documented intermittent failures where it stops synthesizing mouse events after arbitrary running time. Root cause is unclear - appears to be Qt internal state corruption.
-
-**Consequences:**
-- Production HMI becomes unusable mid-shift
-- No error messages or warnings
-- Difficult to reproduce (timing-dependent)
-- User loses trust in system reliability
-
-**Prevention:**
-1. **Don't rely on mouse synthesis** - implement explicit touch handlers
-2. Implement watchdog: detect when touch stops working, log error, prompt restart
-3. Set `Qt.AA_SynthesizeMouseForUnhandledTouchEvents = True` explicitly
-4. Consider implementing input event monitor to detect synthesis failures
-
-**Detection:**
-- Touch works, then stops after random time
-- Mouse still works (if available)
-- Check Qt version - may be version-specific bug
-- Monitor for `TouchEvent` → `MouseEvent` ratio changes
-
-**Mitigation (runtime):**
-```python
-class TouchWatchdog:
-    def __init__(self):
-        self.last_touch_event = None
-        self.last_mouse_event = None
-        self.synthesis_failure_detected = False
-
-    def check_synthesis(self, touch_event, mouse_event):
-        # If touch events happen but no mouse events synthesized
-        if self.last_touch_event and not mouse_event:
-            if (datetime.now() - self.last_touch_event).seconds > 5:
-                logger.error("Touch synthesis failure detected!")
-                self.synthesis_failure_detected = True
-                # Alert user to restart
-```
-
-**Phase impact:** Phase 14-02 (Verification & Documentation) should include synthesis failure detection.
-
-**Sources:**
-- [QT Widgets not responding to touch event sometimes](https://forum.qt.io/topic/96780/qt-widgets-not-responding-to-touch-event-sometimes)
-- [Cannot receive mouse event when using touch panel](https://forum.qt.io/topic/134410/cannot-receive-mouse-event-when-using-touch-panel)
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Call detection every frame (30 Hz) instead of on a timer | Simpler code | GPU thrashes at 30 Hz; existing 10 Hz ML model and detection compete for CUDA; detection latency spikes under load | Never — use a configurable detection interval (e.g., every 3rd frame or 1 Hz) |
+| Storing raw frames (PNG/BMP) instead of JPEG | No lossy compression | Disk fills in hours on an industrial panel PC with limited storage | Never for continuous recording; JPEG with quality 85 is the right default |
+| Running LDC edge detection on CPU inside detection thread | Avoids GPU memory pressure | LDC on large frames (1280x720) takes 80–200ms on CPU, stalling the detection thread | Acceptable only if frame resolution is 640x480 or smaller |
+| Importing torch at module top-level for type hints | Convenient | Breaks camera.enabled=false deployments without GPU drivers | Never — use `TYPE_CHECKING` guard |
+| Writing detection results to SQLite synchronously from detection thread | Simplest code | SQLite calls from a non-queue thread bypass the existing write-queue pattern, risking lock contention with the 10 Hz pipeline | Never — use the existing SQLite queue pattern |
+| Loading all three models sequentially in lifecycle startup | Deterministic order | Blocks asyncio event loop for 6–18 seconds on cold start | Never — load in detection thread, not lifecycle |
 
 ---
 
-### Pitfall 8: Long Press Timer Inconsistency
+## Integration Gotchas
 
-**What goes wrong:**
-You implement custom long-press timer (e.g., 800ms). Behavior feels wrong - sometimes too fast, sometimes too slow. Users complain "it doesn't match other apps."
+Common mistakes when connecting camera/AI components to the existing system.
 
-**Why it happens:**
-Qt provides `QStyleHints.mousePressAndHoldInterval()` which returns the **platform-appropriate** long-press threshold. Using hardcoded values ignores platform conventions and accessibility settings.
-
-**Consequences:**
-- Inconsistent with platform UX expectations
-- Breaks accessibility (users who need longer press time)
-- Different behavior on Windows vs Linux vs embedded
-
-**Prevention:**
-```python
-from PySide6.QtGui import QGuiApplication
-
-# Get platform-appropriate threshold
-style_hints = QGuiApplication.styleHints()
-long_press_threshold_ms = style_hints.mousePressAndHoldInterval()
-
-# Use this value for touch long-press timer
-self.long_press_timer.setInterval(long_press_threshold_ms)
-```
-
-**Detection:**
-- Hardcoded timer values (500, 800, 1000) in code
-- User complaints about timing
-- Different feel from platform apps
-
-**Phase impact:** Phase 14-01 must use `QStyleHints.mousePressAndHoldInterval()`.
-
-**Sources:**
-- [MouseArea QML Type | Qt Quick | Qt 6.10.2](https://doc.qt.io/qt-6/qml-qtquick-mousearea.html)
-- [TapHandler QML Type | Qt Quick | Qt 6.10.1](https://doc.qt.io/qt-6/qml-qtquick-taphandler.html)
-- [QStyleHints (class) - Qt 5.11 Documentation](https://www.typeerror.org/docs/qt~5.11/qstylehints)
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| SQLite (detection results) | Writing from detection thread directly using `sqlite3.connect()` | Use the existing `SQLiteService` queue pattern: call `db_service.queue_write(sql, params)` from the detection thread |
+| IoT / ThingsBoard | Calling `iot_service.send_telemetry()` synchronously from detection thread | Queue detection results to the main data pipeline so the existing IoT batching handles them at the next 10 Hz cycle |
+| 10 Hz processing loop | Passing detection results via a shared dict without a lock | Use `threading.Lock` or `queue.Queue` for the detection-result-to-pipeline handoff; the same lock pattern used by `AnomalyManager` |
+| Lifecycle shutdown | Not stopping camera/detection threads before database flush | Add camera stop to lifecycle `stop()` before step 5 (SQLite flush), mirroring how GUI thread is joined first |
+| Config | Reading `camera.enabled` at each call site | Read once during `_init_camera()` and store as `self._camera_enabled`; avoids scattered config reads |
+| Health monitor | Not including camera/detection thread health in the 30s health check | Add frame rate and detection queue depth to `get_status()` so health monitor can alarm on camera stalls |
 
 ---
 
-## Minor Pitfalls
+## Performance Traps
 
-Mistakes that cause annoyance but are fixable.
+Patterns that work during testing but fail under sustained industrial operation.
 
-### Pitfall 9: Touch Point Movement Threshold Ignored
-
-**What goes wrong:**
-You implement long-press detection. User touches screen, finger drifts slightly (normal human behavior), long-press cancels unexpectedly.
-
-**Why it happens:**
-Humans can't hold finger perfectly still. Touch long-press requires movement threshold - typically 5-10 pixels of drift is acceptable.
-
-**Consequences:**
-- Long-press feels unreliable
-- Users think they're doing it wrong
-- Frustration with touch UI
-
-**Prevention:**
-```python
-TOUCH_MOVE_THRESHOLD = 10  # pixels
-
-def event(self, event):
-    if event.type() == QEvent.TouchBegin:
-        self.touch_start_pos = event.touchPoints()[0].startPos()
-        self.long_press_timer.start()
-
-    elif event.type() == QEvent.TouchUpdate:
-        current_pos = event.touchPoints()[0].pos()
-        distance = (current_pos - self.touch_start_pos).manhattanLength()
-
-        if distance > TOUCH_MOVE_THRESHOLD:
-            # Moved too much - cancel long press
-            self.long_press_timer.stop()
-```
-
-**Detection:**
-- Users report long-press "doesn't work"
-- Watch finger movement during testing - even "still" touch moves 2-5 pixels
-- No movement threshold in code
-
-**Phase impact:** Phase 14-01 must implement movement threshold.
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Detection thread reads frames faster than they are produced | CPU spins at 100% in detection thread polling an empty queue | Use `queue.get(timeout=0.1)` instead of `get_nowait()` with a spin loop | Immediately — becomes visible as high CPU in `top` |
+| QTimer interval set to 0ms for "fastest possible" display | Qt paint events flood the GUI thread; existing GUI updates (graphs, sensor labels) starve | Use 100–200ms QTimer interval for camera display (5–10 Hz is sufficient for live monitoring) | When camera page is open and operator interacts with other controls |
+| Saving JPEG per-frame during active detection at 30 Hz | Disk I/O 1–3 MB/s sustained; SSD write amplification; detection thread stalls waiting for `cv2.imwrite` | Write JPEG in a separate writer thread with a bounded queue; only record when `testere_durumu == 3` (cutting state) | After 30–60 minutes of continuous operation |
+| Loading 3 models without `torch.no_grad()` context | Gradient buffers allocated for every inference call; GPU memory doubles | Wrap all inference in `with torch.no_grad():` | Models load fine; OOM error appears during the first cutting session |
+| Not calling `cap.release()` on camera service stop | USB camera device remains held; restart required to re-open camera | Always call `cap.release()` in the camera thread's cleanup; add to lifecycle stop sequence | When operator exits and restarts application |
 
 ---
 
-### Pitfall 10: Multiple Simultaneous Touch Points
+## "Looks Done But Isn't" Checklist
 
-**What goes wrong:**
-User accidentally rests palm on screen while pressing button. Extra touch point is grouped with original, causing unexpected behavior.
+Things that appear complete but are missing critical pieces.
 
-**Why it happens:**
-Qt groups new touch points with active ones if they're on the same widget or ancestor/descendant. All points sent in single `QTouchEvent`.
-
-**Consequences:**
-- Unexpected multi-touch handling when only single touch intended
-- Palm rejection failures
-- Position calculated from wrong touch point
-
-**Prevention:**
-```python
-def event(self, event):
-    if event.type() == QEvent.TouchBegin:
-        touch_points = event.touchPoints()
-
-        # Handle only first/primary touch point
-        if len(touch_points) > 1:
-            # Multi-touch - reject
-            event.ignore()
-            return False
-
-        # Single touch - proceed
-        primary_point = touch_points[0]
-```
-
-**Detection:**
-- Unexpected behavior when palm touches screen
-- `event.touchPoints()` has length > 1
-- Position jumps unexpectedly
-
-**Phase impact:** Phase 14-01 should implement single-touch-only validation.
-
-**Sources:**
-- [Handling touch events for parent and child widgets](https://www.qtcentre.org/threads/71335-Handling-touch-events-for-parent-and-child-widgets)
-- [QTouchEvent Class | Qt GUI | Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html)
+- [ ] **Camera display working:** Often missing RGB conversion — verify colors look correct on real hardware, not just a test image
+- [ ] **Detection results saving:** Often missing the SQLite queue pattern — verify with `db_service.get_stats()['queue_size']` that writes are going through the queue, not direct sqlite3 calls
+- [ ] **config camera.enabled=false:** Often still imports cv2 — verify by running on a machine without OpenCV installed; startup should succeed
+- [ ] **Lifecycle shutdown:** Often camera thread is not joined before shutdown completes — verify no "Timers cannot be stopped from another thread" errors on exit
+- [ ] **GPU memory:** Often `torch.no_grad()` missing — verify with `torch.cuda.memory_allocated()` before and after inference; should not grow
+- [ ] **Detection thread safety:** Often models accessed from more than one call site — verify there is exactly one path to each model's `.predict()` method
+- [ ] **IoT integration:** Often detection results bypass the IoT service entirely — verify ThingsBoard receives detection telemetry by checking device attributes after a test cut
+- [ ] **JPEG recording:** Often records every frame even when saw is idle — verify recording only activates when `testere_durumu == 3`
 
 ---
 
-## Phase-Specific Warnings
+## Recovery Strategies
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| 14-01 Touch Event Implementation | Pitfall #1 (synthesis blocking) | Test all buttons with touch after implementation |
-| 14-01 Touch Event Implementation | Pitfall #4 (TouchBegin propagation) | Implement full Begin/Update/End cycle |
-| 14-01 Touch Event Implementation | Pitfall #8 (timer inconsistency) | Use `QStyleHints.mousePressAndHoldInterval()` |
-| 14-01 Touch Event Implementation | Pitfall #9 (movement threshold) | Implement 10px movement tolerance |
-| 14-02 Verification & Documentation | Pitfall #3 (right-click conversion) | Test on Windows touchscreen hardware |
-| 14-02 Verification & Documentation | Pitfall #7 (synthesis failure) | Long-running test (8+ hours) |
-| 14-02 Verification & Documentation | Pitfall #2 (viewport attribute) | Audit all scroll areas |
+When pitfalls occur despite prevention, how to recover.
 
----
-
-## Industrial HMI-Specific Considerations
-
-### Single Interaction Point Assumption
-
-**Context:** Industrial HMI is typically single-user, single-touch at a time.
-
-**Implications:**
-- Multi-touch complexity reduced
-- But still must handle accidental palm touches
-- Can assume only one active interaction
-
-**Recommendation:** Validate single-touch assumption in code - reject multi-touch events explicitly.
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Asyncio event loop blocked by `cap.read()` | MEDIUM | Refactor: move all capture to a dedicated thread; no asyncio changes needed in detection code |
+| Model shared across threads (race condition) | MEDIUM | Add `threading.Lock` around all `.predict()` calls as temporary fix; proper fix is per-thread model instances |
+| `torch.load()` blocking startup | LOW | Move model loading from `_init_camera()` to `DetectionThread.run()` — typically a 10-line change |
+| Camera imported unconditionally (import error) | LOW | Add lifecycle config guard; add `from __future__ import annotations` to camera module files |
+| BGR/RGB double conversion (bad predictions) | LOW | Add a `_frame_format = "RGB"` constant to camera service; audit all call sites in 30 minutes |
+| QLabel.setPixmap() from wrong thread (crash) | HIGH | Must redesign frame delivery to use Qt signal/slot; no quick fix; plan 1–2 hours refactor |
+| JPEG write stalling detection thread | MEDIUM | Extract JPEG write to a writer thread with bounded queue; 50-line change but requires adding a new thread lifecycle |
+| Detection results not reaching IoT | LOW | Add detection result fields to the telemetry dict in data pipeline; no architectural change needed |
 
 ---
 
-### Glove Usage
+## Pitfall-to-Phase Mapping
 
-**Context:** Industrial environments may require protective gloves.
+How roadmap phases should address these pitfalls.
 
-**Implications:**
-- Capacitive touch may not work well with gloves
-- Users may press harder, longer
-- Touch point may be less precise
-
-**Recommendation:**
-- Test with various glove types
-- Consider larger hit targets (already have 120x62px buttons)
-- May need resistive touchscreen hardware instead of capacitive
-
----
-
-### 24/7 Operation
-
-**Context:** Industrial HMI may run continuously without restart.
-
-**Implications:**
-- Pitfall #7 (synthesis failure) is **critical**, not moderate
-- Must detect and recover from synthesis failure
-- Consider implementing automatic recovery (restart touch subsystem)
-
-**Recommendation:** Implement touch event monitoring and automatic recovery.
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| cap.read() blocking asyncio (Pitfall 1) | Camera capture module phase | Measure Modbus read rate (must stay at 10 Hz) with camera running |
+| Shared model instances (Pitfall 2) | Detection pipeline phase | Code review: grep for model instantiation outside thread `run()` method |
+| torch.load() blocking startup (Pitfall 3) | Lifecycle integration phase | Time startup with and without camera enabled; delta must be < 500ms |
+| setPixmap() from wrong thread (Pitfall 4) | Camera GUI page phase | Run application with Python's `-W error` mode; any cross-thread Qt warning becomes an error |
+| Unconditional cv2 import (Pitfall 5) | Camera module foundation (first camera phase) | Test startup with camera.enabled=false on a machine without OpenCV installed |
+| BGR/RGB corruption (Pitfall 6) | Camera module phase | Manual verification: display a known test image (red object); verify it appears red |
+| JPEG recording stalling detection | JPEG recording phase | Profile detection thread frame processing time; must stay < 50ms per frame |
+| SQLite detection writes bypassing queue | Detection results storage phase | Check `db_service.get_stats()` — queue_size should increase, not zero |
+| Lifecycle shutdown ordering | Lifecycle integration phase | Automated: run app, start camera, kill gracefully; no segfault, no "timer" errors |
+| torch.no_grad() missing (GPU OOM) | Detection pipeline phase | `torch.cuda.memory_allocated()` must be stable after 100 inference calls |
 
 ---
 
-## Testing Checklist
+## Sources
 
-Before deploying touch support:
-
-- [ ] All buttons work with touch (not just mouse)
-- [ ] Long-press works on target frames
-- [ ] Long-press doesn't trigger on accidental touch
-- [ ] Movement threshold prevents false cancellation
-- [ ] Multi-touch (palm) doesn't cause issues
-- [ ] Numpad dialog opens correctly on long-press
-- [ ] No event loop recursion crashes
-- [ ] Touch → mouse synthesis working
-- [ ] Platform-appropriate timing used
-- [ ] Tested on actual touchscreen hardware (Windows)
-- [ ] 8+ hour stability test (synthesis failure detection)
-- [ ] Works with protective gloves (if applicable)
+- [opencv/opencv Issue #24393: How to avoid blocking with cv2.VideoCapture.read()](https://github.com/opencv/opencv/issues/24393) — confirms blocking nature of VideoCapture.read()
+- [opencv/opencv Issue #24229: Does cv::VideoCapture have any thread lock?](https://github.com/opencv/opencv/issues/24229) — documents thread safety constraints
+- [Ultralytics YOLO Thread-Safe Inference Guide](https://docs.ultralytics.com/guides/yolo-thread-safe-inference/) — official guidance on per-thread model instantiation
+- [pytorch/pytorch Issue #5879: torch.load blocks asyncio loop](https://github.com/pytorch/pytorch/issues/5879) — confirmed asyncio blocking during torch.load
+- [PyTorch CUDA semantics documentation](https://docs.pytorch.org/docs/stable/notes/cuda.html) — CUDA context initialization overhead
+- [PySide6 QImage documentation](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QImage.html) — thread safety constraints for QPixmap/QImage
+- [How to display OpenCV video in PyQt apps (gist)](https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1) — QThread + Signal pattern for OpenCV/Qt
+- [Multithreading PySide6 applications with QThreadPool — pythonguis.com](https://www.pythonguis.com/tutorials/multithreading-pyside6-applications-qthreadpool/) — Qt threading patterns
+- [Python optional imports discussion — discuss.python.org](https://discuss.python.org/t/optional-imports-for-optional-dependencies/104760) — config-driven import guard patterns
+- [PyTorch Frequently Asked Questions — memory management](https://docs.pytorch.org/docs/stable/notes/faq.html) — `torch.no_grad()` and GPU memory
+- [Codebase ARCHITECTURE.md](../.planning/codebase/ARCHITECTURE.md) — existing concurrency model (asyncio + threading hybrid)
+- [src/core/lifecycle.py](../src/core/lifecycle.py) — existing startup/shutdown sequence; camera services must follow same pattern
 
 ---
-
-## Sources Summary
-
-**HIGH Confidence Sources:**
-- Official Qt Documentation (Qt 6.10.1, Qt 5.x)
-- Qt Forums (developer reports with code examples)
-- Qt Development Mailing List (architectural discussions)
-
-**Key References:**
-- [QTouchEvent Class | Qt GUI | Qt 6.10.1](https://doc.qt.io/qt-6/qtouchevent.html) - Official documentation
-- [How does Qt synthesize Mouse Events from Touch Events?](https://forum.qt.io/topic/136576/how-does-qt-synthesize-mouse-events-from-touch-events) - Synthesis explanation
-- [Touch event synthesis conflicts](https://groups.google.com/g/qt-project-list-development/c/J8G9KkFVkCM/m/iim6Ts4itiwJ) - Architectural issues
-- [PySide6.QtGui.QTouchEvent](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QTouchEvent.html) - Python bindings
-- [PySide6 Signals, Slots and Events](https://www.pythonguis.com/tutorials/pyside6-signals-slots-events/) - Tutorial
+*Pitfalls research for: camera vision & AI detection integration into existing industrial async control system*
+*Researched: 2026-03-16*
