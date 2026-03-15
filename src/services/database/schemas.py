@@ -237,7 +237,12 @@ CREATE TABLE IF NOT EXISTS anomaly_events (
     sensor_value REAL,
     detection_method TEXT,
     kesim_id INTEGER,
-    kafa_yuksekligi REAL  -- Head height at anomaly detection (mm)
+    kafa_yuksekligi REAL,  -- Head height at anomaly detection (mm)
+
+    -- Traceability fields
+    makine_id INTEGER,      -- Machine ID
+    serit_id INTEGER,       -- Blade ID
+    malzeme_cinsi TEXT      -- Material type
 );
 
 CREATE INDEX IF NOT EXISTS idx_anomaly_timestamp ON anomaly_events(timestamp);
