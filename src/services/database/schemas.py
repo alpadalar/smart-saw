@@ -214,10 +214,17 @@ CREATE TABLE IF NOT EXISTS ml_predictions (
 
     -- ML outputs
     katsayi REAL,
-    ml_output REAL
+    ml_output REAL,
+
+    -- Traceability fields
+    kesim_id INTEGER,       -- Cut session ID (NULL if not cutting)
+    makine_id INTEGER,      -- Machine ID
+    serit_id INTEGER,       -- Blade ID
+    malzeme_cinsi TEXT      -- Material type
 );
 
 CREATE INDEX IF NOT EXISTS idx_ml_timestamp ON ml_predictions(timestamp);
+CREATE INDEX IF NOT EXISTS idx_ml_kesim_id ON ml_predictions(kesim_id);
 """
 
 # anomaly.db - Anomaly detection tracking
