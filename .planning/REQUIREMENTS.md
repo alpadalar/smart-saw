@@ -23,9 +23,9 @@ Requirements for v1.6 Touch UX & Data Traceability milestone. Each maps to roadm
 
 ### Anomaly Database
 
-- [ ] **ANDB-01**: Anomaly events table includes makine_id field for machine identification
-- [ ] **ANDB-02**: Anomaly events table includes serit_id field for blade identification
-- [ ] **ANDB-03**: Anomaly events table includes malzeme_cinsi field for material type
+- [x] **ANDB-01**: Anomaly events table includes makine_id field for machine identification
+- [x] **ANDB-02**: Anomaly events table includes serit_id field for blade identification
+- [x] **ANDB-03**: Anomaly events table includes malzeme_cinsi field for material type
 
 ## Future Requirements
 
@@ -66,9 +66,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MLDB-03 | Phase 17 | Complete |
 | MLDB-04 | Phase 17 | Complete |
 | MLDB-05 | Phase 16 | Pending |
-| ANDB-01 | Phase 18 | Pending |
-| ANDB-02 | Phase 18 | Pending |
-| ANDB-03 | Phase 18 | Pending |
+| ANDB-01 | Phase 18 | Complete |
+| ANDB-02 | Phase 18 | Complete |
+| ANDB-03 | Phase 18 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 11 total
