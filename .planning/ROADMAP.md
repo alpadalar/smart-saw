@@ -103,10 +103,10 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
   2. `camera.enabled: true` ile baslatildiginda camera config alanlari (device_id, fps, resolution, model paths) okunur
   3. Lifecycle'da camera.db dosyasi yalnizca camera.enabled=true iken olusturulur; false iken disk'e dokunulmaz
   4. requirements.txt'teki numpy<2.0 kapi kaldirilir; opencv-python-headless, ultralytics, torch (CPU), kornia bagimliliklar eklenir
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 19-01: numpy unblock + requirements update + camera config schema (config.yaml + schemas.py camera.db schema)
+- [ ] 19-01: numpy uncap + np.ptp fix + camera config schema + SCHEMA_CAMERA_DB + lifecycle _init_camera() + camera module scaffold
 
 ### Phase 20: Camera Capture
 **Goal**: Kameradan frame alimi ve JPEG kaydi — asyncio event loop'u hic bloklamadan arka plan thread'lerinde calisir
