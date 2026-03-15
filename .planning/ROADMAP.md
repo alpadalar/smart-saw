@@ -162,16 +162,16 @@ Plans:
 3. User can query ML predictions table and see actual numeric values in katsayi field (not None)
 4. Root cause of None values documented in investigation report
 
-#### Phase 17: ML DB Schema Update — PENDING
+#### Phase 17: ML DB Schema Update — COMPLETE
 
 **Goal**: Add traceability fields to ML predictions table
 **Depends on**: Phase 16
 **Requirements**: MLDB-01, MLDB-02, MLDB-03, MLDB-04
 **Research**: Unlikely (established v1.0 ALTER TABLE pattern)
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 17-01-PLAN.md — Add traceability columns (kesim_id, makine_id, serit_id, malzeme_cinsi) to schema and populate in ML prediction logging
+- [x] 17-01-PLAN.md — Add traceability columns (kesim_id, makine_id, serit_id, malzeme_cinsi) to schema and populate in ML prediction logging — completed 2026-03-16
 
 **Success Criteria:**
 1. User can query ML predictions table and see kesim_id field linking each prediction to cut session
@@ -219,5 +219,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | 14. Chart Axis Labels & Sapma Gauge Fix | v1.5 | 1/1 | Complete | 2026-01-28 |
 | 15. Touch Long Press Fix | v1.6 | 1/1 | Complete | 2026-01-30 |
 | 16. ML DB None Values Investigation | v1.6 | 1/1 | Complete | 2026-02-04 |
-| 17. ML DB Schema Update | v1.6 | 0/1 | Pending | — |
+| 17. ML DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 18. Anomaly DB Schema Update | v1.6 | 0/? | Pending | — |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** ML ve anomali kayitlarinda tork ve kafa yuksekligi verilerinin saklanmasi — gecmise donuk analiz icin kritik verinin eksik kalmamasi.
-**Current focus:** v1.6 Touch UX & Data Traceability — Phase 16 complete
+**Current focus:** v1.6 Touch UX & Data Traceability — Phase 17 complete
 
 ## Current Position
 
-Phase: 16 - ML DB None Values Investigation
+Phase: 17 - ML DB Schema Update
 Plan: 1/1 complete
-Status: Phase complete, ready for Phase 17
-Last activity: 2026-02-04 — Completed 16-01-PLAN.md
+Status: Phase complete, ready for Phase 18
+Last activity: 2026-03-16 — Completed 17-01-PLAN.md
 
-Progress: [####--------] 33% (Phase 16 of 18 complete)
+Progress: [#####-------] 38% (Phase 17 of 18 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
+- Total plans completed: 18
 - Average duration: 2 min
-- Total execution time: ~33 min
+- Total execution time: ~35 min
 
 **By Phase:**
 
@@ -43,9 +43,10 @@ Progress: [####--------] 33% (Phase 16 of 18 complete)
 | 14-chart-axis-sapma-gauge | 1 | 2 min | 2 min |
 | 15-touch-long-press-fix | 1 | 3 min | 3 min |
 | 16-ml-db-none-values-investigation | 1 | 3 min | 3 min |
+| 17-ml-db-schema-update | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 12-01 (1 min), 13-01 (1 min), 14-01 (2 min), 15-01 (3 min), 16-01 (3 min)
+- Last 5 plans: 13-01 (1 min), 14-01 (2 min), 15-01 (3 min), 16-01 (3 min), 17-01 (2 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -79,6 +80,9 @@ All decisions from v1.0, v1.1, v1.2, v1.3, v1.4, and v1.5 milestones captured.
 - App focus loss: Stop jog on focusOutEvent - safety mechanism for backgrounded app
 - ML logging: Log calculated speeds (speed_changes), not threshold-dependent targets - captures all ML decisions
 - ML logging: Deferred logging pattern - log after calculation, not before
+- ML traceability: NULL defaults for new schema columns — no NOT NULL, no DEFAULT — preserves existing records
+- ML traceability: Falsy-to-None conversion at call site — store NULL when source is 0 or empty string
+- ML traceability: Index only on kesim_id — no indexes on makine_id/serit_id/malzeme_cinsi (low cardinality)
 
 ### Deferred Issues
 
@@ -105,9 +109,10 @@ None.
 - Milestone v1.6 created: Touch UX & data traceability, 4 phases (Phase 15-18)
 - Phase 15 COMPLETE: 2026-01-30
 - Phase 16 COMPLETE: 2026-02-04
+- Phase 17 COMPLETE: 2026-03-16
 
 ## Session Continuity
 
-Last session: 2026-02-04
-Stopped at: Phase 16 complete, ready for Phase 17 planning
+Last session: 2026-03-16
+Stopped at: Phase 17 complete (17-01-PLAN.md)
 Resume file: None

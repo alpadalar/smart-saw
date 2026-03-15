@@ -15,10 +15,10 @@ Requirements for v1.6 Touch UX & Data Traceability milestone. Each maps to roadm
 
 ### ML Database
 
-- [ ] **MLDB-01**: ML predictions table includes kesim_id field linking to cut sessions
-- [ ] **MLDB-02**: ML predictions table includes makine_id field for machine identification
-- [ ] **MLDB-03**: ML predictions table includes serit_id field for blade identification
-- [ ] **MLDB-04**: ML predictions table includes malzeme_cinsi field for material type
+- [x] **MLDB-01**: ML predictions table includes kesim_id field linking to cut sessions
+- [x] **MLDB-02**: ML predictions table includes makine_id field for machine identification
+- [x] **MLDB-03**: ML predictions table includes serit_id field for blade identification
+- [x] **MLDB-04**: ML predictions table includes malzeme_cinsi field for material type
 - [ ] **MLDB-05**: yeni_kesme_hizi, yeni_inme_hizi, katsayi fields contain actual values (not None)
 
 ### Anomaly Database
@@ -61,10 +61,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOUCH-01 | Phase 15 | Pending |
 | TOUCH-02 | Phase 15 | Pending |
 | TOUCH-03 | Phase 15 | Pending |
-| MLDB-01 | Phase 17 | Pending |
-| MLDB-02 | Phase 17 | Pending |
-| MLDB-03 | Phase 17 | Pending |
-| MLDB-04 | Phase 17 | Pending |
+| MLDB-01 | Phase 17 | Complete |
+| MLDB-02 | Phase 17 | Complete |
+| MLDB-03 | Phase 17 | Complete |
+| MLDB-04 | Phase 17 | Complete |
 | MLDB-05 | Phase 16 | Pending |
 | ANDB-01 | Phase 18 | Pending |
 | ANDB-02 | Phase 18 | Pending |
