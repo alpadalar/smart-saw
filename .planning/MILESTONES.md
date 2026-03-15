@@ -1,5 +1,36 @@
 # Project Milestones: Smart Saw Database Field Additions
 
+## v1.6 Touch UX & Data Traceability (Shipped: 2026-03-16)
+
+**Delivered:** Dokunmatik ekran long press desteği ve ML/anomali veritabanlarına makine/serit/malzeme izlenebilirlik alanları eklenerek kesim bazlı veri analizi mümkün hale getirildi.
+
+**Phases completed:** 15-18 (4 plans total)
+
+**Key accomplishments:**
+
+- TouchButton widget with Qt touch events for industrial HMI positioning buttons (instant activation, strict bounds)
+- Emergency stop overlay during jog operations with app focus loss safety
+- ML prediction logging fixed — yeni_kesme_hizi, yeni_inme_hizi, katsayi now populated (deferred logging pattern)
+- ML predictions table extended with kesim_id, makine_id, serit_id, malzeme_cinsi traceability columns
+- Anomaly events table extended with makine_id, serit_id, malzeme_cinsi traceability columns
+- Consistent falsy-to-None conversion pattern established for database storage
+
+**Stats:**
+
+- 13 files changed (655 insertions, 146 deletions)
+- ~15,641 lines Python (existing codebase)
+- 4 phases, 4 plans, 8 tasks
+- Timeline: 46 days (2026-01-30 → 2026-03-16)
+
+**Git range:** `feat(15-01)` → `feat(18-01)`
+
+**Known Gaps:**
+- MLDB-05: yeni_kesme_hizi, yeni_inme_hizi, katsayi — fix deployed (Phase 16) but historical records retain NULL values
+
+**What's next:** Production validation of traceability data in ML and anomaly databases
+
+---
+
 ## v1.5 ML Parity & UX Polish (Shipped: 2026-01-28)
 
 **Delivered:** ML tahmin hesaplamalarında eski kod ile tam eşitlik sağlandı ve GUI etiketlerinde birim/terminoloji düzeltmeleri yapıldı.
