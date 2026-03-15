@@ -1,0 +1,106 @@
+# Requirements: Smart Saw v2.0
+
+**Defined:** 2026-03-16
+**Core Value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi
+
+## v2.0 Requirements
+
+Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap phases.
+
+### Camera Infrastructure
+
+- [ ] **CAM-01**: Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi
+- [ ] **CAM-02**: camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
+- [ ] **CAM-03**: OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
+- [ ] **CAM-04**: Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
+- [ ] **CAM-05**: Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
+
+### AI Detection
+
+- [ ] **DET-01**: RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
+- [ ] **DET-02**: RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
+- [ ] **DET-03**: LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
+- [ ] **DET-04**: Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
+- [ ] **DET-05**: Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
+- [ ] **DET-06**: AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
+
+### Data Integration
+
+- [ ] **DATA-01**: Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db)
+- [ ] **DATA-02**: Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek)
+- [ ] **DATA-03**: Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
+
+### GUI
+
+- [ ] **GUI-01**: Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
+- [ ] **GUI-02**: Kirik dis tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
+- [ ] **GUI-03**: Catlak tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
+- [ ] **GUI-04**: Asinma yuzdesinin kamera sayfasinda goruntulenmesi
+- [ ] **GUI-05**: Testere saglik durumunun kamera sayfasinda goruntulenmesi (yuzde + durum metni + renk kodu)
+- [ ] **GUI-06**: Sidebar'a 5. navigasyon butonu olarak kamera butonu eklenmesi (sadece camera.enabled=true iken)
+- [ ] **GUI-07**: Son kaydedilen frame'lerden 4 adet thumbnail goruntulenmesi (sequential images panel)
+- [ ] **GUI-08**: Tespit durumu icin OK/alert ikonlari goruntulenmesi
+- [ ] **GUI-09**: Asinma olcum gorsellestirmesinin (wear visualization overlay) goruntulenmesi
+
+## v2.x Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Recording Management
+
+- **REC-01**: Eski kayitlarin otomatik silinmesi (disk alani yonetimi)
+- **REC-02**: Kayit bazli gecmis paneli (per-recording history UI)
+
+### Detection Tuning
+
+- **TUNE-01**: Confidence threshold'un GUI uzerinden ayarlanabilmesi
+- **TUNE-02**: Detection interval'in GUI uzerinden ayarlanabilmesi
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Real-time AI inference during recording | CPU, RT-DETR'yi frame rate'inde calistiramaz; record-then-detect pattern dogru yaklasim |
+| Surekli video kaydi (MP4/AVI) | Disk alani: ~54GB/30dk; JPEG sekans yeterli |
+| Multi-camera destegi | Tek kamera yeterli; genisleme noktasi dokumante edilir ama implement edilmez |
+| opencv-python (full) kullanimi | Qt5/Qt6 symbol catismasi — opencv-python-headless kullanilmali |
+| Model egitimi / fine-tuning | Mevcut modeller (best.pt, catlak-best.pt) kullanilacak |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CAM-01 | — | Pending |
+| CAM-02 | — | Pending |
+| CAM-03 | — | Pending |
+| CAM-04 | — | Pending |
+| CAM-05 | — | Pending |
+| DET-01 | — | Pending |
+| DET-02 | — | Pending |
+| DET-03 | — | Pending |
+| DET-04 | — | Pending |
+| DET-05 | — | Pending |
+| DET-06 | — | Pending |
+| DATA-01 | — | Pending |
+| DATA-02 | — | Pending |
+| DATA-03 | — | Pending |
+| GUI-01 | — | Pending |
+| GUI-02 | — | Pending |
+| GUI-03 | — | Pending |
+| GUI-04 | — | Pending |
+| GUI-05 | — | Pending |
+| GUI-06 | — | Pending |
+| GUI-07 | — | Pending |
+| GUI-08 | — | Pending |
+| GUI-09 | — | Pending |
+
+**Coverage:**
+- v2.0 requirements: 23 total
+- Mapped to phases: 0
+- Unmapped: 23 ⚠️
+
+---
+*Requirements defined: 2026-03-16*
+*Last updated: 2026-03-16 after initial definition*
