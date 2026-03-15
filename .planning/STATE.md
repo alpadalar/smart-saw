@@ -5,11 +5,11 @@ milestone_name: Camera Vision & AI Detection
 status: in_progress
 stopped_at: null
 last_updated: "2026-03-16"
-last_activity: 2026-03-16 — Milestone v2.0 started
+last_activity: 2026-03-16 — Roadmap v2.0 created (Phases 19-24)
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
-  total_plans: 0
+  total_plans: 9
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** v2.0 Camera Vision & AI Detection
+**Current focus:** v2.0 Camera Vision & AI Detection — Phase 19: Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 19 of 24 (Foundation)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-16 — Milestone v2.0 started
+Status: Ready to plan
+Last activity: 2026-03-16 — Roadmap v2.0 written (Phases 19-24), 23 requirements mapped
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -60,19 +62,28 @@ Last activity: 2026-03-16 — Milestone v2.0 started
 | 17-ml-db-schema-update | 1 | 2 min | 2 min |
 | 18-anomaly-db-schema-update | 1 | 2 min | 2 min |
 
+**Recent Trend:**
+- Last 5 plans: 3 min, 3 min, 2 min, 2 min, 2 min
+- Trend: Stable
+
 ## Accumulated Context
 
 ### Decisions
 
 All decisions from v1.0-v1.6 milestones captured in PROJECT.md Key Decisions table.
 
-### Deferred Issues
-
-None.
+Key v2.0 decisions established in research:
+- opencv-python-headless (not full) — Qt5/Qt6 symbol conflict on Linux
+- CameraResultsStore is sole integration boundary — GUI and IoT only touch the store
+- Camera threads are daemon threads, never touch asyncio event loop
+- Models loaded inside DetectionThread.run(), not in lifecycle startup
+- Lazy imports behind camera.enabled guard in lifecycle.py and main_controller.py
 
 ### Blockers/Concerns
 
-None.
+- Phase 21: LDC model source (modelB4.py) must be matched to eskiimas/smart-saw version exactly — wrong variant produces different wear values
+- Phase 21: RT-DETR inference timing on panel PC CPU unknown — 2 Hz detection interval is estimate, measure during impl
+- Phase 24: Sidebar 5th button geometry (y=649 projected) must be verified against actual .ui or main_controller.py layout
 
 ### Roadmap Evolution
 
@@ -83,9 +94,10 @@ None.
 - Milestone v1.4 COMPLETE: 2026-01-28
 - Milestone v1.5 COMPLETE: 2026-01-28
 - Milestone v1.6 COMPLETE: 2026-03-16
+- Milestone v2.0 STARTED: 2026-03-16
 
 ## Session Continuity
 
 Last session: 2026-03-16
-Stopped at: Milestone v1.6 archived
+Stopped at: Roadmap v2.0 created — ready to plan Phase 19
 Resume file: None

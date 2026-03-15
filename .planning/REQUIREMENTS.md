@@ -72,35 +72,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAM-01 | — | Pending |
-| CAM-02 | — | Pending |
-| CAM-03 | — | Pending |
-| CAM-04 | — | Pending |
-| CAM-05 | — | Pending |
-| DET-01 | — | Pending |
-| DET-02 | — | Pending |
-| DET-03 | — | Pending |
-| DET-04 | — | Pending |
-| DET-05 | — | Pending |
-| DET-06 | — | Pending |
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| GUI-01 | — | Pending |
-| GUI-02 | — | Pending |
-| GUI-03 | — | Pending |
-| GUI-04 | — | Pending |
-| GUI-05 | — | Pending |
-| GUI-06 | — | Pending |
-| GUI-07 | — | Pending |
-| GUI-08 | — | Pending |
-| GUI-09 | — | Pending |
+| CAM-01 | Phase 19 | Pending |
+| CAM-02 | Phase 19 | Pending |
+| CAM-03 | Phase 20 | Pending |
+| CAM-04 | Phase 20 | Pending |
+| CAM-05 | Phase 20 | Pending |
+| DET-01 | Phase 21 | Pending |
+| DET-02 | Phase 21 | Pending |
+| DET-03 | Phase 21 | Pending |
+| DET-04 | Phase 21 | Pending |
+| DET-05 | Phase 21 | Pending |
+| DET-06 | Phase 21 | Pending |
+| DATA-01 | Phase 22 | Pending |
+| DATA-02 | Phase 23 | Pending |
+| DATA-03 | Phase 19 | Pending |
+| GUI-01 | Phase 24 | Pending |
+| GUI-02 | Phase 24 | Pending |
+| GUI-03 | Phase 24 | Pending |
+| GUI-04 | Phase 24 | Pending |
+| GUI-05 | Phase 24 | Pending |
+| GUI-06 | Phase 24 | Pending |
+| GUI-07 | Phase 24 | Pending |
+| GUI-08 | Phase 24 | Pending |
+| GUI-09 | Phase 24 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-16*
-*Last updated: 2026-03-16 after initial definition*
+*Last updated: 2026-03-16 — traceability mapped to Phases 19-24*
