@@ -30,7 +30,7 @@ class GUIApplication:
     Clean implementation with proper Qt object lifecycle.
     """
 
-    def __init__(self, control_manager, data_pipeline, event_loop=None):
+    def __init__(self, control_manager, data_pipeline, event_loop=None, camera_results_store=None):
         """
         Initialize GUI application.
 
@@ -38,6 +38,7 @@ class GUIApplication:
             control_manager: ControlManager instance
             data_pipeline: DataProcessingPipeline instance
             event_loop: asyncio event loop for cross-thread scheduling (optional)
+            camera_results_store: CameraResultsStore instance (optional, None when camera disabled)
         """
         if QApplication is None:
             raise RuntimeError("PySide6 not installed - cannot use GUI")
@@ -45,6 +46,7 @@ class GUIApplication:
         self.control_manager = control_manager
         self.data_pipeline = data_pipeline
         self.event_loop = event_loop
+        self.camera_results_store = camera_results_store
 
         # Qt application (created in GUI thread)
         self._app: Optional[QApplication] = None
@@ -120,7 +122,8 @@ class GUIApplication:
             self._main_window = MainController(
                 self.control_manager,
                 self.data_pipeline,
-                event_loop=self.event_loop
+                event_loop=self.event_loop,
+                camera_results_store=self.camera_results_store
             )
             self._main_window.showFullScreen()
 

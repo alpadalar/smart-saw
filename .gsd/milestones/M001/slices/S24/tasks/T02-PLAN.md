@@ -130,3 +130,11 @@ Thread `camera_results_store` through the creation chain: lifecycle → GUIAppli
 - `src/core/lifecycle.py` — MODIFIED: passes camera_results_store to GUIApplication
 - `src/gui/app.py` — MODIFIED: accepts and forwards camera_results_store
 - `src/gui/controllers/main_controller.py` — MODIFIED: conditional 5th button + camera page + closeEvent wiring
+
+## Observability Impact
+
+- **Camera page presence:** `hasattr(main_controller, 'camera_page')` — True only when camera_results_store was provided
+- **Button count:** `len(main_controller.nav_buttons)` — 5 when camera enabled, 4 when disabled
+- **Stacked widget page count:** `main_controller.stackedWidget.count()` — 5 when camera enabled, 4 when disabled
+- **Timer cleanup:** `"CameraController timers stopped"` appears in logs during closeEvent when camera page exists
+- **Failure visibility:** If CameraController import fails at runtime, the error surfaces immediately during MainController._setup_ui() — not silently swallowed

@@ -493,7 +493,8 @@ class ApplicationLifecycle:
             self.gui_app = GUIApplication(
                 self.control_manager,
                 self.data_pipeline,
-                event_loop=event_loop
+                event_loop=event_loop,
+                camera_results_store=self.camera_results_store
             )
 
             # Start GUI in separate thread (non-daemon so it keeps app alive)
