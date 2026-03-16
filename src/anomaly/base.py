@@ -251,7 +251,7 @@ class BaseAnomalyDetector:
 
             # Dynamic eps calculation: fraction of standard deviation
             std_value = np.std(values)
-            ptp_value = np.ptp(values)  # ptp = peak-to-peak (max-min)
+            ptp_value = np.max(values) - np.min(values)  # peak-to-peak (np.ptp removed in numpy 2.0)
 
             # Ensure eps is always positive (DBSCAN requires eps > 0)
             # Use a small minimum value when data has zero variance

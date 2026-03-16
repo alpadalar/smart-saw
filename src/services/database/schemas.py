@@ -259,11 +259,54 @@ CREATE TABLE IF NOT EXISTS anomaly_resets (
 CREATE INDEX IF NOT EXISTS idx_reset_time ON anomaly_resets(reset_time);
 """
 
+# camera.db - Camera vision detection results
+SCHEMA_CAMERA_DB = """
+-- Detection events (broken teeth, cracks)
+CREATE TABLE IF NOT EXISTS detection_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    event_type TEXT NOT NULL,          -- 'broken_tooth' or 'crack'
+    confidence REAL,                   -- Model confidence score (0.0-1.0)
+    count INTEGER DEFAULT 0,           -- Number of detections in this event
+    image_path TEXT,                    -- Path to source frame JPEG
+    kesim_id INTEGER,                  -- Cutting session ID (NULL if not cutting)
+
+    -- Traceability fields (same pattern as ml_predictions and anomaly_events)
+    makine_id INTEGER,
+    serit_id INTEGER,
+    malzeme_cinsi TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_detection_timestamp ON detection_events(timestamp);
+CREATE INDEX IF NOT EXISTS idx_detection_event_type ON detection_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_detection_kesim_id ON detection_events(kesim_id);
+
+-- Wear history (LDC edge detection measurements)
+CREATE TABLE IF NOT EXISTS wear_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    wear_percentage REAL NOT NULL,     -- Calculated wear % (0.0-100.0)
+    health_score REAL,                 -- Combined health score (0.0-100.0)
+    edge_pixel_count INTEGER,          -- Raw edge pixel count from LDC
+    image_path TEXT,                    -- Path to source frame JPEG
+    kesim_id INTEGER,                  -- Cutting session ID (NULL if not cutting)
+
+    -- Traceability fields
+    makine_id INTEGER,
+    serit_id INTEGER,
+    malzeme_cinsi TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_wear_timestamp ON wear_history(timestamp);
+CREATE INDEX IF NOT EXISTS idx_wear_kesim_id ON wear_history(kesim_id);
+"""
+
 # Schema mapping
 SCHEMAS = {
     'raw': SCHEMA_RAW_DB,
     'total': SCHEMA_TOTAL_DB,
     'log': SCHEMA_LOG_DB,
     'ml': SCHEMA_ML_DB,
-    'anomaly': SCHEMA_ANOMALY_DB
+    'anomaly': SCHEMA_ANOMALY_DB,
+    'camera': SCHEMA_CAMERA_DB
 }
