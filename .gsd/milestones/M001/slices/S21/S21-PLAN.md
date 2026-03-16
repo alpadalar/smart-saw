@@ -65,7 +65,7 @@
   - Verify: `python3 -c "from src.services.camera.detection_worker import DetectionWorker; print('OK')"` and instantiation test with mock config
   - Done when: DetectionWorker imports cleanly; constructor accepts (config, store, camera_service); run() loads models inside thread; detection cycle reads frame, runs both models, writes results to store
 
-- [ ] **T03: Build LDCWorker for edge detection wear measurement** `est:1h`
+- [x] **T03: Build LDCWorker for edge detection wear measurement** `est:1h`
   - Why: Implements the wear measurement pipeline — LDC edge detection followed by contour-based wear percentage calculation. Reads frames from CameraService, runs LDC model, computes wear, publishes to store, and triggers health recalculation.
   - Files: `src/services/camera/ldc_worker.py`
   - Do: Create LDCWorker(threading.Thread) with constructor taking (config, results_store, camera_service). Load LDC model from modelB4.py and BIPED checkpoint inside `run()`. On each cycle: get frame, resize to 512x512, BGR mean subtraction ([103.939, 116.779, 123.68]), transpose to CHW, run LDC forward pass under torch.no_grad(), sigmoid + normalize + threshold the fused output, compute wear via contour analysis (same TOP_LINE_Y=170, BOTTOM_LINE_Y=236 logic as old VisionService._compute_wear). Write wear_percentage, last_wear_ts to store. After each detection or wear update, call HealthCalculator.calculate_saw_health() and write health_score, health_status, health_color to store. Handle missing checkpoint gracefully. Use `from __future__ import annotations`.
