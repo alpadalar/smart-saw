@@ -348,6 +348,14 @@ iot:
       # Anomaly detection
       - anomalies
 
+      # Camera vision
+      - broken_count
+      - tooth_count
+      - crack_count
+      - wear_percentage
+      - health_score
+      - health_status
+
 # Anomaly Detection Settings
 anomaly_detection:
   enabled: true

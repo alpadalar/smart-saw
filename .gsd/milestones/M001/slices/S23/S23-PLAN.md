@@ -36,9 +36,16 @@
 - New wiring introduced in this slice: camera_results_store threaded through pipeline → mqtt → formatter chain
 - What remains before the milestone is truly usable end-to-end: S24 (Camera GUI page)
 
+## Observability / Diagnostics
+
+- **Runtime signal:** `"Camera snapshot failed: ..."` warning log in `data_processor.py` processing loop — indicates camera store is present but snapshot() threw.
+- **Inspection surface:** Camera fields (`broken_count`, `tooth_count`, etc.) visible in ThingsBoard telemetry payload values when camera is active. Absence of these keys confirms camera is disabled/None — no ambiguity.
+- **Failure visibility:** Existing MQTT `_stats['errors']` counter and offline-storage path cover transport failures. Camera snapshot failures are logged but not counted separately (low-frequency, non-critical path).
+- **Redaction:** No secrets flow through this path. Camera fields are numeric scalars + one string enum (`health_status`). `latest_frame` (binary image data) is explicitly excluded from the snapshot extraction.
+
 ## Tasks
 
-- [ ] **T01: Wire camera telemetry through IoT pipeline** `est:30m`
+- [x] **T01: Wire camera telemetry through IoT pipeline** `est:30m`
   - Why: Thread CameraResultsStore.snapshot() data from lifecycle through DataProcessingPipeline → MQTTService → ThingsBoardFormatter, add camera field names to config whitelist
   - Files: `src/services/iot/thingsboard.py`, `src/services/iot/mqtt_client.py`, `src/services/processing/data_processor.py`, `src/core/lifecycle.py`, `config/config.yaml`
   - Do: (1) ThingsBoardFormatter.format_telemetry — add `vision_data=None` param, merge 6 fields (broken_count, tooth_count, crack_count, wear_percentage, health_score, health_status) into field_mapping when vision_data is not None. (2) MQTTService.queue_telemetry — add `vision_data=None` param, forward to `self.formatter.format_telemetry(processed_data, vision_data=vision_data)`. (3) DataProcessingPipeline — add `camera_results_store=None` constructor param, store as attribute; in processing loop step 6 when iot_service and camera_results_store are both available, call `self.camera_results_store.snapshot()` and pass as vision_data to queue_telemetry. (4) Lifecycle._init_data_pipeline — pass `self.camera_results_store` as kwarg. (5) config.yaml — add 6 camera field names to telemetry_fields list under a "# Camera vision" comment group.

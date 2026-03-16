@@ -461,7 +461,8 @@ class ApplicationLifecycle:
             self.modbus_writer,
             self.control_manager,
             self.db_services,
-            self.iot_service  # Can be MQTT or HTTP based on config
+            self.iot_service,  # Can be MQTT or HTTP based on config
+            camera_results_store=self.camera_results_store
         )
 
         await self.data_pipeline.start()

@@ -325,7 +325,7 @@ class MQTTService:
                 except asyncio.QueueEmpty:
                     break
 
-    async def queue_telemetry(self, processed_data):
+    async def queue_telemetry(self, processed_data, vision_data=None):
         """
         Queue telemetry data for batch sending.
 
@@ -333,10 +333,11 @@ class MQTTService:
 
         Args:
             processed_data: ProcessedData instance
+            vision_data: Optional dict with camera vision fields
         """
         try:
             # Format for ThingsBoard
-            telemetry = self.formatter.format_telemetry(processed_data)
+            telemetry = self.formatter.format_telemetry(processed_data, vision_data=vision_data)
 
             if telemetry:
                 # Add timestamp

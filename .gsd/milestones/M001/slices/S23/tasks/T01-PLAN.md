@@ -104,3 +104,9 @@ Thread CameraResultsStore vision data through the existing IoT telemetry chain: 
 - `src/services/processing/data_processor.py` — pipeline holds `camera_results_store`, calls `snapshot()` per cycle, passes vision_data to queue_telemetry
 - `src/core/lifecycle.py` — `_init_data_pipeline` passes `camera_results_store=self.camera_results_store`
 - `config/config.yaml` — 6 camera field names added to telemetry_fields
+
+## Observability Impact
+
+- **New log signal:** `logger.warning("Camera snapshot failed: {e}")` in `data_processor.py` — emitted when `camera_results_store.snapshot()` raises. Grep for `"Camera snapshot failed"` to detect camera↔pipeline integration failures.
+- **Inspection:** Camera fields appear in ThingsBoard telemetry `values` dict when vision_data is provided. When camera is disabled/None, values dict is unchanged — no camera keys present.
+- **No new status endpoints or persisted failure state** — this is pass-through wiring; failure visibility comes from the existing MQTT stats (`errors` counter) and the warning log above.

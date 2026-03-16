@@ -43,7 +43,8 @@ class DataProcessingPipeline:
         modbus_writer,
         control_manager,
         db_services: dict,
-        mqtt_service=None
+        mqtt_service=None,
+        camera_results_store=None
     ):
         """
         Initialize data processing pipeline.
@@ -56,6 +57,7 @@ class DataProcessingPipeline:
             db_services: Dictionary of SQLiteService instances
                 {'raw': raw_db, 'total': total_db, 'log': log_db}
             mqtt_service: IoT service instance (MQTT or HTTP, optional)
+            camera_results_store: CameraResultsStore instance (optional)
         """
         self.config = config
         self.modbus_reader = modbus_reader
@@ -63,6 +65,7 @@ class DataProcessingPipeline:
         self.control_manager = control_manager
         self.db_services = db_services
         self.iot_service = mqtt_service  # Can be MQTT or HTTP service
+        self.camera_results_store = camera_results_store
 
         # Processing components
         self.cutting_tracker = CuttingTracker(db_services.get('total'))
@@ -196,7 +199,21 @@ class DataProcessingPipeline:
 
                 # 6. Queue for IoT (MQTT or HTTP)
                 if self.iot_service:
-                    await self.iot_service.queue_telemetry(processed_data)
+                    vision_data = None
+                    if self.camera_results_store is not None:
+                        try:
+                            snapshot = self.camera_results_store.snapshot()
+                            vision_data = {
+                                k: snapshot[k] for k in (
+                                    'broken_count', 'tooth_count', 'crack_count',
+                                    'wear_percentage', 'health_score', 'health_status',
+                                ) if k in snapshot and snapshot[k] is not None
+                            }
+                            if not vision_data:
+                                vision_data = None
+                        except Exception as e:
+                            logger.warning(f"Camera snapshot failed: {e}")
+                    await self.iot_service.queue_telemetry(processed_data, vision_data=vision_data)
                     self._stats['mqtt_queued'] += 1
 
                 # Update statistics
