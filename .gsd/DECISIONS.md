@@ -32,3 +32,6 @@
 - "Workers import torch/ultralytics inside run() not at module level — preserves zero-import guard when camera.enabled=false"
 - "HealthCalculator called from LDCWorker after each wear update — collocated with the slower measurement cycle rather than separate thread"
 - "No kornia dependency — LDC pipeline uses only torch+cv2+numpy, old project had no kornia imports"
+- "Camera shutdown order: workers.stop() → workers.join() → camera_service.stop() → (later) SQLite flush — ensures all queued DB writes complete before queue drain"
+- "Workers accept optional db_service=None parameter for backward compatibility — no DB writes when None"
+- "__init__.py stripped of unconditional CameraService import to preserve zero-import guard — lifecycle imports from submodules directly"
