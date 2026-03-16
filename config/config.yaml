@@ -522,7 +522,7 @@ health:
 
 # Camera Vision Settings
 camera:
-  enabled: false  # Set to true to enable camera vision system
+  enabled: true  # Set to true to enable camera vision system
 
   # Camera device
   device_id: 0              # OpenCV VideoCapture device index
