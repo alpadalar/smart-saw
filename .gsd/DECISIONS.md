@@ -23,3 +23,7 @@
 - "Y-axis title positioned at x=5, y=130 to fit left of graph frame"
 - "X-axis title positioned at x=105, y=225 centered below graph"
 - "New get_axis_max/get_axis_min methods added to preserve existing get_max_value/get_min_value behavior"
+- "CameraResultsStore stores latest_frame as JPEG bytes (not raw numpy) — compact for GUI, consumers convert if needed"
+- "CameraService stores raw numpy frame separately via get_current_frame() for detection workers (S21)"
+- "opencv-python-headless chosen over opencv-python to avoid Qt5/Qt6 conflict with PySide6"
+- "S19 foundation cherry-picked into worktree rather than rebased — preserves commit history on diverged branch"
