@@ -43,7 +43,7 @@
   > After this: ml_predictions table includes kesim_id, makine_id, serit_id, malzeme_cinsi traceability columns.
 - [x] **S18: Anomaly DB Schema Update** `risk:medium` `depends:[S17]`
   > After this: anomaly_events table includes makine_id, serit_id, malzeme_cinsi traceability columns.
-- [ ] **S19: Foundation** `risk:medium` `depends:[S18]`
+- [x] **S19: Foundation** `risk:medium` `depends:[S18]`
   > After this: numpy cap removed, camera config schema defined, camera.db schema in schemas.py, zero-import guard active.
 - [ ] **S20: Camera Capture** `risk:medium` `depends:[S19]`
   > After this: OpenCV capture thread runs in background, JPEG frames written to recordings directory.
