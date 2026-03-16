@@ -36,3 +36,5 @@
 - "Workers accept optional db_service=None parameter for backward compatibility — no DB writes when None"
 - "Camera fields merged into existing field_mapping dict (flat ThingsBoard payload) rather than a separate telemetry object"
 - "Snapshot extraction whitelists 6 scalar fields, explicitly excludes latest_frame (binary image data) from IoT payload"
+- "CameraController uses QImage.loadFromData() for JPEG decoding — avoids cv2 dependency in GUI layer entirely"
+- "CameraController lazy-imported inside camera_results_store guard in MainController._setup_ui() — not in controllers/__init__.py — preserves zero-import guarantee"
