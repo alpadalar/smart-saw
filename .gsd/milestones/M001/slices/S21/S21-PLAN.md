@@ -58,7 +58,7 @@
   - Verify: `python3 -c "from src.services.camera.modelB4 import LDC; print('OK')"` and health calculator unit tests (calculate_saw_health, get_health_status, get_health_color)
   - Done when: modelB4 imports LDC class; HealthCalculator returns correct scores for known inputs; requirements.txt has torch/ultralytics; config has ldc_checkpoint_path
 
-- [ ] **T02: Build DetectionWorker for RT-DETR broken and crack detection** `est:1h`
+- [x] **T02: Build DetectionWorker for RT-DETR broken and crack detection** `est:1h`
   - Why: Implements the core broken tooth and crack detection pipeline — the primary AI capability of the camera system. Single thread running two RT-DETR models sequentially, reading live frames from CameraService and publishing results to CameraResultsStore.
   - Files: `src/services/camera/detection_worker.py`
   - Do: Create DetectionWorker(threading.Thread) with constructor taking (config, results_store, camera_service). Load both RT-DETR models (broken `best.pt` + crack `catlak-best.pt`) inside `run()` using ultralytics RTDETR class. On each cycle: get frame via camera_service.get_current_frame(), copy it, run broken detection (class 0=tooth, class 1=broken, conf=0.5, imgsz=960), then crack detection (class 0=crack, conf=0.5, imgsz=960) on same frame. Write results to store: broken_count, broken_confidence, crack_count, crack_confidence, detection_image_path, last_detection_ts. All inference in torch.no_grad(). Check _stop_event between model loads and before each cycle. Handle missing model files gracefully (log error, return). Use `from __future__ import annotations`.
