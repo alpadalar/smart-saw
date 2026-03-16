@@ -11,5 +11,6 @@ This module will contain:
 """
 
 from src.services.camera.results_store import CameraResultsStore
+from src.services.camera.camera_service import CameraService
 
-__all__ = ["CameraResultsStore"]
+__all__ = ["CameraResultsStore", "CameraService"]

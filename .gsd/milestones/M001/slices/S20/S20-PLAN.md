@@ -57,7 +57,7 @@
   - Verify: `python -c "from src.services.camera.results_store import CameraResultsStore; ..."` passes; `import cv2` works; `grep opencv-python-headless requirements.txt` matches
   - Done when: CameraResultsStore importable and tested, S19 artifacts present in worktree, cv2 importable
 
-- [ ] **T02: Build CameraService with capture and JPEG encoder threads** `est:1h`
+- [x] **T02: Build CameraService with capture and JPEG encoder threads** `est:1h`
   - Why: This is the core capture engine. Ports the old CameraModule pattern into a clean config-driven service with CameraResultsStore as the data boundary.
   - Files: `src/services/camera/camera_service.py` (new), `src/services/camera/__init__.py`
   - Do: Build CameraService class: constructor takes `config: dict` + `results_store: CameraResultsStore`. `async start()` opens VideoCapture, spawns capture daemon thread + N encoder daemon threads. `async stop()` sets stop_event, sends None sentinels, joins threads, releases cap. `start_recording() -> bool` creates timestamped dir. `stop_recording() -> bool` drains queue. `get_current_frame() -> Optional[np.ndarray]`. Capture thread stores JPEG-encoded `latest_frame` bytes in results_store, keeps raw frame for `get_current_frame()`. Queue uses `put_nowait()` with `Full` catch. Platform-aware backend (DSHOW on Windows). Update `__init__.py` to export both classes.
