@@ -43,13 +43,14 @@ class MainController(QMainWindow):
 
     data_updated = Signal(dict)
 
-    def __init__(self, control_manager, data_pipeline, event_loop=None):
+    def __init__(self, control_manager, data_pipeline, event_loop=None, camera_results_store=None):
         """Initialize main controller."""
         super().__init__()
 
         self.control_manager = control_manager
         self.data_pipeline = data_pipeline
         self.event_loop = event_loop
+        self.camera_results_store = camera_results_store
 
         # Setup UI
         self._setup_ui()
@@ -207,6 +208,17 @@ class MainController(QMainWindow):
             self.btnTracking
         ]
 
+        # Conditional camera button
+        if self.camera_results_store is not None:
+            self.btnCamera = QPushButton("  Kamera", self.sidebarFrame)
+            self.btnCamera.setGeometry(26, 649, 355, 110)
+            self.btnCamera.setIcon(self._icon("camera-icon2.svg"))
+            self.btnCamera.setIconSize(QSize(80, 80))
+            self.btnCamera.setStyleSheet(nav_btn_style)
+            self.btnCamera.setCheckable(True)
+            self.btnCamera.clicked.connect(lambda: self._switch_page(4))
+            self.nav_buttons.append(self.btnCamera)
+
         # ===== CONTENT AREA (Stacked Pages) =====
         # Created FIRST so notification bar renders on top (z-order)
         self.stackedWidget = QStackedWidget(central_widget)
@@ -280,6 +292,15 @@ class MainController(QMainWindow):
         self.stackedWidget.addWidget(self.positioning_page)    # Index 1
         self.stackedWidget.addWidget(self.sensor_page)         # Index 2
         self.stackedWidget.addWidget(self.monitoring_page)     # Index 3
+
+        # Conditional camera page
+        if self.camera_results_store is not None:
+            from .camera_controller import CameraController
+            self.camera_page = CameraController(
+                self.camera_results_store,
+                parent=self.stackedWidget
+            )
+            self.stackedWidget.addWidget(self.camera_page)  # Index 4
 
         # Update date/time
         self._update_datetime()
@@ -390,6 +411,10 @@ class MainController(QMainWindow):
                          self.sensor_page, self.monitoring_page]:
                 if page and hasattr(page, 'stop_timers'):
                     page.stop_timers()
+
+            # Stop camera page timers if it exists
+            if hasattr(self, 'camera_page') and self.camera_page and hasattr(self.camera_page, 'stop_timers'):
+                self.camera_page.stop_timers()
 
             logger.info("All timers stopped")
 

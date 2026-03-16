@@ -44,12 +44,15 @@ class ThingsBoardFormatter:
             f"{len(self.telemetry_fields)} telemetry fields"
         )
 
-    def format_telemetry(self, processed_data) -> Dict[str, Any]:
+    def format_telemetry(self, processed_data, vision_data=None) -> Dict[str, Any]:
         """
         Format ProcessedData for ThingsBoard telemetry.
 
         Args:
             processed_data: ProcessedData instance
+            vision_data: Optional dict with camera vision fields
+                (broken_count, tooth_count, crack_count,
+                 wear_percentage, health_score, health_status)
 
         Returns:
             Dictionary with ThingsBoard telemetry format
@@ -99,6 +102,18 @@ class ThingsBoardFormatter:
                 'cutting_session_id': processed_data.cutting_session_id,
                 'anomaly_count': len(processed_data.anomalies) if processed_data.anomalies else 0
             })
+
+            # Add camera vision fields (when available)
+            if vision_data is not None:
+                _camera_fields = (
+                    'broken_count', 'tooth_count', 'crack_count',
+                    'wear_percentage', 'health_score', 'health_status',
+                )
+                field_mapping.update({
+                    k: vision_data[k]
+                    for k in _camera_fields
+                    if k in vision_data
+                })
 
             # Filter to configured fields (or all if not configured)
             if self.telemetry_fields:

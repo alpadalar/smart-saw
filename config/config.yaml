@@ -348,6 +348,14 @@ iot:
       # Anomaly detection
       - anomalies
 
+      # Camera vision
+      - broken_count
+      - tooth_count
+      - crack_count
+      - wear_percentage
+      - health_score
+      - health_status
+
 # Anomaly Detection Settings
 anomaly_detection:
   enabled: true
@@ -539,6 +547,7 @@ camera:
   wear:
     enabled: true
     interval_seconds: 5.0          # Run wear measurement every N seconds
+    ldc_checkpoint_path: "data/models/ldc/16_model.pth"
 
   # Health score calculation
   health:
