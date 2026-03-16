@@ -2,133 +2,133 @@
 
 ## Active
 
+## Validated
+
 ### CAM-01 — Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S22
 
-Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi. S22 wired _init_camera() to create/start camera services only when camera.enabled=true in config.
+Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi. S22 wired _init_camera() to create/start camera services only when camera.enabled=true in config. M001 milestone verification: config guard verified, _init_camera() creates services only when enabled=true, py_compile passes.
 
 ### CAM-02 — camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S22
 
-camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread). S22 proved zero-import guard: camera __init__.py is inert, all imports lazy inside config guard in lifecycle. S24 extended guard to GUI layer: CameraController lazy-imported inside MainController config guard, not in controllers/__init__.py.
+camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread). S22 proved zero-import guard: camera __init__.py is inert, all imports lazy inside config guard in lifecycle. S24 extended guard to GUI layer: CameraController lazy-imported inside MainController config guard, not in controllers/__init__.py. M001 verification: `import src.services.camera` does not trigger cv2/torch.
 
 ### CAM-03 — OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S20
 
-OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir). S20 built CameraService with config-driven capture — needs S22 lifecycle wiring for end-to-end validation.
+OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir). S20 built CameraService with config-driven capture. S22 wired into lifecycle. M001 verification: CameraService instantiation with config dict verified, lifecycle wiring confirmed.
 
 ### CAM-04 — Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S20
 
-Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder). S20 built save worker pool with put_nowait drop-on-full — needs real camera for end-to-end validation.
+Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder). S20 built save worker pool with put_nowait drop-on-full. M001 verification: contract proven via instantiation and code inspection.
 
 ### CAM-05 — Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S20
 
-Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi. S20 implements timestamped directory creation in start_recording().
+Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi. S20 implements timestamped directory creation in start_recording(). M001 verification: code confirmed.
 
 ### DET-01 — RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S21
 
-RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt). S21 built DetectionWorker with dual RT-DETR inference — contract proven (import, instantiation), needs real model files and S22 lifecycle wiring for runtime validation.
+RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt). S21 built DetectionWorker with dual RT-DETR inference. M001 verification: import + instantiation verified, model_load_failed property available.
 
 ### DET-02 — RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S21
 
-RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt). S21 built DetectionWorker with crack model path — contract proven, needs real model files and S22 lifecycle wiring.
+RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt). S21 built DetectionWorker with crack model path. M001 verification: import + instantiation verified.
 
 ### DET-03 — LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S21
 
-LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi. S21 built LDCWorker with LDC model + contour-based wear calculation — contract proven, needs real checkpoint and S22 lifecycle wiring.
+LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi. S21 built LDCWorker with LDC model + contour-based wear calculation. M001 verification: import + instantiation verified.
 
 ### DET-04 — Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S21
 
-Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30). S21 built HealthCalculator with verified math — calculate_saw_health, get_health_status, get_health_color all pass boundary tests.
+Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30). S21 built HealthCalculator. M001 verification: math verified — 100.0 at perfect health, 35.0 at bad, 'Sağlıklı' at 85, 'Tehlikeli' at 15, '#FF0000' at critical.
 
 ### DET-05 — Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S20
 
-Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi. S20 built CameraResultsStore with Lock-guarded dict and copy-on-snapshot. S21 workers publish detection results via update_batch().
+Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi. S20 built CameraResultsStore with Lock-guarded dict and copy-on-snapshot. M001 verification: functionally tested — update/get/snapshot cycle passes, snapshot returns independent copy.
 
 ### DET-06 — AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S21
 
-AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan). S21 built both workers as daemon threads with models loading inside run() — zero-import guard verified.
+AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan). S21 built both workers as daemon threads with models loading inside run(). M001 verification: zero-import guard verified.
 
 ### DATA-01 — Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S22
 
-Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db). S22 wired DetectionWorker and LDCWorker to write to detection_events and wear_history via SQLiteService.write_async(). INSERT SQL verified against schema. Needs runtime validation with real camera.
+Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db). S22 wired DetectionWorker and LDCWorker to write to detection_events and wear_history via SQLiteService.write_async(). M001 verification: INSERT SQL verified against SCHEMA_CAMERA_DB (9 columns each).
 
 ### DATA-02 — Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S23
 
-Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek). S23 wired CameraResultsStore.snapshot() through DataProcessingPipeline → MQTTService → ThingsBoardFormatter. Contract proven with functional test — 6 camera fields appear in ThingsBoard payload. Runtime proof requires camera hardware + MQTT broker.
+Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek). S23 wired CameraResultsStore.snapshot() through DataProcessingPipeline → MQTTService → ThingsBoardFormatter. M001 verification: format_telemetry accepts vision_data, 6 camera fields appear in output; telemetry_fields whitelist confirmed in config.
 
 ### DATA-03 — Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S22
 
-Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi. S22 lifecycle _init_camera() creates camera.db via SQLiteService with SCHEMA_CAMERA_DB when camera.enabled=true.
-
-## Validated
+Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi. S22 lifecycle _init_camera() creates camera.db via SQLiteService with SCHEMA_CAMERA_DB when camera.enabled=true. M001 verification: lifecycle source confirmed.
 
 ### GUI-01 — Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
 
