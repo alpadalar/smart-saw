@@ -9,8 +9,8 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 
 ### Camera Infrastructure
 
-- [ ] **CAM-01**: Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi
-- [ ] **CAM-02**: camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
+- [x] **CAM-01**: Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi
+- [x] **CAM-02**: camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
 - [ ] **CAM-03**: OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
 - [ ] **CAM-04**: Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
 - [ ] **CAM-05**: Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
@@ -28,7 +28,7 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 
 - [ ] **DATA-01**: Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db)
 - [ ] **DATA-02**: Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek)
-- [ ] **DATA-03**: Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
+- [x] **DATA-03**: Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
 
 ### GUI
 
@@ -72,8 +72,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAM-01 | Phase 19 | Pending |
-| CAM-02 | Phase 19 | Pending |
+| CAM-01 | Phase 19 | Complete |
+| CAM-02 | Phase 19 | Complete |
 | CAM-03 | Phase 20 | Pending |
 | CAM-04 | Phase 20 | Pending |
 | CAM-05 | Phase 20 | Pending |
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DET-06 | Phase 21 | Pending |
 | DATA-01 | Phase 22 | Pending |
 | DATA-02 | Phase 23 | Pending |
-| DATA-03 | Phase 19 | Pending |
+| DATA-03 | Phase 19 | Complete |
 | GUI-01 | Phase 24 | Pending |
 | GUI-02 | Phase 24 | Pending |
 | GUI-03 | Phase 24 | Pending |
