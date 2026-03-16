@@ -27,3 +27,8 @@
 - "CameraService stores raw numpy frame separately via get_current_frame() for detection workers (S21)"
 - "opencv-python-headless chosen over opencv-python to avoid Qt5/Qt6 conflict with PySide6"
 - "S19 foundation cherry-picked into worktree rather than rebased — preserves commit history on diverged branch"
+- "Both RT-DETR models (broken+crack) consolidated into single DetectionWorker thread — sequential inference, no model sharing across threads"
+- "LDC model vendored as modelB4.py into src/services/camera/ — pure PyTorch, ~240 lines, no external deps beyond torch"
+- "Workers import torch/ultralytics inside run() not at module level — preserves zero-import guard when camera.enabled=false"
+- "HealthCalculator called from LDCWorker after each wear update — collocated with the slower measurement cycle rather than separate thread"
+- "No kornia dependency — LDC pipeline uses only torch+cv2+numpy, old project had no kornia imports"
