@@ -7,16 +7,18 @@
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S22
 
-Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi
+Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi. S22 wired _init_camera() to create/start camera services only when camera.enabled=true in config.
 
 ### CAM-02 — camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S22
+
+camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread). S22 proved zero-import guard: camera __init__.py is inert, all imports lazy inside config guard in lifecycle.
 
 camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
 
@@ -106,9 +108,9 @@ AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamada
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S22
 
-Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db)
+Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db). S22 wired DetectionWorker and LDCWorker to write to detection_events and wear_history via SQLiteService.write_async(). INSERT SQL verified against schema. Needs runtime validation with real camera.
 
 ### DATA-02 — Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek)
 
@@ -124,9 +126,9 @@ Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri b
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S22
 
-Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
+Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi. S22 lifecycle _init_camera() creates camera.db via SQLiteService with SCHEMA_CAMERA_DB when camera.enabled=true.
 
 ### GUI-01 — Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
 

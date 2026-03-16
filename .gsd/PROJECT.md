@@ -83,7 +83,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v1.6 shipped, v2.0 S21 complete):**
+**Current State (v1.6 shipped, v2.0 S22 complete):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`, `kesim_id`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - TouchButton widget: Qt touch events, instant activation, strict bounds, first-touch-wins, emergency stop overlay
@@ -106,6 +106,8 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - LDCWorker: Daemon thread with LDC edge detection + contour-based wear calculation + health scoring
 - HealthCalculator: Standalone class (no torch dep) with 70/30 weighted health formula, Turkish status labels, hex colors
 - modelB4.py: Vendored LDC network architecture (pure PyTorch)
+- Lifecycle camera integration: _init_camera() creates CameraResultsStore → CameraService → DetectionWorker → LDCWorker with lazy imports; stop() tears down camera before SQLite flush
+- Camera DB persistence: DetectionWorker writes broken_tooth/crack events to detection_events; LDCWorker writes wear measurements to wear_history; both via SQLiteService.write_async()
 
 **Tech Stack:**
 - ~15,641 LOC Python
@@ -155,4 +157,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-16 after S21 AI Detection Pipeline complete*
+*Last updated: 2026-03-16 after S22 Lifecycle & DB Integration complete*
