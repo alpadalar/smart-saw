@@ -242,7 +242,7 @@ database:
 iot:
   thingsboard:
     enabled: true
-    protocol: "mqtt"  # mqtt or http
+    protocol: "http"  # mqtt or http (http works with old project server)
 
     # Device identification (for reference)
     device_id: "5a326080-f203-11f0-b6b6-4987006f8c33"
@@ -511,3 +511,36 @@ health:
     database_queue_size_critical: 8000    # Critical if queue >8000
     memory_usage_percent: 80.0            # Warn if memory >80%
     disk_usage_percent: 90.0              # Warn if disk >90%
+
+# Camera Vision Settings
+camera:
+  enabled: false  # Set to true to enable camera vision system
+
+  # Camera device
+  device_id: 0              # OpenCV VideoCapture device index
+  resolution:
+    width: 1280
+    height: 720
+  fps: 30
+  jpeg_quality: 85          # JPEG compression quality (1-100)
+
+  # Recording
+  recordings_path: "data/recordings"
+
+  # Detection (RT-DETR broken tooth + crack)
+  detection:
+    enabled: true
+    interval_seconds: 2.0          # Run detection every N seconds
+    confidence_threshold: 0.5      # Minimum confidence for detections
+    broken_model_path: "data/models/best.pt"
+    crack_model_path: "data/models/catlak-best.pt"
+
+  # Wear measurement (LDC edge detection)
+  wear:
+    enabled: true
+    interval_seconds: 5.0          # Run wear measurement every N seconds
+
+  # Health score calculation
+  health:
+    broken_weight: 0.70            # 70% weight for broken tooth count
+    wear_weight: 0.30              # 30% weight for wear percentage
