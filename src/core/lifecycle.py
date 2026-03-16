@@ -20,6 +20,7 @@ from ..services.modbus.writer import ModbusWriter
 from ..services.control.manager import ControlManager
 from ..services.processing.data_processor import DataProcessingPipeline
 from ..services.iot.mqtt_client import MQTTService
+from ..services.iot.http_client import HTTPThingsBoardService
 
 # GUI imports (optional)
 try:
@@ -77,6 +78,8 @@ class ApplicationLifecycle:
         self.control_manager: Optional[ControlManager] = None
         self.data_pipeline: Optional[DataProcessingPipeline] = None
         self.mqtt_service: Optional[MQTTService] = None
+        self.http_iot_service: Optional[HTTPThingsBoardService] = None
+        self.iot_service = None  # Will point to whichever IoT service is active
         self.gui_app: Optional['GUIApplication'] = None
         self.gui_thread: Optional[threading.Thread] = None
 
@@ -113,6 +116,9 @@ class ApplicationLifecycle:
 
             # 4. Initialize MQTT (optional)
             await self._init_mqtt()
+
+            # 4.5. Initialize camera (optional, config-driven)
+            await self._init_camera()
 
             # 5. Initialize data pipeline
             await self._init_data_pipeline()
@@ -171,10 +177,10 @@ class ApplicationLifecycle:
                 logger.info("Stopping data pipeline...")
                 await self.data_pipeline.stop(timeout=timeout)
 
-            # 2. Stop MQTT
-            if self.mqtt_service:
-                logger.info("Stopping MQTT service...")
-                await self.mqtt_service.stop(timeout=timeout)
+            # 2. Stop IoT service (MQTT or HTTP)
+            if self.iot_service:
+                logger.info("Stopping IoT service...")
+                await self.iot_service.stop(timeout=timeout)
 
             # 3. Disconnect Modbus
             if self.modbus_service:
@@ -316,25 +322,75 @@ class ApplicationLifecycle:
 
     async def _init_mqtt(self):
         """
-        Initialize MQTT service (optional).
+        Initialize IoT service (MQTT or HTTP based on config).
         """
-        if not self.config.get('iot', {}).get('thingsboard', {}).get('enabled', False):
-            logger.info("MQTT disabled - skipping")
+        iot_config = self.config.get('iot', {}).get('thingsboard', {})
+
+        if not iot_config.get('enabled', False):
+            logger.info("ThingsBoard IoT disabled - skipping")
             return
 
-        logger.info("Initializing MQTT...")
+        protocol = iot_config.get('protocol', 'mqtt').lower()
+        logger.info(f"Initializing ThingsBoard IoT ({protocol.upper()})...")
 
         try:
-            self.mqtt_service = MQTTService(self.config)
-            await self.mqtt_service.start()
+            if protocol == 'http':
+                # Use HTTP-based sender (like old project)
+                self.http_iot_service = HTTPThingsBoardService(self.config)
+                await self.http_iot_service.start()
+                self.iot_service = self.http_iot_service
 
-            broker = self.config['iot']['thingsboard']['mqtt']['broker']
-            logger.info(f"  MQTT started: {broker}")
+                http_config = iot_config.get('http', {})
+                host = http_config.get('host', '185.87.252.58')
+                port = http_config.get('port', 8081)
+                logger.info(f"  HTTP ThingsBoard started: http://{host}:{port}")
+
+            else:
+                # Use MQTT-based sender
+                self.mqtt_service = MQTTService(self.config)
+                await self.mqtt_service.start()
+                self.iot_service = self.mqtt_service
+
+                broker = iot_config['mqtt']['broker']
+                logger.info(f"  MQTT started: {broker}")
 
         except Exception as e:
-            logger.warning(f"  MQTT initialization failed: {e}")
-            logger.warning("  Continuing without MQTT")
+            logger.warning(f"  ThingsBoard IoT initialization failed: {e}")
+            logger.warning("  Continuing without IoT")
             self.mqtt_service = None
+            self.http_iot_service = None
+            self.iot_service = None
+
+    async def _init_camera(self):
+        """
+        Initialize camera database (optional, config-driven).
+
+        Only creates camera.db when camera.enabled=true.
+        No camera module imports - those are deferred to S22.
+        """
+        camera_config = self.config.get('camera', {})
+
+        if not camera_config.get('enabled', False):
+            logger.info("Camera vision disabled - skipping")
+            return
+
+        logger.info("Initializing camera database...")
+
+        try:
+            db_config = self.config['database']['sqlite']
+            db_path = Path(db_config['path'])
+            db_file = db_path / "camera.db"
+            schema_sql = SCHEMAS.get('camera', '')
+
+            service = SQLiteService(db_file, schema_sql)
+            service.start()
+
+            self.db_services['camera'] = service
+            logger.info(f"  camera.db initialized: {db_file}")
+
+        except Exception as e:
+            logger.warning(f"  Camera database initialization failed: {e}")
+            logger.warning("  Continuing without camera database")
 
     async def _init_data_pipeline(self):
         """
@@ -348,7 +404,7 @@ class ApplicationLifecycle:
             self.modbus_writer,
             self.control_manager,
             self.db_services,
-            self.mqtt_service
+            self.iot_service  # Can be MQTT or HTTP based on config
         )
 
         await self.data_pipeline.start()
@@ -497,8 +553,8 @@ class ApplicationLifecycle:
         if self.data_pipeline:
             status['pipeline'] = self.data_pipeline.get_stats()
 
-        if self.mqtt_service:
-            status['mqtt'] = self.mqtt_service.get_stats()
+        if self.iot_service:
+            status['iot'] = self.iot_service.get_stats()
 
         return status
 
