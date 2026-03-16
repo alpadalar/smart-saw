@@ -53,5 +53,5 @@
   > After this: Camera services start/stop in lifecycle, detection results written to camera.db via SQLiteService queue.
 - [x] **S23: IoT Integration** `risk:medium` `depends:[S22]`
   > After this: Camera telemetry fields included in ThingsBoard payload when camera.enabled=true.
-- [ ] **S24: Camera GUI** `risk:medium` `depends:[S23]`
+- [x] **S24: Camera GUI** `risk:medium` `depends:[S23]`
   > After this: Camera page with live feed, detection stats, wear %, health score, thumbnails, and sidebar nav button.

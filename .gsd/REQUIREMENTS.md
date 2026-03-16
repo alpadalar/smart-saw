@@ -18,9 +18,7 @@ Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapati
 - Source: inferred
 - Primary Slice: S22
 
-camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread). S22 proved zero-import guard: camera __init__.py is inert, all imports lazy inside config guard in lifecycle.
-
-camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
+camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread). S22 proved zero-import guard: camera __init__.py is inert, all imports lazy inside config guard in lifecycle. S24 extended guard to GUI layer: CameraController lazy-imported inside MainController config guard, not in controllers/__init__.py.
 
 ### CAM-03 — OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
 
@@ -130,88 +128,88 @@ Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri b
 
 Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi. S22 lifecycle _init_camera() creates camera.db via SQLiteService with SCHEMA_CAMERA_DB when camera.enabled=true.
 
+## Validated
+
 ### GUI-01 — Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
+S24 contract proof: CameraController has 500ms frame update timer reading latest_frame from CameraResultsStore, using QImage.loadFromData() for JPEG decoding.
 
 ### GUI-02 — Kirik dis tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Kirik dis tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
+S24 contract proof: Broken tooth detection panel with lbl_broken_count and lbl_broken_time labels populated from store snapshot.
 
 ### GUI-03 — Catlak tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Catlak tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
+S24 contract proof: Crack detection panel with lbl_crack_count and lbl_crack_time labels populated from store snapshot.
 
 ### GUI-04 — Asinma yuzdesinin kamera sayfasinda goruntulenmesi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Asinma yuzdesinin kamera sayfasinda goruntulenmesi
+S24 contract proof: lbl_wear_percentage label populated from store snapshot wear_percentage field.
 
 ### GUI-05 — Testere saglik durumunun kamera sayfasinda goruntulenmesi (yuzde + durum metni + renk kodu)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Testere saglik durumunun kamera sayfasinda goruntulenmesi (yuzde + durum metni + renk kodu)
+S24 contract proof: lbl_health_score with percentage, lbl_health_status with dynamic setStyleSheet from health_color hex value.
 
 ### GUI-06 — Sidebar'a 5. navigasyon butonu olarak kamera butonu eklenmesi (sadece camera.enabled=true iken)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Sidebar'a 5. navigasyon butonu olarak kamera butonu eklenmesi (sadece camera.enabled=true iken)
+S24 contract proof: btnCamera created at y=649 only when camera_results_store is not None, wired to _switch_page(4). Not created when camera disabled.
 
 ### GUI-07 — Son kaydedilen frame'lerden 4 adet thumbnail goruntulenmesi (sequential images panel)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Son kaydedilen frame'lerden 4 adet thumbnail goruntulenmesi (sequential images panel)
+S24 contract proof: deque(maxlen=4) thumbnail history, 4 QLabel thumbnails updated from frame JPEG bytes.
 
 ### GUI-08 — Tespit durumu icin OK/alert ikonlari goruntulenmesi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Tespit durumu icin OK/alert ikonlari goruntulenmesi
+S24 contract proof: _set_ok_style (green ✓ OK) / _set_alert_style (red ✗ UYARI) applied based on detection counts.
 
 ### GUI-09 — Asinma olcum gorsellestirmesinin (wear visualization overlay) goruntulenmesi
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S24
 
-Asinma olcum gorsellestirmesinin (wear visualization overlay) goruntulenmesi
-
-## Validated
+S24 contract proof: AsinmaYuzdesiFrame with wear percentage display label reading from CameraResultsStore.
 
 ## Deferred
 

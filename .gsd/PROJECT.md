@@ -60,17 +60,17 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ### Active
 
-- [ ] Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir)
-- [ ] OpenCV frame capture ve JPEG recording sistemi
-- [ ] RT-DETR kirik dis tespiti (best.pt model)
-- [ ] RT-DETR catlak tespiti (catlak-best.pt model)
-- [ ] LDC edge detection + asinma hesaplama pipeline
-- [ ] Testere saglik hesaplayicisi (kirik %70 + asinma %30)
-- [ ] PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik)
-- [ ] GUI sidebar'a kamera navigasyon butonu eklenmesi
-- [ ] Tespit sonuclarinin SQLite'a kaydedilmesi
-- [ ] Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi
-- [ ] Lifecycle'da kamera servislerinin config-driven baslatilmasi
+- [x] Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir) — S22
+- [x] OpenCV frame capture ve JPEG recording sistemi — S20
+- [x] RT-DETR kirik dis tespiti (best.pt model) — S21
+- [x] RT-DETR catlak tespiti (catlak-best.pt model) — S21
+- [x] LDC edge detection + asinma hesaplama pipeline — S21
+- [x] Testere saglik hesaplayicisi (kirik %70 + asinma %30) — S21
+- [x] PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik) — S24
+- [x] GUI sidebar'a kamera navigasyon butonu eklenmesi — S24
+- [x] Tespit sonuclarinin SQLite'a kaydedilmesi — S22
+- [x] Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi — S23
+- [x] Lifecycle'da kamera servislerinin config-driven baslatilmasi — S22
 
 ### Out of Scope
 
@@ -83,7 +83,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v1.6 shipped, v2.0 S22 complete):**
+**Current State (v2.0 M001 complete — all 24 slices shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`, `kesim_id`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - TouchButton widget: Qt touch events, instant activation, strict bounds, first-touch-wins, emergency stop overlay
@@ -109,6 +109,8 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - Lifecycle camera integration: _init_camera() creates CameraResultsStore → CameraService → DetectionWorker → LDCWorker with lazy imports; stop() tears down camera before SQLite flush
 - Camera DB persistence: DetectionWorker writes broken_tooth/crack events to detection_events; LDCWorker writes wear measurements to wear_history; both via SQLiteService.write_async()
 - IoT camera telemetry: CameraResultsStore.snapshot() → DataProcessingPipeline → MQTTService → ThingsBoardFormatter; 6 scalar fields (broken_count, tooth_count, crack_count, wear_percentage, health_score, health_status) in flat ThingsBoard payload; vision_data=None for backward compat
+
+- CameraController: QWidget with 3 QTimers (500ms frame, 1000ms stats, 2000ms health), reads exclusively from CameraResultsStore.snapshot(), QImage.loadFromData() for JPEG decoding, deque-based thumbnail history, OK/alert detection indicators, dynamic health color
 
 **Tech Stack:**
 - ~15,641 LOC Python
@@ -158,4 +160,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-16 after S23 IoT Integration complete*
+*Last updated: 2026-03-16 after S24 Camera GUI complete — M001 milestone finished*
