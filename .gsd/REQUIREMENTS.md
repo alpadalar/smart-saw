@@ -25,27 +25,27 @@ camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, si
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S20
 
-OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
+OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir). S20 built CameraService with config-driven capture — needs S22 lifecycle wiring for end-to-end validation.
 
 ### CAM-04 — Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S20
 
-Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
+Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder). S20 built save worker pool with put_nowait drop-on-full — needs real camera for end-to-end validation.
 
 ### CAM-05 — Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S20
 
-Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
+Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi. S20 implements timestamped directory creation in start_recording().
 
 ### DET-01 — RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
 
@@ -88,9 +88,9 @@ Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kiri
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S20
 
-Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
+Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi. S20 built CameraResultsStore with Lock-guarded dict and copy-on-snapshot. S21 will add detection result keys.
 
 ### DET-06 — AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
 

@@ -83,7 +83,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v1.6 shipped):**
+**Current State (v1.6 shipped, v2.0 S20 complete):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`, `kesim_id`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - TouchButton widget: Qt touch events, instant activation, strict bounds, first-touch-wins, emergency stop overlay
@@ -99,6 +99,9 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - ControlManager: Mode-aware initial delay (ML-only, manual mode bypasses)
 - GUI Labels: Units (mm/dk, m/dk, A, %) on all numerical values; "Ilerleme" terminology
 - PositioningController: TouchButton for 4 positioning buttons with emergency stop overlay
+- CameraResultsStore: Thread-safe Lock-guarded key-value store for camera pipeline state
+- CameraService: Config-driven capture engine with daemon threads, JPEG encoding, recording to disk
+- Camera foundation: config.yaml camera section, SCHEMA_CAMERA_DB, lifecycle stub, zero-import guard
 
 **Tech Stack:**
 - ~15,641 LOC Python
