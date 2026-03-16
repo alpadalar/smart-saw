@@ -52,7 +52,7 @@
 
 ## Tasks
 
-- [ ] **T01: Build CameraController widget** `est:1h30m`
+- [x] **T01: Build CameraController widget** `est:1h30m`
   - Why: The camera page is the core deliverable — a self-contained QWidget that reads CameraResultsStore and displays all camera vision data. Covers GUI-01 through GUI-05, GUI-07, GUI-08, GUI-09.
   - Files: `src/gui/controllers/camera_controller.py`
   - Do: Create CameraController(results_store, parent=None) QWidget with programmatic layout for 1528×1080 content area. 8 sub-frames: KameraFrame (live feed ~934×525), SiraliGoruntuFrame (4 thumbnails 934×150), KirikTespitiFrame (broken detection ~505×438), CatlakTespitiFrame (crack detection ~505×438), TestereDegisimFrame (blade change strip), AsinmaYuzdesiFrame (wear % 260×105), TestereSagligiFrame (health score 260×105), TestereDurumuFrame (health status 260×105). 3 QTimers for frame/stats/health updates. Use QImage.loadFromData() for JPEG→QPixmap (no cv2). Include stop_timers() method. All styling matches dark theme (#0A0E1A background, #F4F6FC text, rgba frames). No module-level cv2/torch imports.

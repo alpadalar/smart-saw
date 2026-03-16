@@ -89,6 +89,13 @@ Create the CameraController QWidget — the camera page that lives inside MainCo
 - S24-RESEARCH.md — Widget layout geometry, JPEG-to-QImage conversion pattern, data contract table
 - Existing controllers (`sensor_controller.py`, `monitoring_controller.py`) — pattern reference for dark theme styling, QTimer usage, stop_timers() convention
 
+## Observability Impact
+
+- **Structured logs**: `logger.info("CameraController initialized")` on construction, `logger.info("CameraController timers stopped")` on teardown, `logger.error` with `exc_info=True` on frame decode failures and timer callback exceptions.
+- **Inspection surfaces**: QLabel text values for broken count, crack count, wear %, health score, health status — readable via Qt introspection or screenshot.
+- **Failure visibility**: Frame decode failures logged with full traceback. Each timer callback wraps work in try/except so one failing timer doesn't crash others.
+- **Agent diagnostics**: To check widget state at runtime, read `lbl_broken_count.text()`, `lbl_health_score.text()`, etc. Timer intervals are 500/1000/2000 ms — allow at least 2s after start before expecting all labels populated.
+
 ## Expected Output
 
 - `src/gui/controllers/camera_controller.py` — New ~400-500 line QWidget with full camera page layout and 3 timer-driven update methods
