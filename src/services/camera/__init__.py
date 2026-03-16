@@ -9,3 +9,7 @@ This module will contain:
 - SawHealthCalculator: Health score calculation (S21)
 - VisionService: Orchestration (S22)
 """
+
+from src.services.camera.results_store import CameraResultsStore
+
+__all__ = ["CameraResultsStore"]

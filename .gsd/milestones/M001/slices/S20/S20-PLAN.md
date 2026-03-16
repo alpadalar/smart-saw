@@ -33,6 +33,7 @@
 - `python -c "from src.services.camera import CameraResultsStore, CameraService; print('exports OK')"` — `__init__.py` exports both
 - `python -c "from src.services.camera.camera_service import CameraService; from src.services.camera.results_store import CameraResultsStore; s = CameraResultsStore(); cs = CameraService({'device_id': 99, 'resolution': {'width': 640, 'height': 480}, 'fps': 30, 'jpeg_quality': 85, 'recordings_path': '/tmp/test_rec'}, s); print('instantiation OK')"` — CameraService instantiates without opening camera
 - Application startup with `camera.enabled: false` still works (zero-import guard preserved)
+- `python -c "from src.services.camera.results_store import CameraResultsStore; s = CameraResultsStore(); print(s.snapshot())"` — returns empty dict `{}` on fresh store (inspectable failure-state baseline)
 
 ## Observability / Diagnostics
 
@@ -49,7 +50,7 @@
 
 ## Tasks
 
-- [ ] **T01: Merge S19 foundation and build CameraResultsStore** `est:45m`
+- [x] **T01: Merge S19 foundation and build CameraResultsStore** `est:45m`
   - Why: S19's two commits (`8dfbdb0`, `2131ac2`) are on a diverged branch — the worktree HEAD lacks camera config, DB schema, lifecycle stub, camera scaffold, and numpy uncap. CameraResultsStore is the sole integration boundary for all camera data consumers and must exist before CameraService.
   - Files: `src/services/camera/results_store.py` (new), `src/services/camera/__init__.py`, `requirements.txt`
   - Do: Cherry-pick S19 commits into worktree branch. Add `opencv-python-headless>=4.11.0` to requirements.txt. Build CameraResultsStore with threading.Lock, internal `_data` dict, `update(key, value)`, `update_batch(dict)`, `get(key, default=None)`, `snapshot() -> dict` (returns copy). Install opencv-python-headless. Verify store works.

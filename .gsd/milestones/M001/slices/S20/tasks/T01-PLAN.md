@@ -56,6 +56,12 @@ Two things must happen before any camera code can be built: (1) S19's foundation
 - `grep '_init_camera' src/core/lifecycle.py` matches
 - `grep 'camera:' config/config.yaml` matches
 
+## Observability Impact
+
+- **New signal:** `CameraResultsStore.snapshot()` — returns full state dict; any consumer or diagnostic script can call this to inspect current camera data (latest_frame, frame_count, is_recording, etc.)
+- **Inspection:** `python -c "from src.services.camera.results_store import CameraResultsStore; s = CameraResultsStore(); print(s.snapshot())"` shows `{}` on fresh store — useful baseline to confirm store is empty before service starts
+- **Failure state:** Store methods never raise (get returns default, snapshot returns empty dict) — failures are silent by design since the store is a passive data holder. Consumer-level errors surface upstream.
+
 ## Inputs
 
 - S19 commits `8dfbdb0` and `2131ac2` on diverged branch — contain all foundation artifacts
