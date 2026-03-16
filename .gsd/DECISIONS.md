@@ -34,4 +34,5 @@
 - "No kornia dependency — LDC pipeline uses only torch+cv2+numpy, old project had no kornia imports"
 - "Camera shutdown order: workers.stop() → workers.join() → camera_service.stop() → (later) SQLite flush — ensures all queued DB writes complete before queue drain"
 - "Workers accept optional db_service=None parameter for backward compatibility — no DB writes when None"
-- "__init__.py stripped of unconditional CameraService import to preserve zero-import guard — lifecycle imports from submodules directly"
+- "Camera fields merged into existing field_mapping dict (flat ThingsBoard payload) rather than a separate telemetry object"
+- "Snapshot extraction whitelists 6 scalar fields, explicitly excludes latest_frame (binary image data) from IoT payload"

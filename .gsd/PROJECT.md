@@ -108,6 +108,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - modelB4.py: Vendored LDC network architecture (pure PyTorch)
 - Lifecycle camera integration: _init_camera() creates CameraResultsStore → CameraService → DetectionWorker → LDCWorker with lazy imports; stop() tears down camera before SQLite flush
 - Camera DB persistence: DetectionWorker writes broken_tooth/crack events to detection_events; LDCWorker writes wear measurements to wear_history; both via SQLiteService.write_async()
+- IoT camera telemetry: CameraResultsStore.snapshot() → DataProcessingPipeline → MQTTService → ThingsBoardFormatter; 6 scalar fields (broken_count, tooth_count, crack_count, wear_percentage, health_score, health_status) in flat ThingsBoard payload; vision_data=None for backward compat
 
 **Tech Stack:**
 - ~15,641 LOC Python
@@ -157,4 +158,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-16 after S22 Lifecycle & DB Integration complete*
+*Last updated: 2026-03-16 after S23 IoT Integration complete*

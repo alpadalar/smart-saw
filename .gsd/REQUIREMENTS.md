@@ -117,9 +117,9 @@ Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (ca
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S23
 
-Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek)
+Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek). S23 wired CameraResultsStore.snapshot() through DataProcessingPipeline → MQTTService → ThingsBoardFormatter. Contract proven with functional test — 6 camera fields appear in ThingsBoard payload. Runtime proof requires camera hardware + MQTT broker.
 
 ### DATA-03 — Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
 
