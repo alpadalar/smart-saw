@@ -47,7 +47,7 @@
   > After this: numpy cap removed, camera config schema defined, camera.db schema in schemas.py, zero-import guard active.
 - [x] **S20: Camera Capture** `risk:medium` `depends:[S19]`
   > After this: OpenCV capture thread runs in background, JPEG frames written to recordings directory.
-- [ ] **S21: AI Detection Pipeline** `risk:medium` `depends:[S20]`
+- [x] **S21: AI Detection Pipeline** `risk:medium` `depends:[S20]`
   > After this: RT-DETR broken/crack detection and LDC wear calculation run in dedicated threads with results in CameraResultsStore.
 - [ ] **S22: Lifecycle & DB Integration** `risk:medium` `depends:[S21]`
   > After this: Camera services start/stop in lifecycle, detection results written to camera.db via SQLiteService queue.

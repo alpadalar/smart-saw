@@ -52,36 +52,36 @@ Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi. S20 imp
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S21
 
-RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
+RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt). S21 built DetectionWorker with dual RT-DETR inference — contract proven (import, instantiation), needs real model files and S22 lifecycle wiring for runtime validation.
 
 ### DET-02 — RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S21
 
-RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
+RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt). S21 built DetectionWorker with crack model path — contract proven, needs real model files and S22 lifecycle wiring.
 
 ### DET-03 — LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S21
 
-LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
+LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi. S21 built LDCWorker with LDC model + contour-based wear calculation — contract proven, needs real checkpoint and S22 lifecycle wiring.
 
 ### DET-04 — Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S21
 
-Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
+Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30). S21 built HealthCalculator with verified math — calculate_saw_health, get_health_status, get_health_color all pass boundary tests.
 
 ### DET-05 — Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
 
@@ -90,16 +90,16 @@ Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kiri
 - Source: inferred
 - Primary Slice: S20
 
-Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi. S20 built CameraResultsStore with Lock-guarded dict and copy-on-snapshot. S21 will add detection result keys.
+Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi. S20 built CameraResultsStore with Lock-guarded dict and copy-on-snapshot. S21 workers publish detection results via update_batch().
 
 ### DET-06 — AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
 
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S21
 
-AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
+AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan). S21 built both workers as daemon threads with models loading inside run() — zero-import guard verified.
 
 ### DATA-01 — Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db)
 
