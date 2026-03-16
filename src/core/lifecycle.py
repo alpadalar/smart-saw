@@ -83,6 +83,12 @@ class ApplicationLifecycle:
         self.gui_app: Optional['GUIApplication'] = None
         self.gui_thread: Optional[threading.Thread] = None
 
+        # Camera services (optional, config-driven)
+        self.camera_results_store = None
+        self.camera_service = None
+        self.detection_worker = None
+        self.ldc_worker = None
+
         # Background tasks
         self._health_monitor_task: Optional[asyncio.Task] = None
         self._shutdown_event = asyncio.Event()
@@ -171,6 +177,19 @@ class ApplicationLifecycle:
                     logger.warning("GUI thread did not finish in time")
                 else:
                     logger.info("GUI thread finished")
+
+            # 0.5. Stop camera threads (before data pipeline and SQLite flush)
+            if self.detection_worker:
+                logger.info("Stopping detection worker...")
+                self.detection_worker.stop()
+                self.detection_worker.join(timeout=timeout)
+            if self.ldc_worker:
+                logger.info("Stopping LDC worker...")
+                self.ldc_worker.stop()
+                self.ldc_worker.join(timeout=timeout)
+            if self.camera_service:
+                logger.info("Stopping camera service...")
+                await self.camera_service.stop()
 
             # 1. Stop data pipeline
             if self.data_pipeline:
@@ -363,10 +382,11 @@ class ApplicationLifecycle:
 
     async def _init_camera(self):
         """
-        Initialize camera database (optional, config-driven).
+        Initialize camera database and services (optional, config-driven).
 
-        Only creates camera.db when camera.enabled=true.
-        No camera module imports - those are deferred to S22.
+        Only activates when camera.enabled=true.
+        All camera module imports are lazy (inside this method) to preserve
+        the zero-import guard — no cv2/torch at lifecycle module level.
         """
         camera_config = self.config.get('camera', {})
 
@@ -374,9 +394,10 @@ class ApplicationLifecycle:
             logger.info("Camera vision disabled - skipping")
             return
 
-        logger.info("Initializing camera database...")
+        logger.info("Initializing camera services...")
 
         try:
+            # --- Camera database ---
             db_config = self.config['database']['sqlite']
             db_path = Path(db_config['path'])
             db_file = db_path / "camera.db"
@@ -388,9 +409,45 @@ class ApplicationLifecycle:
             self.db_services['camera'] = service
             logger.info(f"  camera.db initialized: {db_file}")
 
+            # --- Camera services (lazy imports — camera modules pull cv2/torch) ---
+            from src.services.camera.results_store import CameraResultsStore
+            from src.services.camera.camera_service import CameraService
+
+            camera_db_service = self.db_services.get('camera')
+
+            # Results store (in-memory, thread-safe)
+            self.camera_results_store = CameraResultsStore()
+
+            # Camera capture service
+            self.camera_service = CameraService(camera_config, self.camera_results_store)
+            await self.camera_service.start()
+            logger.info("  Camera capture service started")
+
+            # Detection worker (optional)
+            det_config = camera_config.get('detection', {})
+            if det_config.get('enabled', False):
+                from src.services.camera.detection_worker import DetectionWorker
+                self.detection_worker = DetectionWorker(
+                    camera_config, self.camera_results_store,
+                    self.camera_service, db_service=camera_db_service,
+                )
+                self.detection_worker.start()  # Thread.start()
+                logger.info("  Detection worker started")
+
+            # LDC wear worker (optional)
+            wear_config = camera_config.get('wear', {})
+            if wear_config.get('enabled', False):
+                from src.services.camera.ldc_worker import LDCWorker
+                self.ldc_worker = LDCWorker(
+                    camera_config, self.camera_results_store,
+                    self.camera_service, db_service=camera_db_service,
+                )
+                self.ldc_worker.start()  # Thread.start()
+                logger.info("  LDC wear worker started")
+
         except Exception as e:
-            logger.warning(f"  Camera database initialization failed: {e}")
-            logger.warning("  Continuing without camera database")
+            logger.warning(f"  Camera initialization failed: {e}")
+            logger.warning("  Continuing without camera services")
 
     async def _init_data_pipeline(self):
         """

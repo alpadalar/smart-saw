@@ -67,7 +67,7 @@
   - Verify: `python -m py_compile src/services/camera/detection_worker.py && python -m py_compile src/services/camera/ldc_worker.py`; verify constructors accept `db_service=None`; verify INSERT SQL column lists match schema
   - Done when: Both workers accept `db_service` kwarg and write detection/wear results to camera.db when db_service is provided
 
-- [ ] **T03: Wire camera services into lifecycle start/stop** `est:25m`
+- [x] **T03: Wire camera services into lifecycle start/stop** `est:25m`
   - Why: Camera services exist as standalone classes but aren't started or stopped by the application. This task wires them into `_init_camera()` and `stop()`.
   - Files: `src/core/lifecycle.py`
   - Do: (1) Add camera service attributes to `__init__`: `self.camera_results_store`, `self.camera_service`, `self.detection_worker`, `self.ldc_worker` — all `Optional`, default None. (2) Expand `_init_camera()`: after existing db init code, lazy-import CameraResultsStore, CameraService, DetectionWorker, LDCWorker inside the config guard. Instantiate CameraResultsStore(). Instantiate CameraService(camera_config, results_store) and call `await camera_service.start()`. Instantiate DetectionWorker(camera_config, results_store, camera_service, db_service=self.db_services.get('camera')) — only if `detection.enabled`. Call `detection_worker.start()` (thread start, not await). Same pattern for LDCWorker with `wear.enabled` check. Store all on self. (3) Add camera stop in `stop()` between step 0 (GUI join) and step 1 (data pipeline stop): stop detection_worker and ldc_worker (`.stop()` then `.join(timeout)`), then stop camera_service (`await .stop()`). Camera threads must stop before step 5 (SQLite flush). (4) All imports inside the guard — no cv2/torch at module level.
