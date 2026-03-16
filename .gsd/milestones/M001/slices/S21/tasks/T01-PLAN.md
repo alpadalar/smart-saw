@@ -73,3 +73,10 @@ Lay the foundation for S21 by vendoring the LDC model definition, building the H
 - `src/services/camera/health_calculator.py` — HealthCalculator class with calculate_saw_health, get_health_status, get_health_color
 - `requirements.txt` — includes ultralytics, torch, torchvision
 - `config/config.yaml` — camera.wear section includes ldc_checkpoint_path
+
+## Observability Impact
+
+- **HealthCalculator** logs at `DEBUG` level on each `calculate_saw_health` call with broken%, wear%, and health% values via `logging.getLogger(__name__)`
+- **HealthCalculator** logs at `ERROR` level on calculation exceptions with the exception message
+- No new runtime processes, endpoints, or persisted state — this task is pure logic/vendoring
+- Future agents inspect health scoring via: `python3 -c "from src.services.camera.health_calculator import HealthCalculator; h=HealthCalculator(); print(h.calculate_saw_health(100, 5, 20.0))"`

@@ -51,7 +51,7 @@
 
 ## Tasks
 
-- [ ] **T01: Vendor modelB4, build HealthCalculator, update deps and config** `est:45m`
+- [x] **T01: Vendor modelB4, build HealthCalculator, update deps and config** `est:45m`
   - Why: Provides the foundational pieces — LDC model definition, health scoring logic, and dependency declarations. All pure logic/vendoring, testable immediately without models or hardware. Unblocks T02 and T03.
   - Files: `src/services/camera/modelB4.py`, `src/services/camera/health_calculator.py`, `requirements.txt`, `config/config.yaml`
   - Do: Copy modelB4.py from old project (`/media/workspace/eskiimas/smart-saw/src/vision/ldc/modelB4.py`) into `src/services/camera/modelB4.py` — add `from __future__ import annotations` at top, keep everything else as-is. Build HealthCalculator class porting from old project's `saw_health_calculator.py` — same formula (broken_weight=0.7, wear_weight=0.3), same status thresholds, same color codes. Add `from __future__ import annotations`. Add `ultralytics>=8.3.70`, `torch>=2.6.0`, `torchvision>=0.21.0` to requirements.txt. Add `ldc_checkpoint_path: "data/models/ldc/16_model.pth"` to camera.wear config section.
