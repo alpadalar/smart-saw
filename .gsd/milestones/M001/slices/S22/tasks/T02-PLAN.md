@@ -91,3 +91,10 @@ DetectionWorker and LDCWorker currently publish results only to CameraResultsSto
 
 - `src/services/camera/detection_worker.py` — constructor accepts `db_service=None`, main loop writes broken_tooth and crack events to detection_events
 - `src/services/camera/ldc_worker.py` — constructor accepts `db_service=None`, main loop writes wear measurements to wear_history
+
+## Observability Impact
+
+- **New log signals:** `logger.warning("DB write failed — broken_tooth event dropped")`, `logger.warning("DB write failed — crack event dropped")` in DetectionWorker; `logger.warning("DB write failed — wear_history event dropped")` in LDCWorker. These fire when `write_async` returns `False` (queue full or DB error).
+- **Inspection:** Query `detection_events` and `wear_history` tables in camera.db to confirm writes are landing. No writes appear when `db_service` is `None` (backward compatible).
+- **Failure state:** When the write queue is full, warnings are emitted but detection/wear processing continues uninterrupted. No crash, no retry — events are dropped with a visible log line.
+- **Future agent diagnostic:** grep logs for `"DB write failed"` to detect write-queue saturation.

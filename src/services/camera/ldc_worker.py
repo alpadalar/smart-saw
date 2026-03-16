@@ -47,6 +47,7 @@ class LDCWorker(threading.Thread):
         config: dict,
         results_store: CameraResultsStore,
         camera_service: CameraService,
+        db_service=None,
     ) -> None:
         super().__init__(daemon=True, name="ldc-worker")
 
@@ -59,6 +60,7 @@ class LDCWorker(threading.Thread):
 
         self._results_store = results_store
         self._camera_service = camera_service
+        self._db_service = db_service
 
         self._stop_event = threading.Event()
         self._model_load_failed: bool = False
@@ -155,6 +157,19 @@ class LDCWorker(threading.Thread):
             updates["health_color"] = health_color
 
             self._results_store.update_batch(updates)
+
+            # -- persist to camera.db --
+            if self._db_service and wear_percentage is not None:
+                ok = self._db_service.write_async(
+                    "INSERT INTO wear_history "
+                    "(timestamp, wear_percentage, health_score, edge_pixel_count, "
+                    "image_path, kesim_id, makine_id, serit_id, malzeme_cinsi) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (now, wear_percentage, health_score, None,
+                     None, None, None, None, None),
+                )
+                if not ok:
+                    logger.warning("DB write failed — wear_history event dropped")
 
             logger.debug(
                 "Wear cycle — wear=%.2f%%, health=%.2f%%",

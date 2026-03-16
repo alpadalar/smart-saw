@@ -37,6 +37,7 @@ class DetectionWorker(threading.Thread):
         config: dict,
         results_store: CameraResultsStore,
         camera_service: CameraService,
+        db_service=None,
     ) -> None:
         super().__init__(daemon=True, name="detection-worker")
 
@@ -53,6 +54,7 @@ class DetectionWorker(threading.Thread):
 
         self._results_store = results_store
         self._camera_service = camera_service
+        self._db_service = db_service
 
         self._stop_event = threading.Event()
         self._model_load_failed: bool = False
@@ -193,6 +195,31 @@ class DetectionWorker(threading.Thread):
                     "last_detection_ts": now,
                 }
             )
+
+            # -- persist to camera.db --
+            if self._db_service:
+                if broken_count > 0:
+                    ok = self._db_service.write_async(
+                        "INSERT INTO detection_events "
+                        "(timestamp, event_type, confidence, count, image_path, "
+                        "kesim_id, makine_id, serit_id, malzeme_cinsi) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (now, "broken_tooth", broken_confidence, broken_count,
+                         None, None, None, None, None),
+                    )
+                    if not ok:
+                        logger.warning("DB write failed — broken_tooth event dropped")
+                if crack_count > 0:
+                    ok = self._db_service.write_async(
+                        "INSERT INTO detection_events "
+                        "(timestamp, event_type, confidence, count, image_path, "
+                        "kesim_id, makine_id, serit_id, malzeme_cinsi) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (now, "crack", crack_confidence, crack_count,
+                         None, None, None, None, None),
+                    )
+                    if not ok:
+                        logger.warning("DB write failed — crack event dropped")
 
             logger.debug(
                 "Detection cycle — broken=%d, tooth=%d, crack=%d",

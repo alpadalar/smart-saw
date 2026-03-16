@@ -60,7 +60,7 @@
   - Verify: `python -c "import src.services.camera; print('OK')"` succeeds without cv2; `python -m py_compile src/services/camera/__init__.py` passes
   - Done when: `import src.services.camera` does not trigger cv2 import
 
-- [ ] **T02: Add db_service to workers with DB writes** `est:25m`
+- [x] **T02: Add db_service to workers with DB writes** `est:25m`
   - Why: DetectionWorker and LDCWorker need to persist results to camera.db. Adding optional `db_service` parameter and INSERT calls after each detection/wear cycle.
   - Files: `src/services/camera/detection_worker.py`, `src/services/camera/ldc_worker.py`
   - Do: (1) Add optional `db_service=None` parameter to both constructors, store as `self._db_service`. (2) In DetectionWorker's main loop, after publishing to results_store, if `self._db_service` and `broken_count > 0`: call `self._db_service.write_async(INSERT INTO detection_events (...) VALUES (...), params)` with event_type='broken_tooth'. Same for `crack_count > 0` with event_type='crack'. (3) In LDCWorker's main loop, after publishing to results_store, if `self._db_service` and `wear_percentage is not None`: call `self._db_service.write_async(INSERT INTO wear_history (...) VALUES (...), params)`. (4) INSERT column lists must match `detection_events` and `wear_history` schemas exactly. Traceability columns (kesim_id, makine_id, serit_id, malzeme_cinsi) can be NULL for now. (5) Log warning if write_async returns False.
