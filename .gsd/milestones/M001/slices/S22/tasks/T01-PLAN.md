@@ -36,6 +36,12 @@ Fix by removing the unconditional imports that trigger cv2. Keep the docstring f
 
 - `src/services/camera/__init__.py` — current file with unconditional cv2-triggering imports
 
+## Observability Impact
+
+- **Before:** `import src.services.camera` silently triggers cv2/torch load, causing import errors or slow startup when camera is disabled.
+- **After:** Package import is inert — no side effects. A future agent debugging import failures can confirm the `__init__.py` is clean by checking that it contains only a docstring, no import statements.
+- **Failure state:** If someone re-adds an unconditional import, `python -c "import src.services.camera"` will fail with `ModuleNotFoundError: No module named 'cv2'` in environments without opencv installed — a clear, greppable signal.
+
 ## Expected Output
 
 - `src/services/camera/__init__.py` — cleaned: docstring only, no unconditional imports that trigger cv2/torch

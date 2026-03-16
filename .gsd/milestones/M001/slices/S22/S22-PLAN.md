@@ -36,6 +36,7 @@
 - Verify `stop()` stops camera threads before SQLite flush (step 5)
 - Verify INSERT SQL in detection_worker matches detection_events schema columns
 - Verify INSERT SQL in ldc_worker matches wear_history schema columns
+- Verify logger.warning emitted when db_service.write_async returns False (failure path visible in logs)
 
 ## Observability / Diagnostics
 
@@ -52,7 +53,7 @@
 
 ## Tasks
 
-- [ ] **T01: Fix __init__.py zero-import guard** `est:15m`
+- [x] **T01: Fix __init__.py zero-import guard** `est:15m`
   - Why: `__init__.py` unconditionally imports CameraService which imports cv2. This breaks the zero-import guard when `camera.enabled=false`. Must fix before lifecycle wiring since lifecycle imports from submodules directly.
   - Files: `src/services/camera/__init__.py`
   - Do: Remove the unconditional `from src.services.camera.camera_service import CameraService` import. Keep docstring and `__all__` but make it empty or remove it. The package should be importable without triggering cv2/torch. Lifecycle already imports from submodules directly (`from src.services.camera.results_store import CameraResultsStore` etc.).
