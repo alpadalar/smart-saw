@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
 status: Ready to plan
-stopped_at: Completed 20-camera-capture-20-01-PLAN.md
-last_updated: "2026-03-25T20:46:08.590Z"
+stopped_at: Phase 21 context gathered
+last_updated: "2026-03-25T21:19:53.831Z"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -105,6 +105,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-25T20:42:11.563Z
-Stopped at: Completed 20-camera-capture-20-01-PLAN.md
-Resume file: None
+Last session: 2026-03-25T21:19:53.825Z
+Stopped at: Phase 21 context gathered
+Resume file: .planning/phases/21-ai-detection-pipeline/21-CONTEXT.md
