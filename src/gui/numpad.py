@@ -153,6 +153,22 @@ class Ui_Dialog:
         self.toolButton_2.setIconSize(QSize(75, 85))
         self.toolButton_2.setObjectName("toolButton_2")
 
+        # Close button
+        self.closeButton = QPushButton(Dialog)
+        self.closeButton.setGeometry(633, 11, 57, 57)
+        self.closeButton.setStyleSheet("""
+            background-color: transparent;
+            border: none;
+        """)
+        self.closeButton.setText("")
+
+        icon_path = os.path.join(os.path.dirname(__file__), "images", "close.png")
+        if os.path.exists(icon_path):
+            close_icon = QIcon(icon_path)
+            self.closeButton.setIcon(close_icon)
+        self.closeButton.setIconSize(QSize(57, 57))
+        self.closeButton.setObjectName("closeButton")
+
         self.retranslateUi(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -173,11 +189,12 @@ class Ui_Dialog:
 class NumpadDialog(QDialog):
     """Numpad dialog for entering numeric values."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_value=""):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        self.value = ""
+        self.value = initial_value
+        self._prefilled = bool(initial_value)
         self.Accepted = QDialog.Accepted
         self.setup_connections()
         self.update_label()
@@ -214,9 +231,13 @@ class NumpadDialog(QDialog):
         self.ui.pushButton_11.clicked.connect(lambda: self.add_digit('0'))
         self.ui.toolButton.clicked.connect(self.backspace)
         self.ui.toolButton_2.clicked.connect(self.accept)
+        self.ui.closeButton.clicked.connect(self.reject)
 
     def add_digit(self, digit):
         """Add a digit to the value."""
+        if self._prefilled:
+            self.value = ""
+            self._prefilled = False
         if len(self.value) < 10:
             self.value += digit
             self.update_label()
