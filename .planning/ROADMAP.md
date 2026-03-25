@@ -108,6 +108,16 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 Plans:
 - [ ] 19-01: numpy uncap + np.ptp fix + camera config schema + SCHEMA_CAMERA_DB + lifecycle _init_camera() + camera module scaffold
 
+### Phase 19.1: UI Refinements (INSERTED) — COMPLETE 2026-03-25
+
+**Goal:** Urgent touch UX improvements — NumpadDialog close button and speed pre-fill
+**Requirements**: none
+**Depends on:** Phase 19
+**Plans:** 1 plan
+
+Plans:
+- [x] 19.1-01: NumpadDialog close button + initial_value pre-fill + first-keystroke replacement — completed 2026-03-25
+
 ### Phase 20: Camera Capture
 **Goal**: Kameradan frame alimi ve JPEG kaydi — asyncio event loop'u hic bloklamadan arka plan thread'lerinde calisir
 **Depends on**: Phase 19
@@ -207,7 +217,8 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 16. ML DB None Values Investigation | v1.6 | 1/1 | Complete | 2026-02-04 |
 | 17. ML DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 18. Anomaly DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
-| 19. Foundation | 1/1 | Complete    | 2026-03-16 | - |
+| 19. Foundation | v2.0 | 1/1 | Complete | 2026-03-16 |
+| 19.1. UI Refinements (INSERTED) | v2.0 | 1/1 | Complete | 2026-03-25 |
 | 20. Camera Capture | v2.0 | 0/1 | Not started | - |
 | 21. AI Detection Pipeline | v2.0 | 0/2 | Not started | - |
 | 22. Lifecycle & DB Integration | v2.0 | 0/1 | Not started | - |

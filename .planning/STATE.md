@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
 status: planning
-stopped_at: Completed 19-foundation-19-01-PLAN.md
-last_updated: "2026-03-16T00:05:28.282Z"
-last_activity: 2026-03-16 — Roadmap v2.0 written (Phases 19-24), 23 requirements mapped
+stopped_at: Completed 19.1-ui-refinements-19.1-01-PLAN.md
+last_updated: "2026-03-25T21:20:57Z"
+last_activity: 2026-03-25 — Phase 19.1-01 complete (NumpadDialog close button + pre-fill)
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 2
+  completed_plans: 2
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ## Current Position
 
-Phase: 19 of 24 (Foundation)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-16 — Roadmap v2.0 written (Phases 19-24), 23 requirements mapped
+Phase: 19.1 of 24+ (UI Refinements)
+Plan: 01 COMPLETE
+Status: Phase 19.1 complete — ready for Phase 19 (Foundation)
+Last activity: 2026-03-25 — Phase 19.1-01 complete (NumpadDialog close button + pre-fill)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,9 +63,10 @@ Progress: [░░░░░░░░░░] 0%
 | 18-anomaly-db-schema-update | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 3 min, 2 min, 2 min, 2 min
+- Last 5 plans: 3 min, 3 min, 2 min, 2 min, 1 min
 - Trend: Stable
 | Phase 19-foundation P01 | 2 | 2 tasks | 6 files |
+| Phase 19.1-ui-refinements P01 | 1 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Key v2.0 decisions established in research:
 - [Phase 19-foundation]: camera.enabled defaults to false — zero behavioral change until hardware connected
 - [Phase 19-foundation]: camera.db created by _init_camera() not _init_databases() — camera lifecycle isolated, no config.yaml database entry needed
 - [Phase 19-foundation]: No camera module imports in lifecycle.py — lazy import pattern deferred to S22 to avoid ImportError when opencv not installed
+- [Phase 19.1-ui-refinements]: closeButton uses QPushButton (not QToolButton) with transparent style — dismiss action, not a numpad value button
+- [Phase 19.1-ui-refinements]: backspace() intentionally NOT checking _prefilled — trim behavior on pre-filled value is correct per UX research
+- [Phase 19.1-ui-refinements]: initial_value defaults to "" (not None) — keeps self.value type-consistent as str throughout
 
 ### Blockers/Concerns
 
@@ -100,9 +104,10 @@ Key v2.0 decisions established in research:
 - Milestone v1.5 COMPLETE: 2026-01-28
 - Milestone v1.6 COMPLETE: 2026-03-16
 - Milestone v2.0 STARTED: 2026-03-16
+- Phase 19.1 inserted after Phase 19: UI refinements (URGENT)
 
 ## Session Continuity
 
-Last session: 2026-03-16T00:02:55.018Z
-Stopped at: Completed 19-foundation-19-01-PLAN.md
+Last session: 2026-03-25T21:20:57Z
+Stopped at: Completed 19.1-ui-refinements-19.1-01-PLAN.md
 Resume file: None
