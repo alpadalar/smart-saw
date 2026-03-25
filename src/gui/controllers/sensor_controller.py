@@ -304,13 +304,13 @@ class CuttingGraphWidget(QWidget):
             }
         """
 
-        # Axis title style (bold, 20px)
+        # Axis title style
         axis_title_style = """
             QLabel {
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: bold;
-                font-size: 20px;
+                font-weight: 200;
+                font-size: 18px;
                 background-color: transparent;
                 border: none;
             }
@@ -451,7 +451,7 @@ class CuttingGraphWidget(QWidget):
             # X-axis title label — bottom-right of graph area; right edge at x=806, y=518 in kesimGrafigiFrame
             # Qt.AlignRight justifies text to the right edge of the widget (x=506+300=806)
             if hasattr(self, 'x_axis_title') and self.x_axis_title:
-                self.x_axis_title.setGeometry(506, 518, 300, 30)
+                self.x_axis_title.setGeometry(626, 518, 300, 30)
 
         except Exception as e:
             logger.error(f"Error updating label positions: {e}")

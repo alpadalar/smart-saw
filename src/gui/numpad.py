@@ -155,7 +155,7 @@ class Ui_Dialog:
 
         # Close button
         self.closeButton = QPushButton(Dialog)
-        self.closeButton.setGeometry(633, 11, 57, 57)
+        self.closeButton.setGeometry(664, 48, 57, 57)
         self.closeButton.setStyleSheet("""
             background-color: transparent;
             border: none;
