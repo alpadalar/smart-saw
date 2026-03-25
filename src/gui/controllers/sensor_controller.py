@@ -304,13 +304,13 @@ class CuttingGraphWidget(QWidget):
             }
         """
 
-        # Axis title style (bold, 16px)
+        # Axis title style (bold, 20px)
         axis_title_style = """
             QLabel {
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
-                font-size: 16px;
+                font-size: 20px;
                 background-color: transparent;
                 border: none;
             }
@@ -320,7 +320,7 @@ class CuttingGraphWidget(QWidget):
         self.y_axis_title = QLabel(self.parent())
         self.y_axis_title.setStyleSheet(axis_title_style)
         self.y_axis_title.setText("Kesme Hızı (m/min)")  # Default
-        self.y_axis_title.setAlignment(Qt.AlignCenter)
+        self.y_axis_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         # Left side labels (Y axis) - in kesimGrafigiFrame
         self.yust = QLabel(self.parent())
@@ -358,7 +358,7 @@ class CuttingGraphWidget(QWidget):
         self.x_axis_title = QLabel(self.parent())
         self.x_axis_title.setStyleSheet(axis_title_style)
         self.x_axis_title.setText("Zaman (s)")  # Default
-        self.x_axis_title.setAlignment(Qt.AlignCenter)
+        self.x_axis_title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Show labels
         self.yust.show()
@@ -444,22 +444,14 @@ class CuttingGraphWidget(QWidget):
             # Right
             self.xalt.setGeometry(graph_x + graph_width - label_width - 20, graph_y + graph_height + 5, label_width, label_height)
 
-            # Y-axis title label (positioned to left of Y-axis value labels, centered vertically)
-            # Using horizontal text since Qt rotation is complex
-            y_title_width = 180
-            y_title_height = 25
-            y_title_x = graph_x - label_width - y_title_width - 10  # Left of value labels
-            y_title_y = graph_y + (graph_height // 2) - (y_title_height // 2)  # Centered vertically
+            # Y-axis title label — top-left corner of graph area (x=46, y=72 in kesimGrafigiFrame)
             if hasattr(self, 'y_axis_title') and self.y_axis_title:
-                self.y_axis_title.setGeometry(y_title_x, y_title_y, y_title_width, y_title_height)
+                self.y_axis_title.setGeometry(46, 72, 300, 30)
 
-            # X-axis title label (below X-axis value labels, centered horizontally)
-            x_title_width = 180
-            x_title_height = 25
-            x_title_x = graph_x + (graph_width // 2) - (x_title_width // 2)  # Centered horizontally
-            x_title_y = graph_y + graph_height + 35  # Below value labels (5 + 30 for label height)
+            # X-axis title label — bottom-right of graph area; right edge at x=806, y=518 in kesimGrafigiFrame
+            # Qt.AlignRight justifies text to the right edge of the widget (x=506+300=806)
             if hasattr(self, 'x_axis_title') and self.x_axis_title:
-                self.x_axis_title.setGeometry(x_title_x, x_title_y, x_title_width, x_title_height)
+                self.x_axis_title.setGeometry(506, 518, 300, 30)
 
         except Exception as e:
             logger.error(f"Error updating label positions: {e}")
