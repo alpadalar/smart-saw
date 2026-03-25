@@ -132,11 +132,11 @@ Plans:
   3. SawHealthCalculator saglik skorunu (kirik %70 + asinma %30) hesaplar; CameraResultsStore'da gorunur
   4. Modeller kendi thread run() metodunda yuklenir — lifecycle startup'ini bloklamaz
   5. Broken ve crack modeli tek thread'de sirayla calisir — model nesneleri thread'ler arasinda paylasilmaz
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: DetectionWorker (broken + crack RT-DETR) + CameraResultsStore detection fields
-- [ ] 21-02: LDCWorker (edge detection + wear %) + SawHealthCalculator
+- [ ] 21-01-PLAN.md — Convention-audit DetectionWorker + modelB4 cleanup + unit tests (DET-01, DET-02, DET-05, DET-06)
+- [ ] 21-02-PLAN.md — ROI config migration + convention-audit LDCWorker + HealthCalculator + unit tests (DET-03, DET-04, DET-05, DET-06)
 
 ### Phase 22: Lifecycle & DB Integration
 **Goal**: Kamera servislerinin uygulama lifecyle'ina baglanmasi ve tespit sonuclarinin SQLite'a yazilmasi
