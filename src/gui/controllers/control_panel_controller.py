@@ -911,9 +911,9 @@ class ControlPanelController(QWidget):
         self.labelBandDeviationValue.setStyleSheet(label_value_style)
         self.labelBandDeviationValue.setAlignment(Qt.AlignCenter)
 
-        # === SYSTEM STATUS FRAME (1176, 127, 321, 243) ===
+        # === SYSTEM STATUS FRAME (1176, 823, 321, 243) ===
         self.systemStatusFrame = QFrame(self)
-        self.systemStatusFrame.setGeometry(1176, 127, 321, 243)
+        self.systemStatusFrame.setGeometry(1176, 823, 321, 243)
         self.systemStatusFrame.setStyleSheet(frame_style)
 
         self.labelSystemStatus = QLabel("Sistem Durumu", self.systemStatusFrame)
@@ -957,7 +957,7 @@ class ControlPanelController(QWidget):
         self.bandCuttingSpeedFrame.mousePressEvent = self._handle_cutting_speed_frame_click
 
         self.labelBandCuttingSpeed = QLabel(
-            "Şerit Kesme Hızı (m/dk)",
+            '<b>Şerit Kesme Hızı</b> <span style="font-weight: 300;">(m/dk)</span>',
             self.bandCuttingSpeedFrame
         )
         self.labelBandCuttingSpeed.setGeometry(31, 27, 491, 45)
@@ -1014,14 +1014,14 @@ class ControlPanelController(QWidget):
             "Şerit Motor Akımı (A)",
             self.BandCuttingCurrentFrame
         )
-        self.labelBandCuttingCurrent.setGeometry(23, 20, 181, 20)
+        self.labelBandCuttingCurrent.setGeometry(20, 20, 181, 20)
         self.labelBandCuttingCurrent.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: medium;
-                font-size: 20px;
+                font-size: 18px;
             }
         """)
 
@@ -1047,14 +1047,14 @@ class ControlPanelController(QWidget):
             "Şerit Motor Torku (%)",
             self.BandCuttingTorqueFrame
         )
-        self.labelBandCuttingTorque.setGeometry(23, 20, 181, 20)
+        self.labelBandCuttingTorque.setGeometry(20, 20, 181, 20)
         self.labelBandCuttingTorque.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: medium;
-                font-size: 20px;
+                font-size: 18px;
             }
         """)
 
@@ -1079,7 +1079,7 @@ class ControlPanelController(QWidget):
         self.bandDescentSpeedFrame.mousePressEvent = self._handle_descent_speed_frame_click
 
         self.labelBandDescentSpeed = QLabel(
-            "Şerit İlerleme Hızı (mm/dk)",
+            '<b>Şerit İlerleme Hızı</b> <span style="font-weight: 300;">(mm/dk)</span>',
             self.bandDescentSpeedFrame
         )
         self.labelBandDescentSpeed.setGeometry(31, 27, 491, 45)
@@ -1136,14 +1136,14 @@ class ControlPanelController(QWidget):
             "İlerleme Motor Akımı (A)",
             self.BandDescentCurrentFrame
         )
-        self.labelBandDescentCurrent.setGeometry(23, 20, 181, 20)
+        self.labelBandDescentCurrent.setGeometry(20, 20, 181, 20)
         self.labelBandDescentCurrent.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: medium;
-                font-size: 20px;
+                font-size: 16px;
             }
         """)
 
@@ -1169,14 +1169,14 @@ class ControlPanelController(QWidget):
             "İlerleme Motor Torku (%)",
             self.BandDescentTorqueFrame
         )
-        self.labelBandDescentTorque.setGeometry(23, 20, 181, 20)
+        self.labelBandDescentTorque.setGeometry(20, 20, 181, 20)
         self.labelBandDescentTorque.setStyleSheet("""
             QLabel {
                 background-color: transparent;
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: medium;
-                font-size: 20px;
+                font-size: 16px;
             }
         """)
 
@@ -1193,9 +1193,9 @@ class ControlPanelController(QWidget):
         """)
         self.labelBandDescentTorqueValue.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        # === LOG VIEWER FRAME (1176, 384, 321, 480) ===
+        # === LOG VIEWER FRAME (1176, 362, 321, 480) ===
         self.logViewerFrame = QFrame(self)
-        self.logViewerFrame.setGeometry(1176, 384, 321, 460)
+        self.logViewerFrame.setGeometry(1176, 362, 321, 460)
         self.logViewerFrame.setStyleSheet(frame_style)
 
         self.labelLogViewer = QLabel("Çalışma Günlüğü", self.logViewerFrame)
@@ -1309,7 +1309,7 @@ class ControlPanelController(QWidget):
 
         # Cutting time display (in control frame)
         self.cuttingTimeFrame = QFrame(self)
-        self.cuttingTimeFrame.setGeometry(1176, 845, 321, 221)
+        self.cuttingTimeFrame.setGeometry(1176, 127, 321, 221)
         self.cuttingTimeFrame.setStyleSheet(nested_frame_style)
 
         self.labelCuttingTime = QLabel("Kesim Zamanı", self.cuttingTimeFrame)
