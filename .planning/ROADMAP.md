@@ -117,10 +117,10 @@ Plans:
   2. Kameradan alinan frame'ler `recordings/YYYYMMDD-HHMMSS/` klasorune JPEG olarak yazilir
   3. CameraResultsStore'daki `latest_frame` alani her yeni frame sonrasi guncellenir (thread-safe)
   4. Config'deki cozunurluk ve FPS degerleri gercekte VideoCapture'a uygulanir
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 20-01: CameraResultsStore (results_store.py) + CameraService (camera_service.py) — capture thread + JPEG encoder
+- [ ] 20-01-PLAN.md — Test scaffold + CameraResultsStore + CameraService (capture thread, JPEG encoder, auto-discovery, retry)
 
 ### Phase 21: AI Detection Pipeline
 **Goal**: RT-DETR ve LDC modellerinin kendi thread'lerinde calisarak tespit sonuclarini CameraResultsStore'a yazmasi
