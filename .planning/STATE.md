@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
-status: planning
-stopped_at: Phase 20 context gathered
-last_updated: "2026-03-25T20:16:01.779Z"
-last_activity: 2026-03-16 — Roadmap v2.0 written (Phases 19-24), 23 requirements mapped
+status: Ready to plan
+stopped_at: Completed 20-camera-capture-20-01-PLAN.md
+last_updated: "2026-03-25T20:46:08.590Z"
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 0
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** v2.0 Camera Vision & AI Detection — Phase 19: Foundation
+**Current focus:** Phase 20 — camera-capture
 
 ## Current Position
 
-Phase: 19 of 24 (Foundation)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-16 — Roadmap v2.0 written (Phases 19-24), 23 requirements mapped
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 21
+Plan: Not started
 
 ## Performance Metrics
 
@@ -69,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: Stable
 
 | Phase 19-foundation P01 | 2 | 2 tasks | 6 files |
+| Phase 20-camera-capture P01 | 4 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -87,6 +82,9 @@ Key v2.0 decisions established in research:
 - [Phase 19-foundation]: camera.enabled defaults to false — zero behavioral change until hardware connected
 - [Phase 19-foundation]: camera.db created by _init_camera() not _init_databases() — camera lifecycle isolated, no config.yaml database entry needed
 - [Phase 19-foundation]: No camera module imports in lifecycle.py — lazy import pattern deferred to S22 to avoid ImportError when opencv not installed
+- [Phase 20-camera-capture]: Auto-discovery scans 4 device IDs from config hint — industrial robustness for USB ID shifts
+- [Phase 20-camera-capture]: 30-second retry on capture loss — transient USB disconnect must not crash main application
+- [Phase 20-camera-capture]: fps_actual moving average via deque(maxlen=30) updated every 30 frames — low lock contention
 
 ### Blockers/Concerns
 
@@ -107,6 +105,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-25T20:16:01.773Z
-Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-camera-capture/20-CONTEXT.md
+Last session: 2026-03-25T20:42:11.563Z
+Stopped at: Completed 20-camera-capture-20-01-PLAN.md
+Resume file: None

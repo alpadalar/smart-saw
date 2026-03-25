@@ -86,7 +86,7 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 **Milestone Goal:** Kamera tabanli yapay zeka ile serit testere dis kirigi, catlak ve asinma tespiti; camera.enabled=false oldugunda sifir kod yuklenir.
 
 - [x] **Phase 19: Foundation** - numpy unblocker, camera config schema, camera.db schema, config-driven zero-import guard (completed 2026-03-16)
-- [ ] **Phase 20: Camera Capture** - OpenCV frame capture thread, JPEG encoder, recordings directory structure
+- [x] **Phase 20: Camera Capture** - OpenCV frame capture thread, JPEG encoder, recordings directory structure (completed 2026-03-25)
 - [ ] **Phase 21: AI Detection Pipeline** - RT-DETR broken/crack detection, LDC wear, health calculator, CameraResultsStore
 - [ ] **Phase 22: Lifecycle & DB Integration** - VisionService orchestration, lifecycle _init_camera(), detection results to SQLite
 - [ ] **Phase 23: IoT Integration** - Detection results appended to existing ThingsBoard telemetry batch
@@ -208,7 +208,7 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 17. ML DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 18. Anomaly DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 19. Foundation | 1/1 | Complete    | 2026-03-16 | - |
-| 20. Camera Capture | v2.0 | 0/1 | Not started | - |
+| 20. Camera Capture | v2.0 | 0/1 | Complete    | 2026-03-25 |
 | 21. AI Detection Pipeline | v2.0 | 0/2 | Not started | - |
 | 22. Lifecycle & DB Integration | v2.0 | 0/1 | Not started | - |
 | 23. IoT Integration | v2.0 | 0/1 | Not started | - |
