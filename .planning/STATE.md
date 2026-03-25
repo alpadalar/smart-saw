@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
-status: Ready to plan
-stopped_at: Phase 21 context gathered
-last_updated: "2026-03-25T21:19:53.831Z"
+status: Ready to execute
+stopped_at: Completed 21-ai-detection-pipeline-21-01-PLAN.md
+last_updated: "2026-03-25T21:54:17.637Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** Phase 20 — camera-capture
+**Current focus:** Phase 21 — ai-detection-pipeline
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
+Phase: 21 (ai-detection-pipeline) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Plan: Not started
 
 | Phase 19-foundation P01 | 2 | 2 tasks | 6 files |
 | Phase 20-camera-capture P01 | 4 | 3 tasks | 5 files |
+| Phase 21-ai-detection-pipeline P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Key v2.0 decisions established in research:
 - [Phase 20-camera-capture]: Auto-discovery scans 4 device IDs from config hint — industrial robustness for USB ID shifts
 - [Phase 20-camera-capture]: 30-second retry on capture loss — transient USB disconnect must not crash main application
 - [Phase 20-camera-capture]: fps_actual moving average via deque(maxlen=30) updated every 30 frames — low lock contention
+- [Phase 21-ai-detection-pipeline]: Use Any type for frame param in _save_annotated_frame — ultralytics Results are runtime-only
+- [Phase 21-ai-detection-pipeline]: sys.modules patching for torch/ultralytics mocks — local imports inside run() cannot be patched with @patch
 
 ### Blockers/Concerns
 
@@ -105,6 +108,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-25T21:19:53.825Z
-Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-ai-detection-pipeline/21-CONTEXT.md
+Last session: 2026-03-25T21:54:17.633Z
+Stopped at: Completed 21-ai-detection-pipeline-21-01-PLAN.md
+Resume file: None

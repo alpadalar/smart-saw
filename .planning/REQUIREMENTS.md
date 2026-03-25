@@ -11,18 +11,18 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 
 - [x] **CAM-01**: Sistem config dosyasinda camera.enabled flagi ile kamera modulunun acilip kapatilabilmesi
 - [x] **CAM-02**: camera.enabled=false oldugunda hicbir kamera kodu yuklenmemesi (sifir import, sifir thread)
-- [ ] **CAM-03**: OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
-- [ ] **CAM-04**: Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
-- [ ] **CAM-05**: Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
+- [x] **CAM-03**: OpenCV ile kameradan frame capture yapilabilmesi (cozunurluk ve FPS config'den ayarlanabilir)
+- [x] **CAM-04**: Capture edilen frame'lerin JPEG formatinda diske kaydedilmesi (multi-thread encoder)
+- [x] **CAM-05**: Kayit klasor yapisi (recordings/YYYYMMDD-HHMMSS/) ile organize edilmesi
 
 ### AI Detection
 
-- [ ] **DET-01**: RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
-- [ ] **DET-02**: RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
+- [x] **DET-01**: RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
+- [x] **DET-02**: RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
 - [ ] **DET-03**: LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
 - [ ] **DET-04**: Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
-- [ ] **DET-05**: Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
-- [ ] **DET-06**: AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
+- [x] **DET-05**: Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
+- [x] **DET-06**: AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
 
 ### Data Integration
 
@@ -74,15 +74,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | CAM-01 | Phase 19 | Complete |
 | CAM-02 | Phase 19 | Complete |
-| CAM-03 | Phase 20 | Pending |
-| CAM-04 | Phase 20 | Pending |
-| CAM-05 | Phase 20 | Pending |
-| DET-01 | Phase 21 | Pending |
-| DET-02 | Phase 21 | Pending |
+| CAM-03 | Phase 20 | Complete |
+| CAM-04 | Phase 20 | Complete |
+| CAM-05 | Phase 20 | Complete |
+| DET-01 | Phase 21 | Complete |
+| DET-02 | Phase 21 | Complete |
 | DET-03 | Phase 21 | Pending |
 | DET-04 | Phase 21 | Pending |
-| DET-05 | Phase 21 | Pending |
-| DET-06 | Phase 21 | Pending |
+| DET-05 | Phase 21 | Complete |
+| DET-06 | Phase 21 | Complete |
 | DATA-01 | Phase 22 | Pending |
 | DATA-02 | Phase 23 | Pending |
 | DATA-03 | Phase 19 | Complete |

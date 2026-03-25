@@ -135,7 +135,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 21-01-PLAN.md — Convention-audit DetectionWorker + modelB4 cleanup + unit tests (DET-01, DET-02, DET-05, DET-06)
+- [x] 21-01-PLAN.md — Convention-audit DetectionWorker + modelB4 cleanup + unit tests (DET-01, DET-02, DET-05, DET-06)
 - [ ] 21-02-PLAN.md — ROI config migration + convention-audit LDCWorker + HealthCalculator + unit tests (DET-03, DET-04, DET-05, DET-06)
 
 ### Phase 22: Lifecycle & DB Integration
@@ -209,7 +209,7 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 18. Anomaly DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 19. Foundation | 1/1 | Complete    | 2026-03-16 | - |
 | 20. Camera Capture | v2.0 | 0/1 | Complete    | 2026-03-25 |
-| 21. AI Detection Pipeline | v2.0 | 0/2 | Not started | - |
+| 21. AI Detection Pipeline | v2.0 | 1/2 | In Progress|  |
 | 22. Lifecycle & DB Integration | v2.0 | 0/1 | Not started | - |
 | 23. IoT Integration | v2.0 | 0/1 | Not started | - |
 | 24. Camera GUI | v2.0 | 0/2 | Not started | - |
