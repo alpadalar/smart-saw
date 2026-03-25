@@ -1599,10 +1599,9 @@ class ControlPanelController(QWidget):
             except ValueError:
                 initial_value = 0.0
 
-            # Show numpad dialog - don't call show(), just use exec()
-            dialog = NumpadDialog(self)
-            # Set initial value AFTER construction to avoid showEvent reset
+            # Show numpad dialog pre-filled with current value
             initial_str = str(int(initial_value)) if initial_value > 0 else ""
+            dialog = NumpadDialog(self, initial_value=initial_str)
 
             # Use exec() which is blocking and properly shows the dialog
             result = dialog.exec()
@@ -1661,10 +1660,9 @@ class ControlPanelController(QWidget):
             except ValueError:
                 initial_value = 0.0
 
-            # Show numpad dialog - don't call show(), just use exec()
-            dialog = NumpadDialog(self)
-            # Set initial value AFTER construction to avoid showEvent reset
+            # Show numpad dialog pre-filled with current value
             initial_str = str(int(initial_value)) if initial_value > 0 else ""
+            dialog = NumpadDialog(self, initial_value=initial_str)
 
             # Use exec() which is blocking and properly shows the dialog
             result = dialog.exec()
