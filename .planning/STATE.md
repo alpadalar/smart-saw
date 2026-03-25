@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
-status: Ready to execute
-stopped_at: Completed 21-ai-detection-pipeline-21-01-PLAN.md
-last_updated: "2026-03-25T21:54:17.637Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 21-ai-detection-pipeline-21-02-PLAN.md
+last_updated: "2026-03-25T22:02:25.110Z"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -65,6 +65,7 @@ Plan: 2 of 2
 | Phase 19-foundation P01 | 2 | 2 tasks | 6 files |
 | Phase 20-camera-capture P01 | 4 | 3 tasks | 5 files |
 | Phase 21-ai-detection-pipeline P01 | 2 | 2 tasks | 3 files |
+| Phase 21-ai-detection-pipeline P02 | 5 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Key v2.0 decisions established in research:
 - [Phase 20-camera-capture]: fps_actual moving average via deque(maxlen=30) updated every 30 frames — low lock contention
 - [Phase 21-ai-detection-pipeline]: Use Any type for frame param in _save_annotated_frame — ultralytics Results are runtime-only
 - [Phase 21-ai-detection-pipeline]: sys.modules patching for torch/ultralytics mocks — local imports inside run() cannot be patched with @patch
+- [Phase 21-ai-detection-pipeline]: Use real numpy in sys.modules mock for ldc_worker tests — mocking numpy breaks astype(np.uint8)
+- [Phase 21-ai-detection-pipeline]: ROI config migration: wear_cfg.get() with fallback defaults — convert @staticmethod to instance methods for self._roi_* access
 
 ### Blockers/Concerns
 
@@ -108,6 +111,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-25T21:54:17.633Z
-Stopped at: Completed 21-ai-detection-pipeline-21-01-PLAN.md
+Last session: 2026-03-25T22:02:25.106Z
+Stopped at: Completed 21-ai-detection-pipeline-21-02-PLAN.md
 Resume file: None

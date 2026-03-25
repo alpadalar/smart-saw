@@ -19,8 +19,8 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 
 - [x] **DET-01**: RT-DETR modeli ile kirik dis tespiti yapilabilmesi (best.pt)
 - [x] **DET-02**: RT-DETR modeli ile catlak tespiti yapilabilmesi (catlak-best.pt)
-- [ ] **DET-03**: LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
-- [ ] **DET-04**: Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
+- [x] **DET-03**: LDC edge detection ile serit testere asinma yuzdesi hesaplanabilmesi
+- [x] **DET-04**: Kirik ve asinma verilerine dayanarak testere saglik skoru hesaplanabilmesi (kirik %70 + asinma %30)
 - [x] **DET-05**: Tespit sonuclarinin thread-safe CameraResultsStore uzerinden tum tukecilere sunulmasi
 - [x] **DET-06**: AI modellerinin kendi thread'lerinde yuklenmesi (asyncio event loop'u bloklamadan)
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAM-05 | Phase 20 | Complete |
 | DET-01 | Phase 21 | Complete |
 | DET-02 | Phase 21 | Complete |
-| DET-03 | Phase 21 | Pending |
-| DET-04 | Phase 21 | Pending |
+| DET-03 | Phase 21 | Complete |
+| DET-04 | Phase 21 | Complete |
 | DET-05 | Phase 21 | Complete |
 | DET-06 | Phase 21 | Complete |
 | DATA-01 | Phase 22 | Pending |
