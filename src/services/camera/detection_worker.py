@@ -17,7 +17,7 @@ import os
 import threading
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.services.camera.camera_service import CameraService
@@ -39,6 +39,17 @@ class DetectionWorker(threading.Thread):
         camera_service: CameraService,
         db_service=None,
     ) -> None:
+        """Initialise the detection worker thread.
+
+        Args:
+            config: Camera config dict containing ``detection`` sub-section with
+                keys: enabled, interval_seconds, confidence_threshold,
+                broken_model_path, crack_model_path.
+            results_store: Shared store where detection results are published.
+            camera_service: Source of live frames via ``get_current_frame()``.
+            db_service: Optional SQLiteService instance for persisting detection
+                events to ``camera.db``. Defaults to None (no DB writes).
+        """
         super().__init__(daemon=True, name="detection-worker")
 
         det_cfg = config.get("detection", {})
@@ -242,7 +253,7 @@ class DetectionWorker(threading.Thread):
     # -- internal ----------------------------------------------------------
 
     def _save_annotated_frame(
-        self, frame, broken_results, crack_results
+        self, frame: Any, broken_results: list, crack_results: list
     ) -> None:
         """Optionally save annotated frame to a ``detected/`` subdirectory.
 

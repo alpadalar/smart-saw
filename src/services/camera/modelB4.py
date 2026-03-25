@@ -1,4 +1,7 @@
+"""Lightweight Dense CNN (LDC) for edge detection — model architecture for 16_model.pth checkpoint."""
+
 from __future__ import annotations
+
 # Lightweight Dense CNN for Edge Detection
 # It has less than 1 Million parameters
 import torch
@@ -229,24 +232,3 @@ class LDC(nn.Module):
         # return results
         results.append(block_cat)
         return results
-
-
-if __name__ == '__main__':
-    batch_size = 8
-    img_height = 352
-    img_width = 352
-
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = "cpu"
-    input = torch.rand(batch_size, 3, img_height, img_width).to(device)
-    # target = torch.rand(batch_size, 1, img_height, img_width).to(device)
-    print(f"input shape: {input.shape}")
-    model = LDC().to(device)
-    output = model(input)
-    print(f"output shapes: {[t.shape for t in output]}")
-
-    # for i in range(20000):
-    #     print(i)
-    #     output = model(input)
-    #     loss = nn.MSELoss()(output[-1], target)
-    #     loss.backward()
