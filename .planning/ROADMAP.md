@@ -108,6 +108,16 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 Plans:
 - [ ] 19-01: numpy uncap + np.ptp fix + camera config schema + SCHEMA_CAMERA_DB + lifecycle _init_camera() + camera module scaffold
 
+### Phase 19.2: Graph axis labels (INSERTED)
+
+**Goal:** Show currently selected X and Y axis variable names as static labels inside kesimGrafigiFrame, updating dynamically on axis button clicks
+**Requirements**: none
+**Depends on:** Phase 19
+**Plans:** 1 plan
+
+Plans:
+- [ ] 19.2-01-PLAN.md — Reposition and resize y_axis_title and x_axis_title labels to user-specified coordinates with 20pt font
+
 ### Phase 19.1: UI Refinements (INSERTED) — COMPLETE 2026-03-25
 
 **Goal:** Urgent touch UX improvements — NumpadDialog close button and speed pre-fill
@@ -219,6 +229,7 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 18. Anomaly DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 19. Foundation | v2.0 | 1/1 | Complete | 2026-03-16 |
 | 19.1. UI Refinements (INSERTED) | v2.0 | Complete    | 2026-03-25 | 2026-03-25 |
+| 19.2. Graph Axis Labels (INSERTED) | v2.0 | 0/1 | Not started | - |
 | 20. Camera Capture | v2.0 | 0/1 | Not started | - |
 | 21. AI Detection Pipeline | v2.0 | 0/2 | Not started | - |
 | 22. Lifecycle & DB Integration | v2.0 | 0/1 | Not started | - |
