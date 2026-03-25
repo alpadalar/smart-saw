@@ -17,7 +17,7 @@ gui:
 
 # Modbus TCP Settings
 modbus:
-  host: "192.168.2.147"  # PLC IP address
+  host: "192.168.1.147"  # PLC IP address
   port: 502
   timeout: 1.0  # Connection timeout (seconds)
   retry_count: 3
@@ -548,6 +548,13 @@ camera:
     enabled: true
     interval_seconds: 5.0          # Run wear measurement every N seconds
     ldc_checkpoint_path: "data/models/ldc/16_model.pth"
+    top_line_y: 170                # ROI top boundary (pixels)
+    bottom_line_y: 236             # ROI bottom boundary (pixels)
+    roi_x_center_n: 0.500000      # Normalized ROI X center
+    roi_y_center_n: 0.530692      # Normalized ROI Y center
+    roi_width_n: 0.736888         # Normalized ROI width
+    roi_height_n: 0.489510        # Normalized ROI height
+    bgr_mean: [103.939, 116.779, 123.68]  # BGR mean for LDC preprocessing
 
   # Health score calculation
   health:

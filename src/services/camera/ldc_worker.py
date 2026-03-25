@@ -22,19 +22,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Wear ROI constants (matching old VisionService)
-TOP_LINE_Y = 170
-BOTTOM_LINE_Y = 236
-
-# Normalized bounding box for ROI extraction
-_ROI_X_CENTER_N = 0.500000
-_ROI_Y_CENTER_N = 0.530692
-_ROI_WIDTH_N = 0.736888
-_ROI_HEIGHT_N = 0.489510
-
-# BGR mean for LDC preprocessing
-_BGR_MEAN = [103.939, 116.779, 123.68]
-
 
 class LDCWorker(threading.Thread):
     """Daemon thread that runs LDC edge detection and wear measurement.
@@ -57,6 +44,15 @@ class LDCWorker(threading.Thread):
         self._checkpoint_path: str = wear_cfg.get(
             "ldc_checkpoint_path", "data/models/ldc/16_model.pth"
         )
+
+        # Wear ROI parameters (D-06: migrated from module-level constants to config)
+        self._top_line_y: int = int(wear_cfg.get("top_line_y", 170))
+        self._bottom_line_y: int = int(wear_cfg.get("bottom_line_y", 236))
+        self._roi_x_center_n: float = float(wear_cfg.get("roi_x_center_n", 0.500000))
+        self._roi_y_center_n: float = float(wear_cfg.get("roi_y_center_n", 0.530692))
+        self._roi_width_n: float = float(wear_cfg.get("roi_width_n", 0.736888))
+        self._roi_height_n: float = float(wear_cfg.get("roi_height_n", 0.489510))
+        self._bgr_mean: list = wear_cfg.get("bgr_mean", [103.939, 116.779, 123.68])
 
         self._results_store = results_store
         self._camera_service = camera_service
@@ -190,20 +186,30 @@ class LDCWorker(threading.Thread):
 
     # -- internal ----------------------------------------------------------
 
-    @staticmethod
-    def _run_ldc_inference(model, frame, device, torch, np, cv2):
+    def _run_ldc_inference(self, model, frame, device, torch, np, cv2):
         """Run LDC forward pass and return edge BGR image.
 
         Preprocessing matches old VisionService._run_ldc_on_image:
         resize 512x512, subtract BGR mean, CHW float32, sigmoid → normalize
         → uint8 → bitwise_not → resize → binarize.
+
+        Args:
+            model: Loaded LDC model instance.
+            frame: Input BGR frame as numpy array.
+            device: Torch device string ("cpu" or "cuda").
+            torch: The torch module (lazy import).
+            np: The numpy module (lazy import).
+            cv2: The cv2 module (lazy import).
+
+        Returns:
+            Edge detection result as BGR numpy array.
         """
         h, w = frame.shape[:2]
 
         # Preprocess
         resized = cv2.resize(frame, (512, 512))
         img = resized.astype(np.float32)
-        img -= np.array(_BGR_MEAN, dtype=np.float32)
+        img -= np.array(self._bgr_mean, dtype=np.float32)
         img = img.transpose(2, 0, 1)
         tensor = torch.from_numpy(img).unsqueeze(0).to(device)
 
@@ -239,12 +245,20 @@ class LDCWorker(threading.Thread):
         edge_bgr = cv2.cvtColor(edge_gray, cv2.COLOR_GRAY2BGR)
         return edge_bgr
 
-    @staticmethod
-    def _compute_wear(edge_bgr, np, cv2):
+    def _compute_wear(self, edge_bgr, np, cv2):
         """Compute saw blade wear percentage from LDC edge image.
 
         Returns wear percentage (0-100) or None if insufficient contour data.
         Matches old VisionService._compute_wear logic.
+
+        Args:
+            edge_bgr: LDC edge detection result as BGR numpy array.
+            np: The numpy module (lazy import).
+            cv2: The cv2 module (lazy import).
+
+        Returns:
+            Wear percentage as float in [0, 100], or None if contour data is
+            insufficient.
         """
         if edge_bgr is None:
             return None
@@ -252,13 +266,13 @@ class LDCWorker(threading.Thread):
         image_height, image_width = edge_bgr.shape[:2]
 
         # Calculate ROI pixel coordinates from normalized bbox
-        x_center = int(_ROI_X_CENTER_N * image_width)
-        box_w = int(_ROI_WIDTH_N * image_width)
+        x_center = int(self._roi_x_center_n * image_width)
+        box_w = int(self._roi_width_n * image_width)
 
         x1 = int(x_center - box_w / 2)
         x2 = int(x_center + box_w / 2)
-        y1 = TOP_LINE_Y
-        y2 = BOTTOM_LINE_Y
+        y1 = self._top_line_y
+        y2 = self._bottom_line_y
 
         # Clamp to image bounds
         x1 = max(0, min(x1, image_width - 1))
@@ -304,8 +318,8 @@ class LDCWorker(threading.Thread):
         min_y = int(np.mean(smallest))
 
         wear_y = min_y + y1
-        band_h = max(1, BOTTOM_LINE_Y - TOP_LINE_Y)
-        percent = ((wear_y - TOP_LINE_Y) / band_h) * 100.0
+        band_h = max(1, self._bottom_line_y - self._top_line_y)
+        percent = ((wear_y - self._top_line_y) / band_h) * 100.0
         percent = float(np.clip(percent, 0.0, 100.0))
 
         return percent

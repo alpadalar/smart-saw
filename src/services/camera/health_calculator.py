@@ -1,3 +1,5 @@
+"""Saw health calculator — computes overall health from broken-tooth count and wear percentage."""
+
 from __future__ import annotations
 
 import logging
