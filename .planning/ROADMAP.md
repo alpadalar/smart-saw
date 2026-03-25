@@ -113,7 +113,7 @@ Plans:
 **Goal:** Urgent touch UX improvements — NumpadDialog close button and speed pre-fill
 **Requirements**: none
 **Depends on:** Phase 19
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [x] 19.1-01: NumpadDialog close button + initial_value pre-fill + first-keystroke replacement — completed 2026-03-25
@@ -218,7 +218,7 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 17. ML DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 18. Anomaly DB Schema Update | v1.6 | 1/1 | Complete | 2026-03-16 |
 | 19. Foundation | v2.0 | 1/1 | Complete | 2026-03-16 |
-| 19.1. UI Refinements (INSERTED) | v2.0 | 1/1 | Complete | 2026-03-25 |
+| 19.1. UI Refinements (INSERTED) | v2.0 | Complete    | 2026-03-25 | 2026-03-25 |
 | 20. Camera Capture | v2.0 | 0/1 | Not started | - |
 | 21. AI Detection Pipeline | v2.0 | 0/2 | Not started | - |
 | 22. Lifecycle & DB Integration | v2.0 | 0/1 | Not started | - |
