@@ -60,8 +60,8 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ### Active
 
+- ✓ OpenCV frame capture ve JPEG recording sistemi — Phase 20
 - [ ] Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir)
-- [ ] OpenCV frame capture ve JPEG recording sistemi
 - [ ] RT-DETR kirik dis tespiti (best.pt model)
 - [ ] RT-DETR catlak tespiti (catlak-best.pt model)
 - [ ] LDC edge detection + asinma hesaplama pipeline
@@ -83,7 +83,12 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v1.6 shipped):**
+**Current State (v2.0 Phase 20 complete):**
+- CameraResultsStore: Thread-safe key-value store for camera pipeline state (results_store.py)
+- CameraService: OpenCV frame capture, auto-discovery (4 device), 30s retry, JPEG encoding, worker pool disk recording (camera_service.py)
+- 17 unit tests (8 results_store + 9 camera_service), all mocked — no hardware dependency
+
+**Previous State (v1.6 shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`, `kesim_id`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - Anomaly events tablosu: `timestamp`, `sensor_name`, `sensor_value`, `detection_method`, `kesim_id`, `kafa_yuksekligi`, `makine_id`, `serit_id`, `malzeme_cinsi`
 - TouchButton widget: Qt touch events, instant activation, strict bounds, first-touch-wins, emergency stop overlay
@@ -148,4 +153,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-16 after v2.0 milestone start*
+*Last updated: 2026-03-25 after Phase 20 Camera Capture complete*
