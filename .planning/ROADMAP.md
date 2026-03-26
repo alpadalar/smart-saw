@@ -196,11 +196,11 @@ Plans:
   4. Son 4 kaydedilen frame thumbnail olarak goruntulenir
   5. Sidebar'da 5. navigasyon butonu yalnizca camera.enabled=true iken gozukur; false iken sidebar degismez
   6. Her tespit kategorisi icin OK/alert ikonu ve asinma olcum overlay goruntulenir
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 24-01: CameraController Qt widget (QTimers, live feed, stats display, health color coding)
-- [ ] 24-02: Thumbnails panel + OK/alert icons + wear visualization overlay + sidebar nav button
+- [ ] 24-01-PLAN.md — Annotated frame pipeline + CameraController progress bars + convention audit (GUI-01..05, 07..09)
+- [ ] 24-02-PLAN.md — MainController audit + visual verification checkpoint (GUI-06)
 
 ## Progress
 
