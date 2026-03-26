@@ -147,10 +147,10 @@ Plans:
   2. Her tespit sonucu camera.db'ye (detection_events ve wear_history tablolari) SQLiteService queue pattern ile yazilir
   3. camera.db'ye yazma hatalari ana kontrol dongusunu etkilemez (exception izole edilir)
   4. camera.enabled=false iken lifecycle hicbir kamera nesnesi olusturmaz
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 22-01: VisionService (scheduling orchestration) + lifecycle _init_camera() lazy import + camera.db writes
+- [ ] 22-01-PLAN.md — VisionService orchestration + lifecycle _init_camera() integration + worker DB write field population
 
 ### Phase 23: IoT Integration
 **Goal**: Tespit sonuclarinin mevcut ThingsBoard telemetri batch'ine eklenerek IoT'a iletilmesi
