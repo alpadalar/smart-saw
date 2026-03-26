@@ -41,14 +41,18 @@ Do not break existing geometry without explicit justification.
 | Token | Value | Use |
 |-------|-------|-----|
 | spacing-xs | 8 px | Inner label margins from frame edge |
-| spacing-sm | 10 px | Thumbnail gap between cells |
-| spacing-md | 15 px | Standard label x-offset inside frames |
+| spacing-sm | 8 px | Thumbnail gap between cells |
+| spacing-md | 16 px | Standard label x-offset inside frames |
 | spacing-lg | 20 px | Frame x/y offset from page edges |
 | spacing-xl | 48 px | Camera feed top offset (y=48 for feed inside kamera_frame) |
 | touch-target | 110 px height | Sidebar nav buttons (already deployed: h=110) |
 
 Source: Extracted from `camera_controller.py` geometry values; confirmed in
 `main_controller.py` sidebar button at `setGeometry(26, 649, 355, 110)`.
+
+Spacing fixes applied (checker rev 2026-03-26):
+- `spacing-sm` corrected from 10 px to 8 px (10 is not a multiple of 4).
+- `spacing-md` corrected from 15 px to 16 px (15 is not a multiple of 4).
 
 ---
 
@@ -64,17 +68,21 @@ constants in `camera_controller.py`.
 | Level | Size | Weight | Line-height | Usage |
 |-------|------|--------|-------------|-------|
 | value | 32 px | bold (700) | 1.2 | Large numeric values (`lbl_wear_value`, `lbl_health_score`, `lbl_health_status`) |
-| status | 28 px | bold (700) | 1.2 | OK/alert indicator labels (`lbl_kirik_status`, `lbl_catlak_status`) |
-| title | 22 px | bold (700) | 1.3 | Panel section titles (`_TITLE_STYLE`) |
-| subtitle | 16 px | medium (500) | 1.5 | Field name labels (`_SUBTITLE_STYLE`) |
+| title | 22 px | bold (700) | 1.3 | Panel section titles (`_TITLE_STYLE`); also status indicators (`lbl_kirik_status`, `lbl_catlak_status`) |
+| subtitle | 16 px | regular (400) | 1.5 | Field name labels (`_SUBTITLE_STYLE`) |
 | info | 14 px | regular (400) | 1.5 | Timestamps, frame count, recording status (`_INFO_STYLE`) |
 
-Note: 5 levels are used here rather than 4 because the status indicator at 28 px
-is a semantically distinct level from the 32 px value display. This is an
-existing established pattern — do not consolidate.
+Typography fixes applied (checker rev 2026-03-26):
+- Removed the 28 px "status" level (was 5 levels; maximum is 4). Status indicators
+  `lbl_kirik_status` and `lbl_catlak_status` use the 22 px title level. Semantic
+  distinction is provided by text content ("✓ OK" / "✗ UYARI") and color (green/red)
+  without requiring a dedicated font size. The `_STATUS_STYLE` constant must be set
+  to 22 px bold (700).
+- Removed medium (500) weight (was 3 weights; maximum is 2). Subtitle labels
+  (`_SUBTITLE_STYLE`) use regular (400). The 2 px size difference between subtitle
+  (16 px) and info (14 px) provides sufficient visual hierarchy without a weight step.
 
-**Weights used:** regular (400), medium (500), bold (700). Only 3 are active.
-Source: extracted from existing style constants.
+**Weights used:** regular (400), bold (700). Exactly 2 weights.
 
 ---
 
@@ -151,6 +159,11 @@ Source: `health_calculator.py` — `get_health_color()`, `get_health_status()`.
 **Canvas:** 1528 × 1080 px (content area, child of `stackedWidget` at x=392).
 **Sidebar:** 392 px wide — handled by MainController, not CameraController.
 
+**Primary visual anchor:** `kamera_frame` — the live feed panel occupies the dominant
+left quadrant (934 × 525 px, roughly 40% of canvas area). All other panels are
+secondary. The executor must ensure the live feed always draws with full contrast and
+is never visually subordinated to the analysis panels.
+
 ### Panel Grid
 
 | Panel | Widget | x | y | w | h | Purpose |
@@ -184,7 +197,7 @@ Source: `camera_controller.py` `_setup_ui()` — all geometries verified.
 
 - Count: 4 cells
 - Cell size: 220 × 140 px
-- Cell spacing: 10 px between cells
+- Cell spacing: 8 px between cells
 - Cell x-start: 20 px inside `sirali_frame`
 - Cell y: 40 px inside `sirali_frame`
 - Cell bg: `#1A1F37`, border-radius 8 px
@@ -199,13 +212,13 @@ Sub-labels (all inside kirik_frame):
 | Widget | Geometry | Style | Content |
 |--------|----------|-------|---------|
 | lbl_kirik_title | (20, 15, 300, 30) | `_TITLE_STYLE` | "Kırık Diş Tespiti" |
-| lbl_broken_name | (20, 60, 200, 22) | `_SUBTITLE_STYLE` | "Kırık Diş Sayısı" |
-| lbl_broken_count | (20, 85, 200, 45) | `_VALUE_STYLE` | integer string, default "0" |
-| lbl_tooth_name | (20, 140, 200, 22) | `_SUBTITLE_STYLE` | "Toplam Diş Sayısı" |
-| lbl_tooth_count | (20, 165, 200, 45) | `_VALUE_STYLE` | integer or "—", default "—" |
-| lbl_kirik_ts_name | (20, 225, 200, 22) | `_SUBTITLE_STYLE` | "Son Tespit" |
-| lbl_kirik_ts | (20, 250, 300, 30) | `_INFO_STYLE` | ISO timestamp or "—" |
-| lbl_kirik_status | (20, 290, 200, 40) | dynamic | "✓ OK" or "✗ UYARI" |
+| lbl_broken_name | (16, 60, 200, 22) | `_SUBTITLE_STYLE` | "Kırık Diş Sayısı" |
+| lbl_broken_count | (16, 85, 200, 45) | `_VALUE_STYLE` | integer string, default "0" |
+| lbl_tooth_name | (16, 140, 200, 22) | `_SUBTITLE_STYLE` | "Toplam Diş Sayısı" |
+| lbl_tooth_count | (16, 165, 200, 45) | `_VALUE_STYLE` | integer or "—", default "—" |
+| lbl_kirik_ts_name | (16, 225, 200, 22) | `_SUBTITLE_STYLE` | "Son Tespit" |
+| lbl_kirik_ts | (16, 250, 300, 30) | `_INFO_STYLE` | ISO timestamp or "—" |
+| lbl_kirik_status | (16, 290, 200, 40) | `_STATUS_STYLE` (22 px bold) + dynamic color | "✓ OK" or "✗ UYARI" |
 
 Status indicator colors: ok-green (`#22C55E`) when `broken_count == 0`; alert-red (`#EF4444`) when `broken_count > 0`.
 
@@ -216,11 +229,11 @@ Update interval: 1000 ms (`_stats_timer`).
 | Widget | Geometry | Style | Content |
 |--------|----------|-------|---------|
 | lbl_catlak_title | (20, 15, 300, 30) | `_TITLE_STYLE` | "Çatlak Tespiti" |
-| lbl_crack_name | (20, 60, 200, 22) | `_SUBTITLE_STYLE` | "Çatlak Sayısı" |
-| lbl_crack_count | (20, 85, 200, 45) | `_VALUE_STYLE` | integer string, default "0" |
-| lbl_catlak_ts_name | (20, 145, 200, 22) | `_SUBTITLE_STYLE` | "Son Tespit" |
-| lbl_catlak_ts | (20, 170, 300, 30) | `_INFO_STYLE` | ISO timestamp or "—" |
-| lbl_catlak_status | (20, 220, 200, 40) | dynamic | "✓ OK" or "✗ UYARI" |
+| lbl_crack_name | (16, 60, 200, 22) | `_SUBTITLE_STYLE` | "Çatlak Sayısı" |
+| lbl_crack_count | (16, 85, 200, 45) | `_VALUE_STYLE` | integer string, default "0" |
+| lbl_catlak_ts_name | (16, 145, 200, 22) | `_SUBTITLE_STYLE` | "Son Tespit" |
+| lbl_catlak_ts | (16, 170, 300, 30) | `_INFO_STYLE` | ISO timestamp or "—" |
+| lbl_catlak_status | (16, 220, 200, 40) | `_STATUS_STYLE` (22 px bold) + dynamic color | "✓ OK" or "✗ UYARI" |
 
 Status logic: ok-green when `crack_count == 0`; alert-red when `crack_count > 0`.
 
@@ -230,9 +243,9 @@ Update interval: 1000 ms (`_stats_timer`).
 
 | Widget | Geometry | Style | Content |
 |--------|----------|-------|---------|
-| lbl_asinma_title | (15, 10, 270, 26) | `_TITLE_STYLE` | "Aşınma Yüzdesi" |
-| lbl_wear_value | (15, 45, 270, **35**) | `_VALUE_STYLE` + AlignCenter | `f"{float(wear):.1f}%"` or "—" |
-| wear_bar (NEW) | (15, **83**, 270, 18) | see below | QProgressBar, range 0–100 |
+| lbl_asinma_title | (16, 10, 270, 26) | `_TITLE_STYLE` | "Aşınma Yüzdesi" |
+| lbl_wear_value | (16, 45, 270, **35**) | `_VALUE_STYLE` + AlignCenter | `f"{float(wear):.1f}%"` or "—" |
+| wear_bar (NEW) | (16, **83**, 270, 18) | see below | QProgressBar, range 0–100 |
 
 `lbl_wear_value` height is REDUCED from 55 px to 35 px to make room for the bar.
 Bottom of label = y 45 + 35 = 80. Bar starts at y=83. Bar bottom = 83+18=101. Frame height=120. Margin=19 px. Fits cleanly.
@@ -263,9 +276,9 @@ Update interval: 2000 ms (`_health_timer`).
 
 | Widget | Geometry | Style | Content |
 |--------|----------|-------|---------|
-| lbl_saglik_title | (15, 10, 270, 26) | `_TITLE_STYLE` | "Testere Sağlığı" |
-| lbl_health_score | (15, 45, 270, **35**) | `_VALUE_STYLE` + AlignCenter | `f"{float(score):.1f}%"` or "—" |
-| health_bar (NEW) | (15, **83**, 270, 18) | see below | QProgressBar, range 0–100 |
+| lbl_saglik_title | (16, 10, 270, 26) | `_TITLE_STYLE` | "Testere Sağlığı" |
+| lbl_health_score | (16, 45, 270, **35**) | `_VALUE_STYLE` + AlignCenter | `f"{float(score):.1f}%"` or "—" |
+| health_bar (NEW) | (16, **83**, 270, 18) | see below | QProgressBar, range 0–100 |
 
 `lbl_health_score` height is REDUCED from 55 px to 35 px. Same math as wear frame.
 
@@ -475,6 +488,10 @@ Per D-07 and D-08, the executor must audit (not rewrite) the following:
 | Add `wear_bar` QProgressBar | Insert after lbl_wear_value in `_setup_ui()` |
 | Add `health_bar` QProgressBar | Insert after lbl_health_score in `_setup_ui()` |
 | Update `_update_health()` | Add `self.wear_bar.setValue(...)` and `self.health_bar.setValue(...)` |
+| Sub-label x-offset in kirik_frame, catlak_frame | Use x=16 (spacing-md) instead of x=15 |
+| Sub-label x-offset in asinma_frame, saglik_frame | Use x=16 (spacing-md) instead of x=15 for title, value, and bar |
+| `_STATUS_STYLE` constant | Set to 22 px bold (700) — same as `_TITLE_STYLE` size |
+| `_SUBTITLE_STYLE` constant | Set weight to 400 (regular) instead of 500 (medium) |
 
 ### main_controller.py
 
@@ -499,7 +516,9 @@ third-party component registries. All UI is PySide6 stdlib + project-internal st
 |----------|--------|
 | All panel geometry values | `camera_controller.py` — read directly |
 | Font family: Plus Jakarta Sans | `_TITLE_STYLE`, `_VALUE_STYLE` etc. in `camera_controller.py` |
-| Font sizes: 14/16/22/28/32 px | Extracted from style constants |
+| Font sizes: 14/16/22/32 px | Extracted from style constants; 28 px level removed (checker rev) |
+| Font weights: 400/700 | Extracted from style constants; 500 (medium) removed (checker rev) |
+| Spacing: sm=8 px, md=16 px | Corrected to 4-point grid (checker rev; was 10 and 15 respectively) |
 | Color palette: `#0A0E1A`, `#1A1F37`, `#F4F6FC` etc. | Extracted from style constants |
 | Progress bar direction (D-04, D-05) | CONTEXT.md locked decisions |
 | Annotated frame fallback (D-01, D-02) | CONTEXT.md locked decisions |
@@ -512,6 +531,7 @@ third-party component registries. All UI is PySide6 stdlib + project-internal st
 | camera-icon2.svg existence | `src/gui/images/` directory listing |
 | Timer intervals (500/1000/2000 ms) | `camera_controller.py` `_setup_timers()` |
 | Store key names | RESEARCH.md Store Keys Inventory |
+| Primary visual anchor declaration | Checker recommendation — kamera_frame dominant left quadrant |
 
 No user questions were required. All design contract decisions were derivable from
 upstream artifacts (CONTEXT.md, RESEARCH.md) and direct codebase reading.
@@ -520,4 +540,5 @@ upstream artifacts (CONTEXT.md, RESEARCH.md) and direct codebase reading.
 
 *Phase: 24-camera-gui*
 *UI-SPEC created: 2026-03-26*
+*UI-SPEC revised: 2026-03-26 — checker issues fixed (typography 4+2, spacing 4-point grid, focal point)*
 *Status: draft — awaiting checker validation*
