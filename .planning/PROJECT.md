@@ -65,12 +65,12 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - ✓ RT-DETR catlak tespiti (DetectionWorker, catlak-best.pt model) — Phase 21
 - ✓ LDC edge detection + asinma hesaplama pipeline (LDCWorker, config-driven ROI) — Phase 21
 - ✓ Testere saglik hesaplayicisi (HealthCalculator, kirik %70 + asinma %30) — Phase 21
-- [ ] Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir)
+- ✓ Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir) — Phase 22
 - [ ] PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik)
 - [ ] GUI sidebar'a kamera navigasyon butonu eklenmesi
-- [ ] Tespit sonuclarinin SQLite'a kaydedilmesi
+- ✓ Tespit sonuclarinin SQLite'a kaydedilmesi — Phase 22
 - [ ] Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi
-- [ ] Lifecycle'da kamera servislerinin config-driven baslatilmasi
+- ✓ Lifecycle'da kamera servislerinin config-driven baslatilmasi — Phase 22
 
 ### Out of Scope
 
@@ -83,14 +83,17 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.0 Phase 21 complete):**
+**Current State (v2.0 Phase 22 complete):**
+- VisionService: Daemon thread polling CameraResultsStore at 0.5s, detects CUTTING(3)->non-CUTTING transitions, triggers start_recording/stop_recording (10s duration), error-isolated (vision_service.py)
+- DataProcessingPipeline: Bridges testere_durumu + traceability fields (kesim_id, makine_id, serit_id, malzeme_cinsi) to CameraResultsStore every processing cycle (data_processor.py)
+- Lifecycle: _init_camera() creates VisionService after LDCWorker; shutdown stops VisionService first (lifecycle.py)
+- DetectionWorker: DB writes include image_path + traceability fields from CameraResultsStore (no more None stubs) (detection_worker.py)
+- LDCWorker: _compute_wear returns (wear_percentage, edge_pixel_count) tuple; DB writes include edge_pixel_count + image_path + traceability (ldc_worker.py)
 - CameraResultsStore: Thread-safe key-value store for camera pipeline state (results_store.py)
 - CameraService: OpenCV frame capture, auto-discovery (4 device), 30s retry, JPEG encoding, worker pool disk recording (camera_service.py)
-- DetectionWorker: RT-DETR broken/crack detection in dedicated thread, lazy torch/ultralytics imports, publishes results to CameraResultsStore (detection_worker.py)
-- LDCWorker: LDC edge detection wear measurement in dedicated thread, config-driven ROI parameters, publishes wear + health to CameraResultsStore (ldc_worker.py)
 - HealthCalculator: Saw health formula (broken %70 + wear %30), Turkish status labels, CSS colors (health_calculator.py)
 - modelB4.py: LDC neural network architecture for 16_model.pth checkpoint
-- 36 unit tests (8 results_store + 9 camera_service + 6 detection_worker + 5 ldc_worker + 8 health_calculator), all mocked — no hardware dependency
+- 45 unit tests (8 results_store + 9 camera_service + 9 detection_worker + 8 ldc_worker + 8 health_calculator + 11 vision_service), all mocked — no hardware dependency
 
 **Previous State (v1.6 shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`, `kesim_id`, `makine_id`, `serit_id`, `malzeme_cinsi`
@@ -157,4 +160,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-26 after Phase 21 AI Detection Pipeline complete*
+*Last updated: 2026-03-26 after Phase 22 Lifecycle & DB Integration complete*
