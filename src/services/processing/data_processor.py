@@ -176,6 +176,19 @@ class DataProcessingPipeline:
                 # Store for GUI access
                 self._last_processed_data = processed_data
 
+                # Write camera-relevant fields to CameraResultsStore (per D-02, D-05)
+                if self.camera_results_store is not None:
+                    try:
+                        self.camera_results_store.update_batch({
+                            "testere_durumu": raw_data.testere_durumu,
+                            "kesim_id": processed_data.cutting_session_id,
+                            "makine_id": raw_data.makine_id,
+                            "serit_id": raw_data.serit_id,
+                            "malzeme_cinsi": raw_data.malzeme_cinsi,
+                        })
+                    except Exception as e:
+                        logger.warning(f"CameraResultsStore update failed: {e}")
+
                 # 3. Control logic (ML or Manual)
                 command = await self.control_manager.process_data(processed_data)
 
