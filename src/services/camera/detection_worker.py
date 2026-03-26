@@ -190,7 +190,7 @@ class DetectionWorker(threading.Thread):
                             crack_confidence = conf
 
             # -- save annotated frame if recording --
-            self._save_annotated_frame(
+            image_path = self._save_annotated_frame(
                 frame, broken_results, crack_results
             )
 
@@ -209,6 +209,12 @@ class DetectionWorker(threading.Thread):
 
             # -- persist to camera.db --
             if self._db_service:
+                # Read traceability fields from CameraResultsStore (per D-05)
+                kesim_id = self._results_store.get("kesim_id")
+                makine_id = self._results_store.get("makine_id")
+                serit_id = self._results_store.get("serit_id")
+                malzeme_cinsi = self._results_store.get("malzeme_cinsi")
+
                 if broken_count > 0:
                     ok = self._db_service.write_async(
                         "INSERT INTO detection_events "
@@ -216,7 +222,7 @@ class DetectionWorker(threading.Thread):
                         "kesim_id, makine_id, serit_id, malzeme_cinsi) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (now, "broken_tooth", broken_confidence, broken_count,
-                         None, None, None, None, None),
+                         image_path, kesim_id, makine_id, serit_id, malzeme_cinsi),
                     )
                     if not ok:
                         logger.warning("DB write failed — broken_tooth event dropped")
@@ -227,7 +233,7 @@ class DetectionWorker(threading.Thread):
                         "kesim_id, makine_id, serit_id, malzeme_cinsi) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (now, "crack", crack_confidence, crack_count,
-                         None, None, None, None, None),
+                         image_path, kesim_id, makine_id, serit_id, malzeme_cinsi),
                     )
                     if not ok:
                         logger.warning("DB write failed — crack event dropped")
@@ -254,23 +260,26 @@ class DetectionWorker(threading.Thread):
 
     def _save_annotated_frame(
         self, frame: Any, broken_results: list, crack_results: list
-    ) -> None:
+    ) -> str | None:
         """Optionally save annotated frame to a ``detected/`` subdirectory.
 
         Only writes when a recording is active (recording_path is set in the
         results store). Silently skips on any error — this is best-effort.
+
+        Returns:
+            The saved file path as a string, or None if not saved.
         """
         import cv2
 
         recording_path = self._results_store.get("recording_path")
         if not recording_path:
-            return
+            return None
 
         detected_dir = os.path.join(recording_path, "detected")
         try:
             os.makedirs(detected_dir, exist_ok=True)
         except OSError:
-            return
+            return None
 
         # Draw bounding boxes on a copy
         annotated = frame.copy()
@@ -317,5 +326,7 @@ class DetectionWorker(threading.Thread):
         out_path = os.path.join(detected_dir, f"det_{ts}.jpg")
         try:
             cv2.imwrite(out_path, annotated)
+            return out_path
         except Exception:
             logger.debug("Failed to save annotated frame — path=%s", out_path)
+            return None

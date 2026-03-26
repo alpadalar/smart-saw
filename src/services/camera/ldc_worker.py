@@ -126,7 +126,21 @@ class LDCWorker(threading.Thread):
             )
 
             # -- wear calculation --
-            wear_percentage = self._compute_wear(edge_bgr, np, cv2)
+            wear_percentage, edge_pixel_count = self._compute_wear(edge_bgr, np, cv2)
+
+            # -- save edge image if recording is active (per D-06) --
+            image_path = None
+            recording_path = self._results_store.get("recording_path")
+            if recording_path and edge_bgr is not None:
+                ldc_dir = os.path.join(recording_path, "ldc")
+                try:
+                    os.makedirs(ldc_dir, exist_ok=True)
+                    ts_img = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    ldc_path = os.path.join(ldc_dir, f"ldc_{ts_img}.jpg")
+                    cv2.imwrite(ldc_path, edge_bgr)
+                    image_path = ldc_path
+                except Exception:
+                    logger.debug("Failed to save LDC edge image — path=%s", ldc_dir)
 
             # -- publish results and recalculate health --
             now = datetime.now().isoformat()
@@ -156,13 +170,19 @@ class LDCWorker(threading.Thread):
 
             # -- persist to camera.db --
             if self._db_service and wear_percentage is not None:
+                # Read traceability fields from CameraResultsStore (per D-05)
+                kesim_id = self._results_store.get("kesim_id")
+                makine_id = self._results_store.get("makine_id")
+                serit_id = self._results_store.get("serit_id")
+                malzeme_cinsi = self._results_store.get("malzeme_cinsi")
+
                 ok = self._db_service.write_async(
                     "INSERT INTO wear_history "
                     "(timestamp, wear_percentage, health_score, edge_pixel_count, "
                     "image_path, kesim_id, makine_id, serit_id, malzeme_cinsi) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (now, wear_percentage, health_score, None,
-                     None, None, None, None, None),
+                    (now, wear_percentage, health_score, edge_pixel_count,
+                     image_path, kesim_id, makine_id, serit_id, malzeme_cinsi),
                 )
                 if not ok:
                     logger.warning("DB write failed — wear_history event dropped")
@@ -245,11 +265,11 @@ class LDCWorker(threading.Thread):
         edge_bgr = cv2.cvtColor(edge_gray, cv2.COLOR_GRAY2BGR)
         return edge_bgr
 
-    def _compute_wear(self, edge_bgr, np, cv2):
+    def _compute_wear(self, edge_bgr, np, cv2) -> tuple:
         """Compute saw blade wear percentage from LDC edge image.
 
-        Returns wear percentage (0-100) or None if insufficient contour data.
-        Matches old VisionService._compute_wear logic.
+        Returns (wear_percentage, edge_pixel_count) or (None, None) if
+        insufficient contour data. Matches old VisionService._compute_wear logic.
 
         Args:
             edge_bgr: LDC edge detection result as BGR numpy array.
@@ -257,11 +277,12 @@ class LDCWorker(threading.Thread):
             cv2: The cv2 module (lazy import).
 
         Returns:
-            Wear percentage as float in [0, 100], or None if contour data is
-            insufficient.
+            Tuple of (wear_percentage, edge_pixel_count) where wear_percentage is
+            a float in [0, 100] and edge_pixel_count is an int, or (None, None)
+            if contour data is insufficient.
         """
         if edge_bgr is None:
-            return None
+            return None, None
 
         image_height, image_width = edge_bgr.shape[:2]
 
@@ -281,7 +302,7 @@ class LDCWorker(threading.Thread):
         y2 = max(0, min(y2, image_height))
 
         if y2 <= y1 or x2 <= x1:
-            return None
+            return None, None
 
         roi = edge_bgr[y1:y2, x1:x2]
         gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
@@ -302,12 +323,13 @@ class LDCWorker(threading.Thread):
             binary_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
         if not contours:
-            return None
+            return None, None
 
         # Collect Y coordinates from all contour points
         ys = [pt[0][1] for c in contours for pt in c]
-        if len(ys) < 5:
-            return None
+        edge_pixel_count = len(ys)
+        if edge_pixel_count < 5:
+            return None, None
 
         ys = np.array(ys, dtype=np.int32)
 
@@ -322,4 +344,4 @@ class LDCWorker(threading.Thread):
         percent = ((wear_y - self._top_line_y) / band_h) * 100.0
         percent = float(np.clip(percent, 0.0, 100.0))
 
-        return percent
+        return percent, edge_pixel_count

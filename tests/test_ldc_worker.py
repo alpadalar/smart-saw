@@ -356,3 +356,132 @@ def test_stop_event_exits_loop() -> None:
             worker.join(timeout=5.0)
 
     assert not worker.is_alive(), "Thread still alive after stop() and 5s join timeout"
+
+
+# ---------------------------------------------------------------------------
+# Test 6: _compute_wear returns tuple (float, int) when contours found
+# ---------------------------------------------------------------------------
+
+
+def test_compute_wear_returns_tuple():
+    """_compute_wear returns (wear_percentage: float, edge_pixel_count: int) when contours found."""
+    from src.services.camera.ldc_worker import LDCWorker
+
+    store = CameraResultsStore()
+    mock_camera = MagicMock()
+    worker = LDCWorker(LDC_CONFIG, store, mock_camera)
+
+    with _mock_ml_libraries(produce_wear=True):
+        import sys
+        mock_cv2 = sys.modules.get("cv2")
+        mock_np = sys.modules.get("numpy")
+
+        # Build a real gray edge image for the real _compute_wear logic
+        # Use real numpy since we're using the real impl
+        import numpy as real_np
+        # Create a fake edge image and mock cv2 for _compute_wear
+        fake_edge_bgr = real_np.zeros((480, 640, 3), dtype=real_np.uint8)
+
+        # Mock cv2 for the _compute_wear call
+        mock_cv2_local = MagicMock()
+        mock_cv2_local.COLOR_BGR2GRAY = 6
+        mock_cv2_local.THRESH_BINARY = 0
+        mock_cv2_local.THRESH_BINARY_INV = 1
+        mock_cv2_local.RETR_EXTERNAL = 0
+        mock_cv2_local.CHAIN_APPROX_SIMPLE = 1
+
+        # Return a gray image
+        mock_cv2_local.cvtColor.return_value = real_np.zeros((480, 640), dtype=real_np.uint8)
+        # threshold returns mean val and binary
+        gray_roi = real_np.zeros((66, 471), dtype=real_np.uint8)
+        mock_cv2_local.threshold.return_value = (0, gray_roi)
+        # findContours: return enough points
+        def make_contour_point(y_val):
+            return real_np.array([[[0, y_val]]], dtype=real_np.int32)
+        fake_contours = [make_contour_point(y) for y in range(5, 20)]
+        mock_cv2_local.findContours.return_value = (fake_contours, None)
+
+        result = worker._compute_wear(fake_edge_bgr, real_np, mock_cv2_local)
+
+    assert isinstance(result, tuple), f"_compute_wear should return tuple, got {type(result)}"
+    assert len(result) == 2, f"Tuple should have 2 elements, got {len(result)}"
+    wear_pct, edge_count = result
+    assert wear_pct is not None, "wear_percentage should not be None with valid contours"
+    assert edge_count is not None, "edge_pixel_count should not be None with valid contours"
+    assert isinstance(wear_pct, float), f"wear_percentage should be float, got {type(wear_pct)}"
+    assert isinstance(edge_count, int), f"edge_pixel_count should be int, got {type(edge_count)}"
+
+
+# ---------------------------------------------------------------------------
+# Test 7: _compute_wear returns (None, None) when edge_bgr is None
+# ---------------------------------------------------------------------------
+
+
+def test_compute_wear_returns_none_tuple_when_no_edge():
+    """_compute_wear returns (None, None) when edge_bgr is None."""
+    from src.services.camera.ldc_worker import LDCWorker
+
+    store = CameraResultsStore()
+    mock_camera = MagicMock()
+    worker = LDCWorker(LDC_CONFIG, store, mock_camera)
+
+    import numpy as real_np
+    import sys
+    mock_cv2 = MagicMock()
+
+    result = worker._compute_wear(None, real_np, mock_cv2)
+
+    assert result == (None, None), f"Expected (None, None), got {result}"
+
+
+# ---------------------------------------------------------------------------
+# Test 8: DB write includes traceability fields and edge_pixel_count (D-05, D-06)
+# ---------------------------------------------------------------------------
+
+
+def test_db_write_includes_traceability_and_edge_pixel_count():
+    """LDCWorker DB write_async includes edge_pixel_count, kesim_id, makine_id, serit_id, malzeme_cinsi."""
+    from src.services.camera.ldc_worker import LDCWorker
+
+    store = CameraResultsStore()
+    # Pre-populate traceability in store
+    store.update("kesim_id", 99)
+    store.update("makine_id", 2)
+    store.update("serit_id", 8)
+    store.update("malzeme_cinsi", 3)
+
+    mock_camera = MagicMock()
+    mock_camera.get_current_frame.return_value = np.zeros((480, 640, 3), dtype=np.uint8)
+    mock_db = MagicMock()
+    mock_db.write_async.return_value = True
+
+    with _mock_ml_libraries(produce_wear=True):
+        import importlib
+        import src.services.camera.ldc_worker as ldc_mod
+        importlib.reload(ldc_mod)
+
+        worker = ldc_mod.LDCWorker(LDC_CONFIG, store, mock_camera, db_service=mock_db)
+
+        call_count = [0]
+
+        def fast_stop(timeout=None):
+            call_count[0] += 1
+            if call_count[0] >= 1:
+                worker._stop_event.set()
+            return worker._stop_event.is_set()
+
+        from unittest.mock import patch
+        with patch("os.path.isfile", return_value=True):
+            worker._stop_event.wait = fast_stop
+            worker.start()
+            worker.join(timeout=5.0)
+
+    # The wear_history write should have been made
+    assert mock_db.write_async.called, "DB write was not called"
+    call_args = mock_db.write_async.call_args_list[0]
+    params = call_args[0][1]  # params tuple
+    # params: (now, wear_percentage, health_score, edge_pixel_count, image_path, kesim_id, makine_id, serit_id, malzeme_cinsi)
+    assert params[5] == 99, f"kesim_id should be 99, got {params[5]}"
+    assert params[6] == 2, f"makine_id should be 2, got {params[6]}"
+    assert params[7] == 8, f"serit_id should be 8, got {params[7]}"
+    assert params[8] == 3, f"malzeme_cinsi should be 3, got {params[8]}"

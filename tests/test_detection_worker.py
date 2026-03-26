@@ -345,3 +345,123 @@ def test_stop_event_exits_loop():
         worker.join(timeout=5.0)
 
     assert not worker.is_alive(), "Thread still alive after stop() and 5s join timeout"
+
+
+# ---------------------------------------------------------------------------
+# Test 7: DB write includes traceability fields from CameraResultsStore (D-05)
+# ---------------------------------------------------------------------------
+
+
+def test_db_write_includes_traceability_fields():
+    """DetectionWorker DB write_async includes kesim_id, makine_id, serit_id, malzeme_cinsi from store."""
+    from src.services.camera.detection_worker import DetectionWorker
+
+    store = CameraResultsStore()
+    # Pre-populate traceability in store
+    store.update("kesim_id", 42)
+    store.update("makine_id", 7)
+    store.update("serit_id", 3)
+    store.update("malzeme_cinsi", 5)
+
+    mock_camera = MagicMock()
+    mock_camera.get_current_frame.return_value = np.zeros((720, 1280, 3), dtype=np.uint8)
+    mock_db = MagicMock()
+    mock_db.write_async.return_value = True
+
+    broken_box = _make_mock_box(class_id=1, confidence=0.88)
+
+    with _mock_torch_ultralytics(broken_boxes=[broken_box], crack_boxes=[]):
+        worker = DetectionWorker(DET_CONFIG, store, mock_camera, db_service=mock_db)
+
+        call_count = [0]
+
+        def fast_stop(timeout=None):
+            call_count[0] += 1
+            if call_count[0] >= 1:
+                worker._stop_event.set()
+            return worker._stop_event.is_set()
+
+        worker._stop_event.wait = fast_stop
+        worker.start()
+        worker.join(timeout=5.0)
+
+    assert mock_db.write_async.called, "DB write was not called with broken_count > 0"
+    # Check the params tuple for the broken_tooth write
+    call_args = mock_db.write_async.call_args_list[0]
+    params = call_args[0][1]  # positional arg index 1 = params tuple
+    # params: (now, event_type, confidence, count, image_path, kesim_id, makine_id, serit_id, malzeme_cinsi)
+    assert params[5] == 42, f"kesim_id should be 42, got {params[5]}"
+    assert params[6] == 7, f"makine_id should be 7, got {params[6]}"
+    assert params[7] == 3, f"serit_id should be 3, got {params[7]}"
+    assert params[8] == 5, f"malzeme_cinsi should be 5, got {params[8]}"
+
+
+# ---------------------------------------------------------------------------
+# Test 8: _save_annotated_frame returns path when recording is active
+# ---------------------------------------------------------------------------
+
+
+def test_save_annotated_frame_returns_path_when_recording():
+    """_save_annotated_frame returns file path string when recording_path is set in store."""
+    import os
+    import sys
+    import tempfile
+    from src.services.camera.detection_worker import DetectionWorker
+
+    store = CameraResultsStore()
+    mock_camera = MagicMock()
+    worker = DetectionWorker(DET_CONFIG, store, mock_camera)
+
+    # We need cv2 to be importable inside _save_annotated_frame
+    # Use a temp dir as the recording path
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        store.update("recording_path", tmp_dir)
+
+        frame = np.zeros((100, 100, 3), dtype=np.uint8)
+
+        # Mock cv2 for this call
+        mock_cv2 = MagicMock()
+        mock_cv2.imwrite.return_value = True
+
+        old_cv2 = sys.modules.get("cv2")
+        sys.modules["cv2"] = mock_cv2
+        try:
+            result = worker._save_annotated_frame(frame, [], [])
+        finally:
+            if old_cv2 is None:
+                sys.modules.pop("cv2", None)
+            else:
+                sys.modules["cv2"] = old_cv2
+
+    assert result is not None, "_save_annotated_frame should return a path string when recording"
+    assert isinstance(result, str), "_save_annotated_frame should return a str path"
+
+
+# ---------------------------------------------------------------------------
+# Test 9: _save_annotated_frame returns None when recording_path is not set
+# ---------------------------------------------------------------------------
+
+
+def test_save_annotated_frame_returns_none_without_recording():
+    """_save_annotated_frame returns None when no recording_path in store."""
+    from src.services.camera.detection_worker import DetectionWorker
+
+    store = CameraResultsStore()  # no recording_path set
+    mock_camera = MagicMock()
+    worker = DetectionWorker(DET_CONFIG, store, mock_camera)
+
+    frame = np.zeros((100, 100, 3), dtype=np.uint8)
+
+    import sys
+    mock_cv2 = MagicMock()
+    old_cv2 = sys.modules.get("cv2")
+    sys.modules["cv2"] = mock_cv2
+    try:
+        result = worker._save_annotated_frame(frame, [], [])
+    finally:
+        if old_cv2 is None:
+            sys.modules.pop("cv2", None)
+        else:
+            sys.modules["cv2"] = old_cv2
+
+    assert result is None, "_save_annotated_frame should return None when no recording_path"

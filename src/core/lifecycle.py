@@ -88,6 +88,7 @@ class ApplicationLifecycle:
         self.camera_service = None
         self.detection_worker = None
         self.ldc_worker = None
+        self.vision_service = None
 
         # Background tasks
         self._health_monitor_task: Optional[asyncio.Task] = None
@@ -179,6 +180,11 @@ class ApplicationLifecycle:
                     logger.info("GUI thread finished")
 
             # 0.5. Stop camera threads (before data pipeline and SQLite flush)
+            # VisionService FIRST (per D-09 — cut recording trigger before workers)
+            if self.vision_service:
+                logger.info("Stopping vision service...")
+                self.vision_service.stop()
+                self.vision_service.join(timeout=timeout)
             if self.detection_worker:
                 logger.info("Stopping detection worker...")
                 self.detection_worker.stop()
@@ -444,6 +450,14 @@ class ApplicationLifecycle:
                 )
                 self.ldc_worker.start()  # Thread.start()
                 logger.info("  LDC wear worker started")
+
+            # Vision orchestration service (per D-01)
+            from src.services.camera.vision_service import VisionService
+            self.vision_service = VisionService(
+                camera_config, self.camera_results_store, self.camera_service
+            )
+            self.vision_service.start()  # Thread.start()
+            logger.info("  Vision service started")
 
         except Exception as e:
             logger.warning(f"  Camera initialization failed: {e}")
