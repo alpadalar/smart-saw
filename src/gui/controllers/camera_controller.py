@@ -12,7 +12,7 @@ Framework: PySide6
 import logging
 from collections import deque
 
-from PySide6.QtWidgets import QWidget, QFrame, QLabel
+from PySide6.QtWidgets import QWidget, QFrame, QLabel, QProgressBar
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QImage, QPixmap, QFont, QColor
 
@@ -57,8 +57,18 @@ _SUBTITLE_STYLE = """
     QLabel {
         color: rgba(244, 246, 252, 151);
         font-family: 'Plus Jakarta Sans';
-        font-weight: medium;
+        font-weight: 400;
         font-size: 16px;
+        background-color: transparent;
+    }
+"""
+
+_STATUS_STYLE = """
+    QLabel {
+        color: #22C55E;
+        font-family: 'Plus Jakarta Sans';
+        font-weight: bold;
+        font-size: 22px;
         background-color: transparent;
     }
 """
@@ -138,7 +148,7 @@ class CameraController(QWidget):
 
         self.thumbnail_labels: list[QLabel] = []
         thumb_y = 40
-        thumb_spacing = 10
+        thumb_spacing = 8
         thumb_x_start = 20
         for i in range(self._MAX_THUMBNAILS):
             lbl = QLabel(self.sirali_frame)
@@ -163,34 +173,34 @@ class CameraController(QWidget):
 
         # Broken count
         lbl_broken_name = QLabel("Kırık Diş Sayısı", self.kirik_frame)
-        lbl_broken_name.setGeometry(20, 60, 200, 22)
+        lbl_broken_name.setGeometry(16, 60, 200, 22)
         lbl_broken_name.setStyleSheet(_SUBTITLE_STYLE)
 
         self.lbl_broken_count = QLabel("0", self.kirik_frame)
-        self.lbl_broken_count.setGeometry(20, 85, 200, 45)
+        self.lbl_broken_count.setGeometry(16, 85, 200, 45)
         self.lbl_broken_count.setStyleSheet(_VALUE_STYLE)
 
         # Tooth count
         lbl_tooth_name = QLabel("Toplam Diş Sayısı", self.kirik_frame)
-        lbl_tooth_name.setGeometry(20, 140, 200, 22)
+        lbl_tooth_name.setGeometry(16, 140, 200, 22)
         lbl_tooth_name.setStyleSheet(_SUBTITLE_STYLE)
 
         self.lbl_tooth_count = QLabel("—", self.kirik_frame)
-        self.lbl_tooth_count.setGeometry(20, 165, 200, 45)
+        self.lbl_tooth_count.setGeometry(16, 165, 200, 45)
         self.lbl_tooth_count.setStyleSheet(_VALUE_STYLE)
 
         # Last detection timestamp
         lbl_kirik_ts_name = QLabel("Son Tespit", self.kirik_frame)
-        lbl_kirik_ts_name.setGeometry(20, 225, 200, 22)
+        lbl_kirik_ts_name.setGeometry(16, 225, 200, 22)
         lbl_kirik_ts_name.setStyleSheet(_SUBTITLE_STYLE)
 
         self.lbl_kirik_ts = QLabel("—", self.kirik_frame)
-        self.lbl_kirik_ts.setGeometry(20, 250, 300, 30)
+        self.lbl_kirik_ts.setGeometry(16, 250, 300, 30)
         self.lbl_kirik_ts.setStyleSheet(_INFO_STYLE)
 
         # OK / alert indicator
         self.lbl_kirik_status = QLabel("✓ OK", self.kirik_frame)
-        self.lbl_kirik_status.setGeometry(20, 290, 200, 40)
+        self.lbl_kirik_status.setGeometry(16, 290, 200, 40)
         self.lbl_kirik_status.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self._set_ok_style(self.lbl_kirik_status)
 
@@ -205,25 +215,25 @@ class CameraController(QWidget):
 
         # Crack count
         lbl_crack_name = QLabel("Çatlak Sayısı", self.catlak_frame)
-        lbl_crack_name.setGeometry(20, 60, 200, 22)
+        lbl_crack_name.setGeometry(16, 60, 200, 22)
         lbl_crack_name.setStyleSheet(_SUBTITLE_STYLE)
 
         self.lbl_crack_count = QLabel("0", self.catlak_frame)
-        self.lbl_crack_count.setGeometry(20, 85, 200, 45)
+        self.lbl_crack_count.setGeometry(16, 85, 200, 45)
         self.lbl_crack_count.setStyleSheet(_VALUE_STYLE)
 
         # Last detection timestamp
         lbl_catlak_ts_name = QLabel("Son Tespit", self.catlak_frame)
-        lbl_catlak_ts_name.setGeometry(20, 145, 200, 22)
+        lbl_catlak_ts_name.setGeometry(16, 145, 200, 22)
         lbl_catlak_ts_name.setStyleSheet(_SUBTITLE_STYLE)
 
         self.lbl_catlak_ts = QLabel("—", self.catlak_frame)
-        self.lbl_catlak_ts.setGeometry(20, 170, 300, 30)
+        self.lbl_catlak_ts.setGeometry(16, 170, 300, 30)
         self.lbl_catlak_ts.setStyleSheet(_INFO_STYLE)
 
         # OK / alert indicator
         self.lbl_catlak_status = QLabel("✓ OK", self.catlak_frame)
-        self.lbl_catlak_status.setGeometry(20, 220, 200, 40)
+        self.lbl_catlak_status.setGeometry(16, 220, 200, 40)
         self.lbl_catlak_status.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self._set_ok_style(self.lbl_catlak_status)
 
@@ -233,13 +243,35 @@ class CameraController(QWidget):
         self.asinma_frame.setStyleSheet(_FRAME_STYLE)
 
         lbl_asinma_title = QLabel("Aşınma Yüzdesi", self.asinma_frame)
-        lbl_asinma_title.setGeometry(15, 10, 270, 26)
+        lbl_asinma_title.setGeometry(16, 10, 270, 26)
         lbl_asinma_title.setStyleSheet(_TITLE_STYLE)
 
         self.lbl_wear_value = QLabel("—", self.asinma_frame)
-        self.lbl_wear_value.setGeometry(15, 45, 270, 55)
+        self.lbl_wear_value.setGeometry(16, 45, 270, 35)
         self.lbl_wear_value.setStyleSheet(_VALUE_STYLE)
         self.lbl_wear_value.setAlignment(Qt.AlignCenter)
+
+        self.wear_bar = QProgressBar(self.asinma_frame)
+        self.wear_bar.setGeometry(16, 83, 270, 18)
+        self.wear_bar.setRange(0, 100)
+        self.wear_bar.setValue(0)
+        self.wear_bar.setTextVisible(False)
+        self.wear_bar.setStyleSheet("""
+            QProgressBar {
+                background-color: rgba(255, 255, 255, 20);
+                border-radius: 9px;
+                border: none;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #22C55E,
+                    stop:0.5 #EAB308,
+                    stop:1 #EF4444
+                );
+                border-radius: 9px;
+            }
+        """)
 
         # ── Health score frame ───────────────────────────────────────
         self.saglik_frame = QFrame(self)
@@ -247,13 +279,35 @@ class CameraController(QWidget):
         self.saglik_frame.setStyleSheet(_FRAME_STYLE)
 
         lbl_saglik_title = QLabel("Testere Sağlığı", self.saglik_frame)
-        lbl_saglik_title.setGeometry(15, 10, 270, 26)
+        lbl_saglik_title.setGeometry(16, 10, 270, 26)
         lbl_saglik_title.setStyleSheet(_TITLE_STYLE)
 
         self.lbl_health_score = QLabel("—", self.saglik_frame)
-        self.lbl_health_score.setGeometry(15, 45, 270, 55)
+        self.lbl_health_score.setGeometry(16, 45, 270, 35)
         self.lbl_health_score.setStyleSheet(_VALUE_STYLE)
         self.lbl_health_score.setAlignment(Qt.AlignCenter)
+
+        self.health_bar = QProgressBar(self.saglik_frame)
+        self.health_bar.setGeometry(16, 83, 270, 18)
+        self.health_bar.setRange(0, 100)
+        self.health_bar.setValue(0)
+        self.health_bar.setTextVisible(False)
+        self.health_bar.setStyleSheet("""
+            QProgressBar {
+                background-color: rgba(255, 255, 255, 20);
+                border-radius: 9px;
+                border: none;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #EF4444,
+                    stop:0.5 #EAB308,
+                    stop:1 #22C55E
+                );
+                border-radius: 9px;
+            }
+        """)
 
         # ── Health status frame ──────────────────────────────────────
         self.durum_frame = QFrame(self)
@@ -261,11 +315,11 @@ class CameraController(QWidget):
         self.durum_frame.setStyleSheet(_FRAME_STYLE)
 
         lbl_durum_title = QLabel("Testere Durumu", self.durum_frame)
-        lbl_durum_title.setGeometry(15, 10, 270, 26)
+        lbl_durum_title.setGeometry(16, 10, 270, 26)
         lbl_durum_title.setStyleSheet(_TITLE_STYLE)
 
         self.lbl_health_status = QLabel("—", self.durum_frame)
-        self.lbl_health_status.setGeometry(15, 45, 270, 55)
+        self.lbl_health_status.setGeometry(16, 45, 270, 55)
         self.lbl_health_status.setStyleSheet(_VALUE_STYLE)
         self.lbl_health_status.setAlignment(Qt.AlignCenter)
 
@@ -326,7 +380,7 @@ class CameraController(QWidget):
         """Poll latest frame from the store, update camera label + thumbnails."""
         try:
             snapshot = self.results_store.snapshot()
-            jpeg_bytes = snapshot.get("latest_frame")
+            jpeg_bytes = snapshot.get("annotated_frame") or snapshot.get("latest_frame")
             if not jpeg_bytes:
                 return
 
@@ -424,6 +478,12 @@ class CameraController(QWidget):
             else:
                 self.lbl_health_score.setText("—")
 
+            # Update progress bars (per D-04, D-05)
+            if wear is not None:
+                self.wear_bar.setValue(int(round(float(wear))))
+            if score is not None:
+                self.health_bar.setValue(int(round(float(score))))
+
             # Health status text with dynamic color
             self.lbl_health_status.setText(str(status))
             self.lbl_health_status.setStyleSheet(f"""
@@ -460,7 +520,7 @@ class CameraController(QWidget):
                 color: #22C55E;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
-                font-size: 28px;
+                font-size: 22px;
                 background-color: transparent;
             }
         """)
@@ -473,7 +533,7 @@ class CameraController(QWidget):
                 color: #EF4444;
                 font-family: 'Plus Jakarta Sans';
                 font-weight: bold;
-                font-size: 28px;
+                font-size: 22px;
                 background-color: transparent;
             }
         """)
