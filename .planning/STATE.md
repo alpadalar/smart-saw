@@ -63,6 +63,8 @@ Plan: Not started
 - Trend: Stable
 
 | Phase 19-foundation P01 | 2 | 2 tasks | 6 files |
+| Phase 19.1-ui-refinements P01 | 1 | 2 tasks | 3 files |
+| Phase 19.2-graph-axis-labels P01 | 3 | 1 tasks | 1 files |
 | Phase 20-camera-capture P01 | 4 | 3 tasks | 5 files |
 | Phase 21-ai-detection-pipeline P01 | 2 | 2 tasks | 3 files |
 | Phase 21-ai-detection-pipeline P02 | 5 | 2 tasks | 5 files |
@@ -85,6 +87,11 @@ Key v2.0 decisions established in research:
 - [Phase 19-foundation]: camera.enabled defaults to false — zero behavioral change until hardware connected
 - [Phase 19-foundation]: camera.db created by _init_camera() not _init_databases() — camera lifecycle isolated, no config.yaml database entry needed
 - [Phase 19-foundation]: No camera module imports in lifecycle.py — lazy import pattern deferred to S22 to avoid ImportError when opencv not installed
+- [Phase 19.1-ui-refinements]: closeButton uses QPushButton (not QToolButton) with transparent style — dismiss action, not a numpad value button
+- [Phase 19.1-ui-refinements]: backspace() intentionally NOT checking _prefilled — trim behavior on pre-filled value is correct per UX research
+- [Phase 19.1-ui-refinements]: initial_value defaults to "" (not None) — keeps self.value type-consistent as str throughout
+- [Phase 19.2-graph-axis-labels]: X-axis label right-alignment via setGeometry(506, 518, 300, 30) with Qt.AlignRight so right edge aligns at x=806; fixed coords replace dynamic offset calculation
+- [Phase 19.2-graph-axis-labels]: Axis title labels use fixed pixel geometry within kesimGrafigiFrame rather than computed offsets from graph widget position
 - [Phase 20-camera-capture]: Auto-discovery scans 4 device IDs from config hint — industrial robustness for USB ID shifts
 - [Phase 20-camera-capture]: 30-second retry on capture loss — transient USB disconnect must not crash main application
 - [Phase 20-camera-capture]: fps_actual moving average via deque(maxlen=30) updated every 30 frames — low lock contention
@@ -112,6 +119,8 @@ Key v2.0 decisions established in research:
 - Milestone v1.5 COMPLETE: 2026-01-28
 - Milestone v1.6 COMPLETE: 2026-03-16
 - Milestone v2.0 STARTED: 2026-03-16
+- Phase 19.1 inserted after Phase 19: UI refinements (URGENT)
+- Phase 19.2 inserted after Phase 19: Graph axis labels (URGENT)
 
 ## Session Continuity
 

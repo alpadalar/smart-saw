@@ -292,7 +292,7 @@ class MonitoringController(QWidget):
 
         self.labelInmeMotorHiz = QLabel("İlerleme Motor Hızı (mm/dk)", self.FrameInmeMotorHiz)
         self.labelInmeMotorHiz.setGeometry(33, 20, 201, 20)
-        self.labelInmeMotorHiz.setStyleSheet(label_name_style)
+        self.labelInmeMotorHiz.setStyleSheet(label_name_style + " QLabel { font-size: 16px; }")
 
         self.labelInmeMotorHizValue = QLabel("—", self.FrameInmeMotorHiz)
         self.labelInmeMotorHizValue.setGeometry(30, 43, 211, 50)
@@ -320,7 +320,7 @@ class MonitoringController(QWidget):
 
         self.labelInmeMotorAkim = QLabel("İlerleme Motor Akımı (A)", self.FrameInmeMotorAkim)
         self.labelInmeMotorAkim.setGeometry(33, 20, 211, 20)
-        self.labelInmeMotorAkim.setStyleSheet(label_name_style)
+        self.labelInmeMotorAkim.setStyleSheet(label_name_style + " QLabel { font-size: 18px; }")
 
         self.labelInmeMotorAkimValue = QLabel("—", self.FrameInmeMotorAkim)
         self.labelInmeMotorAkimValue.setGeometry(30, 43, 211, 50)
@@ -348,7 +348,7 @@ class MonitoringController(QWidget):
 
         self.labelInmeMotorTork = QLabel("İlerleme Motor Torku (%)", self.FrameInmeMotorTork)
         self.labelInmeMotorTork.setGeometry(33, 20, 211, 20)
-        self.labelInmeMotorTork.setStyleSheet(label_name_style)
+        self.labelInmeMotorTork.setStyleSheet(label_name_style + " QLabel { font-size: 18px; }")
 
         self.labelInmeMotorTorkValue = QLabel("—", self.FrameInmeMotorTork)
         self.labelInmeMotorTorkValue.setGeometry(30, 43, 211, 50)
