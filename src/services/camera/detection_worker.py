@@ -261,27 +261,28 @@ class DetectionWorker(threading.Thread):
     def _save_annotated_frame(
         self, frame: Any, broken_results: list, crack_results: list
     ) -> str | None:
-        """Optionally save annotated frame to a ``detected/`` subdirectory.
+        """Draw bounding boxes, publish annotated frame to store, and optionally save to disk.
 
-        Only writes when a recording is active (recording_path is set in the
-        results store). Silently skips on any error — this is best-effort.
+        Bounding boxes are drawn unconditionally every detection cycle. The
+        annotated JPEG is always written to ``CameraResultsStore`` under the
+        ``"annotated_frame"`` key so the GUI live feed reflects current
+        detections even when recording is inactive (per D-02).
+
+        Disk save only occurs when a recording is active (``recording_path``
+        set in results store). Silently skips on any error — this is
+        best-effort.
+
+        Args:
+            frame: BGR numpy array captured from the camera.
+            broken_results: Ultralytics RTDETR results for the broken-tooth model.
+            crack_results: Ultralytics RTDETR results for the crack model.
 
         Returns:
-            The saved file path as a string, or None if not saved.
+            The saved file path as a string, or None if not saved to disk.
         """
         import cv2
 
-        recording_path = self._results_store.get("recording_path")
-        if not recording_path:
-            return None
-
-        detected_dir = os.path.join(recording_path, "detected")
-        try:
-            os.makedirs(detected_dir, exist_ok=True)
-        except OSError:
-            return None
-
-        # Draw bounding boxes on a copy
+        # Draw bounding boxes on a copy (unconditional)
         annotated = frame.copy()
 
         for result in broken_results:
@@ -321,6 +322,22 @@ class DetectionWorker(threading.Thread):
                     (255, 0, 0),
                     2,
                 )
+
+        # Publish annotated frame to store for live GUI feed (per D-02)
+        ok_enc, buf = cv2.imencode(".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        if ok_enc:
+            self._results_store.update("annotated_frame", buf.tobytes())
+
+        # Save to disk only when recording is active
+        recording_path = self._results_store.get("recording_path")
+        if not recording_path:
+            return None
+
+        detected_dir = os.path.join(recording_path, "detected")
+        try:
+            os.makedirs(detected_dir, exist_ok=True)
+        except OSError:
+            return None
 
         ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         out_path = os.path.join(detected_dir, f"det_{ts}.jpg")

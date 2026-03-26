@@ -419,9 +419,14 @@ def test_save_annotated_frame_returns_path_when_recording():
 
         frame = np.zeros((100, 100, 3), dtype=np.uint8)
 
-        # Mock cv2 for this call
+        # Mock cv2 for this call — imencode must return (ok, buf) tuple
         mock_cv2 = MagicMock()
+        mock_cv2.imencode.return_value = (True, MagicMock())
         mock_cv2.imwrite.return_value = True
+        mock_cv2.rectangle = MagicMock()
+        mock_cv2.putText = MagicMock()
+        mock_cv2.IMWRITE_JPEG_QUALITY = 1
+        mock_cv2.FONT_HERSHEY_SIMPLEX = 0
 
         old_cv2 = sys.modules.get("cv2")
         sys.modules["cv2"] = mock_cv2
@@ -454,6 +459,10 @@ def test_save_annotated_frame_returns_none_without_recording():
 
     import sys
     mock_cv2 = MagicMock()
+    # imencode must return (ok, buf) tuple; even without recording, store write path runs
+    mock_cv2.imencode.return_value = (True, MagicMock())
+    mock_cv2.IMWRITE_JPEG_QUALITY = 1
+    mock_cv2.FONT_HERSHEY_SIMPLEX = 0
     old_cv2 = sys.modules.get("cv2")
     sys.modules["cv2"] = mock_cv2
     try:
