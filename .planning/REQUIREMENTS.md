@@ -32,15 +32,15 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 
 ### GUI
 
-- [ ] **GUI-01**: Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
-- [ ] **GUI-02**: Kirik dis tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
-- [ ] **GUI-03**: Catlak tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
-- [ ] **GUI-04**: Asinma yuzdesinin kamera sayfasinda goruntulenmesi
-- [ ] **GUI-05**: Testere saglik durumunun kamera sayfasinda goruntulenmesi (yuzde + durum metni + renk kodu)
+- [x] **GUI-01**: Kamera sayfasinda canli kamera goruntusu goruntulenmesi (QTimer ile periyodik guncelleme)
+- [x] **GUI-02**: Kirik dis tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
+- [x] **GUI-03**: Catlak tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
+- [x] **GUI-04**: Asinma yuzdesinin kamera sayfasinda goruntulenmesi
+- [x] **GUI-05**: Testere saglik durumunun kamera sayfasinda goruntulenmesi (yuzde + durum metni + renk kodu)
 - [ ] **GUI-06**: Sidebar'a 5. navigasyon butonu olarak kamera butonu eklenmesi (sadece camera.enabled=true iken)
-- [ ] **GUI-07**: Son kaydedilen frame'lerden 4 adet thumbnail goruntulenmesi (sequential images panel)
-- [ ] **GUI-08**: Tespit durumu icin OK/alert ikonlari goruntulenmesi
-- [ ] **GUI-09**: Asinma olcum gorsellestirmesinin (wear visualization overlay) goruntulenmesi
+- [x] **GUI-07**: Son kaydedilen frame'lerden 4 adet thumbnail goruntulenmesi (sequential images panel)
+- [x] **GUI-08**: Tespit durumu icin OK/alert ikonlari goruntulenmesi
+- [x] **GUI-09**: Asinma olcum gorsellestirmesinin (wear visualization overlay) goruntulenmesi
 
 ## v2.x Requirements
 
@@ -86,15 +86,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-01 | Phase 22 | Complete |
 | DATA-02 | Phase 23 | Complete |
 | DATA-03 | Phase 19 | Complete |
-| GUI-01 | Phase 24 | Pending |
-| GUI-02 | Phase 24 | Pending |
-| GUI-03 | Phase 24 | Pending |
-| GUI-04 | Phase 24 | Pending |
-| GUI-05 | Phase 24 | Pending |
+| GUI-01 | Phase 24 | Complete |
+| GUI-02 | Phase 24 | Complete |
+| GUI-03 | Phase 24 | Complete |
+| GUI-04 | Phase 24 | Complete |
+| GUI-05 | Phase 24 | Complete |
 | GUI-06 | Phase 24 | Pending |
-| GUI-07 | Phase 24 | Pending |
-| GUI-08 | Phase 24 | Pending |
-| GUI-09 | Phase 24 | Pending |
+| GUI-07 | Phase 24 | Complete |
+| GUI-08 | Phase 24 | Complete |
+| GUI-09 | Phase 24 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 23 total

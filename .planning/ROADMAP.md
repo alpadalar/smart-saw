@@ -199,7 +199,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 24-01-PLAN.md — Annotated frame pipeline + CameraController progress bars + convention audit (GUI-01..05, 07..09)
+- [x] 24-01-PLAN.md — Annotated frame pipeline + CameraController progress bars + convention audit (GUI-01..05, 07..09)
 - [ ] 24-02-PLAN.md — MainController audit + visual verification checkpoint (GUI-06)
 
 ## Progress
@@ -234,4 +234,4 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 21. AI Detection Pipeline | v2.0 | 2/2 | Complete | 2026-03-25 |
 | 22. Lifecycle & DB Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
 | 23. IoT Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
-| 24. Camera GUI | v2.0 | 0/2 | Not started | - |
+| 24. Camera GUI | v2.0 | 1/2 | In Progress|  |
