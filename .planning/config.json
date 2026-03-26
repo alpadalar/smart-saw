@@ -1,6 +1,5 @@
 {
   "mode": "yolo",
-  "depth": "comprehensive",
   "parallelization": {
     "enabled": false,
     "plan_level": false,
@@ -22,5 +21,9 @@
   "safety": {
     "always_confirm_destructive": true,
     "always_confirm_external_services": true
+  },
+  "granularity": "fine",
+  "workflow": {
+    "_auto_chain_active": false
   }
 }

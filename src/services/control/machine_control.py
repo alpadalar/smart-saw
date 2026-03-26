@@ -8,8 +8,10 @@ Uses SYNCHRONOUS Modbus calls (like old project) for reliable Qt integration.
 import logging
 import threading
 import time
+from pathlib import Path
 from typing import Optional
 
+import yaml
 from pymodbus.client import ModbusTcpClient
 
 logger = logging.getLogger(__name__)
@@ -17,6 +19,22 @@ logger = logging.getLogger(__name__)
 # Connection settings
 CONNECT_TIMEOUT = 1.0  # Connection timeout in seconds
 CONNECT_COOLDOWN = 1.0  # Minimum seconds between connection attempts
+
+
+def _load_modbus_config() -> dict:
+    """Load modbus host/port from config/config.yaml."""
+    config_path = Path(__file__).parent.parent.parent.parent / 'config' / 'config.yaml'
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        modbus = config.get('modbus', {})
+        return {
+            'host': modbus.get('host', '127.0.0.1'),
+            'port': modbus.get('port', 502),
+        }
+    except Exception as e:
+        logger.warning(f"Could not load modbus config: {e}, using defaults")
+        return {'host': '127.0.0.1', 'port': 502}
 
 
 class MachineControl:
@@ -52,7 +70,7 @@ class MachineControl:
     SAW_DOWN_BIT = 10            # 20.10: Saw down
     COOLANT_BIT = 1              # 2000.1: Coolant
 
-    def __new__(cls, host: str = '192.168.2.147', port: int = 502):
+    def __new__(cls, host: str = None, port: int = None):
         """Thread-safe singleton pattern."""
         with cls._lock:
             if cls._instance is None:
@@ -60,8 +78,12 @@ class MachineControl:
                 cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, host: str = '192.168.2.147', port: int = 502):
-        """Initialize MachineControl with Modbus connection."""
+    def __init__(self, host: str = None, port: int = None):
+        """Initialize MachineControl with Modbus connection.
+
+        Host and port are read from config/config.yaml (modbus section).
+        Explicit parameters override config values.
+        """
         if self._initialized:
             return
 
@@ -69,11 +91,12 @@ class MachineControl:
             if self._initialized:
                 return
 
-            self.host = host
-            self.port = port
+            cfg = _load_modbus_config()
+            self.host = host or cfg['host']
+            self.port = port or cfg['port']
             self.client = ModbusTcpClient(
-                host=host,
-                port=port,
+                host=self.host,
+                port=self.port,
                 timeout=CONNECT_TIMEOUT
             )
             self.connected = False

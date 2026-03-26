@@ -110,7 +110,7 @@ control:
     enabled: true
     default_delay_ms: 30000    # Default 30 seconds (when inme_hizi=0)
     min_delay_ms: 5000         # Minimum 5 seconds (no max limit)
-    target_distance_mm: 10     # Activate after 10mm descent
+    target_distance_mm: 25     # Activate after 25mm descent
 
   # Data buffering for control decisions
   buffer:

@@ -118,6 +118,14 @@ None — all data paths are wired. `wear_bar` and `health_bar` receive values fr
 - Remaining Phase 24 work: sidebar camera button in MainController (GUI-07/GUI-08), if applicable
 - All 9 detection worker tests pass; camera controller import is clean
 
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/24-camera-gui/24-01-SUMMARY.md`
+- FOUND: `src/services/camera/detection_worker.py`
+- FOUND: `src/gui/controllers/camera_controller.py`
+- FOUND commit: `6f4b938` (Task 1)
+- FOUND commit: `f37efd0` (Task 2)
+
 ---
 *Phase: 24-camera-gui*
 *Completed: 2026-03-26*

@@ -630,7 +630,7 @@ class DataProcessingPipeline:
             Unlike to_dict() which returns nested structure, this method
             flattens raw_data fields for direct GUI access.
         """
-        modbus_ip = self.config.get('modbus', {}).get('host', '192.168.1.100')
+        modbus_ip = self.config.get('modbus', {}).get('host', '')
 
         # If we have recent processed data, connection is working
         # Check data freshness (within last 2 seconds)
