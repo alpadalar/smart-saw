@@ -89,7 +89,7 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 - [x] **Phase 20: Camera Capture** - OpenCV frame capture thread, JPEG encoder, recordings directory structure (completed 2026-03-25)
 - [x] **Phase 21: AI Detection Pipeline** - RT-DETR broken/crack detection, LDC wear, health calculator, CameraResultsStore (completed 2026-03-25)
 - [x] **Phase 22: Lifecycle & DB Integration** - VisionService orchestration, lifecycle _init_camera(), detection results to SQLite (completed 2026-03-26)
-- [ ] **Phase 23: IoT Integration** - Detection results appended to existing ThingsBoard telemetry batch
+- [x] **Phase 23: IoT Integration** - Detection results appended to existing ThingsBoard telemetry batch (completed 2026-03-26)
 - [ ] **Phase 24: Camera GUI** - Live feed, detection stats, wear %, health score, thumbnails, icons, sidebar button
 
 ## Phase Details
@@ -160,10 +160,10 @@ Plans:
   1. 10 Hz veri dongusunda CameraResultsStore snapshot'i alinir; kamera alanlari ThingsBoard payload'una eklenir
   2. camera.enabled=false iken IoT payload degismez — hic kamera alani eklenmez
   3. Kamera alanlari mevcut telemetri batch'ine eklenirken hicbir mevcut alan kaybolmaz
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 23-01: DataProcessingPipeline optional camera_results_store parameter + IoT snapshot integration
+- [x] 23-01: DataProcessingPipeline optional camera_results_store parameter + IoT snapshot integration — completed 2026-03-26
 
 ### Phase 24: Camera GUI
 **Goal**: Operatorun kamera sayfasinda canli goruntu, tespit sonuclari, asinma ve saglik durumunu gorebilmesi
@@ -211,5 +211,5 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 20. Camera Capture | v2.0 | 0/1 | Complete    | 2026-03-25 |
 | 21. AI Detection Pipeline | v2.0 | 2/2 | Complete    | 2026-03-25 |
 | 22. Lifecycle & DB Integration | v2.0 | 1/1 | Complete    | 2026-03-26 |
-| 23. IoT Integration | v2.0 | 0/1 | Not started | - |
+| 23. IoT Integration | v2.0 | 1/1 | Complete    | 2026-03-26 |
 | 24. Camera GUI | v2.0 | 0/2 | Not started | - |

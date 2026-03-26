@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
 status: Ready to plan
-stopped_at: Completed 22-lifecycle-db-integration-22-01-PLAN.md
-last_updated: "2026-03-26T04:17:34.584Z"
+stopped_at: Phase 23 IoT Integration marked complete (already implemented)
+last_updated: "2026-03-26T05:56:39.578Z"
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 5
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** Phase 22 — lifecycle-db-integration
+**Current focus:** Phase 24 — camera-gui
 
 ## Current Position
 
-Phase: 23
+Phase: 24
 Plan: Not started
 
 ## Performance Metrics
@@ -115,6 +115,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-26T04:14:09.267Z
-Stopped at: Completed 22-lifecycle-db-integration-22-01-PLAN.md
+Last session: 2026-03-26T05:56:39.574Z
+Stopped at: Phase 23 IoT Integration marked complete (already implemented)
 Resume file: None

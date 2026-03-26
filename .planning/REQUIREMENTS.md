@@ -27,7 +27,7 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 ### Data Integration
 
 - [x] **DATA-01**: Tespit sonuclarinin (kirik, catlak, asinma) SQLite veritabanina kaydedilmesi (camera.db)
-- [ ] **DATA-02**: Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek)
+- [x] **DATA-02**: Tespit sonuclarinin ThingsBoard IoT platformuna gonderilmesi (mevcut telemetri batch'ine eklenerek) — Phase 23
 - [x] **DATA-03**: Kamera veritabani semasinin lifecycle'da config-driven olusturulmasi
 
 ### GUI
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DET-05 | Phase 21 | Complete |
 | DET-06 | Phase 21 | Complete |
 | DATA-01 | Phase 22 | Complete |
-| DATA-02 | Phase 23 | Pending |
+| DATA-02 | Phase 23 | Complete |
 | DATA-03 | Phase 19 | Complete |
 | GUI-01 | Phase 24 | Pending |
 | GUI-02 | Phase 24 | Pending |

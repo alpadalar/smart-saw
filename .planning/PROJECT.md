@@ -69,7 +69,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - [ ] PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik)
 - [ ] GUI sidebar'a kamera navigasyon butonu eklenmesi
 - ✓ Tespit sonuclarinin SQLite'a kaydedilmesi — Phase 22
-- [ ] Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi
+- ✓ Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi — Phase 23
 - ✓ Lifecycle'da kamera servislerinin config-driven baslatilmasi — Phase 22
 
 ### Out of Scope
@@ -83,7 +83,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.0 Phase 22 complete):**
+**Current State (v2.0 Phase 23 complete):**
 - VisionService: Daemon thread polling CameraResultsStore at 0.5s, detects CUTTING(3)->non-CUTTING transitions, triggers start_recording/stop_recording (10s duration), error-isolated (vision_service.py)
 - DataProcessingPipeline: Bridges testere_durumu + traceability fields (kesim_id, makine_id, serit_id, malzeme_cinsi) to CameraResultsStore every processing cycle (data_processor.py)
 - Lifecycle: _init_camera() creates VisionService after LDCWorker; shutdown stops VisionService first (lifecycle.py)
@@ -93,6 +93,8 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - CameraService: OpenCV frame capture, auto-discovery (4 device), 30s retry, JPEG encoding, worker pool disk recording (camera_service.py)
 - HealthCalculator: Saw health formula (broken %70 + wear %30), Turkish status labels, CSS colors (health_calculator.py)
 - modelB4.py: LDC neural network architecture for 16_model.pth checkpoint
+- IoT Integration: CameraResultsStore snapshot → vision_data → ThingsBoard telemetry (6 camera fields: broken_count, tooth_count, crack_count, wear_percentage, health_score, health_status)
+- ThingsBoardFormatter: format_telemetry(vision_data=) merges camera fields; config whitelist includes all 6
 - 45 unit tests (8 results_store + 9 camera_service + 9 detection_worker + 8 ldc_worker + 8 health_calculator + 11 vision_service), all mocked — no hardware dependency
 
 **Previous State (v1.6 shipped):**
@@ -160,4 +162,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-26 after Phase 22 Lifecycle & DB Integration complete*
+*Last updated: 2026-03-26 after Phase 23 IoT Integration complete*
