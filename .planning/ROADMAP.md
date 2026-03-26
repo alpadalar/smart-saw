@@ -108,6 +108,16 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 Plans:
 - [ ] 19-01: numpy uncap + np.ptp fix + camera config schema + SCHEMA_CAMERA_DB + lifecycle _init_camera() + camera module scaffold
 
+### Phase 19.3: Band Tension Graph (INSERTED)
+
+**Goal:** Add "Şerit Gerginliği" (serit_gerginligi_bar) as a selectable Y-axis variable in the cutting graph by adding one QPushButton and threading the data key through 3 existing integration points in sensor_controller.py
+**Requirements**: none (inserted phase, no formal v2.0 requirement ID assigned)
+**Depends on:** Phase 19
+**Plans:** 1/1 plans complete
+
+Plans:
+- [ ] 19.3-01-PLAN.md — Add btnSeritGerginligi + relocate btnSeritTork + wire through _setup_axis_button_groups, _get_selected_y_axis, update_axis_titles
+
 ### Phase 19.2: Graph axis labels (INSERTED)
 
 **Goal:** Show currently selected X and Y axis variable names as static labels inside kesimGrafigiFrame, updating dynamically on axis button clicks

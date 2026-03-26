@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: Camera Vision & AI Detection
 status: Ready to execute
 stopped_at: "Checkpoint in 24-camera-gui-24-02-PLAN.md (Task 2: Visual verification)"
-last_updated: "2026-03-26T07:56:48.793Z"
+last_updated: "2026-03-26T08:45:57.846Z"
 progress:
-  total_phases: 8
-  completed_phases: 6
-  total_plans: 8
-  completed_plans: 9
+  total_phases: 18
+  completed_phases: 18
+  total_plans: 19
+  completed_plans: 19
 ---
 
 # Project State
@@ -65,6 +65,7 @@ Plan: 2 of 2
 | Phase 19-foundation P01 | 2 | 2 tasks | 6 files |
 | Phase 19.1-ui-refinements P01 | 1 | 2 tasks | 3 files |
 | Phase 19.2-graph-axis-labels P01 | 3 | 1 tasks | 1 files |
+| Phase 19.3-band-tension-graph P01 | 3 | 1 tasks | 1 files |
 | Phase 20-camera-capture P01 | 4 | 3 tasks | 5 files |
 | Phase 21-ai-detection-pipeline P01 | 2 | 2 tasks | 3 files |
 | Phase 21-ai-detection-pipeline P02 | 5 | 2 tasks | 5 files |
@@ -93,6 +94,8 @@ Key v2.0 decisions established in research:
 - [Phase 19.1-ui-refinements]: initial_value defaults to "" (not None) — keeps self.value type-consistent as str throughout
 - [Phase 19.2-graph-axis-labels]: X-axis label right-alignment via setGeometry(506, 518, 300, 30) with Qt.AlignRight so right edge aligns at x=806; fixed coords replace dynamic offset calculation
 - [Phase 19.2-graph-axis-labels]: Axis title labels use fixed pixel geometry within kesimGrafigiFrame rather than computed offsets from graph widget position
+- [Phase 19.3-band-tension-graph]: btnSeritTork relocated from (169, 239) to (41, 238); btnSeritGerginligi placed at (298, 238) for symmetric bottom-row pair
+- [Phase 19.3-band-tension-graph]: serit_gerginligi_bar was already wired through data pipeline — only UI button was missing
 - [Phase 20-camera-capture]: Auto-discovery scans 4 device IDs from config hint — industrial robustness for USB ID shifts
 - [Phase 20-camera-capture]: 30-second retry on capture loss — transient USB disconnect must not crash main application
 - [Phase 20-camera-capture]: fps_actual moving average via deque(maxlen=30) updated every 30 frames — low lock contention
@@ -128,6 +131,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-26T07:56:48.789Z
-Stopped at: Checkpoint in 24-camera-gui-24-02-PLAN.md (Task 2: Visual verification)
+Last session: 2026-03-26T08:45:57.846Z
+Stopped at: Checkpoint in 19.3-band-tension-graph-19.3-01-PLAN.md (Task 2: Human verify)
 Resume file: None
