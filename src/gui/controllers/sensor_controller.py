@@ -105,6 +105,7 @@ class CuttingGraphWidget(QWidget):
                 "serit_motor_akim_a": "Şerit Akım (A)",
                 "serit_sapmasi": "Şerit Sapması (mm)",
                 "serit_motor_tork_percentage": "Şerit Tork (%)",
+                "serit_gerginligi_bar": "Şerit Gerginliği (bar)",
             }
             # X-axis title mapping (Turkish with proper characters)
             x_titles = {
@@ -716,9 +717,14 @@ class SensorController(QWidget):
         self.btnSeritSapmasi.setCheckable(True)
 
         self.btnSeritTork = QPushButton("Şerit Tork", self.XEkseniFrame)
-        self.btnSeritTork.setGeometry(169, 239, 240, 69)
+        self.btnSeritTork.setGeometry(41, 238, 240, 69)
         self.btnSeritTork.setStyleSheet(axis_btn_style)
         self.btnSeritTork.setCheckable(True)
+
+        self.btnSeritGerginligi = QPushButton("Şerit Gerginliği", self.XEkseniFrame)
+        self.btnSeritGerginligi.setGeometry(298, 238, 240, 69)
+        self.btnSeritGerginligi.setStyleSheet(axis_btn_style)
+        self.btnSeritGerginligi.setCheckable(True)
 
         # ===== Y EKSENI FRAME (X-axis buttons - Center Bottom) =====
         # Eski UI: (1030, 724, 329, 342) -> Yeni: (638, 724, 329, 342)
@@ -978,7 +984,7 @@ class SensorController(QWidget):
         # Y-axis buttons
         self._y_group = QButtonGroup(self)
         self._y_group.setExclusive(True)
-        for name in ('btnKesmeHizi', 'btnIlerlemeHizi', 'btnSeritAkim', 'btnSeritSapmasi', 'btnSeritTork'):
+        for name in ('btnKesmeHizi', 'btnIlerlemeHizi', 'btnSeritAkim', 'btnSeritSapmasi', 'btnSeritTork', 'btnSeritGerginligi'):
             btn = getattr(self, name, None)
             if btn is not None:
                 btn.setCheckable(True)
@@ -1029,6 +1035,8 @@ class SensorController(QWidget):
                 return "serit_sapmasi"
             elif hasattr(self, 'btnSeritTork') and self.btnSeritTork.isChecked():
                 return "serit_motor_tork_percentage"
+            elif hasattr(self, 'btnSeritGerginligi') and self.btnSeritGerginligi.isChecked():
+                return "serit_gerginligi_bar"
             else:
                 return "serit_kesme_hizi"  # Default
         except Exception as e:
