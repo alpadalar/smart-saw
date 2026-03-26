@@ -818,7 +818,7 @@ class ControlPanelController(QWidget):
         self.labelValue.setAlignment(Qt.AlignCenter)
 
         self.labelmm = QLabel("mm", self.headHeightFrame)
-        self.labelmm.setGeometry(170, 210, 41, 34)
+        self.labelmm.setGeometry(170, 210, 60, 34)
         self.labelmm.setStyleSheet("""
             QLabel {
                 background-color: transparent;
@@ -865,20 +865,6 @@ class ControlPanelController(QWidget):
                 background-color: transparent;
             }
         """
-
-        # Y-axis title label (left of graph, vertical position centered)
-        self.band_deviation_y_axis_title = QLabel("Sapma (mm)", self.bandDeviationFrame)
-        self.band_deviation_y_axis_title.setGeometry(5, 130, 80, 25)
-        self.band_deviation_y_axis_title.setStyleSheet(axis_title_style)
-        self.band_deviation_y_axis_title.setAlignment(Qt.AlignCenter)
-        self.band_deviation_y_axis_title.show()
-
-        # X-axis title label (below graph, centered horizontally)
-        self.band_deviation_x_axis_title = QLabel("Zaman (s)", self.bandDeviationFrame)
-        self.band_deviation_x_axis_title.setGeometry(105, 225, 100, 25)
-        self.band_deviation_x_axis_title.setStyleSheet(axis_title_style)
-        self.band_deviation_x_axis_title.setAlignment(Qt.AlignCenter)
-        self.band_deviation_x_axis_title.show()
 
         # Min/max labels
         self.ustdegerlabel = QLabel(" 0.00", self.bandDeviationFrame)

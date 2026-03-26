@@ -310,8 +310,8 @@ class CuttingGraphWidget(QWidget):
             QLabel {
                 color: #F4F6FC;
                 font-family: 'Plus Jakarta Sans';
-                font-weight: 200;
-                font-size: 18px;
+                font-weight: bold;
+                font-size: 19px;
                 background-color: transparent;
                 border: none;
             }
