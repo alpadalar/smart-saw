@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Camera Vision & AI Detection
-status: Ready to plan
-stopped_at: Phase 22 context gathered
-last_updated: "2026-03-25T22:26:33.088Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 22-lifecycle-db-integration-22-01-PLAN.md
+last_updated: "2026-03-26T04:14:09.271Z"
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 4
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** Phase 21 — ai-detection-pipeline
+**Current focus:** Phase 22 — lifecycle-db-integration
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
+Phase: 22 (lifecycle-db-integration) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Plan: Not started
 | Phase 20-camera-capture P01 | 4 | 3 tasks | 5 files |
 | Phase 21-ai-detection-pipeline P01 | 2 | 2 tasks | 3 files |
 | Phase 21-ai-detection-pipeline P02 | 5 | 2 tasks | 5 files |
+| Phase 22-lifecycle-db-integration P01 | 328 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Key v2.0 decisions established in research:
 - [Phase 21-ai-detection-pipeline]: sys.modules patching for torch/ultralytics mocks — local imports inside run() cannot be patched with @patch
 - [Phase 21-ai-detection-pipeline]: Use real numpy in sys.modules mock for ldc_worker tests — mocking numpy breaks astype(np.uint8)
 - [Phase 21-ai-detection-pipeline]: ROI config migration: wear_cfg.get() with fallback defaults — convert @staticmethod to instance methods for self._roi_* access
+- [Phase 22-lifecycle-db-integration]: VisionService polls at 0.5s (2 Hz) — configurable via vision.polling_interval
+- [Phase 22-lifecycle-db-integration]: DataProcessingPipeline writes traceability to CameraResultsStore after _last_processed_data
+- [Phase 22-lifecycle-db-integration]: _compute_wear returns (percent, edge_pixel_count) tuple — internal only, no API break
 
 ### Blockers/Concerns
 
@@ -111,6 +115,6 @@ Key v2.0 decisions established in research:
 
 ## Session Continuity
 
-Last session: 2026-03-25T22:26:33.084Z
-Stopped at: Phase 22 context gathered
-Resume file: .planning/phases/22-lifecycle-db-integration/22-CONTEXT.md
+Last session: 2026-03-26T04:14:09.267Z
+Stopped at: Completed 22-lifecycle-db-integration-22-01-PLAN.md
+Resume file: None

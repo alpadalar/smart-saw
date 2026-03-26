@@ -88,7 +88,7 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 - [x] **Phase 19: Foundation** - numpy unblocker, camera config schema, camera.db schema, config-driven zero-import guard (completed 2026-03-16)
 - [x] **Phase 20: Camera Capture** - OpenCV frame capture thread, JPEG encoder, recordings directory structure (completed 2026-03-25)
 - [x] **Phase 21: AI Detection Pipeline** - RT-DETR broken/crack detection, LDC wear, health calculator, CameraResultsStore (completed 2026-03-25)
-- [ ] **Phase 22: Lifecycle & DB Integration** - VisionService orchestration, lifecycle _init_camera(), detection results to SQLite
+- [x] **Phase 22: Lifecycle & DB Integration** - VisionService orchestration, lifecycle _init_camera(), detection results to SQLite (completed 2026-03-26)
 - [ ] **Phase 23: IoT Integration** - Detection results appended to existing ThingsBoard telemetry batch
 - [ ] **Phase 24: Camera GUI** - Live feed, detection stats, wear %, health score, thumbnails, icons, sidebar button
 
@@ -150,7 +150,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 22-01-PLAN.md — VisionService orchestration + lifecycle _init_camera() integration + worker DB write field population
+- [x] 22-01-PLAN.md — VisionService orchestration + lifecycle _init_camera() integration + worker DB write field population
 
 ### Phase 23: IoT Integration
 **Goal**: Tespit sonuclarinin mevcut ThingsBoard telemetri batch'ine eklenerek IoT'a iletilmesi
@@ -210,6 +210,6 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24
 | 19. Foundation | 1/1 | Complete    | 2026-03-16 | - |
 | 20. Camera Capture | v2.0 | 0/1 | Complete    | 2026-03-25 |
 | 21. AI Detection Pipeline | v2.0 | 2/2 | Complete    | 2026-03-25 |
-| 22. Lifecycle & DB Integration | v2.0 | 0/1 | Not started | - |
+| 22. Lifecycle & DB Integration | v2.0 | 1/1 | Complete   | 2026-03-26 |
 | 23. IoT Integration | v2.0 | 0/1 | Not started | - |
 | 24. Camera GUI | v2.0 | 0/2 | Not started | - |
