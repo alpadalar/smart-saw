@@ -128,6 +128,7 @@ Key v2.0 decisions established in research:
 - Phase 19.1 inserted after Phase 19: UI refinements (URGENT)
 - Phase 19.2 inserted after Phase 19: Graph axis labels (URGENT)
 - Phase 19.3 inserted after Phase 19: Band Tension Graph (URGENT)
+- Phase 19.4 inserted after Phase 19: Move system status to notification frame (URGENT)
 
 ## Session Continuity
 
