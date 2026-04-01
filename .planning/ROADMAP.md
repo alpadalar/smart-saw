@@ -108,6 +108,16 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 Plans:
 - [ ] 19-01: numpy uncap + np.ptp fix + camera config schema + SCHEMA_CAMERA_DB + lifecycle _init_camera() + camera module scaffold
 
+### Phase 19.4: Move system status to notification frame (INSERTED)
+
+**Goal:** Move `iconStatus` and `labelSystemStatusInfo` from the control-panel-only `systemStatusFrame` into the always-visible `notificationFrame` at the top of the main window; expand `logViewerFrame` to fill freed space — no backend changes
+**Requirements**: none (inserted phase, no formal v2.0 requirement ID)
+**Depends on:** Phase 19
+**Plans:** 1 plan
+
+Plans:
+- [ ] 19.4-01-PLAN.md — Add status labels to notificationFrame in main_controller, pass refs to ControlPanelController, remove systemStatusFrame, expand log viewer
+
 ### Phase 19.3: Band Tension Graph (INSERTED)
 
 **Goal:** Add "Şerit Gerginliği" (serit_gerginligi_bar) as a selectable Y-axis variable in the cutting graph by adding one QPushButton and threading the data key through 3 existing integration points in sensor_controller.py
