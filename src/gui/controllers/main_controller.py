@@ -276,7 +276,7 @@ class MainController(QMainWindow):
 
         # System status text (moved from ControlPanelController.systemStatusFrame)
         self.labelSystemStatusInfo = QLabel("Bağlantı Kontrol Ediliyor...", self.notificationFrame)
-        self.labelSystemStatusInfo.setGeometry(615, 13, 400, 34)
+        self.labelSystemStatusInfo.setGeometry(615, 13, 700, 34)
         self.labelSystemStatusInfo.setStyleSheet("""
             QLabel {
                 background-color: transparent;

@@ -2155,18 +2155,18 @@ class ControlPanelController(QWidget):
     def _get_status_message(self, status_text):
         """Get user-friendly status message."""
         status_messages = {
-            "BAĞLANTI BEKLENİYOR": "PLC bağlantısı\nbekleniyor...",
+            "BAĞLANTI BEKLENİYOR": "PLC bağlantısı bekleniyor...",
             "BOŞTA": "Boşta.",
-            "HİDROLİK AKTİF": "Makine kesime\nhazır.",
-            "ŞERİT MOTOR ÇALIŞIYOR": "Şerit motor\nçalışıyor!",
+            "HİDROLİK AKTİF": "Makine kesime hazır.",
+            "ŞERİT MOTOR ÇALIŞIYOR": "Şerit motor çalışıyor!",
             "KESİM YAPILIYOR": "Kesim yapılıyor!",
             "KESİM BİTTİ": "Kesim bitti!",
-            "ŞERİT YUKARI ÇIKIYOR": "Şerit yukarı\nçıkıyor.",
-            "MALZEME BESLEME": "Kesilecek malzeme\nkonumlandırılıyor.",
+            "ŞERİT YUKARI ÇIKIYOR": "Şerit yukarı çıkıyor.",
+            "MALZEME BESLEME": "Kesilecek malzeme konumlandırılıyor.",
             "BİLİNMİYOR": "Bilinmiyor!",
             "Bağlantı Yok": "Bağlantı bekleniyor...",
-            "Veri bekleniyor...": "Veri akışı\nbekleniyor...",
-            "Bağlantı Kontrol Ediliyor...": "Bağlantı kontrol\nediliyor..."
+            "Veri bekleniyor...": "Veri akışı bekleniyor...",
+            "Bağlantı Kontrol Ediliyor...": "Bağlantı kontrol ediliyor..."
         }
 
         self._update_status_icon(status_text)
