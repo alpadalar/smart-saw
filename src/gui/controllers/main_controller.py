@@ -263,13 +263,41 @@ class MainController(QMainWindow):
             }
         """)
 
+        # System status icon (moved from ControlPanelController.systemStatusFrame)
+        self.iconStatus = QLabel(self.notificationFrame)
+        self.iconStatus.setGeometry(560, 13, 35, 35)
+        self.iconStatus.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+            }
+        """)
+        self.iconStatus.setAlignment(Qt.AlignCenter)
+        self.iconStatus.setScaledContents(True)
+
+        # System status text (moved from ControlPanelController.systemStatusFrame)
+        self.labelSystemStatusInfo = QLabel("Bağlantı Kontrol Ediliyor...", self.notificationFrame)
+        self.labelSystemStatusInfo.setGeometry(615, 13, 400, 34)
+        self.labelSystemStatusInfo.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: 400;
+                font-size: 20px;
+            }
+        """)
+        self.labelSystemStatusInfo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.labelSystemStatusInfo.setWordWrap(False)
+
         # Create pages - all have self.stackedWidget as parent
         # Qt will handle cleanup automatically
         self.control_panel_page = ControlPanelController(
             self.control_manager,
             self.data_pipeline,
             parent=self.stackedWidget,
-            event_loop=self.event_loop
+            event_loop=self.event_loop,
+            icon_status=self.iconStatus,
+            label_system_status_info=self.labelSystemStatusInfo
         )
         self.positioning_page = PositioningController(
             self.control_manager,
