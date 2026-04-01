@@ -515,7 +515,9 @@ class ControlPanelController(QWidget):
         control_manager=None,
         data_pipeline=None,
         parent=None,
-        event_loop=None
+        event_loop=None,
+        icon_status=None,
+        label_system_status_info=None
     ):
         """
         Initialize control panel controller.
@@ -525,8 +527,14 @@ class ControlPanelController(QWidget):
             data_pipeline: Data pipeline instance for data access
             parent: Parent widget
             event_loop: asyncio event loop for cross-thread scheduling (optional)
+            icon_status: QLabel for status icon, owned by MainController notificationFrame
+            label_system_status_info: QLabel for status text, owned by MainController notificationFrame
         """
         super().__init__(parent)
+
+        # Status labels moved to notificationFrame (owned by MainController)
+        self.iconStatus = icon_status
+        self.labelSystemStatusInfo = label_system_status_info
 
         # Dependencies
         self.control_manager = control_manager
@@ -897,44 +905,6 @@ class ControlPanelController(QWidget):
         self.labelBandDeviationValue.setStyleSheet(label_value_style)
         self.labelBandDeviationValue.setAlignment(Qt.AlignCenter)
 
-        # === SYSTEM STATUS FRAME (1176, 823, 321, 243) ===
-        self.systemStatusFrame = QFrame(self)
-        self.systemStatusFrame.setGeometry(1176, 823, 321, 243)
-        self.systemStatusFrame.setStyleSheet(frame_style)
-
-        self.labelSystemStatus = QLabel("Sistem Durumu", self.systemStatusFrame)
-        self.labelSystemStatus.setGeometry(27, 26, 271, 34)
-        self.labelSystemStatus.setStyleSheet(label_title_style)
-
-        # Status icon
-        self.iconStatus = QLabel(self.systemStatusFrame)
-        self.iconStatus.setGeometry(125, 70, 71, 71)
-        self.iconStatus.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-            }
-        """)
-        self.iconStatus.setAlignment(Qt.AlignCenter)
-        self.iconStatus.setScaledContents(True)
-
-        # Status text
-        self.labelSystemStatusInfo = QLabel(
-            "Bağlantı Kontrol Ediliyor...",
-            self.systemStatusFrame
-        )
-        self.labelSystemStatusInfo.setGeometry(41, 150, 241, 70)
-        self.labelSystemStatusInfo.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-                color: #F4F6FC;
-                font-family: 'Plus Jakarta Sans';
-                font-weight: 400;
-                font-size: 26px;
-            }
-        """)
-        self.labelSystemStatusInfo.setAlignment(Qt.AlignCenter)
-        self.labelSystemStatusInfo.setWordWrap(True)
-
         # === BAND CUTTING SPEED FRAME (33, 486, 551, 344) ===
         self.bandCuttingSpeedFrame = QFrame(self)
         self.bandCuttingSpeedFrame.setGeometry(33, 486, 551, 344)
@@ -1181,7 +1151,7 @@ class ControlPanelController(QWidget):
 
         # === LOG VIEWER FRAME (1176, 362, 321, 480) ===
         self.logViewerFrame = QFrame(self)
-        self.logViewerFrame.setGeometry(1176, 362, 321, 460)
+        self.logViewerFrame.setGeometry(1176, 362, 321, 703)
         self.logViewerFrame.setStyleSheet(frame_style)
 
         self.labelLogViewer = QLabel("Çalışma Günlüğü", self.logViewerFrame)
@@ -1190,7 +1160,7 @@ class ControlPanelController(QWidget):
 
         # Log text widget
         self.log_text = QTextEdit(self.logViewerFrame)
-        self.log_text.setGeometry(30, 70, 261, 360)
+        self.log_text.setGeometry(30, 70, 261, 603)
         self.log_text.setReadOnly(True)
         self.log_text.setStyleSheet("""
             QTextEdit {
@@ -2233,7 +2203,7 @@ class ControlPanelController(QWidget):
             if os.path.exists(full_path):
                 pixmap = QPixmap(full_path)
                 scaled_pixmap = pixmap.scaled(
-                    71, 71,
+                    35, 35,
                     Qt.KeepAspectRatio,
                     Qt.SmoothTransformation
                 )
