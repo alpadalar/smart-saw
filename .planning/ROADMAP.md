@@ -249,7 +249,11 @@ Plans:
   1. Phase 23 dizini, SUMMARY.md ve VERIFICATION.md mevcut
   2. Phase 24 VERIFICATION.md mevcut ve GUI-01..09 requirements dogrulanmis
   3. Phase 19.3 VERIFICATION.md mevcut
-**Plans**: 0 plans (to be planned)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 24.2-01-PLAN.md — Phase 23 retroactive artifacts (PLAN + SUMMARY + VERIFICATION) + Phase 19.3 VERIFICATION.md
+- [ ] 24.2-02-PLAN.md — Phase 24 Camera GUI VERIFICATION.md (9 GUI requirements)
 
 ## Progress
 
@@ -285,4 +289,4 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24 → 24.1 
 | 23. IoT Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
 | 24. Camera GUI | v2.0 | 2/2 | Complete | 2026-03-26 |
 | 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 1/1 | Complete    | 2026-04-08 |
-| 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 0/0 | Not started | |
+| 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 0/2 | Not started | |
