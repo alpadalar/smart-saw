@@ -1,282 +1,205 @@
-# Feature Research
+# Feature Landscape: Otomatik Kesim Sayfası (v2.1)
 
-**Domain:** Industrial camera-based band saw tooth inspection system
-**Researched:** 2026-03-16
-**Confidence:** HIGH (based on direct analysis of existing working implementation in source project + domain analysis)
-
----
-
-## Context: Source System Already Exists
-
-This is not a greenfield feature set. The old project (`/media/workspace/eskiimas/smart-saw/`) has a
-complete, working camera vision system. The migration task is: port, modularize, and config-drive it
-into the current codebase. Feature research here identifies what is table stakes (must port), what is
-a differentiator (adds value beyond the port), and what to skip.
+**Domain:** Industrial HMI automatic/serial cutting page with PLC integration
+**Researched:** 2026-04-08
+**Confidence:** HIGH (PROJECT.md PLC register spec + codebase analysis + industrial HMI domain research)
 
 ---
 
-## Feature Landscape
+## Context: New GUI Page on Existing Codebase
 
-### Table Stakes (Users Expect These)
+This is not greenfield. v2.1 adds one new page (Otomatik Kesim / Automatic Cutting) to an already
+working PySide6 HMI that has sidebar navigation, a touch numpad, TouchButton widget, and
+AsyncModbusService. All new features are scoped to this single page and its PLC integration.
 
-Features the industrial operator expects once "camera vision" is announced. Missing any of these
-makes the feature feel broken or incomplete.
+**What the PLC spec requires (from PROJECT.md):**
+- Write D2050 (Word): `P × X` — hedef adet × paket adeti → toplam parça
+- Write D2064 (Double Word): `L × 10` — uzunluk mm × 10
+- Read D2056 (Word): kesilmiş adet — live counter from PLC
+- Write bit 20.13: START (momentary)
+- Write bit 20.14: RESET (hold-delay pattern like existing TouchButton operations)
+- Write bit 20.4: İPTAL / Cancel (existing CUTTING_STOP_BIT, already in MachineControl)
+- Shared with manual page: C (kesim hızı → D2066) and S (inme hızı → D2041)
+
+---
+
+## Table Stakes
+
+Features operators expect from any automatic/serial cutting HMI page. Missing any of these makes
+the page feel broken or incomplete — operators will not trust it.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Live camera feed in GUI | Camera page without live video is broken by definition | MEDIUM | QLabel + QTimer at 500ms; CameraModule captures continuously in background thread; frame shown via QImage/QPixmap conversion |
-| Broken tooth detection (count + frames) | Core safety requirement — broken teeth damage workpiece and machine | HIGH | RT-DETR model (best.pt), runs post-recording on full frame set; outputs tooth count, broken count, annotated frames saved to detected/ folder |
-| Crack detection (count + frames) | Structural failure of blade body, distinct from tooth breakage | HIGH | Separate RT-DETR model (catlak-best.pt), runs independently; outputs crack count, annotated frames to detected-crack/ folder |
-| Wear percentage display | Blade wear is a continuous degradation metric; maintenance scheduling depends on it | HIGH | LDC edge detection pipeline (3-thread: watcher, ldc_worker, wear_worker); outputs wear % per frame to wear.csv; UI reads CSV average |
-| Saw health composite score | Operators need single "is the blade OK?" number; separate stats are too cognitive | MEDIUM | Formula: health = 100 - (broken_pct * 0.7 + wear_pct * 0.3); status text (Saglikli/Iyi/Orta/Kritik/Tehlikeli) |
-| Detection results to database | All vision results must persist — same as all other sensor data in this system | MEDIUM | New SQLite table (or camera.db) for detection_events; serit_id, timestamp, broken_count, crack_count, wear_percent, health_score |
-| Detection results to ThingsBoard IoT | Existing telemetry pipeline expects all operational data | MEDIUM | Add camera telemetry fields to existing http_client send cycle |
-| Camera page navigation button in sidebar | All existing pages (Control, Positioning, Sensor, Monitoring) have sidebar nav; camera page must too | LOW | Add btnCamera to existing sidebar widget; wire to camera page |
-| config-driven enable/disable | System must run without camera hardware (factory floor may not have camera on all machines) | MEDIUM | `camera.enabled: false` in config.yaml suppresses all imports/threads; zero overhead when disabled |
+| Parameter entry: P (hedef adet) | Every auto-cut system requires quantity target before job start | LOW | Touch numpad opens on tap; integer ≥ 1; validates before write; shared pattern with existing kesme hizi input |
+| Parameter entry: X (paketteki adet) | Serial production needs batch-size; P×X gives total to PLC D2050 | LOW | Touch numpad; integer ≥ 1; P and X entered together; product written to D2050 as Word |
+| Parameter entry: L (uzunluk mm) | Cut length is the core job parameter — no cut without it | LOW | Touch numpad; positive integer; value ×10 written to D2064 as Double Word (2 registers) |
+| Parameter entry: C (kesim hızı) | Speed affects cut quality; operator must confirm before auto job | LOW | Shared register D2066 with control panel; same numpad pattern; labeled mm/dk |
+| Parameter entry: S (inme hızı) | Descent speed affects material and blade; required for auto mode | LOW | Shared register D2041 with control panel; same numpad ×100 scaling |
+| Live kesilmiş adet counter display | Operator must see job progress in real time; core feedback loop | LOW | Read D2056 at 5 Hz via QTimer; large, prominent display near parameter fields |
+| START button | Initiates the automatic cutting cycle on PLC | LOW | Momentary write to bit 20.13; no hold-delay needed; standard QPushButton |
+| RESET button (hold-delay) | Clears PLC counter and state; accidental press must be prevented | MEDIUM | Same hold-delay pattern as existing positioning TouchButton ops; write to bit 20.14 on sustained press |
+| İPTAL / Cancel button | Operator must be able to abort a running cycle safely | LOW | Writes bit 20.4 (CUTTING_STOP_BIT already in MachineControl); momentary; confirm dialog or immediate |
+| Sidebar navigation button (2nd slot) | All pages have sidebar entries; missing button = page inaccessible | LOW | Add btnOtomatikKesim between Kontrol Paneli and Konumlandırma; same nav_btn_style |
+| Connection status awareness | Buttons must not mislead operator when PLC is disconnected | LOW | Disable START/RESET/İPTAL if MachineControl.is_connected is False; show "Bağlantı yok" label |
 
-### Differentiators (Competitive Advantage)
+---
 
-Features that go beyond a direct port and increase the system's value. None of these are in the old
-project as-is.
+## Differentiators
+
+Features that increase operator trust and operational efficiency beyond the bare minimum. None of
+these block the job from running, but all reduce errors and save time at the machine.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Sequential image thumbnails panel (4 frames) | Operator can quickly scan recent blade images without opening file explorer | MEDIUM | Already present in old CameraPage (_siralı_goruntu_labels, _max_images=4, 240x150px each); worth porting as it directly answers "what did the blade look like?" |
-| Detection status OK/alert icons per category | Single-glance status for each defect type; more scannable than numbers alone | LOW | Old code uses okey icon per detection type; simple QLabel icon swap based on count threshold |
-| Real-time stats progress during batch detection | Detection over 500+ frames takes minutes; progress feedback prevents operator from thinking system hung | MEDIUM | The old detect_broken_objects() updates detection_stats.json per frame; GUI timer polls JSON to show live progress |
-| Wear visualization overlay (red boundary lines) | Makes the algorithm's measurement visible; builds operator trust in automation | MEDIUM | Wear worker saves wear_vis/ images with OpenCV drawn reference lines and measured boundary; GUI can show latest vis image |
-| Health status color coding | Immediate red/yellow/green comprehension; no number reading needed | LOW | SawHealthCalculator.get_health_color() already implemented; apply as label background or icon |
-| Per-recording history in sidebar | Show previous session detection summaries; helps maintenance scheduling | HIGH | Not in old project; requires UI redesign; defer unless explicitly requested |
-| Serit_id correlation on camera results | Link blade identity to visual inspection results; enables per-blade wear tracking across sessions | LOW | Just pass serit_id from existing system context when recording detection results |
+| Parameter lock during active job | Prevents mid-job parameter edits that would create PLC data inconsistency | LOW | setEnabled(False) on all numpad-tap labels/fields when job is running; job state inferred from D2056 counting up |
+| Progress display: kesilmiş / hedef | "3 / 10" format gives immediate sense of job completion — more readable than counter alone | LOW | Single QLabel showing "{kesilmiş_adet} / {hedef_adet}" formatted string; hedef_adet is local state |
+| Completion visual feedback | Operator needs to know job is done without staring at screen | LOW | Color change or icon on counter label when kesilmiş_adet reaches hedef_adet; ISA-101: use consistent status color |
+| Input validation with reason | Touch operator miskeys often; show what's wrong, not just "invalid" | LOW | Label shows "P: minimum 1 olmalı" or "L: boş bırakılamaz" rather than silent reject |
+| Parameter persistence across navigation | Operator sets P/L/C/S, navigates away, returns — values should not reset | LOW | Store last-entered values in controller state dict; repopulate labels on page show |
+| "Hesaplanan toplam" display | Show P×X before writing to PLC so operator can verify the product | LOW | Dynamic label updates on P or X change: "Toplam: 25 parça (5×5)"; no extra PLC write |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+---
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Real-time AI inference during recording | "Why not detect while recording?" — seems faster | At 50fps/1920x1200, RT-DETR inference per frame requires a powerful GPU; on typical industrial PC (CPU-only or basic GPU), inference at full frame rate would drop to <1fps and block recording; recording quality degrades | Record first, then batch-process; keeps recording pipeline clean and inference pipeline independent |
-| Live wear percentage during recording | "Show wear while recording is happening" | LDC pipeline already runs concurrently with recording via VisionService watchdog — but this is complex async I/O; introducing it creates watchdog latency, queue overflow risk | LDC pipeline runs concurrently post-frame-write already (VisionService design); UI polls wear.csv every 2s — this is the right pattern |
-| Web dashboard for camera results | Remote viewing of blade images from browser | Out of scope; existing system is desktop-first (industrial panel PC); add HTTP server complexity | Export summary CSV; use ThingsBoard dashboard for aggregated metrics |
-| Continuous video recording (MP4/AVI) | "Keep full video history" | Disk space: 1920x1200 @ 50fps = ~1.8GB/min uncompressed; 30 minute session = 54GB; JPEG frame sequence is intentional design choice (selectively discard, random-access, no codec dependency) | JPEG frame sequence with configurable retention window; delete old recordings after N days |
-| Interactive detection result editing | "Let operator mark false positives" | Adds UI complexity; creates ground truth labeling workflow; model retraining out of scope for this milestone | Log all detections; trust model confidence threshold (0.5 default) |
-| Multi-camera support | "What if we need two cameras?" | CameraModule is designed for single device ID; multi-camera needs significant architecture change | Config `camera.device_id` is a single integer; document extension point, don't implement now |
+## Anti-Features
+
+Commonly considered additions that would be harmful, wasteful, or out of scope for this milestone.
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Job history / log panel on this page | Adds significant layout complexity; log data already goes to existing SQLite databases | Use Monitoring page for historical data; this page is for real-time job control only |
+| Alarm/fault display on this page | Alarm state is PLC-managed; duplicating alarm logic creates maintenance surface | Route alarms to existing Control Panel page display; reference existing alarm_status register (1031) |
+| Auto-restart after completion | "When done, start again" — sounds convenient but risks material overrun if operator is not at machine | Require explicit re-press of START; completion state must be acknowledged, not auto-cleared |
+| ML mode during auto cutting | Mixing ML speed adjustment with PLC auto-cycle causes speed register contention | Auto-cut page uses fixed C/S values only; ML mode belongs to Control Panel page |
+| Decimal length input | D2064 = L × 10 → PLC expects integer tenths of mm; decimal UI would require two-field design | Integer mm input only; label "(×0.1 mm hassasiyet)" for documentation; single numpad field |
+| Save/load job programs | Multi-job program storage requires a job library screen and more registers | Out of scope v2.1; single current job only; operator enters fresh each session |
+| Progress bar widget | QProgressBar for piece count adds visual polish but requires hedef_adet always-current sync | Use text counter "X / Y" instead; simpler, less error-prone when target changes mid-display |
+| Confirmation dialog before START | Adds an extra tap on a touchscreen — operators in production find this patronizing | Parameter lock prevents accidental changes; START intent is clear from context |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Camera Page (GUI)
-    requires --> CameraModule (OpenCV capture, multi-thread JPEG recording)
-    requires --> Broken Detect (RT-DETR model, lazy-loaded)
-    requires --> Crack Detect (RT-DETR model, lazy-loaded)
-    requires --> VisionService (LDC pipeline, wear.csv writer)
-    requires --> SawHealthCalculator (composite score)
-    requires --> recordings/ directory structure
-    requires --> camera.enabled config flag
+Otomatik Kesim Page (GUI controller)
+    requires --> MachineControl singleton (existing)
+        └── _write_register(2050, P*X)          # Word write
+        └── _write_double_register(2064, L*10)  # Double Word write — NEEDS NEW METHOD
+        └── _read_register(2056)                # Read kesilmiş adet
+        └── _set_bit(20, 13, True)              # START momentary
+        └── _set_bit(20, 14, True/False)        # RESET hold-delay
+        └── _set_bit(20, 4, True)               # İPTAL (CUTTING_STOP_BIT exists)
+    requires --> ModbusWriter (existing)
+        └── write_speeds(C, S)                  # Shared registers D2066 / D2041
+    requires --> NumpadDialog (existing)         # Touch numpad, already works
+    requires --> TouchButton widget (existing)   # For RESET hold-delay behavior
+    requires --> MainController sidebar          # Add new nav button
 
-CameraModule
-    requires --> OpenCV (cv2.VideoCapture)
-    requires --> camera config (device_id, width, height, fps, jpeg_quality, num_threads)
-    requires --> recordings/ base directory
+MachineControl — new method needed
+    requires --> Double Word write capability (2 consecutive Word registers)
+        └── D2064 = L*10 → registers[2064] = high word, registers[2065] = low word
+        └── pymodbus write_registers() for 2-register block
 
-Broken Detect
-    requires --> CameraModule (must record first, then detect)
-    requires --> ultralytics RTDETR
-    requires --> best.pt model file
-    requires --> detection_stats.json output format
+D2056 reader (kesilmiş adet)
+    requires --> MachineControl._read_register(2056) at 5 Hz via QTimer
+    reads independently from AsyncModbusService (same pattern as positioning page)
 
-Crack Detect
-    requires --> CameraModule (must record first, then detect)
-    requires --> ultralytics RTDETR
-    requires --> catlak-best.pt model file
-    requires --> detection_stats.json (shared file, same recording dir)
-
-VisionService (LDC wear pipeline)
-    requires --> recordings/ directory (watches for new frame files)
-    requires --> LDC model (modelB4.py + BIPED checkpoint)
-    requires --> PyTorch
-    requires --> wear.csv output format
-
-SawHealthCalculator
-    requires --> Broken Detect stats (total_tooth, total_broken)
-    requires --> VisionService wear percentage
-
-DB Integration
-    requires --> Broken Detect + Crack Detect completed stats
-    requires --> VisionService final wear_percent
-    requires --> Existing SQLiteService pattern
-    requires --> serit_id from existing system context
-
-IoT Integration
-    requires --> DB Integration (same detection_event row ID)
-    requires --> Existing HTTP ThingsBoard client
-
-config-driven enable
-    requires --> lifecycle.py startup sequence understands camera.enabled
-    requires --> CameraModule, VisionService, all camera imports guarded by flag
+Sidebar nav button
+    requires --> MainController._setup_ui() modification
+    requires --> nav_buttons list extension
+    requires --> stackedWidget page index assignment
 ```
 
 ### Dependency Notes
 
-- **CameraModule before detection:** Broken and crack detection run as batch post-processing on the latest recording folder. Recording must complete (or be manually stopped) before running detection models. This is intentional — not a limitation.
-- **VisionService concurrent with recording:** Unlike detection models, VisionService watches the recording directory in real time and processes frames as they appear. It runs from `start()` to `stop()` alongside the main application, not just during active recording.
-- **Shared detection_stats.json:** Both broken detect and crack detect write to the same JSON file in the recording directory. They use separate keys (`total_tooth`, `total_broken`, `total_crack`). Write operations must be thread-safe (old code uses per-file Lock).
-- **config.enabled gates everything:** If `camera.enabled = false`, none of the above services should be instantiated. This includes skipping the GUI camera page entirely.
+- **Double Word write is the one new infrastructure item.** D2064 requires writing two consecutive
+  16-bit registers (high word + low word) as a single atomic 32-bit value. `MachineControl` currently
+  only has `_write_register()` (single Word). A `_write_double_register()` method using
+  `client.write_registers(address, [high, low])` must be added.
+
+- **MachineControl is a singleton.** The new page calls the same singleton already used by the
+  positioning controller. No new Modbus connection — same instance, same lock.
+
+- **Shared speed registers.** C (D2066) and S (D2041) are written via the existing `ModbusWriter`.
+  Writing from the auto-cut page uses the same path as the control panel — no register conflict,
+  but both pages must show the current values. The auto-cut page should read back current speed
+  values on page-show to pre-populate its fields.
+
+- **D2056 read vs AsyncModbusService reads.** The existing 10 Hz Modbus poll reads register 1014
+  (`kesilen_parca_adeti` from address block 1000–1043). D2056 is outside this block and is NOT
+  currently read. The auto-cut page needs a separate periodic read of D2056 using
+  `MachineControl._read_register(2056)` — same synchronous pattern as the positioning controller.
+
+- **Bit 20.4 (İPTAL) already exists.** `CUTTING_STOP_BIT = 4` is defined in `MachineControl`.
+  The new page can call `_set_bit(CONTROL_REGISTER, CUTTING_STOP_BIT, True)` directly.
+
+- **Bits 20.13 and 20.14 are new.** AUTO_START_BIT = 13 and AUTO_RESET_BIT = 14 must be added as
+  class constants to `MachineControl`. The underlying `_set_bit()` mechanism works for any bit.
 
 ---
 
-## MVP Definition
+## MVP Recommendation
 
-### Launch With (v2.0 — the milestone deliverable)
+### Build for v2.1 Launch
 
-These are what PROJECT.md lists as "Active" requirements.
+These directly map to PROJECT.md active requirements:
 
-- [ ] **config-driven camera module** — `camera.enabled` in config.yaml; false = zero camera code loaded in lifecycle
-- [ ] **OpenCV frame capture + JPEG recording** — CameraModule ported; 1920x1200, configurable FPS, multi-thread save
-- [ ] **RT-DETR broken tooth detection** — best.pt model; batch post-processing; results to detection_stats.json
-- [ ] **RT-DETR crack detection** — catlak-best.pt model; batch post-processing; results to detection_stats.json
-- [ ] **LDC wear pipeline** — VisionService ported; concurrent watchdog; wear.csv per recording
-- [ ] **SawHealthCalculator** — 70% broken / 30% wear formula; status text
-- [ ] **Camera GUI page** — live feed, detection stats labels, wear %, health score; sequential image thumbnails
-- [ ] **Sidebar navigation button** — camera icon added to existing sidebar widget
-- [ ] **Detection results to SQLite** — new camera detection table; serit_id, timestamp, counts, wear, health
-- [ ] **Detection results to ThingsBoard** — camera telemetry fields added to existing HTTP send cycle
-- [ ] **Lifecycle integration** — camera services start/stop in ApplicationLifecycle based on config
+1. **Page scaffold + sidebar nav button** — add page to stacked widget, wire navigation
+2. **P, X, L parameter entry** via NumpadDialog tap; computed P×X display label
+3. **C, S parameter entry** (shared registers, same as control panel)
+4. **Write D2050 and D2064** on confirm/apply (requires new `_write_double_register` in MachineControl)
+5. **Write C/S speeds** using existing `ModbusWriter.write_speeds()`
+6. **Live D2056 counter display** at 5 Hz via QTimer
+7. **START button** — momentary bit 20.13 via MachineControl
+8. **RESET button** — hold-delay pattern, bit 20.14 via TouchButton or timer
+9. **İPTAL button** — momentary bit 20.4 (CUTTING_STOP_BIT, already exists)
+10. **PLC connection guard** — disable action buttons when not connected
 
-### Add After Validation (v2.x)
+### Include as Low-Cost Differentiators (same milestone)
 
-Features worth adding once the v2.0 integration is verified stable.
+- Parameter lock when counter is active (setEnabled(False) on input labels)
+- "X / Y" progress format label alongside raw counter
+- "Hesaplanan toplam: P×X parça" preview label
+- Input validation with Turkish reason messages
 
-- [ ] **Per-recording history panel** — show previous session summaries; trigger: operators request historical comparison
-- [ ] **Configurable confidence threshold** — expose RT-DETR `conf` param in config.yaml; trigger: false positive complaints from operators
-- [ ] **Recording retention policy** — auto-delete recordings older than N days; trigger: disk space alerts
+### Defer
 
-### Future Consideration (v3+)
-
-- [ ] **Online/incremental model updates** — retrain on false positives collected by operators; very high complexity
-- [ ] **Multi-camera support** — second camera for blade back side; requires architecture change
-- [ ] **Video export** — compile JPEG sequence to MP4 for shareable reports; trigger: explicit customer request
+- Job history panel: belongs in Monitoring page
+- Save/load programs: v2.2+ feature
+- Completion audio/alert: out of scope, no speaker output defined in system
 
 ---
 
-## Feature Prioritization Matrix
+## Complexity Summary
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| config-driven enable/disable | HIGH | LOW | P1 |
-| CameraModule (capture + recording) | HIGH | MEDIUM | P1 |
-| Broken tooth detection | HIGH | MEDIUM | P1 |
-| Crack detection | HIGH | MEDIUM | P1 |
-| LDC wear pipeline | HIGH | HIGH | P1 |
-| SawHealthCalculator | HIGH | LOW | P1 |
-| Camera GUI page | HIGH | HIGH | P1 |
-| Sidebar nav button | HIGH | LOW | P1 |
-| SQLite integration | MEDIUM | LOW | P1 |
-| IoT telemetry | MEDIUM | LOW | P1 |
-| Sequential image thumbnails | MEDIUM | LOW | P2 |
-| Detection status icons | LOW | LOW | P2 |
-| Wear visualization overlay | MEDIUM | MEDIUM | P2 |
-| Per-recording history panel | MEDIUM | HIGH | P3 |
-| Configurable confidence threshold | LOW | LOW | P3 |
-| Recording retention policy | MEDIUM | LOW | P3 |
-
-**Priority key:**
-- P1: Must have for v2.0 launch (milestone scope)
-- P2: Port from old project, adds polish, low risk
-- P3: Defer to v2.x or later
-
----
-
-## Implementation Details from Source Analysis
-
-### Camera Module Architecture (Directly Ported)
-
-The old `CameraModule` (`src/core/camera.py`) uses:
-- `cv2.VideoCapture(CAMERA_DEVICE_ID)` with platform-aware backend (DSHOW on Windows)
-- Continuous capture thread (`capture_loop` daemon thread)
-- `Queue(maxsize=100)` feeding N save threads (configurable, default 4-8)
-- JPEG quality 92, frame naming `frame_{n:06d}.jpg`
-- `frame_ready` Event for live GUI updates
-- Detection runs as a separate thread triggered post-recording
-- `_detection_finish_callback` notifies GUI when batch is done
-
-### Detection Stats File Format
-
-`recordings/{YYYYMMDD-HHMMSS}/detection_stats.json`:
-```json
-{
-    "total_tooth": 142,
-    "total_broken": 7,
-    "broken_ratio": 0.049,
-    "total_crack": 3,
-    "timestamp": "2026-03-16 14:22:33",
-    "total_frames": 2500,
-    "processed_frames": 2500,
-    "status": "completed",
-    "crack_status": "completed"
-}
-```
-
-### Wear CSV Format
-
-`recordings/{YYYYMMDD-HHMMSS}/wear.csv`:
-```
-timestamp,frame,wear_percent
-2026-03-16T14:22:33,frame_000001.png,12.45
-```
-
-### Directory Structure for a Recording Session
-
-```
-recordings/
-  20260316-142233/
-    frame_000001.jpg ... frame_002500.jpg   (raw captures)
-    detected/
-      frame_000012_tooth3_broken1.jpg       (annotated, broken detect output)
-    detected-crack/
-      frame_000098_crack2.jpg               (annotated, crack detect output)
-    ldc/
-      frame_000001.png ...                  (edge maps from LDC)
-    wear_vis/
-      frame_000001.png ...                  (wear visualization overlays)
-    wear.csv                                (wear % per frame)
-    detection_stats.json                    (aggregate stats)
-```
-
-### GUI Page Timer Architecture
-
-From old `CameraPage` (pyside_camera.py):
-- `_camera_stream_timer` — 500ms — updates live feed QLabel
-- `_periodic_timer` — 1000ms — syncs labels (frame count, state)
-- `_wear_timer` — 2000ms — reads wear.csv, updates wear label
-- `_kirik_frame_timer` — 5000ms — refreshes detected image thumbnails
-- `_combined_image_refresh_timer` — 10000ms — refreshes all image panels
-- `_datetime_timer` — 1000ms — updates date/time display
-
-### Integration with Existing System
-
-The camera page needs to receive `serit_id` and `makine_id` from the existing system's config/state.
-The old project had no such linkage (standalone). In the new system, wire these from:
-- `serit_id`: `raw_data.serit_id` (already in Modbus register 2230)
-- `makine_id`: `raw_data.makine_id` (already in Modbus register 2251)
-
-Both are already being captured and stored in existing DB tables as of v1.6.
+| Item | Complexity | Reason |
+|------|------------|--------|
+| Page scaffold + sidebar nav | LOW | Exact same pattern as existing pages |
+| NumpadDialog integration for 5 fields | LOW | Dialog already exists and works |
+| D2050 Word write | LOW | `_write_register()` already exists |
+| D2064 Double Word write | MEDIUM | New `_write_double_register()` method needed in MachineControl |
+| D2056 live read at 5 Hz | LOW | Same pattern as positioning controller's synchronous reads |
+| START/İPTAL momentary bits | LOW | `_set_bit()` already works; just add bit constants |
+| RESET hold-delay button | LOW | TouchButton or QTimer holds — existing pattern |
+| Parameter lock during job | LOW | setEnabled(False) on widgets in timer callback |
+| Progress "X / Y" display | LOW | String formatting in timer callback |
 
 ---
 
 ## Sources
 
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/core/camera.py` — CameraModule implementation
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/core/broken_detect.py` — RT-DETR broken tooth detection
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/core/crack_detect.py` — RT-DETR crack detection
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/vision/service.py` — VisionService LDC wear pipeline
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/vision/wear_detection/wear_calculation.py` — Wear algorithm
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/core/saw_health_calculator.py` — Health score formula
-- Direct code analysis: `/media/workspace/eskiimas/smart-saw/src/gui/controllers/pyside_camera.py` — Camera GUI page
-- Project context: `/media/workspace/smart-saw/.planning/PROJECT.md` — v2.0 milestone requirements
-- Current project config: `/media/workspace/smart-saw/config/config.yaml` — Existing system integration points
+- `/media/workspace/smart-saw/.planning/PROJECT.md` — PLC register spec (D2050, D2056, D2064, bit 20.x)
+- `/media/workspace/smart-saw/src/services/control/machine_control.py` — Existing MachineControl singleton and bit patterns
+- `/media/workspace/smart-saw/src/services/modbus/writer.py` — Speed register write patterns (D2066, D2041)
+- `/media/workspace/smart-saw/src/gui/widgets/touch_button.py` — Hold-delay TouchButton pattern
+- `/media/workspace/smart-saw/src/gui/controllers/main_controller.py` — Sidebar nav pattern
+- `/media/workspace/smart-saw/src/gui/numpad.py` — Existing touch numpad dialog
+- DoAll S-320CNC band saw HMI: https://www.doallsaws.com/s-320cnc-automatic-cnc-swivel-band-saw — reference for job counter, status feedback, and safety interlock patterns
+- STHEMMA automatic bandsaw HMI: https://www.sthemma.com/Automatic-Bandsaw-AUTOMATIC-DIGITAL-BANDSAW-SUPER-TRAD-370-AO-CN-EVOLUTION_2,1,20,19/ — programmable piece counter, error notifications
+- Industrial Monitor Direct: https://industrialmonitordirect.com/blogs/knowledgebase/design-patterns-for-process-vs-safety-interlocks-in-plc-systems — parameter locking during active cycle, interlock display colors
+- ISA-101 HMI standard summary: https://www.iotindustries.sk/en/blog/isa-101/ — counter display with adjacent numeric value, state indicator color conventions
+- Machinery Safety 101: https://machinerysafety101.com/2021/06/02/manual-reset-using-an-hmi/ — RESET via HMI acceptable for non-safety-critical process reset (bit 20.14 is process reset, not safety reset)
 
 ---
 
-*Feature research for: Industrial camera-based saw tooth inspection system (v2.0 milestone)*
-*Researched: 2026-03-16*
+*Feature research for: v2.1 Otomatik Kesim Sayfası — PLC-integrated automatic cutting GUI page*
+*Researched: 2026-04-08*
