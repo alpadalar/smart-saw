@@ -2,6 +2,55 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v2.0 — Camera Vision & AI Detection
+
+**Shipped:** 2026-04-08
+**Phases:** 11 | **Plans:** 14
+
+### What Was Built
+- Config-driven camera module foundation (camera.enabled=false → zero imports/threads/disk)
+- OpenCV frame capture with auto-discovery, 30s retry, JPEG recording pipeline
+- RT-DETR broken tooth + crack detection, LDC edge-based wear calculation
+- VisionService lifecycle orchestration with CUTTING state transition recording trigger
+- SQLite camera.db integration (detection_events + wear_history tables)
+- ThingsBoard IoT telemetry with 6 camera fields
+- PySide6 camera GUI page: live annotated feed, detection stats, wear/health progress bars, thumbnails, sidebar button
+- NumpadDialog close button + speed pre-fill (UI refinement insert)
+- Graph axis labels repositioning + Şerit Gerginliği Y-axis button (UI insert)
+
+### What Worked
+- CameraResultsStore as single integration boundary: GUI, IoT, and DB all read from one thread-safe store — clean separation
+- Lazy import pattern behind camera.enabled guard: zero risk of ImportError on systems without OpenCV/torch
+- Milestone audit + gap closure phases (24.1, 24.2): caught config-code mismatches and missing verification artifacts before milestone close
+- 50 unit tests with full mocking: no hardware dependency, all tests pass without camera/GPU
+- Decimal phase insertion (19.1, 19.2, 19.3, 24.1, 24.2) for urgent work without disrupting main phase numbering
+
+### What Was Inefficient
+- Phase 23 IoT Integration had no phase directory or artifacts despite code being committed — required retroactive artifact creation in Phase 24.2
+- Several SUMMARY.md files had empty "One-liner:" fields — extraction tooling couldn't populate milestone accomplishments automatically
+- Milestone audit found 9 requirements with "partial" status due to missing VERIFICATION.md — all had working code, just lacked formal verification documents
+- Config keys (camera.health.broken_weight/wear_weight) were written to config.yaml but never consumed by code until Phase 24.1 fix
+
+### Patterns Established
+- Camera pipeline architecture: CameraService → Worker threads → CameraResultsStore → consumers (GUI/IoT/DB)
+- Config-driven feature toggling: camera.enabled flag with lazy imports — reusable for future optional modules
+- Worker thread pattern: models loaded inside thread.run(), daemon threads, never touch asyncio event loop
+- Milestone audit → gap closure phases workflow: systematic quality assurance before milestone close
+
+### Key Lessons
+1. Create phase artifacts (directory, SUMMARY, VERIFICATION) immediately after code is committed — retroactive creation is wasteful
+2. Config keys must be consumed by code in the same phase they're added — dead config is confusing
+3. CameraResultsStore-as-boundary pattern proved excellent: 6 consumers all decoupled via single store
+4. SUMMARY.md one-liner field should be explicitly written, not left as placeholder — it feeds milestone documentation
+5. Milestone audit is valuable even when all requirements have working code — it catches process gaps (missing verification, outdated checkboxes)
+
+### Cost Observations
+- Sessions: ~8
+- Notable: Core camera pipeline (Phases 19-22) completed in 2 days; gap closure phases (24.1-24.2) took separate session
+- 50 unit tests written without hardware — industrial projects need mockable architecture from the start
+
+---
+
 ## Milestone: v1.6 — Touch UX & Data Traceability
 
 **Shipped:** 2026-03-16
@@ -53,9 +102,13 @@
 | v1.4 | 2 | Bug fix milestone |
 | v1.5 | 3 | Parity verification + UX polish |
 | v1.6 | 4 | Touch UX + traceability data enrichment |
+| v2.0 | 11 | First major feature milestone — camera vision pipeline + AI detection |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. ALTER TABLE pattern is reliable and fast — used in v1.0, v1.6 without issues
 2. Investigation phases prevent wasted effort — v1.5 (ML parity) and v1.6 (None values) both benefited
 3. Symmetric patterns (same change to different tables) execute fastest when done back-to-back
+4. CameraResultsStore-as-boundary proves single integration point scales well (v2.0: 6 consumers)
+5. Milestone audits catch process gaps even when code is complete — formal verification matters
+6. Config-driven feature toggles (camera.enabled) enable safe incremental deployment

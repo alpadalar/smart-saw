@@ -1,4 +1,31 @@
-# Project Milestones: Smart Saw Database Field Additions
+# Project Milestones: Smart Saw
+
+## v2.0 Camera Vision & AI Detection (Shipped: 2026-04-08)
+
+**Delivered:** Kamera tabanlı yapay zeka ile şerit testere diş kırığı, çatlak ve aşınma tespiti sistemi entegre edildi; camera.enabled=false olduğunda sıfır etki ile çalışır.
+
+**Phases completed:** 19-24.2 (11 phases, 14 plans, 15 tasks)
+
+**Key accomplishments:**
+
+- Config-driven camera module foundation: camera.enabled=false → zero imports, zero threads, zero disk I/O
+- OpenCV frame capture with auto-discovery (4 device scan), 30s retry, JPEG recording to recordings/ directory
+- RT-DETR broken tooth + crack detection and LDC edge-based wear calculation pipeline with 50 unit tests
+- VisionService lifecycle orchestration: CUTTING state transition triggers recording, detection results to SQLite (camera.db)
+- ThingsBoard IoT telemetry integration: 6 camera fields (broken_count, crack_count, wear_percentage, health_score, etc.)
+- PySide6 camera GUI page: live annotated feed, detection stats, wear/health progress bars, thumbnails, conditional sidebar button
+
+**Stats:**
+
+- 95 files changed (15,365 insertions, 328 deletions)
+- ~15,641 lines Python
+- Timeline: 14 days (2026-03-25 → 2026-04-08)
+
+**Git range:** `feat(19-01)` → `docs(24.2-02)`
+
+**What's next:** Production deployment with kamera donanımı bağlanarak gerçek ortamda doğrulama
+
+---
 
 ## v1.6 Touch UX & Data Traceability (Shipped: 2026-03-16)
 
@@ -25,6 +52,7 @@
 **Git range:** `feat(15-01)` → `feat(18-01)`
 
 **Known Gaps:**
+
 - MLDB-05: yeni_kesme_hizi, yeni_inme_hizi, katsayi — fix deployed (Phase 16) but historical records retain NULL values
 
 **What's next:** Production validation of traceability data in ML and anomaly databases
