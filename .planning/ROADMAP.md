@@ -102,10 +102,14 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 <details open>
 <summary>🔄 v2.1 Otomatik Kesim Sayfası (Phases 25-27) — IN PROGRESS</summary>
 
-- [ ] Phase 25: MachineControl Extension (0/1 plans)
+- [x] Phase 25: MachineControl Extension (1/1 plans)
   Plans:
   - [x] 25-01-PLAN.md — TDD: Auto cutting register/bit methods + unit tests
-- [ ] Phase 26: OtomatikKesimController (0/? plans)
+- [ ] Phase 26: OtomatikKesimController (3 plans)
+  Plans:
+  - [ ] 26-01-PLAN.md — NumpadDialog allow_decimal + OtomatikKesimController UI scaffold
+  - [ ] 26-02-PLAN.md — Parameter input handlers + START/IPTAL control logic
+  - [ ] 26-03-PLAN.md — RESET hold-delay + D2056 polling + ML mode + unit tests
 - [ ] Phase 27: MainController Integration (0/? plans)
 
 </details>
@@ -144,5 +148,5 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 | 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 1/1 | Complete | 2026-04-08 |
 | 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 2/2 | Complete | 2026-04-08 |
 | 25. MachineControl Extension | v2.1 | 1/1 | Complete    | 2026-04-08 |
-| 26. OtomatikKesimController | v2.1 | 0/? | Not started | - |
+| 26. OtomatikKesimController | v2.1 | 0/3 | Not started | - |
 | 27. MainController Integration | v2.1 | 0/? | Not started | - |
