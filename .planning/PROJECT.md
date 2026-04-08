@@ -91,11 +91,11 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - LDCWorker: _compute_wear returns (wear_percentage, edge_pixel_count) tuple; DB writes include edge_pixel_count + image_path + traceability (ldc_worker.py)
 - CameraResultsStore: Thread-safe key-value store for camera pipeline state (results_store.py)
 - CameraService: OpenCV frame capture, auto-discovery (4 device), 30s retry, JPEG encoding, worker pool disk recording (camera_service.py)
-- HealthCalculator: Saw health formula (broken %70 + wear %30), Turkish status labels, CSS colors (health_calculator.py)
+- HealthCalculator: Config-driven saw health formula (broken_weight + wear_weight from config.health, defaults 0.7/0.3), Turkish status labels, CSS colors (health_calculator.py)
 - modelB4.py: LDC neural network architecture for 16_model.pth checkpoint
 - IoT Integration: CameraResultsStore snapshot → vision_data → ThingsBoard telemetry (6 camera fields: broken_count, tooth_count, crack_count, wear_percentage, health_score, health_status)
 - ThingsBoardFormatter: format_telemetry(vision_data=) merges camera fields; config whitelist includes all 6
-- 45 unit tests (8 results_store + 9 camera_service + 9 detection_worker + 8 ldc_worker + 8 health_calculator + 11 vision_service), all mocked — no hardware dependency
+- 50 unit tests (8 results_store + 9 camera_service + 9 detection_worker + 10 ldc_worker + 11 health_calculator + 11 vision_service), all mocked — no hardware dependency
 
 **Previous State (v1.6 shipped):**
 - ML predictions tablosu: `akim_input`, `sapma_input`, `kesme_hizi_input`, `inme_hizi_input`, `serit_motor_tork`, `kafa_yuksekligi`, `yeni_kesme_hizi`, `yeni_inme_hizi`, `katsayi`, `ml_output`, `kesim_id`, `makine_id`, `serit_id`, `malzeme_cinsi`
@@ -162,4 +162,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-03-26 after Phase 23 IoT Integration complete*
+*Last updated: 2026-04-08 after Phase 24.1 Config Fixes & HealthCalculator Config Wiring complete*
