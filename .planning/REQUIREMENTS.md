@@ -37,7 +37,7 @@ Requirements for Camera Vision & AI Detection milestone. Each maps to roadmap ph
 - [x] **GUI-03**: Catlak tespit sonuclarinin kamera sayfasinda goruntulenmesi (sayi, zaman damgasi)
 - [x] **GUI-04**: Asinma yuzdesinin kamera sayfasinda goruntulenmesi
 - [x] **GUI-05**: Testere saglik durumunun kamera sayfasinda goruntulenmesi (yuzde + durum metni + renk kodu)
-- [ ] **GUI-06**: Sidebar'a 5. navigasyon butonu olarak kamera butonu eklenmesi (sadece camera.enabled=true iken)
+- [x] **GUI-06**: Sidebar'a 5. navigasyon butonu olarak kamera butonu eklenmesi (sadece camera.enabled=true iken)
 - [x] **GUI-07**: Son kaydedilen frame'lerden 4 adet thumbnail goruntulenmesi (sequential images panel)
 - [x] **GUI-08**: Tespit durumu icin OK/alert ikonlari goruntulenmesi
 - [x] **GUI-09**: Asinma olcum gorsellestirmesinin (wear visualization overlay) goruntulenmesi
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GUI-03 | Phase 24 | Complete |
 | GUI-04 | Phase 24 | Complete |
 | GUI-05 | Phase 24 | Complete |
-| GUI-06 | Phase 24 | Pending |
+| GUI-06 | Phase 24 | Complete |
 | GUI-07 | Phase 24 | Complete |
 | GUI-08 | Phase 24 | Complete |
 | GUI-09 | Phase 24 | Complete |
