@@ -234,7 +234,10 @@ Plans:
   1. config.yaml camera bolumunde vision alt bolumu (polling_interval, recording_duration) mevcut
   2. HealthCalculator broken_weight ve wear_weight degerlerini config'den okuyor
   3. REQUIREMENTS.md'de GUI-06 checkbox [x] olarak guncellenmis
-**Plans**: 0 plans (to be planned)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 24.1-01-PLAN.md — config.yaml vision bolumu + HealthCalculator config-driven refactor + testler
 
 ### Phase 24.2: Missing Verification Artifacts (INSERTED)
 
@@ -281,5 +284,5 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24 → 24.1 
 | 22. Lifecycle & DB Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
 | 23. IoT Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
 | 24. Camera GUI | v2.0 | 2/2 | Complete | 2026-03-26 |
-| 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 0/0 | Not started | |
+| 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 0/1 | Not started | |
 | 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 0/0 | Not started | |
