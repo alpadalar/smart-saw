@@ -393,21 +393,21 @@ def _show_validation_error(self, message):
 | A5 | ML state reset achieved by re-calling set_mode(ML) | Pattern 5/6 | Medium -- confirmed by CONTEXT.md specifics |
 | A6 | Phase 27 will add OtomatikKesimController to MainController.closeEvent page list | Pitfall 3 | Medium -- without this, timer cleanup skipped on app exit |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. D2056 active cutting detection boundary
+1. RESOLVED: D2056 active cutting detection boundary
    - What we know: D-14 says D2056 > 0 and hedef asilmamis disables params.
    - What is unclear: Does D2056 read 0 between consecutive cuts, or hold last value?
-   - Recommendation: Treat "active" as 0 < count < target. count >= target = complete. count == 0 = idle.
+   - Resolution: Treat "active" as 0 < count < target. count >= target = complete. count == 0 = idle.
 
-2. RESET hold duration: 1500ms unverified with PLC engineer
+2. RESOLVED: RESET hold duration: 1500ms unverified with PLC engineer
    - What we know: 1500ms per D-11. STATE.md flags this as unverified.
-   - Recommendation: Implement 1500ms. If hardware requires different timing, only the constant changes.
+   - Resolution: Implement 1500ms. If hardware requires different timing, only the constant changes.
 
-3. ML state reset: set_mode(ML) vs separate reset method
+3. RESOLVED: ML state reset: set_mode(ML) vs separate reset method
    - What we know: CONTEXT.md specifics confirm set_mode() approach.
    - What is unclear: Whether re-calling set_mode(ML) when already in ML mode resets state or is no-op.
-   - Recommendation: Use set_mode(ControlMode.ML). If it is a no-op, planner must investigate control_manager.
+   - Resolution: Use set_mode(ControlMode.ML). If it is a no-op, planner must investigate control_manager.
 
 ## Environment Availability
 

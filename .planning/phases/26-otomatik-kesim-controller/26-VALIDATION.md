@@ -38,12 +38,12 @@ created: 2026-04-09
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 26-01-01 | 01 | 1 | PARAM-01 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim.py -k "numpad"` | ❌ W0 | ⬜ pending |
+| 26-01-01 | 01 | 1 | PARAM-01 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim_controller.py -k "numpad"` | ❌ W0 | ⬜ pending |
 | 26-01-02 | 01 | 1 | PARAM-05 | — | N/A | unit | `python -m pytest tests/test_numpad.py -k "decimal"` | ❌ W0 | ⬜ pending |
-| 26-01-03 | 01 | 1 | GUI-02 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim.py -k "validate"` | ❌ W0 | ⬜ pending |
-| 26-01-04 | 01 | 1 | GUI-03 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim.py -k "reset"` | ❌ W0 | ⬜ pending |
-| 26-01-05 | 01 | 1 | PARAM-04 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim.py -k "counter"` | ❌ W0 | ⬜ pending |
-| 26-01-06 | 01 | 1 | ML-01 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim.py -k "ml_mode"` | ❌ W0 | ⬜ pending |
+| 26-01-03 | 01 | 1 | GUI-02 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim_controller.py -k "validate"` | ❌ W0 | ⬜ pending |
+| 26-01-04 | 01 | 1 | GUI-03 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim_controller.py -k "reset"` | ❌ W0 | ⬜ pending |
+| 26-01-05 | 01 | 1 | PARAM-04 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim_controller.py -k "counter"` | ❌ W0 | ⬜ pending |
+| 26-01-06 | 01 | 1 | ML-01 | — | N/A | unit | `python -m pytest tests/test_otomatik_kesim_controller.py -k "ml_mode"` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,7 +51,7 @@ created: 2026-04-09
 
 ## Wave 0 Requirements
 
-- [ ] `tests/test_otomatik_kesim.py` — stubs for PARAM-01..05, GUI-02, GUI-03, ML-01, ML-02
+- [ ] `tests/test_otomatik_kesim_controller.py` — stubs for PARAM-01..05, GUI-02, GUI-03, ML-01, ML-02
 - [ ] `tests/test_numpad.py` — extend for allow_decimal parameter
 
 *Existing infrastructure covers test framework requirements.*
