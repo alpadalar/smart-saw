@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Camera Vision & AI Detection
-status: v2.0 milestone complete
-stopped_at: "Milestone v2.0 archived"
-last_updated: "2026-04-08T20:00:00.000Z"
+milestone: v2.1
+milestone_name: Otomatik Kesim Sayfası
+status: defining requirements
+stopped_at: "Milestone v2.1 started"
+last_updated: "2026-04-08T21:00:00.000Z"
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 14
-  completed_plans: 14
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,20 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v2.1 Otomatik Kesim Sayfası
 
 ## Current Position
 
-Phase: v2.0 complete
-Plan: N/A — milestone archived
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 14 (v2.0 milestone)
-- Total across all milestones: 36 plans
-- Timeline: 14 days (2026-03-25 → 2026-04-08)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-08 — Milestone v2.1 started
 
 ## Accumulated Context
 
@@ -59,5 +53,5 @@ All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions tab
 ## Session Continuity
 
 Last session: 2026-04-08
-Stopped at: Milestone v2.0 archived
+Stopped at: Milestone v2.1 started
 Resume file: None

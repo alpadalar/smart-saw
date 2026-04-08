@@ -55,7 +55,17 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ### Active
 
-(Next milestone requirements to be defined via `/gsd-new-milestone`)
+## Current Milestone: v2.1 Otomatik Kesim Sayfası
+
+**Goal:** Seri/otomatik kesim operasyonları için PLC entegrasyonlu yeni GUI sayfası eklenmesi
+
+**Target features:**
+- Otomatik kesim GUI sayfası (sidebar'da 2. sıra)
+- Parametre girişi: P (hedef adet), L (uzunluk mm), C (kesim hızı), S (inme hızı), X (paketteki adet)
+- PLC yazma: P×X → D2050 (Word), L×10 → D2064 (Double Word)
+- PLC okuma: Kesilmiş adet ← D2056 (Word), gerçek zamanlı gösterim
+- Kontrol butonları: START (20.13), RESET (20.14 hold-delay), İPTAL (20.4)
+- C ve S bu sayfadan da girilebilir (manuel kesimle ortak register'lar)
 
 ### Out of Scope
 
@@ -119,5 +129,22 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Config-driven HealthCalculator weights | broken_weight/wear_weight from config.yaml | ✓ Good |
 | annotated_frame unconditional store write | Bounding boxes always visible in live feed | ✓ Good |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-04-08 after v2.0 Camera Vision & AI Detection milestone complete*
+*Last updated: 2026-04-08 after v2.1 Otomatik Kesim Sayfası milestone started*
