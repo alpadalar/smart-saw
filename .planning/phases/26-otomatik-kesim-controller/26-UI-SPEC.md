@@ -48,16 +48,18 @@ registry: not_applicable
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Counter display | 80px | bold (700) | 1.0 | "X / Y" kesilmiş adet counter |
-| Frame title | 24px | bold (700) | 1.2 | Section headers (P/X Parametreleri, Sayaç, Kontrol) |
-| Parameter value | 48px | bold (700) | 1.0 | Value shown inside each param frame (current entered value) |
-| Button label | 20px | bold (700) | 1.2 | START, RESET, İPTAL, Manuel, Yapay Zeka buttons |
-| Body / info | 20px | medium (500) | 1.5 | Sub-labels, hints ("Değer girmek için tıklayınız") |
-| Small / unit | 16px | medium (500) | 1.3 | Unit labels (adet, mm, m/dk), "Toplam:" label |
-| Validation error | 18px | bold (700) | 1.3 | Inline error messages below START |
-| Log / detail | 14px | medium (500) | 1.5 | Reserved for secondary detail text if needed |
+| Frame title / param value | 24px | bold (700) | 1.2 | Section headers (P/X Parametreleri, Sayaç, Kontrol); current entered value inside each param frame |
+| Button label / body / validation error | 20px | bold (700) or medium (500) | 1.2 body; 1.3 error | START, RESET, İPTAL, Manuel, Yapay Zeka (bold); sub-labels and hints (medium); inline validation error below START (bold, `#DC2626`) |
+| Small / unit | 16px | medium (500) | 1.3 | Unit labels (adet, mm, m/dk), "Toplam:" label, range hints |
 
 **Weights declared:** bold (700) and medium (500) only.
-**Source:** Verified from control_panel_controller.py lines 676–1133.
+
+**Typography notes:**
+- Validation error (formerly 18px) is rendered at 20px bold `#DC2626` at line-height 1.3. The semantic-error color provides the visual urgency previously carried by the larger size; no separate size entry is needed.
+- Parameter value display (formerly 48px) is rendered at 24px bold `#F4F6FC`. Param frames are touch targets (min 140px height) so a 24px value label is comfortably legible at arm's length. The 80px size is reserved exclusively for the counter display in the right column.
+- The 14px "Log / detail" role is removed. No component in this phase uses secondary detail text at a size below the 16px unit-label role.
+
+**Source:** Verified from control_panel_controller.py lines 676–1133. Typography fix applied per checker revision 2026-04-09.
 
 ---
 
@@ -153,7 +155,7 @@ All coordinates are Claude's discretion (per CONTEXT.md) — must fit within 152
 | Guard | `if not self._params_enabled: return` at top of handler |
 | Disabled state | `background: rgba(26, 31, 55, 100)`, text `rgba(244, 246, 252, 100)` |
 | Title label | Frame name + unit in `()`, 24px bold `#F4F6FC` |
-| Value label | Current value, 48px bold `#F4F6FC`, default "—" when empty |
+| Value label | Current value, 24px bold `#F4F6FC`, default "—" when empty |
 
 ### NumpadDialog (parameter input)
 
@@ -267,7 +269,7 @@ All coordinates are Claude's discretion (per CONTEXT.md) — must fit within 152
 - Error label below START button becomes visible
 - Text: Turkish error string (e.g., `"P (hedef adet) girilmedi"`)
 - Color: `#DC2626` semantic-error
-- Font: 18px bold
+- Font: 20px bold
 - Auto-hides after 3000ms via `QTimer.singleShot`
 
 ### RESET Hold Progress
@@ -308,7 +310,7 @@ All text is Turkish, matching project-wide convention.
 | Error — missing P | `"P (hedef adet) girilmedi"` |
 | Error — missing L | `"L (uzunluk) girilmedi"` |
 | Error — missing X | `"X (paketteki adet) girilmedi"` |
-| Empty state (param frame, no value) | `"—"` (em dash, 48px bold) |
+| Empty state (param frame, no value) | `"—"` (em dash, 24px bold) |
 
 **Destructive action in this phase:** İPTAL. No separate confirmation dialog — action is recoverable (cut can be restarted). Visual differentiation via `#DC2626` background is sufficient per project pattern.
 
@@ -411,9 +413,11 @@ This is an industrial factory touchscreen HMI (local LAN, closed network). Stand
 | Success color #22C55E | Claude's discretion | Not yet used in codebase; standard green |
 | Validation error copy (Turkish) | Claude's discretion | Consistent with Turkish UI convention |
 | Counter display 80px | Claude's discretion (CONTEXT.md "büyük font") | Matches existing 80px speed value label |
+| Typography collapsed to 4 sizes | Checker revision 2026-04-09 | Dropped 14px (unused), merged 18px→20px, merged 48px→24px |
 
 ---
 
 *Phase: 26-otomatik-kesim-controller*
 *UI-SPEC created: 2026-04-09*
+*UI-SPEC revised: 2026-04-09 — typography collapsed from 7 to 4 sizes per checker*
 *Status: draft — awaiting gsd-ui-checker validation*
