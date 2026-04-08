@@ -91,7 +91,7 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 - [x] **Phase 22: Lifecycle & DB Integration** - VisionService orchestration, lifecycle _init_camera(), detection results to SQLite (completed 2026-03-26)
 - [x] **Phase 23: IoT Integration** - Detection results appended to existing ThingsBoard telemetry batch (completed 2026-03-26)
 - [x] **Phase 24: Camera GUI** - Live feed, detection stats, wear %, health score, thumbnails, icons, sidebar button (completed 2026-03-26)
-- [ ] **Phase 24.1: Config Fixes & Requirements Cleanup (INSERTED)** - camera.vision config section, HealthCalculator config wiring, GUI-06 checkbox fix
+- [x] **Phase 24.1: Config Fixes & Requirements Cleanup (INSERTED)** - camera.vision config section, HealthCalculator config wiring, GUI-06 checkbox fix (completed 2026-04-08)
 - [ ] **Phase 24.2: Missing Verification Artifacts (INSERTED)** - Phase 23/24/19.3 VERIFICATION.md creation
 
 ## Phase Details
@@ -237,7 +237,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 24.1-01-PLAN.md — config.yaml vision bolumu + HealthCalculator config-driven refactor + testler
+- [x] 24.1-01-PLAN.md — config.yaml vision bolumu + HealthCalculator config-driven refactor + testler
 
 ### Phase 24.2: Missing Verification Artifacts (INSERTED)
 
@@ -284,5 +284,5 @@ Phases execute in numeric order: 19 → 20 → 21 → 22 → 23 → 24 → 24.1 
 | 22. Lifecycle & DB Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
 | 23. IoT Integration | v2.0 | 1/1 | Complete | 2026-03-26 |
 | 24. Camera GUI | v2.0 | 2/2 | Complete | 2026-03-26 |
-| 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 0/1 | Not started | |
+| 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 1/1 | Complete    | 2026-04-08 |
 | 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 0/0 | Not started | |
