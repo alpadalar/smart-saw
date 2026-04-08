@@ -66,8 +66,8 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - ✓ LDC edge detection + asinma hesaplama pipeline (LDCWorker, config-driven ROI) — Phase 21
 - ✓ Testere saglik hesaplayicisi (HealthCalculator, kirik %70 + asinma %30) — Phase 21
 - ✓ Config-driven kamera modulu (camera.enabled ile acilip kapatilabilir) — Phase 22
-- [ ] PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik)
-- [ ] GUI sidebar'a kamera navigasyon butonu eklenmesi
+- ✓ PySide6 kamera sayfasi (canli goruntu, tespit sonuclari, asinma, saglik) — Phase 24
+- ✓ GUI sidebar'a kamera navigasyon butonu eklenmesi — Phase 24
 - ✓ Tespit sonuclarinin SQLite'a kaydedilmesi — Phase 22
 - ✓ Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi — Phase 23
 - ✓ Lifecycle'da kamera servislerinin config-driven baslatilmasi — Phase 22
@@ -83,7 +83,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.0 Phase 23 complete):**
+**Current State (v2.0 Phase 24.2 complete — all verification artifacts created):**
 - VisionService: Daemon thread polling CameraResultsStore at 0.5s, detects CUTTING(3)->non-CUTTING transitions, triggers start_recording/stop_recording (10s duration), error-isolated (vision_service.py)
 - DataProcessingPipeline: Bridges testere_durumu + traceability fields (kesim_id, makine_id, serit_id, malzeme_cinsi) to CameraResultsStore every processing cycle (data_processor.py)
 - Lifecycle: _init_camera() creates VisionService after LDCWorker; shutdown stops VisionService first (lifecycle.py)
@@ -162,4 +162,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Index only on kesim_id | Low cardinality on makine_id/serit_id/malzeme_cinsi | ✓ Good |
 
 ---
-*Last updated: 2026-04-08 after Phase 24.1 Config Fixes & HealthCalculator Config Wiring complete*
+*Last updated: 2026-04-08 after Phase 24.2 Missing Verification Artifacts complete*
