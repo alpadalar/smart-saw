@@ -124,3 +124,43 @@ def test_health_color_codes(calc: HealthCalculator) -> None:
     assert calc.get_health_color(60.0) == "#90EE90"
     assert calc.get_health_color(40.0) == "#FFFF00"
     assert calc.get_health_color(20.0) == "#FFA500"
+
+
+# ---------------------------------------------------------------------------
+# Custom weight tests
+# ---------------------------------------------------------------------------
+
+
+def test_custom_weights_affect_health() -> None:
+    """HealthCalculator with custom weights produces different health score.
+
+    With broken_weight=0.5, wear_weight=0.5:
+    10 teeth, 3 broken (30%), 50% wear:
+    health = 100 - ((0.30 * 0.5 + 0.50 * 0.5) * 100)
+           = 100 - ((0.15 + 0.25) * 100)
+           = 100 - 40
+           = 60.0
+    """
+    calc = HealthCalculator(broken_weight=0.5, wear_weight=0.5)
+    result = calc.calculate_saw_health(10, 3, 50.0)
+    assert result == pytest.approx(60.0)
+
+
+def test_custom_weights_only_broken() -> None:
+    """HealthCalculator with broken_weight=1.0, wear_weight=0.0 ignores wear.
+
+    10 teeth, 3 broken (30%), 80% wear:
+    health = 100 - ((0.30 * 1.0 + 0.80 * 0.0) * 100)
+           = 100 - 30
+           = 70.0
+    """
+    calc = HealthCalculator(broken_weight=1.0, wear_weight=0.0)
+    result = calc.calculate_saw_health(10, 3, 80.0)
+    assert result == pytest.approx(70.0)
+
+
+def test_default_constructor_unchanged() -> None:
+    """HealthCalculator() without args still uses 0.7/0.3 defaults."""
+    calc = HealthCalculator()
+    assert calc.BROKEN_WEIGHT == pytest.approx(0.7)
+    assert calc.WEAR_WEIGHT == pytest.approx(0.3)

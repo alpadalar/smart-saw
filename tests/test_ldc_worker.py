@@ -36,7 +36,11 @@ LDC_CONFIG = {
         "roi_width_n": 0.736888,
         "roi_height_n": 0.489510,
         "bgr_mean": [103.939, 116.779, 123.68],
-    }
+    },
+    "health": {
+        "broken_weight": 0.70,
+        "wear_weight": 0.30,
+    },
 }
 
 CUSTOM_ROI_CONFIG = {
@@ -51,7 +55,11 @@ CUSTOM_ROI_CONFIG = {
         "roi_width_n": 0.736888,
         "roi_height_n": 0.489510,
         "bgr_mean": [103.939, 116.779, 123.68],
-    }
+    },
+    "health": {
+        "broken_weight": 0.70,
+        "wear_weight": 0.30,
+    },
 }
 
 
@@ -485,3 +493,52 @@ def test_db_write_includes_traceability_and_edge_pixel_count():
     assert params[6] == 2, f"makine_id should be 2, got {params[6]}"
     assert params[7] == 8, f"serit_id should be 8, got {params[7]}"
     assert params[8] == 3, f"malzeme_cinsi should be 3, got {params[8]}"
+
+
+# ---------------------------------------------------------------------------
+# Test 9: Constructor reads health weights from config
+# ---------------------------------------------------------------------------
+
+
+def test_constructor_reads_health_weights_from_config() -> None:
+    """LDCWorker reads broken_weight and wear_weight from config.health section."""
+    from src.services.camera.ldc_worker import LDCWorker
+
+    store = CameraResultsStore()
+    mock_camera = MagicMock()
+
+    custom_config = {
+        "wear": LDC_CONFIG["wear"],
+        "health": {
+            "broken_weight": 0.50,
+            "wear_weight": 0.50,
+        },
+    }
+
+    worker = LDCWorker(custom_config, store, mock_camera)
+
+    assert worker._broken_weight == pytest.approx(0.50)
+    assert worker._wear_weight == pytest.approx(0.50)
+
+
+# ---------------------------------------------------------------------------
+# Test 10: Default health weights when no health config section
+# ---------------------------------------------------------------------------
+
+
+def test_default_health_weights_without_config() -> None:
+    """LDCWorker uses default 0.7/0.3 when config has no health section."""
+    from src.services.camera.ldc_worker import LDCWorker
+
+    store = CameraResultsStore()
+    mock_camera = MagicMock()
+
+    minimal_config = {
+        "wear": LDC_CONFIG["wear"],
+        # no "health" key
+    }
+
+    worker = LDCWorker(minimal_config, store, mock_camera)
+
+    assert worker._broken_weight == pytest.approx(0.7)
+    assert worker._wear_weight == pytest.approx(0.3)
