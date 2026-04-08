@@ -54,6 +54,11 @@ class LDCWorker(threading.Thread):
         self._roi_height_n: float = float(wear_cfg.get("roi_height_n", 0.489510))
         self._bgr_mean: list = wear_cfg.get("bgr_mean", [103.939, 116.779, 123.68])
 
+        # Health calculator weights (from camera.health config)
+        health_cfg = config.get("health", {})
+        self._broken_weight: float = float(health_cfg.get("broken_weight", 0.7))
+        self._wear_weight: float = float(health_cfg.get("wear_weight", 0.3))
+
         self._results_store = results_store
         self._camera_service = camera_service
         self._db_service = db_service
@@ -77,7 +82,10 @@ class LDCWorker(threading.Thread):
         from src.services.camera.health_calculator import HealthCalculator
         from src.services.camera.modelB4 import LDC
 
-        health_calc = HealthCalculator()
+        health_calc = HealthCalculator(
+            broken_weight=self._broken_weight,
+            wear_weight=self._wear_weight,
+        )
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # --- load LDC model ---

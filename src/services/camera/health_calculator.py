@@ -12,11 +12,19 @@ class HealthCalculator:
     Saw health calculator.
 
     Computes overall saw health from broken-tooth count and wear percentage,
-    using weighted impacts (BROKEN_WEIGHT=0.7, WEAR_WEIGHT=0.3).
+    using weighted impacts (default BROKEN_WEIGHT=0.7, WEAR_WEIGHT=0.3).
+    Weights are configurable via constructor parameters.
     """
 
-    BROKEN_WEIGHT = 0.7
-    WEAR_WEIGHT = 0.3
+    def __init__(self, broken_weight: float = 0.7, wear_weight: float = 0.3) -> None:
+        """Initialise with configurable impact weights.
+
+        Args:
+            broken_weight: Weight for broken-tooth impact (default 0.7).
+            wear_weight: Weight for wear impact (default 0.3).
+        """
+        self.BROKEN_WEIGHT = broken_weight
+        self.WEAR_WEIGHT = wear_weight
 
     def calculate_broken_percentage(
         self, detected_teeth: int, detected_broken: int

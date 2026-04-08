@@ -560,3 +560,8 @@ camera:
   health:
     broken_weight: 0.70            # 70% weight for broken tooth count
     wear_weight: 0.30              # 30% weight for wear percentage
+
+  # Vision service orchestration
+  vision:
+    polling_interval: 0.5      # Saniyede kac kez testere_durumu kontrol edilir
+    recording_duration: 10.0   # Kesim bitiminde kac saniye kayit yapilir
