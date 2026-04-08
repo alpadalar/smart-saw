@@ -102,7 +102,9 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 <details open>
 <summary>🔄 v2.1 Otomatik Kesim Sayfası (Phases 25-27) — IN PROGRESS</summary>
 
-- [ ] Phase 25: MachineControl Extension (0/? plans)
+- [ ] Phase 25: MachineControl Extension (0/1 plans)
+  Plans:
+  - [ ] 25-01-PLAN.md — TDD: Auto cutting register/bit methods + unit tests
 - [ ] Phase 26: OtomatikKesimController (0/? plans)
 - [ ] Phase 27: MainController Integration (0/? plans)
 
@@ -141,6 +143,6 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 | 24. Camera GUI | v2.0 | 2/2 | Complete | 2026-03-26 |
 | 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 1/1 | Complete | 2026-04-08 |
 | 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 2/2 | Complete | 2026-04-08 |
-| 25. MachineControl Extension | v2.1 | 0/? | Not started | - |
+| 25. MachineControl Extension | v2.1 | 0/1 | Not started | - |
 | 26. OtomatikKesimController | v2.1 | 0/? | Not started | - |
 | 27. MainController Integration | v2.1 | 0/? | Not started | - |
