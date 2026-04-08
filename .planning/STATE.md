@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Otomatik Kesim Sayfası
-status: defining requirements
-stopped_at: "Milestone v2.1 started"
-last_updated: "2026-04-08T21:00:00.000Z"
+status: roadmap created
+stopped_at: "Phase 25 not started"
+last_updated: "2026-04-09T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** Defining requirements for v2.1 Otomatik Kesim Sayfası
+**Current focus:** v2.1 Otomatik Kesim Sayfası — Phase 25: MachineControl Extension
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 25 — MachineControl Extension
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-08 — Milestone v2.1 started
+Status: Not started
+Progress: [░░░░░░░░░░] 0% (0/3 phases)
+Last activity: 2026-04-09 — Roadmap created for v2.1
+
+## Performance Metrics
+
+- Phases: 3 total (25, 26, 27)
+- Requirements: 17 (7 in Phase 25, 9 in Phase 26, 1 in Phase 27)
+- Milestone: v2.1 Otomatik Kesim Sayfası
 
 ## Accumulated Context
 
@@ -35,9 +42,22 @@ Last activity: 2026-04-08 — Milestone v2.1 started
 
 All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions table.
 
+**v2.1 key architectural decisions:**
+- All register 20 bit operations route through MachineControl singleton (not AsyncModbusService) — prevents read-modify-write race condition
+- D2064/D2065 Double Word written via single FC16 write_registers([low, high]) — Mitsubishi low-word-at-lower-address convention
+- D2056 polling via 500ms QTimer on OtomatikKesimController (NOT added to 10Hz async loop) — avoids async pipeline changes
+- RESET button wired to all four signals: pressed/released + touch_pressed/touch_released — factory touchscreen compatibility
+- Sidebar insertion at index 1 uses PageIndex named constants for all lambdas (atomic update)
+
+### Open Verification Items
+
+- D2064 word order: must verify L=1000mm → D2064=0x2710, D2065=0x0000 against real PLC hardware before Phase 26
+- Bit 20.13 latch behavior: confirm whether GUI must explicitly clear after PLC acknowledgment (affects start_auto_cutting design)
+- RESET hold duration: 1500ms suggested but unverified; confirm with PLC engineer
+
 ### Blockers/Concerns
 
-(Cleared at milestone boundary)
+(None at roadmap creation)
 
 ### Roadmap Evolution
 
@@ -49,9 +69,11 @@ All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions tab
 - Milestone v1.5 COMPLETE: 2026-01-28
 - Milestone v1.6 COMPLETE: 2026-03-16
 - Milestone v2.0 COMPLETE: 2026-04-08
+- Milestone v2.1 STARTED: 2026-04-09 (roadmap created, 3 phases)
 
 ## Session Continuity
 
-Last session: 2026-04-08
-Stopped at: Milestone v2.1 started
+Last session: 2026-04-09
+Stopped at: Roadmap created — Phase 25 not started
 Resume file: None
+Next action: /gsd-plan-phase 25

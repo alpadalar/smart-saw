@@ -2,7 +2,7 @@
 
 ## Overview
 
-Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegrasyonu. v1.0'dan v2.0'a uzanan veritabani, performans, dokunmatik ekran ve kamera vision milestonelari tamamlandi.
+Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegrasyonu. v1.0'dan v2.0'a uzanan veritabani, performans, dokunmatik ekran ve kamera vision milestonelari tamamlandi. v2.1 otomatik kesim sayfasi aktif.
 
 ## Milestones
 
@@ -14,6 +14,7 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 - ✅ [v1.5 ML Parity & UX Polish](milestones/v1.5-ROADMAP.md) (Phases 12-14) — SHIPPED 2026-01-28
 - ✅ [v1.6 Touch UX & Data Traceability](milestones/v1.6-ROADMAP.md) (Phases 15-18) — SHIPPED 2026-03-16
 - ✅ [v2.0 Camera Vision & AI Detection](milestones/v2.0-ROADMAP.md) (Phases 19-24.2) — SHIPPED 2026-04-08
+- 🔄 [v2.1 Otomatik Kesim Sayfası](milestones/v2.1-ROADMAP.md) (Phases 25-27) — IN PROGRESS
 
 ## Phases
 
@@ -98,6 +99,15 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 
 </details>
 
+<details open>
+<summary>🔄 v2.1 Otomatik Kesim Sayfası (Phases 25-27) — IN PROGRESS</summary>
+
+- [ ] Phase 25: MachineControl Extension (0/? plans)
+- [ ] Phase 26: OtomatikKesimController (0/? plans)
+- [ ] Phase 27: MainController Integration (0/? plans)
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -131,3 +141,6 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 | 24. Camera GUI | v2.0 | 2/2 | Complete | 2026-03-26 |
 | 24.1. Config Fixes & Requirements Cleanup (INSERTED) | v2.0 | 1/1 | Complete | 2026-04-08 |
 | 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 2/2 | Complete | 2026-04-08 |
+| 25. MachineControl Extension | v2.1 | 0/? | Not started | - |
+| 26. OtomatikKesimController | v2.1 | 0/? | Not started | - |
+| 27. MainController Integration | v2.1 | 0/? | Not started | - |

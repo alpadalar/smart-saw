@@ -62,29 +62,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GUI-01 | — | Pending |
-| GUI-02 | — | Pending |
-| GUI-03 | — | Pending |
-| PARAM-01 | — | Pending |
-| PARAM-02 | — | Pending |
-| PARAM-03 | — | Pending |
-| PARAM-04 | — | Pending |
-| PARAM-05 | — | Pending |
-| PLC-01 | — | Pending |
-| PLC-02 | — | Pending |
-| PLC-03 | — | Pending |
-| PLC-04 | — | Pending |
-| CTRL-01 | — | Pending |
-| CTRL-02 | — | Pending |
-| CTRL-03 | — | Pending |
-| ML-01 | — | Pending |
-| ML-02 | — | Pending |
+| GUI-01 | Phase 27 | Pending |
+| GUI-02 | Phase 26 | Pending |
+| GUI-03 | Phase 26 | Pending |
+| PARAM-01 | Phase 26 | Pending |
+| PARAM-02 | Phase 26 | Pending |
+| PARAM-03 | Phase 26 | Pending |
+| PARAM-04 | Phase 26 | Pending |
+| PARAM-05 | Phase 26 | Pending |
+| PLC-01 | Phase 25 | Pending |
+| PLC-02 | Phase 25 | Pending |
+| PLC-03 | Phase 25 | Pending |
+| PLC-04 | Phase 25 | Pending |
+| CTRL-01 | Phase 25 | Pending |
+| CTRL-02 | Phase 25 | Pending |
+| CTRL-03 | Phase 25 | Pending |
+| ML-01 | Phase 26 | Pending |
+| ML-02 | Phase 26 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation (traceability populated)*
