@@ -1,12 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Otomatik Kesim Sayfası
-status: roadmap created
-stopped_at: "Phase 25 not started"
-last_updated: "2026-04-09T00:00:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: Not started
+stopped_at: Phase 25 context gathered
+last_updated: "2026-04-08T21:44:58.753Z"
+last_activity: 2026-04-09 — Roadmap created for v2.1
 progress:
-  total_phases: 3
+  total_phases: 1
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -43,6 +44,7 @@ Last activity: 2026-04-09 — Roadmap created for v2.1
 All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions table.
 
 **v2.1 key architectural decisions:**
+
 - All register 20 bit operations route through MachineControl singleton (not AsyncModbusService) — prevents read-modify-write race condition
 - D2064/D2065 Double Word written via single FC16 write_registers([low, high]) — Mitsubishi low-word-at-lower-address convention
 - D2056 polling via 500ms QTimer on OtomatikKesimController (NOT added to 10Hz async loop) — avoids async pipeline changes
@@ -73,7 +75,7 @@ All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions tab
 
 ## Session Continuity
 
-Last session: 2026-04-09
-Stopped at: Roadmap created — Phase 25 not started
-Resume file: None
+Last session: 2026-04-08T21:44:58.747Z
+Stopped at: Phase 25 context gathered
+Resume file: .planning/phases/25-machinecontrol-extension/25-CONTEXT.md
 Next action: /gsd-plan-phase 25
