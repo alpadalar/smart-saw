@@ -70,6 +70,7 @@ class MachineControl:
     # Bit positions (0-based)
     MACHINE_START_BIT = 0        # 102.0: Machine start (arka kapak bypass)
     UZUNLUK_CONFIRM_BIT = 10     # 40.10: Uzunluk yazıldı onayı
+    UZUNLUK_CONFIRM_COIL = 650   # 40*16+10 = coil 650
     CHIP_CLEANING_BIT = 3        # 102.3: Chip cleaning
     CUTTING_START_BIT = 3        # 20.3: Start cutting
     CUTTING_STOP_BIT = 4         # 20.4: Stop cutting
@@ -196,6 +197,20 @@ class MachineControl:
             return True
         except Exception as e:
             logger.error(f"Register write exception ({register}): {e}")
+            return False
+
+    def _write_coil(self, coil_address: int, value: bool) -> bool:
+        """Write a single coil (discrete output)."""
+        try:
+            if not self._ensure_connected():
+                return False
+            result = self.client.write_coil(address=coil_address, value=value)
+            if result.isError():
+                logger.error(f"Coil write error ({coil_address}): {result}")
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Coil write exception ({coil_address}): {e}")
             return False
 
     def _set_bit(self, register: int, bit_position: int, value: bool) -> bool:
@@ -569,13 +584,14 @@ class MachineControl:
             return False
 
     def write_target_uzunluk(self, l_mm: float) -> bool:
-        """Write L (uzunluk) to register 2064 as single word (value x10), then confirm via 40.10."""
+        """Write L (uzunluk) to register 2064 as single word (value x10), then confirm via coil 650 (40.10)."""
         try:
             value = int(round(l_mm * 10))
             success = self._write_register(self.TARGET_UZUNLUK_REGISTER, value)
             if success:
-                self._set_bit(self.UZUNLUK_CONFIRM_REGISTER, self.UZUNLUK_CONFIRM_BIT, True)
-                logger.info(f"Target uzunluk set to {l_mm}mm (reg={value}), confirm bit 40.10 set")
+                # Confirm via coil (40*16+10=650) — avoids PLC scan cycle overwrite
+                self._write_coil(self.UZUNLUK_CONFIRM_COIL, True)
+                logger.info(f"Target uzunluk set to {l_mm}mm (reg={value}), confirm coil 650 set")
             return success
         except Exception as e:
             logger.error(f"Target uzunluk write error: {e}")
