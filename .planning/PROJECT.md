@@ -83,11 +83,12 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.1 Phase 25 complete — 2026-04-09):**
+**Current State (v2.1 Phase 26 complete — 2026-04-09):**
 - Camera vision pipeline: CameraService → DetectionWorker/LDCWorker → CameraResultsStore → GUI/IoT
 - VisionService: Daemon thread polling at 0.5s, CUTTING transition triggers recording (10s duration)
 - MachineControl auto cutting PLC methods: write_target_adet (FC6), write_target_uzunluk (FC16 Double Word), read_kesilmis_adet, start/reset/cancel auto cutting bit ops
-- 69 unit tests (50 camera + 8 existing + 11 auto cutting)
+- OtomatikKesimController: Full-page auto cutting GUI (963 lines) — 5 param inputs (P,X,L,C,S), NumpadDialog with decimal, cut counter with D2056 polling, START/RESET/IPTAL controls, ML mode toggle
+- 89 unit tests (50 camera + 8 existing + 11 auto cutting + 20 otomatik kesim)
 - HealthCalculator: Config-driven weights (broken_weight=0.7, wear_weight=0.3 from config.yaml)
 - IoT: 6 camera fields in ThingsBoard telemetry (broken_count, crack_count, wear_percentage, health_score, etc.)
 - All 23 v2.0 requirements verified through VERIFICATION.md reports
@@ -148,4 +149,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-09 after Phase 25 (MachineControl Extension) complete*
+*Last updated: 2026-04-09 after Phase 26 (OtomatikKesimController) complete*
