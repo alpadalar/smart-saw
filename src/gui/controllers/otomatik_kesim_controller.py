@@ -542,6 +542,12 @@ class OtomatikKesimController(QWidget):
         self._reset_tick_timer.setInterval(50)
         self._reset_tick_timer.timeout.connect(self._on_reset_tick)
 
+        # Speed sync timer — reads PLC target speeds and updates C/S labels
+        self._speed_sync_timer = QTimer(self)
+        self._speed_sync_timer.setInterval(500)
+        self._speed_sync_timer.timeout.connect(self._sync_speeds_from_plc)
+        self._speed_sync_timer.start()
+
     # -------------------------------------------------------------------------
     # Public API
     # -------------------------------------------------------------------------
@@ -557,7 +563,36 @@ class OtomatikKesimController(QWidget):
             self._polling_timer.stop()
         if hasattr(self, '_reset_tick_timer') and self._reset_tick_timer:
             self._reset_tick_timer.stop()
+        if hasattr(self, '_speed_sync_timer') and self._speed_sync_timer:
+            self._speed_sync_timer.stop()
         logger.debug("OtomatikKesimController timers stopped")
+
+    # -------------------------------------------------------------------------
+    # Speed Sync
+    # -------------------------------------------------------------------------
+
+    def _sync_speeds_from_plc(self):
+        """Read PLC target speeds and update C/S labels if changed externally."""
+        try:
+            if not self.data_pipeline or not hasattr(self.data_pipeline, 'get_latest_data'):
+                return
+            data = self.data_pipeline.get_latest_data()
+            if not data:
+                return
+            # Target speeds written to PLC (registers 2066 / 2041)
+            cutting = data.get('kesme_hizi_hedef', 0)
+            descent = data.get('inme_hizi_hedef', 0)
+            cutting_str = str(int(cutting)) if cutting else "0"
+            descent_str = str(int(descent)) if descent else "0"
+            # Only update if user is not actively editing (params enabled = not cutting)
+            if self._c_value != cutting_str:
+                self._c_value = cutting_str
+                self.labelCValue.setText(cutting_str)
+            if self._s_value != descent_str:
+                self._s_value = descent_str
+                self.labelSValue.setText(descent_str)
+        except Exception as e:
+            logger.error(f"Speed sync error: {e}")
 
     # -------------------------------------------------------------------------
     # Helper Methods
