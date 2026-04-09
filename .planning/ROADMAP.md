@@ -110,7 +110,9 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
   - [x] 26-01-PLAN.md — NumpadDialog allow_decimal + OtomatikKesimController UI scaffold
   - [x] 26-02-PLAN.md — Parameter input handlers + START/IPTAL control logic
   - [x] 26-03-PLAN.md — RESET hold-delay + D2056 polling + ML mode + unit tests
-- [ ] Phase 27: MainController Integration (0/? plans)
+- [ ] Phase 27: MainController Integration (1 plan)
+  Plans:
+  - [ ] 27-01-PLAN.md — PageIndex IntEnum + sidebar button + navigation wiring + closeEvent cleanup
 
 </details>
 
@@ -149,4 +151,4 @@ Endustriyel testere kontrol sistemine kamera tabanli yapay zeka goruntusu entegr
 | 24.2. Missing Verification Artifacts (INSERTED) | v2.0 | 2/2 | Complete | 2026-04-08 |
 | 25. MachineControl Extension | v2.1 | 1/1 | Complete    | 2026-04-08 |
 | 26. OtomatikKesimController | v2.1 | 3/3 | Complete    | 2026-04-09 |
-| 27. MainController Integration | v2.1 | 0/? | Not started | - |
+| 27. MainController Integration | v2.1 | 0/1 | Not started | - |
