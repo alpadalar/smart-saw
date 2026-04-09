@@ -13,4 +13,5 @@ class PageIndex(IntEnum):
     KONUMLANDIRMA  = 2
     SENSOR         = 3
     IZLEME         = 4
-    KAMERA         = 5
+    ALARM          = 5
+    KAMERA         = 6

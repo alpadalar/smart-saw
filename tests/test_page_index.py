@@ -1,6 +1,6 @@
-"""Tests for PageIndex IntEnum (Phase 27).
+"""Tests for PageIndex IntEnum.
 
-Verifies all 6 named page index constants, int subclass behavior,
+Verifies all 7 named page index constants, int subclass behavior,
 and total member count.
 """
 
@@ -10,13 +10,14 @@ from src.gui.page_index import PageIndex
 
 
 def test_page_index_values():
-    """All 6 PageIndex members must have their specified integer values."""
+    """All 7 PageIndex members must have their specified integer values."""
     assert PageIndex.KONTROL_PANELI == 0
     assert PageIndex.OTOMATIK_KESIM == 1
     assert PageIndex.KONUMLANDIRMA == 2
     assert PageIndex.SENSOR == 3
     assert PageIndex.IZLEME == 4
-    assert PageIndex.KAMERA == 5
+    assert PageIndex.ALARM == 5
+    assert PageIndex.KAMERA == 6
 
 
 def test_page_index_is_int():
@@ -26,5 +27,5 @@ def test_page_index_is_int():
 
 
 def test_page_index_count():
-    """PageIndex must have exactly 6 members."""
-    assert len(PageIndex) == 6
+    """PageIndex must have exactly 7 members."""
+    assert len(PageIndex) == 7

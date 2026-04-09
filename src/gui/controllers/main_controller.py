@@ -21,6 +21,7 @@ except ImportError:
     Signal = lambda *args, **kwargs: None
     Slot = lambda *args, **kwargs: (lambda f: f)
 
+from .alarm_controller import AlarmController
 from .control_panel_controller import ControlPanelController
 from .monitoring_controller import MonitoringController
 from .otomatik_kesim_controller import OtomatikKesimController
@@ -210,19 +211,28 @@ class MainController(QMainWindow):
         self.btnTracking.setCheckable(True)
         self.btnTracking.clicked.connect(lambda: self._switch_page(PageIndex.IZLEME))
 
+        self.btnAlarm = QPushButton("  Alarmlar", self.sidebarFrame)
+        self.btnAlarm.setGeometry(26, 770, 355, 110)
+        self.btnAlarm.setIcon(self._icon("sensor-icon2.svg"))
+        self.btnAlarm.setIconSize(QSize(80, 80))
+        self.btnAlarm.setStyleSheet(nav_btn_style)
+        self.btnAlarm.setCheckable(True)
+        self.btnAlarm.clicked.connect(lambda: self._switch_page(PageIndex.ALARM))
+
         # Store navigation buttons
         self.nav_buttons = [
             self.btnControlPanel,    # PageIndex.KONTROL_PANELI (0)
             self.btnOtomatikKesim,   # PageIndex.OTOMATIK_KESIM (1)
             self.btnPositioning,     # PageIndex.KONUMLANDIRMA (2)
             self.btnSensor,          # PageIndex.SENSOR (3)
-            self.btnTracking         # PageIndex.IZLEME (4)
+            self.btnTracking,        # PageIndex.IZLEME (4)
+            self.btnAlarm            # PageIndex.ALARM (5)
         ]
 
         # Conditional camera button
         if self.camera_results_store is not None:
             self.btnCamera = QPushButton("  Kamera", self.sidebarFrame)
-            self.btnCamera.setGeometry(26, 770, 355, 110)
+            self.btnCamera.setGeometry(26, 891, 355, 110)
             self.btnCamera.setIcon(self._icon("camera-icon2.svg"))
             self.btnCamera.setIconSize(QSize(80, 80))
             self.btnCamera.setStyleSheet(nav_btn_style)
@@ -331,6 +341,11 @@ class MainController(QMainWindow):
             self.data_pipeline,
             parent=self.stackedWidget
         )
+        self.alarm_page = AlarmController(
+            data_pipeline=self.data_pipeline,
+            parent=self.stackedWidget,
+            switch_page_callback=self._switch_page,
+        )
 
         # Add pages to stack
         self.stackedWidget.addWidget(self.control_panel_page)     # Index 0 — PageIndex.KONTROL_PANELI
@@ -338,6 +353,7 @@ class MainController(QMainWindow):
         self.stackedWidget.addWidget(self.positioning_page)       # Index 2 — PageIndex.KONUMLANDIRMA
         self.stackedWidget.addWidget(self.sensor_page)            # Index 3 — PageIndex.SENSOR
         self.stackedWidget.addWidget(self.monitoring_page)        # Index 4 — PageIndex.IZLEME
+        self.stackedWidget.addWidget(self.alarm_page)             # Index 5 — PageIndex.ALARM
 
         # Conditional camera page
         if self.camera_results_store is not None:
@@ -346,7 +362,7 @@ class MainController(QMainWindow):
                 self.camera_results_store,
                 parent=self.stackedWidget
             )
-            self.stackedWidget.addWidget(self.camera_page)  # Index 5 — PageIndex.KAMERA
+            self.stackedWidget.addWidget(self.camera_page)  # Index 6 — PageIndex.KAMERA
 
         # Update date/time
         self._update_datetime()
@@ -455,7 +471,8 @@ class MainController(QMainWindow):
             # Stop timers in child page controllers
             for page in [self.control_panel_page, self.otomatik_kesim_page,
                          self.positioning_page,
-                         self.sensor_page, self.monitoring_page]:
+                         self.sensor_page, self.monitoring_page,
+                         self.alarm_page]:
                 if page and hasattr(page, 'stop_timers'):
                     page.stop_timers()
 

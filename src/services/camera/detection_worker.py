@@ -1,13 +1,14 @@
 """
-RT-DETR broken-tooth and crack detection worker.
+Broken-tooth and crack detection worker.
 
-Runs as a daemon thread. Loads two RT-DETR models (broken tooth + crack)
-inside ``run()`` so that ``import detection_worker`` never triggers heavy
-ML library imports. Results are published to CameraResultsStore.
+Runs as a daemon thread. Loads a YOLO model for broken tooth detection
+and an RT-DETR model for crack detection inside ``run()`` so that
+``import detection_worker`` never triggers heavy ML library imports.
+Results are published to CameraResultsStore.
 
 Class mapping:
-    Broken model — class 0: tooth (healthy), class 1: broken
-    Crack model  — class 0: crack
+    Broken model (YOLO) — class 0: tooth (healthy), class 1: broken
+    Crack model (RT-DETR) — class 0: crack
 """
 
 from __future__ import annotations
@@ -79,22 +80,22 @@ class DetectionWorker(threading.Thread):
         importing this module stays lightweight.
         """
         import torch
-        from ultralytics import RTDETR
+        from ultralytics import YOLO, RTDETR
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # --- load broken-tooth model ---
+        # --- load YOLO broken-tooth model ---
         try:
-            broken_model = RTDETR(self._broken_model_path)
+            broken_model = YOLO(self._broken_model_path)
             broken_model.to(device)
             logger.info(
-                "Broken detection model loaded — path=%s, device=%s",
+                "YOLO broken model loaded — path=%s, device=%s",
                 self._broken_model_path,
                 device,
             )
         except Exception:
             logger.error(
-                "Failed to load broken detection model — path=%s",
+                "Failed to load YOLO broken model — path=%s",
                 self._broken_model_path,
                 exc_info=True,
             )
@@ -104,18 +105,18 @@ class DetectionWorker(threading.Thread):
         if self._stop_event.is_set():
             return
 
-        # --- load crack model ---
+        # --- load RT-DETR crack model ---
         try:
             crack_model = RTDETR(self._crack_model_path)
             crack_model.to(device)
             logger.info(
-                "Crack detection model loaded — path=%s, device=%s",
+                "RT-DETR crack model loaded — path=%s, device=%s",
                 self._crack_model_path,
                 device,
             )
         except Exception:
             logger.error(
-                "Failed to load crack detection model — path=%s",
+                "Failed to load RT-DETR crack model — path=%s",
                 self._crack_model_path,
                 exc_info=True,
             )
@@ -142,7 +143,7 @@ class DetectionWorker(threading.Thread):
             # Copy frame so we don't hold camera_service's frame_lock during inference
             frame = frame.copy()
 
-            # -- broken detection --
+            # -- broken detection (YOLO) --
             tooth_count = 0
             broken_count = 0
             broken_confidence = 0.0
@@ -152,7 +153,7 @@ class DetectionWorker(threading.Thread):
                     source=frame,
                     device=device,
                     conf=self._confidence,
-                    imgsz=960,
+                    imgsz=640,
                     verbose=False,
                 )
 
@@ -167,7 +168,7 @@ class DetectionWorker(threading.Thread):
                         if conf > broken_confidence:
                             broken_confidence = conf
 
-            # -- crack detection --
+            # -- crack detection (RT-DETR) --
             crack_count = 0
             crack_confidence = 0.0
 
@@ -189,7 +190,7 @@ class DetectionWorker(threading.Thread):
                         if conf > crack_confidence:
                             crack_confidence = conf
 
-            # -- save annotated frame if recording --
+            # -- save annotated frame --
             image_path = self._save_annotated_frame(
                 frame, broken_results, crack_results
             )
@@ -209,7 +210,6 @@ class DetectionWorker(threading.Thread):
 
             # -- persist to camera.db --
             if self._db_service:
-                # Read traceability fields from CameraResultsStore (per D-05)
                 kesim_id = self._results_store.get("kesim_id")
                 makine_id = self._results_store.get("makine_id")
                 serit_id = self._results_store.get("serit_id")
@@ -263,19 +263,10 @@ class DetectionWorker(threading.Thread):
     ) -> str | None:
         """Draw bounding boxes, publish annotated frame to store, and optionally save to disk.
 
-        Bounding boxes are drawn unconditionally every detection cycle. The
-        annotated JPEG is always written to ``CameraResultsStore`` under the
-        ``"annotated_frame"`` key so the GUI live feed reflects current
-        detections even when recording is inactive (per D-02).
-
-        Disk save only occurs when a recording is active (``recording_path``
-        set in results store). Silently skips on any error — this is
-        best-effort.
-
         Args:
             frame: BGR numpy array captured from the camera.
-            broken_results: Ultralytics RTDETR results for the broken-tooth model.
-            crack_results: Ultralytics RTDETR results for the crack model.
+            broken_results: Ultralytics YOLO results for the broken-tooth model.
+            crack_results: Ultralytics RT-DETR results for the crack model.
 
         Returns:
             The saved file path as a string, or None if not saved to disk.

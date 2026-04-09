@@ -103,6 +103,18 @@ control:
       min: 10.0
       max: 60.0
 
+  # Speed presets for GUI buttons (cutting m/dk, descent mm/dk)
+  speed_presets:
+    slow:
+      cutting: 15.0
+      descent: 8.0
+    normal:
+      cutting: 25.0
+      descent: 12.0
+    fast:
+      cutting: 35.0
+      descent: 18.0
+
   # Dynamic Initial Delay (delay control activation after cutting starts)
   # Logic: Calculate delay = target_distance / inme_hizi, apply MIN limit only
   # Both conditions must be met: time >= calculated delay AND distance >= target
@@ -535,7 +547,7 @@ camera:
   # Recording
   recordings_path: "data/recordings"
 
-  # Detection (RT-DETR broken tooth + crack)
+  # Detection (YOLO broken tooth + RT-DETR crack)
   detection:
     enabled: true
     interval_seconds: 2.0          # Run detection every N seconds

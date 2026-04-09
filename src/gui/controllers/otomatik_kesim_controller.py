@@ -141,13 +141,16 @@ class OtomatikKesimController(QWidget):
         self._reset_tick_timer: Optional[QTimer] = None
 
         # Styles stored as instance attributes for reuse
-        self._frame_style = (
-            "background: qlineargradient("
-            "x1:0,y1:1,x2:0.5,y2:0,"
-            "stop:0 rgba(6,11,38,240),"
-            "stop:1 rgba(26,31,55,0)"
-            "); border-radius: 20px;"
-        )
+        self._frame_style = """
+            QFrame {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(6, 11, 38, 240),
+                    stop:1 rgba(26, 31, 55, 0)
+                );
+                border-radius: 20px;
+            }
+        """
         self._frame_disabled_style = (
             "background: rgba(26,31,55,100); border-radius: 20px;"
         )
@@ -277,27 +280,27 @@ class OtomatikKesimController(QWidget):
 
         # ---- LEFT COLUMN: PARAM FRAMES -----
 
-        # P frame (30,30,340,160)
+        # P frame (30,127,340,160)
         self._create_param_frame(
             parent=self,
-            x=30, y=30, w=340, h=160,
+            x=30, y=127, w=340, h=160,
             title="P \u2014 Hedef Adet",
             hint="(1 - 9999)",
             attr_prefix="P",
         )
 
-        # X frame (380,30,340,160)
+        # X frame (380,127,340,160)
         self._create_param_frame(
             parent=self,
-            x=380, y=30, w=340, h=160,
+            x=380, y=127, w=340, h=160,
             title="X \u2014 Paketteki Adet",
             hint="(1 - 999)",
             attr_prefix="X",
         )
 
-        # P*X total label (30,200,690,40)
+        # P*X total label (30,297,690,40)
         self.labelTotal = QLabel(self)
-        self.labelTotal.setGeometry(30, 200, 690, 40)
+        self.labelTotal.setGeometry(30, 297, 690, 40)
         self.labelTotal.setText("Toplam: 0 adet")
         self.labelTotal.setStyleSheet(
             "background: transparent;"
@@ -306,37 +309,37 @@ class OtomatikKesimController(QWidget):
             " font-weight: 500;"
         )
 
-        # L frame (30,255,690,140)
+        # L frame (30,352,690,140)
         self._create_param_frame(
             parent=self,
-            x=30, y=255, w=690, h=140,
+            x=30, y=352, w=690, h=140,
             title="L \u2014 Uzunluk (mm)",
             hint="(1 - 99999, ondal\u0131kl\u0131)",
             attr_prefix="L",
         )
 
-        # C frame (30,410,690,140)
+        # C frame (30,507,690,140)
         self._create_param_frame(
             parent=self,
-            x=30, y=410, w=690, h=140,
+            x=30, y=507, w=690, h=140,
             title="C \u2014 Kesim H\u0131z\u0131 (m/dk)",
             hint="(0 - 500)",
             attr_prefix="C",
         )
 
-        # S frame (30,565,690,140)
+        # S frame (30,662,690,140)
         self._create_param_frame(
             parent=self,
-            x=30, y=565, w=690, h=140,
-            title="S \u2014 \u0130nme H\u0131z\u0131 (m/dk)",
+            x=30, y=662, w=690, h=140,
+            title="S \u2014 \u0130lerleme H\u0131z\u0131 (mm/dk)",
             hint="(0 - 500)",
             attr_prefix="S",
         )
 
-        # ---- RIGHT COLUMN: COUNTER FRAME (760,30,740,380) ----
+        # ---- RIGHT COLUMN: COUNTER FRAME (760,127,740,380) ----
 
         self.frameCounter = QFrame(self)
-        self.frameCounter.setGeometry(760, 30, 740, 380)
+        self.frameCounter.setGeometry(760, 127, 740, 380)
         self.frameCounter.setStyleSheet(self._frame_style)
 
         self.labelCounterTitle = QLabel(self.frameCounter)
@@ -377,10 +380,10 @@ class OtomatikKesimController(QWidget):
         )
         self.labelComplete.hide()
 
-        # ---- RIGHT COLUMN: CONTROL FRAME (760,425,740,625) ----
+        # ---- RIGHT COLUMN: CONTROL FRAME (760,522,740,558) ----
 
         self.frameControl = QFrame(self)
-        self.frameControl.setGeometry(760, 425, 740, 625)
+        self.frameControl.setGeometry(760, 522, 740, 558)
         self.frameControl.setStyleSheet(self._frame_style)
 
         # Validation error label below START (hidden by default)
@@ -414,16 +417,31 @@ class OtomatikKesimController(QWidget):
         self.btnIptal.setStyleSheet(self._button_destructive_style)
         self.btnIptal.setCursor(Qt.PointingHandCursor)
 
-        # ML mode toggle buttons (30,360,320,55) and (360,360,320,55)
-        self.btnManual = QPushButton("Manuel", self.frameControl)
-        self.btnManual.setGeometry(30, 360, 320, 55)
+        # ---- LEFT COLUMN: MODE CARD (30,820,690,130) ----
+
+        self.frameModeCard = QFrame(self)
+        self.frameModeCard.setGeometry(30, 820, 690, 130)
+        self.frameModeCard.setStyleSheet(self._frame_style)
+
+        self.labelModeTitle = QLabel(self.frameModeCard)
+        self.labelModeTitle.setGeometry(20, 15, 300, 30)
+        self.labelModeTitle.setText("Kesim Modu")
+        self.labelModeTitle.setStyleSheet(
+            "background: transparent;"
+            " color: #F4F6FC;"
+            " font: 24px 'Plus Jakarta Sans';"
+            " font-weight: bold;"
+        )
+
+        self.btnManual = QPushButton("Manuel", self.frameModeCard)
+        self.btnManual.setGeometry(20, 60, 320, 55)
         self.btnManual.setCheckable(True)
         self.btnManual.setChecked(True)
         self.btnManual.setStyleSheet(self._button_checked_style)
         self.btnManual.setCursor(Qt.PointingHandCursor)
 
-        self.btnAI = QPushButton("Yapay Zeka", self.frameControl)
-        self.btnAI.setGeometry(360, 360, 320, 55)
+        self.btnAI = QPushButton("Yapay Zeka", self.frameModeCard)
+        self.btnAI.setGeometry(350, 60, 320, 55)
         self.btnAI.setCheckable(True)
         self.btnAI.setChecked(False)
         self.btnAI.setStyleSheet(self._button_default_style)

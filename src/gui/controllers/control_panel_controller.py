@@ -14,8 +14,11 @@ import queue
 import threading
 import collections
 import asyncio
+from pathlib import Path
 from typing import Optional, Dict, Callable
 from datetime import datetime, timedelta
+
+import yaml
 
 from ...domain.enums import ControlMode
 from ...services.control.machine_control import MachineControl
@@ -566,15 +569,14 @@ class ControlPanelController(QWidget):
         self._cutting_start_height = None  # Height when cutting started (for remaining time calc)
         self._previous_cutting_duration = None  # Previous cutting duration string for display
 
-        # Speed values for preset buttons
-        self.speed_values = {
-            "slow": {"cutting": 15.0, "descent": 8.0},
-            "normal": {"cutting": 25.0, "descent": 12.0},
-            "fast": {"cutting": 35.0, "descent": 18.0}
-        }
+        # Speed values for preset buttons (from config)
+        self.speed_values = self._load_speed_presets()
 
         # Log queue for thread-safe logging
         self.log_queue = queue.Queue()
+
+        # ML countdown tracking for GUI log forwarding
+        self._last_ml_countdown_logged = None
 
         # Flags and state
         self._force_update_cutting_speed = False
@@ -594,6 +596,33 @@ class ControlPanelController(QWidget):
         self._setup_timers()
 
         logger.info("ControlPanelController initialized")
+
+    @staticmethod
+    def _load_speed_presets() -> dict:
+        """Load speed presets from config/config.yaml."""
+        defaults = {
+            "slow": {"cutting": 15.0, "descent": 8.0},
+            "normal": {"cutting": 25.0, "descent": 12.0},
+            "fast": {"cutting": 35.0, "descent": 18.0},
+        }
+        try:
+            config_path = Path(__file__).parent.parent.parent.parent / 'config' / 'config.yaml'
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            presets = config.get('control', {}).get('speed_presets', {})
+            if not presets:
+                return defaults
+            result = {}
+            for key in ("slow", "normal", "fast"):
+                p = presets.get(key, {})
+                result[key] = {
+                    "cutting": float(p.get("cutting", defaults[key]["cutting"])),
+                    "descent": float(p.get("descent", defaults[key]["descent"])),
+                }
+            return result
+        except Exception as e:
+            logger.warning(f"Could not load speed presets from config: {e}, using defaults")
+            return defaults
 
     def _initialize_current_values(self):
         """Initialize default values for all data fields."""
@@ -771,7 +800,14 @@ class ControlPanelController(QWidget):
         self.labelSpeed.setGeometry(27, 170, 371, 34)
         self.labelSpeed.setStyleSheet(label_title_style)
 
-        self.btnSlowSpeed = QPushButton("Yavaş", self.cuttingModeFrame)
+        slow = self.speed_values["slow"]
+        normal = self.speed_values["normal"]
+        fast = self.speed_values["fast"]
+
+        self.btnSlowSpeed = QPushButton(
+            f"Yavaş\n{slow['cutting']:.0f}/{slow['descent']:.0f}",
+            self.cuttingModeFrame,
+        )
         self.btnSlowSpeed.setGeometry(19, 231, 120, 65)
         self.btnSlowSpeed.setStyleSheet(button_speed_style)
         self.btnSlowSpeed.setCheckable(True)
@@ -779,7 +815,10 @@ class ControlPanelController(QWidget):
             lambda: self._handle_speed_buttons(self.btnSlowSpeed)
         )
 
-        self.btnNormalSpeed = QPushButton("Normal", self.cuttingModeFrame)
+        self.btnNormalSpeed = QPushButton(
+            f"Normal\n{normal['cutting']:.0f}/{normal['descent']:.0f}",
+            self.cuttingModeFrame,
+        )
         self.btnNormalSpeed.setGeometry(160, 231, 120, 65)
         self.btnNormalSpeed.setStyleSheet(button_speed_style)
         self.btnNormalSpeed.setCheckable(True)
@@ -787,7 +826,10 @@ class ControlPanelController(QWidget):
             lambda: self._handle_speed_buttons(self.btnNormalSpeed)
         )
 
-        self.btnFastSpeed = QPushButton("Hızlı", self.cuttingModeFrame)
+        self.btnFastSpeed = QPushButton(
+            f"Hızlı\n{fast['cutting']:.0f}/{fast['descent']:.0f}",
+            self.cuttingModeFrame,
+        )
         self.btnFastSpeed.setGeometry(300, 231, 120, 65)
         self.btnFastSpeed.setStyleSheet(button_speed_style)
         self.btnFastSpeed.setCheckable(True)
@@ -1221,10 +1263,21 @@ class ControlPanelController(QWidget):
             }
         """
 
+        # Machine start toggle button (100.1 - arka kapak bypass)
+        self.toolBtnMachineStart = QToolButton(self.cuttingControlFrame)
+        self.toolBtnMachineStart.setText("Makine Başlat")
+        self.toolBtnMachineStart.setGeometry(35, 63, 200, 135)
+        self.toolBtnMachineStart.setStyleSheet(control_button_style)
+        self.toolBtnMachineStart.setCheckable(True)
+        self.toolBtnMachineStart.setIcon(self._load_icon("cutting-start-icon.svg"))
+        self.toolBtnMachineStart.setIconSize(QSize(90, 90))
+        self.toolBtnMachineStart.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.toolBtnMachineStart.toggled.connect(self._on_machine_start_toggled)
+
         # Coolant button
         self.toolBtnCoolant = QToolButton(self.cuttingControlFrame)
         self.toolBtnCoolant.setText("Soğutma Sıvısı")
-        self.toolBtnCoolant.setGeometry(35, 63, 248, 135)
+        self.toolBtnCoolant.setGeometry(250, 63, 200, 135)
         self.toolBtnCoolant.setStyleSheet(control_button_style)
         self.toolBtnCoolant.setCheckable(True)
         self.toolBtnCoolant.setIcon(self._load_icon("coolant-liquid-icon.svg"))
@@ -1235,7 +1288,7 @@ class ControlPanelController(QWidget):
         # Sawdust cleaning button
         self.toolBtnSawdustCleaning = QToolButton(self.cuttingControlFrame)
         self.toolBtnSawdustCleaning.setText("Talaş Temizliği")
-        self.toolBtnSawdustCleaning.setGeometry(305, 63, 248, 135)
+        self.toolBtnSawdustCleaning.setGeometry(465, 63, 200, 135)
         self.toolBtnSawdustCleaning.setStyleSheet(control_button_style)
         self.toolBtnSawdustCleaning.setCheckable(True)
         self.toolBtnSawdustCleaning.setIcon(self._load_icon("sawdust-cleaning-icon.svg"))
@@ -1246,7 +1299,7 @@ class ControlPanelController(QWidget):
         # Cutting start button
         self.toolBtnCuttingStart = QToolButton(self.cuttingControlFrame)
         self.toolBtnCuttingStart.setText("Kesim Başlat")
-        self.toolBtnCuttingStart.setGeometry(575, 63, 248, 135)
+        self.toolBtnCuttingStart.setGeometry(680, 63, 200, 135)
         self.toolBtnCuttingStart.setStyleSheet(control_button_style)
         self.toolBtnCuttingStart.setIcon(self._load_icon("cutting-start-icon.svg"))
         self.toolBtnCuttingStart.setIconSize(QSize(90, 90))
@@ -1256,7 +1309,7 @@ class ControlPanelController(QWidget):
         # Cutting stop button
         self.toolBtnCuttingStop = QToolButton(self.cuttingControlFrame)
         self.toolBtnCuttingStop.setText("Kesim Durdur")
-        self.toolBtnCuttingStop.setGeometry(845, 63, 248, 135)
+        self.toolBtnCuttingStop.setGeometry(895, 63, 200, 135)
         self.toolBtnCuttingStop.setStyleSheet(control_button_style)
         self.toolBtnCuttingStop.setIcon(self._load_icon("cutting-stop-icon.svg"))
         self.toolBtnCuttingStop.setIconSize(QSize(90, 90))
@@ -1741,6 +1794,34 @@ class ControlPanelController(QWidget):
             self.toolBtnSawdustCleaning.setChecked(False)
             self.toolBtnSawdustCleaning.blockSignals(False)
 
+    def _on_machine_start_toggled(self, checked: bool):
+        """Handle machine start toggle (100.1 - arka kapak bypass)."""
+        try:
+            if not self.machine_control:
+                self.add_log("Makine başlatılamadı: MachineControl yok.", "ERROR")
+                self.toolBtnMachineStart.blockSignals(True)
+                self.toolBtnMachineStart.setChecked(False)
+                self.toolBtnMachineStart.blockSignals(False)
+                return
+
+            success = self.machine_control.set_machine_start(checked)
+            if success:
+                if checked:
+                    self.add_log("Makine başlatıldı (100.1 aktif).", "INFO")
+                else:
+                    self.add_log("Makine durduruldu (100.1 pasif).", "INFO")
+            else:
+                self.add_log("Makine başlatma/durdurma başarısız!", "ERROR")
+                self.toolBtnMachineStart.blockSignals(True)
+                self.toolBtnMachineStart.setChecked(not checked)
+                self.toolBtnMachineStart.blockSignals(False)
+
+        except Exception as e:
+            logger.error(f"Machine start toggle error: {e}")
+            self.toolBtnMachineStart.blockSignals(True)
+            self.toolBtnMachineStart.setChecked(False)
+            self.toolBtnMachineStart.blockSignals(False)
+
     def _on_cutting_start_clicked(self):
         """Handle cutting start button click."""
         try:
@@ -1831,8 +1912,65 @@ class ControlPanelController(QWidget):
                 data = self.data_pipeline.get_latest_data()
                 if data:
                     self.update_data(data)
+
+            # Poll machine start bit (100.1) to sync button state
+            self._poll_machine_start_status()
+
+            # Forward ML countdown logs to GUI
+            self._poll_ml_countdown()
+
         except Exception as e:
             logger.error(f"Data tick error: {e}")
+
+    def _poll_machine_start_status(self):
+        """Poll 100.1 bit and sync toggle button state."""
+        try:
+            if not self.machine_control:
+                return
+            is_started = self.machine_control.is_machine_started()
+            if is_started is None:
+                return
+            if is_started != self.toolBtnMachineStart.isChecked():
+                self.toolBtnMachineStart.blockSignals(True)
+                self.toolBtnMachineStart.setChecked(is_started)
+                self.toolBtnMachineStart.blockSignals(False)
+                if not is_started:
+                    self.add_log("Makine dışarıdan durduruldu (100.1 sıfırlandı).", "WARNING")
+        except Exception as e:
+            logger.error(f"Machine start poll error: {e}")
+
+    def _poll_ml_countdown(self):
+        """Forward ML countdown status to GUI log."""
+        try:
+            if not self.control_manager or not hasattr(self.control_manager, 'get_status'):
+                return
+            status = self.control_manager.get_status()
+            if status.get('mode') != 'ml':
+                self._last_ml_countdown_logged = None
+                return
+            if status.get('initial_delay_passed', True):
+                if getattr(self, '_last_ml_countdown_logged', None) is not None:
+                    self.add_log("AI modu aktif — kontrol başladı.", "INFO")
+                    self._last_ml_countdown_logged = None
+                return
+            # Calculate remaining from manager state
+            started_time = status.get('cutting_started_time')
+            if started_time is None:
+                return
+            initial_height = status.get('initial_head_height')
+            if initial_height is None:
+                return
+            # Get current countdown from manager's internal state
+            countdown = getattr(self.control_manager, '_last_countdown_log', None)
+            if countdown is None:
+                return
+            last_logged = getattr(self, '_last_ml_countdown_logged', None)
+            if countdown != last_logged:
+                self._last_ml_countdown_logged = countdown
+                if countdown > 0:
+                    self.add_log(f"AI aktivasyonuna {countdown}s kaldı", "INFO")
+        except Exception as e:
+            logger.error(f"ML countdown poll error: {e}")
 
     def update_data(self, processed_data: Dict):
         """

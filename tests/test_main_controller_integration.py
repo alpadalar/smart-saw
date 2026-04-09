@@ -38,15 +38,15 @@ def ctrl():
     c.positioning_page = MagicMock()
     c.sensor_page = MagicMock()
     c.monitoring_page = MagicMock()
+    c.alarm_page = MagicMock()
 
     # Named nav button mocks for identity testing
-    # Note: MagicMock(name=...) sets display name but .name auto-mocks via MagicMock.
-    # Use spec-less mocks and store references on the controller for identity checks.
     c.btnControlPanel = MagicMock()
     c.btnOtomatikKesim = MagicMock()
     c.btnPositioning = MagicMock()
     c.btnSensor = MagicMock()
     c.btnTracking = MagicMock()
+    c.btnAlarm = MagicMock()
 
     c.nav_buttons = [
         c.btnControlPanel,    # PageIndex.KONTROL_PANELI (0)
@@ -54,6 +54,7 @@ def ctrl():
         c.btnPositioning,     # PageIndex.KONUMLANDIRMA (2)
         c.btnSensor,          # PageIndex.SENSOR (3)
         c.btnTracking,        # PageIndex.IZLEME (4)
+        c.btnAlarm,           # PageIndex.ALARM (5)
     ]
 
     # stackedWidget mock
@@ -72,8 +73,8 @@ def ctrl():
 
 
 def test_nav_buttons_count(ctrl):
-    """nav_buttons must have exactly 5 items (camera excluded — conditional)."""
-    assert len(ctrl.nav_buttons) == 5
+    """nav_buttons must have exactly 6 items (camera excluded — conditional)."""
+    assert len(ctrl.nav_buttons) == 6
 
 
 def test_nav_buttons_otomatik_kesim_at_index_1(ctrl):
@@ -117,7 +118,7 @@ def test_close_event_stops_otomatik_kesim_timers(ctrl):
 
 
 def test_close_event_stops_all_unconditional_pages(ctrl):
-    """closeEvent must call stop_timers() on all 5 unconditional page instances."""
+    """closeEvent must call stop_timers() on all 6 unconditional page instances."""
     ctrl.closeEvent(MagicMock())
 
     for page_name in [
@@ -126,6 +127,7 @@ def test_close_event_stops_all_unconditional_pages(ctrl):
         "positioning_page",
         "sensor_page",
         "monitoring_page",
+        "alarm_page",
     ]:
         page = getattr(ctrl, page_name)
         page.stop_timers.assert_called_once(), (

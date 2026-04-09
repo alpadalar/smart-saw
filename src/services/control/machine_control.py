@@ -57,8 +57,10 @@ class MachineControl:
     CONTROL_REGISTER = 20
     COOLANT_REGISTER = 2000
     KONVEYOR_REGISTER = 102
+    MACHINE_START_REGISTER = 100
 
     # Bit positions (0-based)
+    MACHINE_START_BIT = 1        # 100.1: Machine start (arka kapak bypass)
     CHIP_CLEANING_BIT = 3        # 102.3: Chip cleaning
     CUTTING_START_BIT = 3        # 20.3: Start cutting
     CUTTING_STOP_BIT = 4         # 20.4: Stop cutting
@@ -416,6 +418,18 @@ class MachineControl:
     def is_chip_cleaning_active(self) -> Optional[bool]:
         """Check if chip cleaning is active."""
         return self._get_bit(self.KONVEYOR_REGISTER, self.CHIP_CLEANING_BIT)
+
+    # ========================================================================
+    # Machine Start Toggle (Makine Başlat - Arka Kapak Bypass)
+    # ========================================================================
+
+    def set_machine_start(self, value: bool) -> bool:
+        """Set machine start bit (100.1). Replaces physical back cover switch."""
+        return self._set_bit(self.MACHINE_START_REGISTER, self.MACHINE_START_BIT, value)
+
+    def is_machine_started(self) -> Optional[bool]:
+        """Check if machine start bit (100.1) is active."""
+        return self._get_bit(self.MACHINE_START_REGISTER, self.MACHINE_START_BIT)
 
     # ========================================================================
     # Speed Control (Hız Kontrol)

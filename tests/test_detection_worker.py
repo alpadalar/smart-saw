@@ -1,8 +1,8 @@
 """Unit tests for DetectionWorker.
 
 Tests cover: lightweight import (DET-06), constructor config reading,
-broken detection publishing (DET-01, DET-05), crack detection publishing
-(DET-02, DET-05), db_service guard (D-04), and stop event (thread lifecycle).
+broken detection publishing (DET-01, DET-05), db_service guard (D-04),
+and stop event (thread lifecycle).
 
 All tests mock torch and ultralytics via sys.modules patching so no ML
 libraries are required at test time.
@@ -95,43 +95,46 @@ def _make_mock_result(boxes: list) -> MagicMock:
 
 
 @contextmanager
-def _mock_torch_ultralytics(broken_boxes: list, crack_boxes: list):
+def _mock_torch_ultralytics(broken_boxes: list, crack_boxes: list = None):
     """Inject mock torch and ultralytics into sys.modules.
 
-    The mock RTDETR alternates between returning broken_boxes results
-    and crack_boxes results depending on the model path suffix.
+    The mock YOLO handles the broken model, RT-DETR handles the crack model.
 
     Args:
-        broken_boxes: Boxes returned by the broken model's predict() call.
-        crack_boxes: Boxes returned by the crack model's predict() call.
+        broken_boxes: Boxes returned by the YOLO broken model's predict() call.
+        crack_boxes: Boxes returned by the RT-DETR crack model's predict() call.
 
     Yields:
-        Tuple of (mock_torch, mock_rtdetr_class) for additional setup if needed.
+        Tuple of (mock_torch, mock_yolo_class) for additional setup if needed.
     """
-    # Build mock torch
+    if crack_boxes is None:
+        crack_boxes = []
+
     mock_torch = MagicMock()
     mock_torch.cuda.is_available.return_value = False
     mock_torch.no_grad.return_value.__enter__ = MagicMock(return_value=None)
     mock_torch.no_grad.return_value.__exit__ = MagicMock(return_value=False)
 
-    # Build mock RTDETR — first instantiation = broken model, second = crack model
     broken_result = _make_mock_result(broken_boxes)
     crack_result = _make_mock_result(crack_boxes)
 
-    call_order = [0]
-
-    def make_rtdetr(model_path: str) -> MagicMock:
+    def make_yolo(model_path: str) -> MagicMock:
         model = MagicMock()
-        if "catlak" in model_path:
-            model.predict.return_value = [crack_result]
-        else:
-            model.predict.return_value = [broken_result]
+        model.predict.return_value = [broken_result]
         model.to.return_value = model
         return model
 
+    def make_rtdetr(model_path: str) -> MagicMock:
+        model = MagicMock()
+        model.predict.return_value = [crack_result]
+        model.to.return_value = model
+        return model
+
+    mock_yolo_class = MagicMock(side_effect=make_yolo)
     mock_rtdetr_class = MagicMock(side_effect=make_rtdetr)
 
     mock_ultralytics = MagicMock()
+    mock_ultralytics.YOLO = mock_yolo_class
     mock_ultralytics.RTDETR = mock_rtdetr_class
 
     old_torch = sys.modules.get("torch")
@@ -141,9 +144,8 @@ def _mock_torch_ultralytics(broken_boxes: list, crack_boxes: list):
     sys.modules["ultralytics"] = mock_ultralytics
 
     try:
-        yield mock_torch, mock_rtdetr_class
+        yield mock_torch, mock_yolo_class
     finally:
-        # Restore previous state
         if old_torch is None:
             sys.modules.pop("torch", None)
         else:
@@ -221,7 +223,6 @@ def test_publishes_broken_results():
 
     with _mock_torch_ultralytics(
         broken_boxes=[tooth_box, broken_box],
-        crack_boxes=[],
     ):
         worker = DetectionWorker(DET_CONFIG, store, mock_camera)
 
@@ -299,7 +300,7 @@ def test_db_write_guarded_by_db_service():
 
     broken_box = _make_mock_box(class_id=1, confidence=0.92)
 
-    with _mock_torch_ultralytics(broken_boxes=[broken_box], crack_boxes=[]):
+    with _mock_torch_ultralytics(broken_boxes=[broken_box]):
         worker = DetectionWorker(DET_CONFIG, store, mock_camera, db_service=None)
 
         call_count = [0]
@@ -335,7 +336,7 @@ def test_stop_event_exits_loop():
     # Return None frame so the worker goes through the early-continue branch
     mock_camera.get_current_frame.return_value = None
 
-    with _mock_torch_ultralytics(broken_boxes=[], crack_boxes=[]):
+    with _mock_torch_ultralytics(broken_boxes=[]):
         worker = DetectionWorker(DET_CONFIG, store, mock_camera)
         worker.start()
 
@@ -370,7 +371,7 @@ def test_db_write_includes_traceability_fields():
 
     broken_box = _make_mock_box(class_id=1, confidence=0.88)
 
-    with _mock_torch_ultralytics(broken_boxes=[broken_box], crack_boxes=[]):
+    with _mock_torch_ultralytics(broken_boxes=[broken_box]):
         worker = DetectionWorker(DET_CONFIG, store, mock_camera, db_service=mock_db)
 
         call_count = [0]
