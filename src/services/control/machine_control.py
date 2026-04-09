@@ -60,7 +60,8 @@ class MachineControl:
     MACHINE_START_REGISTER = 102
 
     # Auto-cutting registers
-    TARGET_ADET_REGISTER = 2050      # P*X (hedef adet)
+    AUTO_MODE_REGISTER = 2           # Otomatik kesim modu (1=on, 2=off)
+    TARGET_ADET_REGISTER = 2050      # P (hedef adet)
     TARGET_X_REGISTER = 2070         # X (paketteki adet)
     TARGET_UZUNLUK_REGISTER = 2064   # L (uzunluk, doubleword, x10)
     KESILMIS_ADET_REGISTER = 2056    # Kesilmiş adet (okuma)
@@ -503,6 +504,25 @@ class MachineControl:
     # ========================================================================
     # Auto Cutting (Otomatik Kesim)
     # ========================================================================
+
+    def set_auto_cutting_mode(self, enabled: bool) -> bool:
+        """Set auto cutting mode: register 2 = 1 (on) or 2 (off)."""
+        value = 1 if enabled else 2
+        try:
+            success = self._write_register(self.AUTO_MODE_REGISTER, value)
+            if success:
+                logger.info(f"Auto cutting mode {'ON' if enabled else 'OFF'} (reg 2 = {value})")
+            return success
+        except Exception as e:
+            logger.error(f"Auto cutting mode write error: {e}")
+            return False
+
+    def read_auto_cutting_mode(self) -> Optional[bool]:
+        """Read auto cutting mode from register 2. Returns True if 1, False if 2, None on error."""
+        val = self._read_register(self.AUTO_MODE_REGISTER)
+        if val is None:
+            return None
+        return val == 1
 
     def _write_double_word(self, register: int, value: int) -> bool:
         """Write a 32-bit value as two consecutive registers (FC16)."""

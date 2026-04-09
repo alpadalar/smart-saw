@@ -426,6 +426,38 @@ class OtomatikKesimController(QWidget):
         self.btnIptal.setStyleSheet(self._button_destructive_style)
         self.btnIptal.setCursor(Qt.PointingHandCursor)
 
+        # Auto cutting mode toggle (register 2, value 1=on / 2=off)
+        auto_mode_style = """
+            QPushButton {
+                background-color: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200)
+                );
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 20px;
+                border-radius: 20px;
+                border: 2px solid #F4F6FC;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            QPushButton:checked {
+                background-color: qlineargradient(
+                    spread:pad, x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(149, 9, 82, 255), stop:1 rgba(26, 31, 55, 255)
+                );
+            }
+        """
+        self.btnAutoMode = QPushButton("Otomatik Kesim Modu", self.frameControl)
+        self.btnAutoMode.setGeometry(30, 340, 680, 70)
+        self.btnAutoMode.setStyleSheet(auto_mode_style)
+        self.btnAutoMode.setCheckable(True)
+        self.btnAutoMode.setChecked(False)
+        self.btnAutoMode.setCursor(Qt.PointingHandCursor)
+        self.btnAutoMode.toggled.connect(self._on_auto_mode_toggled)
+
         # ---- LEFT COLUMN: MODE CARD (30,820,690,130) ----
 
         self.frameModeCard = QFrame(self)
@@ -674,6 +706,14 @@ class OtomatikKesimController(QWidget):
                         self.progressWidget.set_progress(progress, complete)
                         self.labelComplete.setVisible(complete)
 
+            # Sync auto cutting mode from PLC (register 2)
+            if self.machine_control:
+                auto_on = self.machine_control.read_auto_cutting_mode()
+                if auto_on is not None and auto_on != self.btnAutoMode.isChecked():
+                    self.btnAutoMode.blockSignals(True)
+                    self.btnAutoMode.setChecked(auto_on)
+                    self.btnAutoMode.blockSignals(False)
+
             # Sync ML mode buttons from control_manager
             if self.control_manager and hasattr(self.control_manager, 'current_mode'):
                 current = self.control_manager.current_mode
@@ -853,6 +893,23 @@ class OtomatikKesimController(QWidget):
             self.labelSValue.setText(str(value))
             if self.machine_control:
                 self.machine_control.write_descent_speed(float(value))
+
+    # -------------------------------------------------------------------------
+    # Auto Cutting Mode Toggle
+    # -------------------------------------------------------------------------
+
+    def _on_auto_mode_toggled(self, checked: bool):
+        """Toggle auto cutting mode — register 2: 1=on, 2=off."""
+        if not self.machine_control:
+            self.btnAutoMode.blockSignals(True)
+            self.btnAutoMode.setChecked(False)
+            self.btnAutoMode.blockSignals(False)
+            return
+        success = self.machine_control.set_auto_cutting_mode(checked)
+        if not success:
+            self.btnAutoMode.blockSignals(True)
+            self.btnAutoMode.setChecked(not checked)
+            self.btnAutoMode.blockSignals(False)
 
     # -------------------------------------------------------------------------
     # START / IPTAL Button Handlers
