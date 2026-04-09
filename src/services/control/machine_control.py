@@ -57,10 +57,10 @@ class MachineControl:
     CONTROL_REGISTER = 20
     COOLANT_REGISTER = 2000
     KONVEYOR_REGISTER = 102
-    MACHINE_START_REGISTER = 100
+    MACHINE_START_REGISTER = 102
 
     # Bit positions (0-based)
-    MACHINE_START_BIT = 1        # 100.1: Machine start (arka kapak bypass)
+    MACHINE_START_BIT = 0        # 102.0: Machine start (arka kapak bypass)
     CHIP_CLEANING_BIT = 3        # 102.3: Chip cleaning
     CUTTING_START_BIT = 3        # 20.3: Start cutting
     CUTTING_STOP_BIT = 4         # 20.4: Stop cutting
