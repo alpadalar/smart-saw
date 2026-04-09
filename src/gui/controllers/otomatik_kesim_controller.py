@@ -494,6 +494,7 @@ class OtomatikKesimController(QWidget):
         title_label = QLabel(frame)
         title_label.setGeometry(20, 15, w - 40, 30)
         title_label.setText(title)
+        title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         title_label.setStyleSheet(
             "background: transparent;"
             " color: #F4F6FC;"
@@ -504,6 +505,7 @@ class OtomatikKesimController(QWidget):
         hint_label = QLabel(frame)
         hint_label.setGeometry(20, 45, w - 40, 25)
         hint_label.setText(hint)
+        hint_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         hint_label.setStyleSheet(
             "background: transparent;"
             " color: rgba(244,246,252,150);"
@@ -515,6 +517,7 @@ class OtomatikKesimController(QWidget):
         value_label.setGeometry(20, 75, w - 40, h - 90)
         value_label.setText("\u2014")  # em dash — indicates no value entered
         value_label.setAlignment(Qt.AlignCenter)
+        value_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         value_label.setStyleSheet(
             "background: transparent;"
             " color: #F4F6FC;"
