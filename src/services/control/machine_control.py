@@ -59,11 +59,18 @@ class MachineControl:
     KONVEYOR_REGISTER = 102
     MACHINE_START_REGISTER = 102
 
+    # Auto-cutting registers
+    TARGET_ADET_REGISTER = 2050      # P (hedef adet)
+    TARGET_UZUNLUK_REGISTER = 2064   # L (uzunluk, doubleword, x10)
+    KESILMIS_ADET_REGISTER = 2056    # Kesilmiş adet (okuma)
+
     # Bit positions (0-based)
     MACHINE_START_BIT = 0        # 102.0: Machine start (arka kapak bypass)
     CHIP_CLEANING_BIT = 3        # 102.3: Chip cleaning
     CUTTING_START_BIT = 3        # 20.3: Start cutting
     CUTTING_STOP_BIT = 4         # 20.4: Stop cutting
+    AUTO_CUTTING_START_BIT = 13  # 20.13: Auto cutting start
+    AUTO_CUTTING_RESET_BIT = 14  # 20.14: Auto cutting reset
     REAR_VISE_OPEN_BIT = 5       # 20.5: Rear vise open
     FRONT_VISE_OPEN_BIT = 6      # 20.6: Front vise open
     MATERIAL_FORWARD_BIT = 7     # 20.7: Material forward
@@ -491,6 +498,66 @@ class MachineControl:
         if raw is not None:
             return raw / 100.0
         return None
+
+    # ========================================================================
+    # Auto Cutting (Otomatik Kesim)
+    # ========================================================================
+
+    def _write_double_word(self, register: int, value: int) -> bool:
+        """Write a 32-bit value as two consecutive registers (FC16)."""
+        try:
+            if not self._ensure_connected():
+                return False
+            low_word = value & 0xFFFF
+            high_word = (value >> 16) & 0xFFFF
+            result = self.client.write_registers(address=register, values=[low_word, high_word])
+            if result.isError():
+                logger.error(f"Double word write error ({register}): {result}")
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Double word write exception ({register}): {e}")
+            return False
+
+    def write_target_adet(self, p: int, x: int) -> bool:
+        """Write P*X (toplam hedef adet) to register 2050."""
+        try:
+            total = int(p) * int(x)
+            success = self._write_register(self.TARGET_ADET_REGISTER, total)
+            if success:
+                logger.info(f"Target adet set to {total} (P={p}, X={x})")
+            return success
+        except Exception as e:
+            logger.error(f"Target adet write error: {e}")
+            return False
+
+    def write_target_uzunluk(self, l_mm: float) -> bool:
+        """Write L (uzunluk) to register 2064-2065 as doubleword (value x10)."""
+        try:
+            dword = int(round(l_mm * 10))
+            success = self._write_double_word(self.TARGET_UZUNLUK_REGISTER, dword)
+            if success:
+                logger.info(f"Target uzunluk set to {l_mm}mm (dword={dword})")
+            return success
+        except Exception as e:
+            logger.error(f"Target uzunluk write error: {e}")
+            return False
+
+    def read_kesilmis_adet(self) -> Optional[int]:
+        """Read current cut count from register 2056."""
+        return self._read_register(self.KESILMIS_ADET_REGISTER)
+
+    def start_auto_cutting(self) -> bool:
+        """Start auto cutting by setting bit 20.13."""
+        return self._set_bit(self.CONTROL_REGISTER, self.AUTO_CUTTING_START_BIT, True)
+
+    def reset_auto_cutting(self, pressed: bool) -> bool:
+        """Set/clear auto cutting reset bit 20.14 (active while pressed)."""
+        return self._set_bit(self.CONTROL_REGISTER, self.AUTO_CUTTING_RESET_BIT, pressed)
+
+    def cancel_auto_cutting(self) -> bool:
+        """Cancel auto cutting by setting stop bit 20.4."""
+        return self._set_bit(self.CONTROL_REGISTER, self.CUTTING_STOP_BIT, True)
 
     # ========================================================================
     # Status Methods
