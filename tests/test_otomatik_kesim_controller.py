@@ -206,24 +206,24 @@ def test_manual_mode_toggle(controller):
     controller.btnAI.setChecked.assert_called_with(False)
 
 
-def test_ml_reset_on_new_cut_start(controller):
-    """_sync_speeds_from_plc triggers ML reset when testere_durumu transitions to 3."""
+def test_ml_reset_on_cut_end(controller):
+    """_sync_speeds_from_plc triggers ML reset when testere_durumu leaves 3."""
     controller._cutting_active = True
-    controller._prev_testere_durumu = 4  # KESİM BİTTİ
+    controller._prev_testere_durumu = 3  # was cutting
     controller._trigger_ml_state_reset = MagicMock()
     controller.data_pipeline = MagicMock()
     controller.data_pipeline.get_latest_data.return_value = {
-        'testere_durumu': 3,  # new cut started
+        'testere_durumu': 5,  # şerit yukarı çıkıyor — cut ended
         'kesme_hizi_hedef': 0, 'inme_hizi_hedef': 0,
     }
     controller._sync_speeds_from_plc()
     controller._trigger_ml_state_reset.assert_called_once()
 
 
-def test_ml_no_reset_when_already_cutting(controller):
+def test_ml_no_reset_while_still_cutting(controller):
     """No reset when testere_durumu stays at 3 (same cut continues)."""
     controller._cutting_active = True
-    controller._prev_testere_durumu = 3  # already cutting
+    controller._prev_testere_durumu = 3
     controller._trigger_ml_state_reset = MagicMock()
     controller.data_pipeline = MagicMock()
     controller.data_pipeline.get_latest_data.return_value = {
@@ -237,11 +237,11 @@ def test_ml_no_reset_when_already_cutting(controller):
 def test_ml_no_reset_when_not_cutting_active(controller):
     """No reset when cutting is not active (START not pressed)."""
     controller._cutting_active = False
-    controller._prev_testere_durumu = 4
+    controller._prev_testere_durumu = 3
     controller._trigger_ml_state_reset = MagicMock()
     controller.data_pipeline = MagicMock()
     controller.data_pipeline.get_latest_data.return_value = {
-        'testere_durumu': 3,
+        'testere_durumu': 5,
         'kesme_hizi_hedef': 0, 'inme_hizi_hedef': 0,
     }
     controller._sync_speeds_from_plc()

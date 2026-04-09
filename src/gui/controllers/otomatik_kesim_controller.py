@@ -656,10 +656,10 @@ class OtomatikKesimController(QWidget):
             if not data:
                 return
 
-            # Detect new cut start (testere_durumu transitions to 3)
+            # Detect cut end (testere_durumu leaves 3) — reset speeds for next cut
             testere_durumu = int(data.get('testere_durumu', 0))
             if self._cutting_active and self._prev_testere_durumu is not None:
-                if testere_durumu == 3 and self._prev_testere_durumu != 3:
+                if self._prev_testere_durumu == 3 and testere_durumu != 3:
                     self._trigger_ml_state_reset()
             self._prev_testere_durumu = testere_durumu
 
@@ -1155,14 +1155,16 @@ class OtomatikKesimController(QWidget):
         Restores initial speeds so AI mode starts from the same baseline
         on every cut in a serial run.
         """
-        # Restore initial speeds to PLC
+        # Restore initial speeds and L to PLC
         if self.machine_control:
             if self._initial_cutting_speed is not None:
                 self.machine_control.write_cutting_speed(self._initial_cutting_speed)
             if self._initial_descent_speed is not None:
                 self.machine_control.write_descent_speed(self._initial_descent_speed)
+            if self._l_value:
+                self.machine_control.write_target_uzunluk(float(self._l_value))
             logger.info(
-                f"Initial speeds restored — C={self._initial_cutting_speed} S={self._initial_descent_speed}"
+                f"Cut reset — C={self._initial_cutting_speed} S={self._initial_descent_speed} L={self._l_value}"
             )
 
         if self.control_manager and self.event_loop:
