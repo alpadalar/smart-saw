@@ -18,7 +18,7 @@ from typing import Optional
 
 try:
     from PySide6.QtWidgets import QWidget, QFrame, QPushButton, QLabel, QDialog
-    from PySide6.QtCore import Qt, QTimer, QRect
+    from PySide6.QtCore import Qt, QTimer, QRect, Signal
     from PySide6.QtGui import QPainter, QColor
 except ImportError:
     logging.warning("PySide6 not installed")
@@ -43,6 +43,15 @@ except ImportError:
     from PySide6.QtWidgets import QDialog as NumpadDialog  # type: ignore[misc]
 
 logger = logging.getLogger(__name__)
+
+
+class _ClickableFrame(QFrame):
+    """QFrame that emits a clicked signal on mouse press."""
+    clicked = Signal()
+
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        event.accept()
 
 
 class _ProgressBar(QWidget):
@@ -445,11 +454,11 @@ class OtomatikKesimController(QWidget):
         self.btnAI.setCursor(Qt.PointingHandCursor)
 
         # Wire param frame click handlers
-        self.frameP.mousePressEvent = self._handle_p_frame_click
-        self.frameX.mousePressEvent = self._handle_x_frame_click
-        self.frameL.mousePressEvent = self._handle_l_frame_click
-        self.frameC.mousePressEvent = self._handle_c_frame_click
-        self.frameS.mousePressEvent = self._handle_s_frame_click
+        self.frameP.clicked.connect(self._handle_p_frame_click)
+        self.frameX.clicked.connect(self._handle_x_frame_click)
+        self.frameL.clicked.connect(self._handle_l_frame_click)
+        self.frameC.clicked.connect(self._handle_c_frame_click)
+        self.frameS.clicked.connect(self._handle_s_frame_click)
 
         # Wire control button click handlers
         self.btnStart.clicked.connect(self._handle_start_click)
@@ -486,7 +495,7 @@ class OtomatikKesimController(QWidget):
 
         Stores frame and labels as instance attributes using attr_prefix.
         """
-        frame = QFrame(parent)
+        frame = _ClickableFrame(parent)
         frame.setGeometry(x, y, w, h)
         frame.setStyleSheet(self._frame_style)
         frame.setCursor(Qt.PointingHandCursor)
@@ -703,22 +712,20 @@ class OtomatikKesimController(QWidget):
             return
         if event is not None:
             event.accept()
-        dialog = NumpadDialog(self, initial_value=self._l_value or "", allow_decimal=True)
+        dialog = NumpadDialog(self, initial_value=self._l_value or "")
         if dialog.exec() == QDialog.Accepted:
             value_str = dialog.get_value()
             try:
-                value = float(value_str.replace(",", ".")) if value_str else 0.0
+                value = int(float(value_str)) if value_str else 0
             except (ValueError, TypeError):
-                value = 0.0
-            value = round(max(1.0, min(99999.0, value)), 1)
+                value = 0
+            value = max(1, min(99999, value))
             if value <= 0:
                 self._l_value = ""
                 self.labelLValue.setText("\u2014")
             else:
-                # Display without trailing .0 if whole number
-                display = f"{value:.1f}" if value != int(value) else str(int(value))
                 self._l_value = str(value)
-                self.labelLValue.setText(display)
+                self.labelLValue.setText(str(value))
 
     def _handle_c_frame_click(self, event=None) -> None:
         """Open NumpadDialog for C (kesim hizi) parameter input and write to PLC."""
