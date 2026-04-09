@@ -106,14 +106,14 @@ control:
   # Speed presets for GUI buttons (cutting m/dk, descent mm/dk)
   speed_presets:
     slow:
-      cutting: 15.0
-      descent: 8.0
+      cutting: 46.0
+      descent: 16.0
     normal:
-      cutting: 25.0
-      descent: 12.0
+      cutting: 58.0
+      descent: 20.0
     fast:
-      cutting: 35.0
-      descent: 18.0
+      cutting: 70.0
+      descent: 24.0
 
   # Dynamic Initial Delay (delay control activation after cutting starts)
   # Logic: Calculate delay = target_distance / inme_hizi, apply MIN limit only
