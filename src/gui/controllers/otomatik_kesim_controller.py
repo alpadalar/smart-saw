@@ -141,16 +141,13 @@ class OtomatikKesimController(QWidget):
         self._reset_tick_timer: Optional[QTimer] = None
 
         # Styles stored as instance attributes for reuse
-        self._frame_style = """
-            QFrame {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(6, 11, 38, 240),
-                    stop:1 rgba(26, 31, 55, 0)
-                );
-                border-radius: 20px;
-            }
-        """
+        self._frame_style = (
+            "background: qlineargradient("
+            "x1:0, y1:0, x2:0, y2:1,"
+            "stop:0 rgba(6, 11, 38, 240),"
+            "stop:1 rgba(26, 31, 55, 0)"
+            "); border-radius: 20px;"
+        )
         self._frame_disabled_style = (
             "background: rgba(26,31,55,100); border-radius: 20px;"
         )
