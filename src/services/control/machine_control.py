@@ -543,6 +543,28 @@ class MachineControl:
             logger.error(f"Target uzunluk write error: {e}")
             return False
 
+    def read_target_adet(self) -> Optional[int]:
+        """Read target adet from register 2050."""
+        return self._read_register(self.TARGET_ADET_REGISTER)
+
+    def read_target_uzunluk(self) -> Optional[float]:
+        """Read target uzunluk from registers 2064-2065 as doubleword (value /10)."""
+        try:
+            if not self._ensure_connected():
+                return None
+            result = self.client.read_holding_registers(
+                address=self.TARGET_UZUNLUK_REGISTER, count=2
+            )
+            if result.isError():
+                return None
+            low_word = result.registers[0]
+            high_word = result.registers[1]
+            dword = (high_word << 16) | low_word
+            return dword / 10.0
+        except Exception as e:
+            logger.error(f"Target uzunluk read error: {e}")
+            return None
+
     def read_kesilmis_adet(self) -> Optional[int]:
         """Read current cut count from register 2056."""
         return self._read_register(self.KESILMIS_ADET_REGISTER)

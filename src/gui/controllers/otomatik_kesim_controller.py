@@ -130,7 +130,7 @@ class OtomatikKesimController(QWidget):
 
         # Parameter state
         self._p_value: str = ""    # Hedef adet (1-9999)
-        self._x_value: str = ""    # Paketteki adet (1-999)
+        self._x_value: str = "1"   # Paketteki adet (1-999), default 1
         self._l_value: str = ""    # Uzunluk mm (1-99999, decimal)
         self._c_value: str = ""    # Kesim hizi m/dk (0-500)
         self._s_value: str = ""    # Inme hizi m/dk (0-500)
@@ -257,6 +257,9 @@ class OtomatikKesimController(QWidget):
         self._setup_ui()
         self._setup_timers()
 
+        # Set X default label
+        self.labelXValue.setText("1")
+
         # Sync ML button state from current control_manager mode (D-17)
         self._sync_ml_mode()
 
@@ -290,7 +293,7 @@ class OtomatikKesimController(QWidget):
         self._create_param_frame(
             parent=self,
             x=30, y=127, w=340, h=160,
-            title="P \u2014 Hedef Adet",
+            title="P \u2014 Paketteki Adet",
             hint="(1 - 9999)",
             attr_prefix="P",
         )
@@ -299,7 +302,7 @@ class OtomatikKesimController(QWidget):
         self._create_param_frame(
             parent=self,
             x=380, y=127, w=340, h=160,
-            title="X \u2014 Paketteki Adet",
+            title="X \u2014 Paket Sayısı",
             hint="(1 - 999)",
             attr_prefix="X",
         )
@@ -608,25 +611,59 @@ class OtomatikKesimController(QWidget):
     # -------------------------------------------------------------------------
 
     def _sync_speeds_from_plc(self):
-        """Read PLC target speeds and update C/S labels if changed externally."""
+        """Read PLC registers and update all param labels if changed externally."""
         try:
             if not self.data_pipeline or not hasattr(self.data_pipeline, 'get_latest_data'):
                 return
             data = self.data_pipeline.get_latest_data()
             if not data:
                 return
-            # Target speeds written to PLC (registers 2066 / 2041)
+
+            # Target speeds (registers 2066 / 2041)
             cutting = data.get('kesme_hizi_hedef', 0)
             descent = data.get('inme_hizi_hedef', 0)
             cutting_str = str(int(cutting)) if cutting else "0"
             descent_str = str(int(descent)) if descent else "0"
-            # Only update if user is not actively editing (params enabled = not cutting)
             if self._c_value != cutting_str:
                 self._c_value = cutting_str
                 self.labelCValue.setText(cutting_str)
             if self._s_value != descent_str:
                 self._s_value = descent_str
                 self.labelSValue.setText(descent_str)
+
+            # Read P, L, kesilmiş adet from MachineControl
+            if self.machine_control:
+                # P (target adet, register 2050)
+                p_val = self.machine_control.read_target_adet()
+                if p_val is not None and p_val > 0:
+                    p_str = str(p_val)
+                    if self._p_value != p_str:
+                        self._p_value = p_str
+                        self.labelPValue.setText(p_str)
+                        self._update_total_label()
+
+                # L (target uzunluk, register 2064-2065, doubleword /10)
+                l_val = self.machine_control.read_target_uzunluk()
+                if l_val is not None and l_val > 0:
+                    if l_val != int(l_val):
+                        l_display = f"{l_val:.1f}"
+                    else:
+                        l_display = str(int(l_val))
+                    l_str = str(l_val)
+                    if self._l_value != l_str:
+                        self._l_value = l_str
+                        self.labelLValue.setText(l_display)
+
+                # Kesilmiş adet (register 2056) — update counter
+                count = self.machine_control.read_kesilmis_adet()
+                if count is not None:
+                    target = self._get_target()
+                    self.labelCounter.setText(f"{count} / {target}")
+                    if target > 0:
+                        progress = min(1.0, count / target)
+                        complete = count >= target
+                        self.progressWidget.set_progress(progress, complete)
+                        self.labelComplete.setVisible(complete)
 
             # Sync ML mode buttons from control_manager
             if self.control_manager and hasattr(self.control_manager, 'current_mode'):
