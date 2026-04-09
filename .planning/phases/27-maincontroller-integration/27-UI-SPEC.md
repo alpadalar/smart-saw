@@ -38,6 +38,8 @@ field is pre-populated. No open design questions remain for this phase.
 The project uses pixel-exact absolute geometry. The established sidebar button grid
 is 121px vertical pitch starting at y=165.
 
+> Note: absolute coordinates inherited from existing layout — 4px web grid not applicable.
+
 | Element | Value | Source |
 |---------|-------|--------|
 | Sidebar button height | 110px | main_controller.py line 171 |
@@ -63,18 +65,18 @@ is 121px vertical pitch starting at y=165.
 
 ## 3. Typography
 
-Sidebar uses a single font family throughout. No new typography is introduced.
+This phase introduces one new sidebar button. Its typography is identical to all
+existing nav buttons — no new font style is defined. Only the single element this
+phase creates is declared here.
 
 | Role | Font Family | Weight | Size | Line Height | Element |
 |------|-------------|--------|------|-------------|---------|
-| Nav button label | Plus Jakarta Sans | medium (500) | 26px | implicit Qt default | All sidebar buttons |
-| Logo primary | Plus Jakarta Sans | bold (700) | 58px | implicit | labelSmart |
-| Logo secondary | Plus Jakarta Sans | 100 | 58px | implicit | labelSaw |
-| Notification date/time | Plus Jakarta Sans | 300 | 24px | implicit | labelDate, labelTime |
-| Status text | Plus Jakarta Sans | 400 | 20px | implicit | labelSystemStatusInfo |
+| Nav button label | Plus Jakarta Sans | medium (500) | 26px | implicit Qt default | btnOtomatikKesim (NEW) |
 
-**Rule:** The new "Otomatik Kesim" button uses font-size 26px, weight medium — identical
-to all other nav buttons. Source: `nav_btn_style` variable, main_controller.py line 148-167.
+**Rule:** The new "Otomatik Kesim" button uses font-size 26px, weight medium (500) —
+identical to all other nav buttons. Source: `nav_btn_style` variable,
+main_controller.py line 148-167. Other sidebar elements (logo, notification labels,
+status text) are untouched by this phase; their typography is not a Phase 27 decision.
 
 ---
 
