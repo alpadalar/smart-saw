@@ -187,30 +187,34 @@ class MachineControl:
         """Write a single register (synchronous)."""
         try:
             if not self._ensure_connected():
+                logger.warning(f"WRITE SKIP reg={register} val={value} — not connected")
                 return False
 
             result = self.client.write_register(address=register, value=value)
             if result.isError():
-                logger.error(f"Register write error ({register}): {result}")
+                logger.error(f"WRITE FAIL reg={register} val={value} — {result}")
                 return False
 
+            logger.info(f"WRITE OK reg={register} val={value}")
             return True
         except Exception as e:
-            logger.error(f"Register write exception ({register}): {e}")
+            logger.error(f"WRITE ERR reg={register} val={value} — {e}")
             return False
 
     def _write_coil(self, coil_address: int, value: bool) -> bool:
         """Write a single coil (discrete output)."""
         try:
             if not self._ensure_connected():
+                logger.warning(f"COIL SKIP coil={coil_address} val={value} — not connected")
                 return False
             result = self.client.write_coil(address=coil_address, value=value)
             if result.isError():
-                logger.error(f"Coil write error ({coil_address}): {result}")
+                logger.error(f"COIL FAIL coil={coil_address} val={value} — {result}")
                 return False
+            logger.info(f"COIL OK coil={coil_address} val={value}")
             return True
         except Exception as e:
-            logger.error(f"Coil write exception ({coil_address}): {e}")
+            logger.error(f"COIL ERR coil={coil_address} val={value} — {e}")
             return False
 
     def _set_bit(self, register: int, bit_position: int, value: bool) -> bool:
