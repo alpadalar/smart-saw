@@ -1919,6 +1919,9 @@ class ControlPanelController(QWidget):
             # Forward ML countdown logs to GUI
             self._poll_ml_countdown()
 
+            # Sync mode buttons from control_manager
+            self._sync_mode_buttons()
+
         except Exception as e:
             logger.error(f"Data tick error: {e}")
 
@@ -1971,6 +1974,23 @@ class ControlPanelController(QWidget):
                     self.add_log(f"AI aktivasyonuna {countdown}s kaldı", "INFO")
         except Exception as e:
             logger.error(f"ML countdown poll error: {e}")
+
+    def _sync_mode_buttons(self):
+        """Sync mode buttons from control_manager (handles changes from other pages)."""
+        try:
+            if not self.control_manager or not hasattr(self.control_manager, 'current_mode'):
+                return
+            current = self.control_manager.current_mode
+            is_manual = (current == ControlMode.MANUAL)
+            if self.btnManualMode.isChecked() != is_manual:
+                self.btnManualMode.blockSignals(True)
+                self.btnAiMode.blockSignals(True)
+                self.btnManualMode.setChecked(is_manual)
+                self.btnAiMode.setChecked(not is_manual)
+                self.btnManualMode.blockSignals(False)
+                self.btnAiMode.blockSignals(False)
+        except Exception as e:
+            logger.error(f"Mode sync error: {e}")
 
     def update_data(self, processed_data: Dict):
         """

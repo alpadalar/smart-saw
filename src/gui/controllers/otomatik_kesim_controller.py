@@ -439,18 +439,42 @@ class OtomatikKesimController(QWidget):
             " font-weight: bold;"
         )
 
+        mode_button_style = """
+            QPushButton {
+                background-color: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #000000, stop:0.38 rgba(26, 31, 55, 200)
+                );
+                color: #F4F6FC;
+                font-family: 'Plus Jakarta Sans';
+                font-weight: bold;
+                font-size: 20px;
+                border-radius: 20px;
+                border: 2px solid #F4F6FC;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            QPushButton:checked {
+                background-color: qlineargradient(
+                    spread:pad, x1:0, y1:0, x2:1, y2:1,
+                    stop:0 rgba(149, 9, 82, 255), stop:1 rgba(26, 31, 55, 255)
+                );
+            }
+        """
+
         self.btnManual = QPushButton("Manuel", self.frameModeCard)
         self.btnManual.setGeometry(20, 60, 320, 55)
         self.btnManual.setCheckable(True)
         self.btnManual.setChecked(True)
-        self.btnManual.setStyleSheet(self._button_checked_style)
+        self.btnManual.setStyleSheet(mode_button_style)
         self.btnManual.setCursor(Qt.PointingHandCursor)
 
         self.btnAI = QPushButton("Yapay Zeka", self.frameModeCard)
         self.btnAI.setGeometry(350, 60, 320, 55)
         self.btnAI.setCheckable(True)
         self.btnAI.setChecked(False)
-        self.btnAI.setStyleSheet(self._button_default_style)
+        self.btnAI.setStyleSheet(mode_button_style)
         self.btnAI.setCursor(Qt.PointingHandCursor)
 
         # Wire param frame click handlers
@@ -603,6 +627,12 @@ class OtomatikKesimController(QWidget):
             if self._s_value != descent_str:
                 self._s_value = descent_str
                 self.labelSValue.setText(descent_str)
+
+            # Sync ML mode buttons from control_manager
+            if self.control_manager and hasattr(self.control_manager, 'current_mode'):
+                current = self.control_manager.current_mode
+                self.btnManual.setChecked(current == ControlMode.MANUAL)
+                self.btnAI.setChecked(current == ControlMode.ML)
         except Exception as e:
             logger.error(f"Speed sync error: {e}")
 
