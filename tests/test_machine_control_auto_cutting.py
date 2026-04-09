@@ -71,16 +71,16 @@ def test_write_double_word_large_value(mock_client_class):
 
 @patch("src.services.control.machine_control.ModbusTcpClient")
 def test_write_target_adet(mock_client_class):
-    """write_target_adet(5, 10) calls write_register(address=2050, value=50)."""
+    """write_target_adet(5) calls write_register(address=2050, value=5)."""
     mock_client = _make_connected_mc(mock_client_class)
     mock_result = MagicMock()
     mock_result.isError.return_value = False
     mock_client.write_register.return_value = mock_result
 
     mc = MachineControl()
-    result = mc.write_target_adet(5, 10)
+    result = mc.write_target_adet(5)
 
-    mock_client.write_register.assert_called_once_with(address=2050, value=50)
+    mock_client.write_register.assert_called_once_with(address=2050, value=5)
     assert result is True
 
 

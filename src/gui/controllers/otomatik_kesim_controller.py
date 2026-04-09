@@ -631,15 +631,24 @@ class OtomatikKesimController(QWidget):
                 self._s_value = descent_str
                 self.labelSValue.setText(descent_str)
 
-            # Read P, L, kesilmiş adet from MachineControl
+            # Read P, X, L, kesilmiş adet from MachineControl
             if self.machine_control:
-                # P (target adet, register 2050)
+                # P (register 2050)
                 p_val = self.machine_control.read_target_adet()
                 if p_val is not None and p_val > 0:
                     p_str = str(p_val)
                     if self._p_value != p_str:
                         self._p_value = p_str
                         self.labelPValue.setText(p_str)
+                        self._update_total_label()
+
+                # X (register 2070)
+                x_val = self.machine_control.read_target_x()
+                if x_val is not None and x_val > 0:
+                    x_str = str(x_val)
+                    if self._x_value != x_str:
+                        self._x_value = x_str
+                        self.labelXValue.setText(x_str)
                         self._update_total_label()
 
                 # L (target uzunluk, register 2064-2065, doubleword /10)
@@ -800,11 +809,12 @@ class OtomatikKesimController(QWidget):
                 self.machine_control.write_target_uzunluk(float(self._l_value))
 
     def _write_p_x_to_plc(self):
-        """Write P*X to PLC register 2050 immediately."""
-        if self.machine_control and self._p_value and self._x_value:
-            p = int(self._p_value)
-            x = int(self._x_value)
-            self.machine_control.write_target_adet(p, x)
+        """Write P to register 2050 and X to register 2070 immediately."""
+        if self.machine_control:
+            if self._p_value:
+                self.machine_control.write_target_adet(int(self._p_value))
+            if self._x_value:
+                self.machine_control.write_target_x(int(self._x_value))
 
     def _handle_c_frame_click(self, event=None) -> None:
         """Open NumpadDialog for C (kesim hizi) parameter input and write to PLC."""
@@ -879,8 +889,9 @@ class OtomatikKesimController(QWidget):
 
         if self.machine_control:
             # Write all params BEFORE starting (Pitfall 6: prevent zero/null to PLC)
-            logger.info(f"Writing to PLC — P*X={p*x} L={l_mm}mm")
-            self.machine_control.write_target_adet(p, x)
+            logger.info(f"Writing to PLC — P={p} X={x} L={l_mm}mm")
+            self.machine_control.write_target_adet(p)
+            self.machine_control.write_target_x(x)
             self.machine_control.write_target_uzunluk(l_mm)
             if self._c_value:
                 self.machine_control.write_cutting_speed(int(self._c_value))

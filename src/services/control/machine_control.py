@@ -60,7 +60,8 @@ class MachineControl:
     MACHINE_START_REGISTER = 102
 
     # Auto-cutting registers
-    TARGET_ADET_REGISTER = 2050      # P (hedef adet)
+    TARGET_ADET_REGISTER = 2050      # P*X (hedef adet)
+    TARGET_X_REGISTER = 2070         # X (paketteki adet)
     TARGET_UZUNLUK_REGISTER = 2064   # L (uzunluk, doubleword, x10)
     KESILMIS_ADET_REGISTER = 2056    # Kesilmiş adet (okuma)
 
@@ -519,13 +520,27 @@ class MachineControl:
             logger.error(f"Double word write exception ({register}): {e}")
             return False
 
-    def write_target_adet(self, p: int, x: int) -> bool:
-        """Write P*X (toplam hedef adet) to register 2050."""
+    def write_target_x(self, x: int) -> bool:
+        """Write X (paketteki adet) to register 2070."""
         try:
-            total = int(p) * int(x)
-            success = self._write_register(self.TARGET_ADET_REGISTER, total)
+            success = self._write_register(self.TARGET_X_REGISTER, int(x))
             if success:
-                logger.info(f"Target adet set to {total} (P={p}, X={x})")
+                logger.info(f"Target X set to {x}")
+            return success
+        except Exception as e:
+            logger.error(f"Target X write error: {e}")
+            return False
+
+    def read_target_x(self) -> Optional[int]:
+        """Read X (paketteki adet) from register 2070."""
+        return self._read_register(self.TARGET_X_REGISTER)
+
+    def write_target_adet(self, p: int) -> bool:
+        """Write P (hedef adet) to register 2050."""
+        try:
+            success = self._write_register(self.TARGET_ADET_REGISTER, int(p))
+            if success:
+                logger.info(f"Target adet (P) set to {p}")
             return success
         except Exception as e:
             logger.error(f"Target adet write error: {e}")
