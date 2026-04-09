@@ -1926,13 +1926,26 @@ class ControlPanelController(QWidget):
             logger.error(f"Data tick error: {e}")
 
     def _poll_machine_start_status(self):
-        """Poll 100.1 bit and sync toggle button state."""
+        """Poll 100.1 bit and sync toggle button state. Auto-clear when alarm active."""
         try:
             if not self.machine_control:
                 return
+
+            # Check alarm status — if alarm active, force-clear machine start
+            if self.data_pipeline and hasattr(self.data_pipeline, 'get_latest_data'):
+                data = self.data_pipeline.get_latest_data()
+                if data and int(data.get('alarm_status', 0)) == 1:
+                    if self.toolBtnMachineStart.isChecked():
+                        # Clear the PLC bit too
+                        self.machine_control.set_machine_start(False)
+                        self.toolBtnMachineStart.blockSignals(True)
+                        self.toolBtnMachineStart.setChecked(False)
+                        self.toolBtnMachineStart.blockSignals(False)
+                        self.add_log("Alarm aktif — makine başlat sıfırlandı.", "WARNING")
+                    return
+
             is_started = self.machine_control.is_machine_started()
             if is_started is None:
-                # Read failed — if button shows active, reset to safe state
                 if self.toolBtnMachineStart.isChecked():
                     self.toolBtnMachineStart.blockSignals(True)
                     self.toolBtnMachineStart.setChecked(False)
