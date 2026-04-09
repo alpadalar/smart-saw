@@ -143,6 +143,7 @@ class OtomatikKesimController(QWidget):
         # AI mode initial speeds — saved at START, restored at each new cut
         self._initial_cutting_speed: Optional[int] = None
         self._initial_descent_speed: Optional[float] = None
+        self._prev_testere_durumu: Optional[int] = None  # Track saw state for cut transitions
 
         # RESET hold state
         self._reset_in_progress: bool = False
@@ -655,6 +656,13 @@ class OtomatikKesimController(QWidget):
             if not data:
                 return
 
+            # Detect new cut start (testere_durumu transitions to 3)
+            testere_durumu = int(data.get('testere_durumu', 0))
+            if self._cutting_active and self._prev_testere_durumu is not None:
+                if testere_durumu == 3 and self._prev_testere_durumu != 3:
+                    self._trigger_ml_state_reset()
+            self._prev_testere_durumu = testere_durumu
+
             # Target speeds (registers 2066 / 2041)
             cutting = data.get('kesme_hizi_hedef', 0)
             descent = data.get('inme_hizi_hedef', 0)
@@ -719,8 +727,8 @@ class OtomatikKesimController(QWidget):
                     self.btnAutoMode.blockSignals(False)
 
             # Sync ML mode buttons from control_manager
-            if self.control_manager and hasattr(self.control_manager, 'current_mode'):
-                current = self.control_manager.current_mode
+            if self.control_manager and hasattr(self.control_manager, 'get_current_mode'):
+                current = self.control_manager.get_current_mode()
                 self.btnManual.setChecked(current == ControlMode.MANUAL)
                 self.btnAI.setChecked(current == ControlMode.ML)
         except Exception as e:
@@ -1083,11 +1091,7 @@ class OtomatikKesimController(QWidget):
 
         target = self._get_target()
 
-        # D-18: ML state reset detection — count decreased means PLC reset
-        # counter for a new cut cycle (Pitfall 4: skip on first poll when
-        # _previous_count is None to avoid spurious reset / T-26-07)
-        if self._previous_count is not None and count > 0 and count < self._previous_count:
-            self._trigger_ml_state_reset()
+        # Track count for UI (ML reset is now handled by testere_durumu in _sync_speeds_from_plc)
         self._previous_count = count
 
         # D-13: Update counter label
@@ -1187,8 +1191,8 @@ class OtomatikKesimController(QWidget):
 
     def _sync_ml_mode(self) -> None:
         """Sync ML button states from current control_manager mode on page open (D-17)."""
-        if self.control_manager and hasattr(self.control_manager, "current_mode"):
-            current = self.control_manager.current_mode
+        if self.control_manager and hasattr(self.control_manager, "get_current_mode"):
+            current = self.control_manager.get_current_mode()
             self.btnManual.setChecked(current == ControlMode.MANUAL)
             self.btnAI.setChecked(current == ControlMode.ML)
         else:

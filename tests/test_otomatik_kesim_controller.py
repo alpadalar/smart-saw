@@ -206,48 +206,45 @@ def test_manual_mode_toggle(controller):
     controller.btnAI.setChecked.assert_called_with(False)
 
 
-def test_ml_reset_on_count_decrease(controller):
-    """_on_polling_timer triggers _trigger_ml_state_reset when count decreases."""
-    controller._previous_count = 10
-    controller._p_value = "20"
-    controller._x_value = "1"
-    controller.machine_control.read_kesilmis_adet.return_value = 1  # decreased
+def test_ml_reset_on_new_cut_start(controller):
+    """_sync_speeds_from_plc triggers ML reset when testere_durumu transitions to 3."""
+    controller._cutting_active = True
+    controller._prev_testere_durumu = 4  # KESİM BİTTİ
     controller._trigger_ml_state_reset = MagicMock()
-    controller._on_polling_timer()
+    controller.data_pipeline = MagicMock()
+    controller.data_pipeline.get_latest_data.return_value = {
+        'testere_durumu': 3,  # new cut started
+        'kesme_hizi_hedef': 0, 'inme_hizi_hedef': 0,
+    }
+    controller._sync_speeds_from_plc()
     controller._trigger_ml_state_reset.assert_called_once()
 
 
-def test_ml_no_reset_on_first_poll(controller):
-    """First poll (previous_count=None) does NOT trigger ML reset (Pitfall 4)."""
-    controller._previous_count = None  # first poll
-    controller._p_value = "20"
-    controller._x_value = "1"
-    controller.machine_control.read_kesilmis_adet.return_value = 5
+def test_ml_no_reset_when_already_cutting(controller):
+    """No reset when testere_durumu stays at 3 (same cut continues)."""
+    controller._cutting_active = True
+    controller._prev_testere_durumu = 3  # already cutting
     controller._trigger_ml_state_reset = MagicMock()
-    controller._on_polling_timer()
+    controller.data_pipeline = MagicMock()
+    controller.data_pipeline.get_latest_data.return_value = {
+        'testere_durumu': 3,
+        'kesme_hizi_hedef': 0, 'inme_hizi_hedef': 0,
+    }
+    controller._sync_speeds_from_plc()
     controller._trigger_ml_state_reset.assert_not_called()
 
 
-def test_ml_no_reset_on_count_increase(controller):
-    """Count increase (normal cutting) does NOT trigger ML reset."""
-    controller._previous_count = 3
-    controller._p_value = "20"
-    controller._x_value = "1"
-    controller.machine_control.read_kesilmis_adet.return_value = 5  # increased
+def test_ml_no_reset_when_not_cutting_active(controller):
+    """No reset when cutting is not active (START not pressed)."""
+    controller._cutting_active = False
+    controller._prev_testere_durumu = 4
     controller._trigger_ml_state_reset = MagicMock()
-    controller._on_polling_timer()
-    controller._trigger_ml_state_reset.assert_not_called()
-
-
-def test_ml_no_reset_when_count_zero(controller):
-    """Count decrease to zero (idle) does NOT trigger ML reset."""
-    controller._previous_count = 5
-    controller._p_value = "20"
-    controller._x_value = "1"
-    # count=0 means not cutting (count > 0 guard in condition)
-    controller.machine_control.read_kesilmis_adet.return_value = 0
-    controller._trigger_ml_state_reset = MagicMock()
-    controller._on_polling_timer()
+    controller.data_pipeline = MagicMock()
+    controller.data_pipeline.get_latest_data.return_value = {
+        'testere_durumu': 3,
+        'kesme_hizi_hedef': 0, 'inme_hizi_hedef': 0,
+    }
+    controller._sync_speeds_from_plc()
     controller._trigger_ml_state_reset.assert_not_called()
 
 

@@ -1997,9 +1997,9 @@ class ControlPanelController(QWidget):
     def _sync_mode_buttons(self):
         """Sync mode buttons from control_manager (handles changes from other pages)."""
         try:
-            if not self.control_manager or not hasattr(self.control_manager, 'current_mode'):
+            if not self.control_manager or not hasattr(self.control_manager, 'get_current_mode'):
                 return
-            current = self.control_manager.current_mode
+            current = self.control_manager.get_current_mode()
             is_manual = (current == ControlMode.MANUAL)
             if self.btnManualMode.isChecked() != is_manual:
                 self.btnManualMode.blockSignals(True)
