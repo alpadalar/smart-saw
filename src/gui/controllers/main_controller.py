@@ -23,8 +23,10 @@ except ImportError:
 
 from .control_panel_controller import ControlPanelController
 from .monitoring_controller import MonitoringController
+from .otomatik_kesim_controller import OtomatikKesimController
 from .positioning_controller import PositioningController
 from .sensor_controller import SensorController
+from ..page_index import PageIndex
 
 logger = logging.getLogger(__name__)
 
@@ -174,49 +176,58 @@ class MainController(QMainWindow):
         self.btnControlPanel.setStyleSheet(nav_btn_style)
         self.btnControlPanel.setCheckable(True)
         self.btnControlPanel.setChecked(True)
-        self.btnControlPanel.clicked.connect(lambda: self._switch_page(0))
+        self.btnControlPanel.clicked.connect(lambda: self._switch_page(PageIndex.KONTROL_PANELI))
+
+        self.btnOtomatikKesim = QPushButton("  Otomatik Kesim", self.sidebarFrame)
+        self.btnOtomatikKesim.setGeometry(26, 286, 355, 110)
+        self.btnOtomatikKesim.setIcon(self._icon("cutting-start-icon.svg"))
+        self.btnOtomatikKesim.setIconSize(QSize(80, 80))
+        self.btnOtomatikKesim.setStyleSheet(nav_btn_style)
+        self.btnOtomatikKesim.setCheckable(True)
+        self.btnOtomatikKesim.clicked.connect(lambda: self._switch_page(PageIndex.OTOMATIK_KESIM))
 
         self.btnPositioning = QPushButton("  Konumlandırma", self.sidebarFrame)
-        self.btnPositioning.setGeometry(26, 286, 355, 110)
+        self.btnPositioning.setGeometry(26, 407, 355, 110)
         self.btnPositioning.setIcon(self._icon("positioning-icon2.svg"))
         self.btnPositioning.setIconSize(QSize(80, 80))
         self.btnPositioning.setStyleSheet(nav_btn_style)
         self.btnPositioning.setCheckable(True)
-        self.btnPositioning.clicked.connect(lambda: self._switch_page(1))
+        self.btnPositioning.clicked.connect(lambda: self._switch_page(PageIndex.KONUMLANDIRMA))
 
         self.btnSensor = QPushButton("  Sensör Verileri", self.sidebarFrame)
-        self.btnSensor.setGeometry(26, 407, 355, 110)
+        self.btnSensor.setGeometry(26, 528, 355, 110)
         self.btnSensor.setIcon(self._icon("sensor-icon2.svg"))
         self.btnSensor.setIconSize(QSize(80, 80))
         self.btnSensor.setStyleSheet(nav_btn_style)
         self.btnSensor.setCheckable(True)
-        self.btnSensor.clicked.connect(lambda: self._switch_page(2))
+        self.btnSensor.clicked.connect(lambda: self._switch_page(PageIndex.SENSOR))
 
         self.btnTracking = QPushButton("  İzleme", self.sidebarFrame)
-        self.btnTracking.setGeometry(26, 528, 355, 110)
+        self.btnTracking.setGeometry(26, 649, 355, 110)
         self.btnTracking.setIcon(self._icon("tracking-icon2.svg"))
         self.btnTracking.setIconSize(QSize(80, 80))
         self.btnTracking.setStyleSheet(nav_btn_style)
         self.btnTracking.setCheckable(True)
-        self.btnTracking.clicked.connect(lambda: self._switch_page(3))
+        self.btnTracking.clicked.connect(lambda: self._switch_page(PageIndex.IZLEME))
 
         # Store navigation buttons
         self.nav_buttons = [
-            self.btnControlPanel,
-            self.btnPositioning,
-            self.btnSensor,
-            self.btnTracking
+            self.btnControlPanel,    # PageIndex.KONTROL_PANELI (0)
+            self.btnOtomatikKesim,   # PageIndex.OTOMATIK_KESIM (1)
+            self.btnPositioning,     # PageIndex.KONUMLANDIRMA (2)
+            self.btnSensor,          # PageIndex.SENSOR (3)
+            self.btnTracking         # PageIndex.IZLEME (4)
         ]
 
         # Conditional camera button
         if self.camera_results_store is not None:
             self.btnCamera = QPushButton("  Kamera", self.sidebarFrame)
-            self.btnCamera.setGeometry(26, 649, 355, 110)
+            self.btnCamera.setGeometry(26, 770, 355, 110)
             self.btnCamera.setIcon(self._icon("camera-icon2.svg"))
             self.btnCamera.setIconSize(QSize(80, 80))
             self.btnCamera.setStyleSheet(nav_btn_style)
             self.btnCamera.setCheckable(True)
-            self.btnCamera.clicked.connect(lambda: self._switch_page(4))
+            self.btnCamera.clicked.connect(lambda: self._switch_page(PageIndex.KAMERA))
             self.nav_buttons.append(self.btnCamera)
 
         # ===== CONTENT AREA (Stacked Pages) =====
@@ -299,6 +310,12 @@ class MainController(QMainWindow):
             icon_status=self.iconStatus,
             label_system_status_info=self.labelSystemStatusInfo
         )
+        self.otomatik_kesim_page = OtomatikKesimController(
+            self.control_manager,
+            self.data_pipeline,
+            parent=self.stackedWidget,
+            event_loop=self.event_loop,
+        )
         self.positioning_page = PositioningController(
             self.control_manager,
             self.data_pipeline,
@@ -316,10 +333,11 @@ class MainController(QMainWindow):
         )
 
         # Add pages to stack
-        self.stackedWidget.addWidget(self.control_panel_page)  # Index 0
-        self.stackedWidget.addWidget(self.positioning_page)    # Index 1
-        self.stackedWidget.addWidget(self.sensor_page)         # Index 2
-        self.stackedWidget.addWidget(self.monitoring_page)     # Index 3
+        self.stackedWidget.addWidget(self.control_panel_page)     # Index 0 — PageIndex.KONTROL_PANELI
+        self.stackedWidget.addWidget(self.otomatik_kesim_page)    # Index 1 — PageIndex.OTOMATIK_KESIM
+        self.stackedWidget.addWidget(self.positioning_page)       # Index 2 — PageIndex.KONUMLANDIRMA
+        self.stackedWidget.addWidget(self.sensor_page)            # Index 3 — PageIndex.SENSOR
+        self.stackedWidget.addWidget(self.monitoring_page)        # Index 4 — PageIndex.IZLEME
 
         # Conditional camera page
         if self.camera_results_store is not None:
@@ -328,7 +346,7 @@ class MainController(QMainWindow):
                 self.camera_results_store,
                 parent=self.stackedWidget
             )
-            self.stackedWidget.addWidget(self.camera_page)  # Index 4
+            self.stackedWidget.addWidget(self.camera_page)  # Index 5 — PageIndex.KAMERA
 
         # Update date/time
         self._update_datetime()
@@ -435,7 +453,8 @@ class MainController(QMainWindow):
                 self._datetime_timer.stop()
 
             # Stop timers in child page controllers
-            for page in [self.control_panel_page, self.positioning_page,
+            for page in [self.control_panel_page, self.otomatik_kesim_page,
+                         self.positioning_page,
                          self.sensor_page, self.monitoring_page]:
                 if page and hasattr(page, 'stop_timers'):
                     page.stop_timers()
