@@ -55,7 +55,8 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ### Active
 
-(Next milestone requirements to be defined via `/gsd-new-milestone`)
+- ✓ OtomatikKesimController sayfasi MainController sidebar entegrasyonu — v2.1
+- ✓ PageIndex IntEnum ile tip-guvenli sayfa gecisi — v2.1
 
 ### Out of Scope
 
@@ -73,7 +74,11 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.0 shipped 2026-04-08):**
+**Current State (v2.1 Phase 27 complete 2026-04-09):**
+- OtomatikKesimController integrated into MainController sidebar navigation
+- PageIndex IntEnum for type-safe page switching (zero hardcoded integers)
+
+**Previous State (v2.0 shipped 2026-04-08):**
 - Camera vision pipeline: CameraService → DetectionWorker/LDCWorker → CameraResultsStore → GUI/IoT
 - VisionService: Daemon thread polling at 0.5s, CUTTING transition triggers recording (10s duration)
 - 50 unit tests for camera module (results_store, camera_service, detection_worker, ldc_worker, health_calculator, vision_service)
@@ -120,4 +125,4 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | annotated_frame unconditional store write | Bounding boxes always visible in live feed | ✓ Good |
 
 ---
-*Last updated: 2026-04-08 after v2.0 Camera Vision & AI Detection milestone complete*
+*Last updated: 2026-04-09 after Phase 27 MainController Integration complete*
