@@ -1932,6 +1932,12 @@ class ControlPanelController(QWidget):
                 return
             is_started = self.machine_control.is_machine_started()
             if is_started is None:
+                # Read failed — if button shows active, reset to safe state
+                if self.toolBtnMachineStart.isChecked():
+                    self.toolBtnMachineStart.blockSignals(True)
+                    self.toolBtnMachineStart.setChecked(False)
+                    self.toolBtnMachineStart.blockSignals(False)
+                    self.add_log("Makine durumu okunamadı — buton sıfırlandı.", "WARNING")
                 return
             if is_started != self.toolBtnMachineStart.isChecked():
                 self.toolBtnMachineStart.blockSignals(True)
