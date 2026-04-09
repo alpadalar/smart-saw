@@ -14,7 +14,7 @@ from PySide6.QtGui import QIcon
 class Ui_Dialog:
     """Numpad dialog UI setup."""
 
-    def setupUi(self, Dialog):
+    def setupUi(self, Dialog, allow_decimal=False):
         Dialog.setObjectName("Dialog")
         Dialog.resize(763, 800)
         Dialog.setStyleSheet("background-color: rgb(6, 15, 42);")
@@ -109,11 +109,25 @@ class Ui_Dialog:
         self.pushButton_9.setStyleSheet(button_style)
         self.pushButton_9.setObjectName("pushButton_9")
 
-        # 0 button
-        self.pushButton_11 = QPushButton(Dialog)
-        self.pushButton_11.setGeometry(273, 661, 217, 109)
-        self.pushButton_11.setStyleSheet(button_style)
-        self.pushButton_11.setObjectName("pushButton_11")
+        # 0 button (narrower when decimal enabled to make room for dot)
+        if allow_decimal:
+            self.pushButton_11 = QPushButton(Dialog)
+            self.pushButton_11.setGeometry(176, 661, 168, 109)
+            self.pushButton_11.setStyleSheet(button_style)
+            self.pushButton_11.setObjectName("pushButton_11")
+
+            # Decimal dot button
+            self.pushButton_dot = QPushButton(Dialog)
+            self.pushButton_dot.setGeometry(369, 661, 120, 109)
+            self.pushButton_dot.setStyleSheet(button_style)
+            self.pushButton_dot.setObjectName("pushButton_dot")
+        else:
+            self.pushButton_11 = QPushButton(Dialog)
+            self.pushButton_11.setGeometry(273, 661, 217, 109)
+            self.pushButton_11.setStyleSheet(button_style)
+            self.pushButton_11.setObjectName("pushButton_11")
+
+            self.pushButton_dot = None
 
         # Backspace button
         tool_button_style = """
@@ -184,15 +198,18 @@ class Ui_Dialog:
         self.pushButton_8.setText("8")
         self.pushButton_9.setText("9")
         self.pushButton_11.setText("0")
+        if self.pushButton_dot is not None:
+            self.pushButton_dot.setText(".")
 
 
 class NumpadDialog(QDialog):
     """Numpad dialog for entering numeric values."""
 
-    def __init__(self, parent=None, initial_value=""):
+    def __init__(self, parent=None, initial_value="", allow_decimal=False):
         super().__init__(parent)
+        self._allow_decimal = allow_decimal
         self.ui = Ui_Dialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self, allow_decimal=allow_decimal)
         self.value = initial_value
         self._prefilled = bool(initial_value)
         self.Accepted = QDialog.Accepted
@@ -229,6 +246,8 @@ class NumpadDialog(QDialog):
         self.ui.pushButton_8.clicked.connect(lambda: self.add_digit('8'))
         self.ui.pushButton_9.clicked.connect(lambda: self.add_digit('9'))
         self.ui.pushButton_11.clicked.connect(lambda: self.add_digit('0'))
+        if self.ui.pushButton_dot is not None:
+            self.ui.pushButton_dot.clicked.connect(self._add_dot)
         self.ui.toolButton.clicked.connect(self.backspace)
         self.ui.toolButton_2.clicked.connect(self.accept)
         self.ui.closeButton.clicked.connect(self.reject)
@@ -240,6 +259,17 @@ class NumpadDialog(QDialog):
             self._prefilled = False
         if len(self.value) < 10:
             self.value += digit
+            self.update_label()
+
+    def _add_dot(self):
+        """Add decimal dot (only once)."""
+        if self._prefilled:
+            self.value = ""
+            self._prefilled = False
+        if "." not in self.value and len(self.value) < 10:
+            if not self.value:
+                self.value = "0"
+            self.value += "."
             self.update_label()
 
     def backspace(self):

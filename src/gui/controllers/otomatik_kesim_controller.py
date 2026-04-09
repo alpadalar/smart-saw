@@ -712,20 +712,21 @@ class OtomatikKesimController(QWidget):
             return
         if event is not None:
             event.accept()
-        dialog = NumpadDialog(self, initial_value=self._l_value or "")
+        dialog = NumpadDialog(self, initial_value=self._l_value or "", allow_decimal=True)
         if dialog.exec() == QDialog.Accepted:
             value_str = dialog.get_value()
             try:
-                value = int(float(value_str)) if value_str else 0
+                value = float(value_str) if value_str else 0.0
             except (ValueError, TypeError):
-                value = 0
-            value = max(1, min(99999, value))
+                value = 0.0
+            value = round(max(1.0, min(99999.0, value)), 1)
             if value <= 0:
                 self._l_value = ""
                 self.labelLValue.setText("\u2014")
             else:
+                display = f"{value:.1f}" if value != int(value) else str(int(value))
                 self._l_value = str(value)
-                self.labelLValue.setText(str(value))
+                self.labelLValue.setText(display)
 
     def _handle_c_frame_click(self, event=None) -> None:
         """Open NumpadDialog for C (kesim hizi) parameter input and write to PLC."""
