@@ -153,13 +153,6 @@ class Ui_Dialog:
         self.toolButton_2.setIconSize(QSize(75, 85))
         self.toolButton_2.setObjectName("toolButton_2")
 
-        # Decimal point button (hidden by default; shown when allow_decimal=True)
-        self.decimalButton = QPushButton(Dialog)
-        self.decimalButton.setGeometry(31, 661, 217, 109)
-        self.decimalButton.setStyleSheet(button_style)
-        self.decimalButton.setObjectName("decimalButton")
-        self.decimalButton.hide()
-
         # Close button
         self.closeButton = QPushButton(Dialog)
         self.closeButton.setGeometry(664, 48, 57, 57)
@@ -191,31 +184,20 @@ class Ui_Dialog:
         self.pushButton_8.setText("8")
         self.pushButton_9.setText("9")
         self.pushButton_11.setText("0")
-        self.decimalButton.setText(".")
 
 
 class NumpadDialog(QDialog):
     """Numpad dialog for entering numeric values."""
 
-    def __init__(self, parent=None, initial_value="", allow_decimal=False):
+    def __init__(self, parent=None, initial_value=""):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        self.allow_decimal = allow_decimal
         self.value = initial_value
         self._prefilled = bool(initial_value)
         self.Accepted = QDialog.Accepted
         self.setup_connections()
         self.update_label()
-
-        if allow_decimal:
-            # Rearrange bottom row to make room for decimal button:
-            # [.](31,661,145,109) [backspace](186,661,145,109) [0](341,661,190,109) [enter](541,661,190,109)
-            self.ui.decimalButton.setGeometry(31, 661, 145, 109)
-            self.ui.decimalButton.show()
-            self.ui.toolButton.setGeometry(186, 661, 145, 109)
-            self.ui.pushButton_11.setGeometry(341, 661, 190, 109)
-            self.ui.toolButton_2.setGeometry(541, 661, 190, 109)
 
         # Make dialog modal and frameless for touch-friendly appearance
         self.setModal(True)
@@ -250,17 +232,12 @@ class NumpadDialog(QDialog):
         self.ui.toolButton.clicked.connect(self.backspace)
         self.ui.toolButton_2.clicked.connect(self.accept)
         self.ui.closeButton.clicked.connect(self.reject)
-        self.ui.decimalButton.clicked.connect(lambda: self.add_digit('.'))
 
     def add_digit(self, digit):
         """Add a digit to the value."""
         if self._prefilled:
             self.value = ""
             self._prefilled = False
-        if digit == '.' and '.' in self.value:
-            return  # prevent double decimal point
-        if digit == '.' and not self.value:
-            self.value = "0"  # auto-prefix "0" before decimal
         if len(self.value) < 10:
             self.value += digit
             self.update_label()

@@ -11,7 +11,9 @@ Page size: 1528x1080 (content area)
 Framework: PySide6
 """
 
+import asyncio
 import logging
+import time
 from typing import Optional
 
 try:
@@ -31,6 +33,7 @@ except ImportError:
     QPainter = object
     QColor = object
 
+from ...domain.enums import ControlMode
 from ...services.control.machine_control import MachineControl
 from ..widgets.touch_button import TouchButton
 
@@ -245,6 +248,9 @@ class OtomatikKesimController(QWidget):
         self._setup_ui()
         self._setup_timers()
 
+        # Sync ML button state from current control_manager mode (D-17)
+        self._sync_ml_mode()
+
         logger.info("OtomatikKesimController initialized")
 
     # -------------------------------------------------------------------------
@@ -434,6 +440,21 @@ class OtomatikKesimController(QWidget):
         self.btnStart.clicked.connect(self._handle_start_click)
         self.btnIptal.clicked.connect(self._handle_iptal_click)
 
+        # Wire RESET hold-delay (all 4 signals — Pitfall 1: touchscreen fires both
+        # pressed and touch_pressed; guard in _on_reset_press prevents double-fire)
+        self.btnReset.pressed.connect(self._on_reset_press)
+        self.btnReset.released.connect(self._on_reset_release)
+        self.btnReset.touch_pressed.connect(self._on_reset_press)
+        self.btnReset.touch_released.connect(self._on_reset_release)
+
+        # Override btnReset paintEvent for progress animation
+        self._btnReset_original_paint = self.btnReset.paintEvent
+        self.btnReset.paintEvent = self._paint_reset_progress
+
+        # Wire ML mode toggle buttons
+        self.btnManual.clicked.connect(lambda: self._switch_to_mode(ControlMode.MANUAL))
+        self.btnAI.clicked.connect(lambda: self._switch_to_mode(ControlMode.ML))
+
     def _create_param_frame(
         self,
         parent,
@@ -500,11 +521,11 @@ class OtomatikKesimController(QWidget):
         """Create timers but do NOT start them (behavior wired in Plan 02/03)."""
         self._polling_timer = QTimer(self)
         self._polling_timer.setInterval(500)
-        # timeout connection wired in Plan 03
+        self._polling_timer.timeout.connect(self._on_polling_timer)
 
         self._reset_tick_timer = QTimer(self)
         self._reset_tick_timer.setInterval(50)
-        # timeout connection wired in Plan 03
+        self._reset_tick_timer.timeout.connect(self._on_reset_tick)
 
     # -------------------------------------------------------------------------
     # Public API
@@ -767,3 +788,176 @@ class OtomatikKesimController(QWidget):
             )
         except (ValueError, TypeError):
             return 0
+
+    # -------------------------------------------------------------------------
+    # RESET Hold-Delay (D-11, T-26-06, T-26-08)
+    # -------------------------------------------------------------------------
+
+    def _on_reset_press(self) -> None:
+        """Handle RESET button press (mouse or touch).
+
+        Guard prevents double-fire when both pressed and touch_pressed fire on
+        a touchscreen (Pitfall 1 / T-26-06).
+        """
+        if self._reset_in_progress:
+            return
+        self._reset_in_progress = True
+        self._reset_start = time.monotonic()
+        self._reset_tick_timer.start(50)
+
+    def _on_reset_release(self) -> None:
+        """Handle RESET button release (mouse or touch).
+
+        Always calls reset_auto_cutting(False) to clear bit 20.14 regardless
+        of elapsed time (T-26-08: prevents stuck bit).
+        """
+        if not self._reset_in_progress:
+            return
+        self._reset_tick_timer.stop()
+        elapsed = time.monotonic() - self._reset_start
+        if elapsed < 1.5 and self.machine_control:
+            self.machine_control.reset_auto_cutting(False)
+        self._reset_in_progress = False
+        self._reset_progress = 0.0
+        self.btnReset.update()
+
+    def _on_reset_tick(self) -> None:
+        """Called every 50ms while RESET is held.
+
+        Updates progress animation and triggers reset_auto_cutting(True) when
+        hold duration reaches 1500ms.
+        """
+        elapsed = time.monotonic() - self._reset_start
+        self._reset_progress = min(1.0, elapsed / 1.5)
+        self.btnReset.update()
+        if elapsed >= 1.5:
+            self._reset_tick_timer.stop()
+            if self.machine_control:
+                self.machine_control.reset_auto_cutting(True)
+
+    def _paint_reset_progress(self, event) -> None:
+        """Paint RESET button with left-to-right progress overlay."""
+        self._btnReset_original_paint(event)
+        if self._reset_progress > 0:
+            painter = QPainter(self.btnReset)
+            painter.setRenderHint(QPainter.Antialiasing)
+            rect = self.btnReset.rect()
+            fill_width = int(rect.width() * self._reset_progress)
+            painter.setBrush(QColor(149, 9, 82, 120))
+            painter.setPen(Qt.NoPen)
+            painter.drawRoundedRect(0, 0, fill_width, rect.height(), 20, 20)
+            painter.end()
+
+    # -------------------------------------------------------------------------
+    # D2056 Polling Timer (D-13, D-14, D-15, D-18)
+    # -------------------------------------------------------------------------
+
+    def _on_polling_timer(self) -> None:
+        """Poll D2056 for cut count, update UI, detect new-cut for ML reset."""
+        if not self.machine_control:
+            return
+
+        count = self.machine_control.read_kesilmis_adet()
+        if count is None:
+            return  # Connection issue, skip this cycle
+
+        target = self._get_target()
+
+        # D-18: ML state reset detection — count decreased means PLC reset
+        # counter for a new cut cycle (Pitfall 4: skip on first poll when
+        # _previous_count is None to avoid spurious reset / T-26-07)
+        if self._previous_count is not None and count > 0 and count < self._previous_count:
+            self._trigger_ml_state_reset()
+        self._previous_count = count
+
+        # D-13: Update counter label
+        self.labelCounter.setText(f"{count} / {target}")
+
+        # Update progress bar
+        progress = min(1.0, count / target) if target > 0 else 0.0
+        if hasattr(self, "progressWidget"):
+            self.progressWidget._progress = progress
+            self.progressWidget._complete = target > 0 and count >= target
+            self.progressWidget.update()
+
+        # D-15: Completion detection
+        if target > 0 and count >= target:
+            self._on_cutting_complete()
+            return
+
+        # D-14: Toggle param enabled/disabled based on cutting activity
+        cutting_active = count > 0
+        self._set_params_enabled(not cutting_active)
+
+        # D-10: START button state
+        if cutting_active:
+            self.btnStart.setEnabled(False)
+            self.btnStart.setText("DEVAM EDIYOR...")
+        else:
+            self.btnStart.setEnabled(True)
+            self.btnStart.setText("START")
+
+    def _on_cutting_complete(self) -> None:
+        """Handle cutting completion: green counter, green progress, Tamamlandi label."""
+        # Counter goes green
+        self.labelCounter.setStyleSheet(
+            "background: transparent;"
+            " color: #22C55E;"
+            " font: 80px 'Plus Jakarta Sans';"
+            " font-weight: bold;"
+        )
+
+        # Show completion label
+        if hasattr(self, "labelComplete"):
+            self.labelComplete.setVisible(True)
+
+        # Re-enable params
+        self._set_params_enabled(True)
+        self._cutting_active = False
+
+        # Re-enable START
+        self.btnStart.setEnabled(True)
+        self.btnStart.setText("START")
+
+        # Stop polling
+        if self._polling_timer and self._polling_timer.isActive():
+            self._polling_timer.stop()
+
+        logger.info("Auto cutting completed - target reached")
+
+    def _trigger_ml_state_reset(self) -> None:
+        """Reset ML state when new cut cycle detected (D2056 count decreased)."""
+        if self.control_manager and self.event_loop:
+            asyncio.run_coroutine_threadsafe(
+                self.control_manager.set_mode(ControlMode.ML),
+                self.event_loop,
+            )
+            # Sync button states
+            self.btnManual.setChecked(False)
+            self.btnAI.setChecked(True)
+            logger.info("ML state reset triggered - new cut cycle detected")
+
+    # -------------------------------------------------------------------------
+    # ML Mode Toggle (D-16, D-17)
+    # -------------------------------------------------------------------------
+
+    def _switch_to_mode(self, mode: ControlMode) -> None:
+        """Switch control mode and schedule async set_mode call (D-17)."""
+        self.btnManual.setChecked(mode == ControlMode.MANUAL)
+        self.btnAI.setChecked(mode == ControlMode.ML)
+        if self.control_manager and self.event_loop:
+            asyncio.run_coroutine_threadsafe(
+                self.control_manager.set_mode(mode),
+                self.event_loop,
+            )
+        logger.info(f"ML mode switched to: {mode.value}")
+
+    def _sync_ml_mode(self) -> None:
+        """Sync ML button states from current control_manager mode on page open (D-17)."""
+        if self.control_manager and hasattr(self.control_manager, "current_mode"):
+            current = self.control_manager.current_mode
+            self.btnManual.setChecked(current == ControlMode.MANUAL)
+            self.btnAI.setChecked(current == ControlMode.ML)
+        else:
+            self.btnManual.setChecked(True)
+            self.btnAI.setChecked(False)
