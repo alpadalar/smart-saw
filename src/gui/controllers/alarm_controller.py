@@ -392,5 +392,17 @@ class AlarmController(QWidget):
     def _on_reset_clicked(self):
         ts = datetime.now().isoformat(timespec="seconds")
         self._set_reset_timestamp(ts)
+
+        # Resolve all currently active alarms in DB
+        for code, row_id in list(self._active_alarm_ids.items()):
+            self._resolve_alarm(row_id)
+
+        # Reset tracking so polling re-detects current alarms as new
+        self._active_alarm_ids.clear()
+        self._prev_alarm_bits = 0
+
+        # Force immediate re-poll to pick up still-active alarms
+        self._poll_alarms()
+
         self._reload_table()
         logger.info(f"Alarm display reset at {ts}")
