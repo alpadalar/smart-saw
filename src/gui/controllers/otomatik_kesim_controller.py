@@ -15,7 +15,7 @@ import logging
 from typing import Optional
 
 try:
-    from PySide6.QtWidgets import QWidget, QFrame, QPushButton, QLabel
+    from PySide6.QtWidgets import QWidget, QFrame, QPushButton, QLabel, QDialog
     from PySide6.QtCore import Qt, QTimer, QRect
     from PySide6.QtGui import QPainter, QColor
 except ImportError:
@@ -24,6 +24,7 @@ except ImportError:
     QFrame = object
     QPushButton = object
     QLabel = object
+    QDialog = object
     Qt = object
     QTimer = object
     QRect = object
@@ -32,6 +33,11 @@ except ImportError:
 
 from ...services.control.machine_control import MachineControl
 from ..widgets.touch_button import TouchButton
+
+try:
+    from ..numpad import NumpadDialog
+except ImportError:
+    from PySide6.QtWidgets import QDialog as NumpadDialog  # type: ignore[misc]
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +423,17 @@ class OtomatikKesimController(QWidget):
         self.btnAI.setStyleSheet(self._button_default_style)
         self.btnAI.setCursor(Qt.PointingHandCursor)
 
+        # Wire param frame click handlers
+        self.frameP.mousePressEvent = self._handle_p_frame_click
+        self.frameX.mousePressEvent = self._handle_x_frame_click
+        self.frameL.mousePressEvent = self._handle_l_frame_click
+        self.frameC.mousePressEvent = self._handle_c_frame_click
+        self.frameS.mousePressEvent = self._handle_s_frame_click
+
+        # Wire control button click handlers
+        self.btnStart.clicked.connect(self._handle_start_click)
+        self.btnIptal.clicked.connect(self._handle_iptal_click)
+
     def _create_param_frame(
         self,
         parent,
@@ -557,3 +574,196 @@ class OtomatikKesimController(QWidget):
             self.labelTotal.setText(f"Toplam: {total} adet")
         except (ValueError, TypeError):
             self.labelTotal.setText("Toplam: 0 adet")
+
+    # -------------------------------------------------------------------------
+    # Parameter Frame Click Handlers
+    # -------------------------------------------------------------------------
+
+    def _handle_p_frame_click(self, event=None) -> None:
+        """Open NumpadDialog for P (hedef adet) parameter input."""
+        if not self._params_enabled:
+            return
+        if event is not None:
+            event.accept()
+        dialog = NumpadDialog(self, initial_value=self._p_value or "")
+        if dialog.exec() == QDialog.Accepted:
+            value_str = dialog.get_value()
+            try:
+                value = int(float(value_str)) if value_str else 0
+            except (ValueError, TypeError):
+                value = 0
+            value = max(1, min(9999, value))
+            if value <= 0:
+                self._p_value = ""
+                self.labelPValue.setText("\u2014")
+            else:
+                self._p_value = str(value)
+                self.labelPValue.setText(str(value))
+            self._update_total_label()
+
+    def _handle_x_frame_click(self, event=None) -> None:
+        """Open NumpadDialog for X (paketteki adet) parameter input."""
+        if not self._params_enabled:
+            return
+        if event is not None:
+            event.accept()
+        dialog = NumpadDialog(self, initial_value=self._x_value or "")
+        if dialog.exec() == QDialog.Accepted:
+            value_str = dialog.get_value()
+            try:
+                value = int(float(value_str)) if value_str else 0
+            except (ValueError, TypeError):
+                value = 0
+            value = max(1, min(999, value))
+            if value <= 0:
+                self._x_value = ""
+                self.labelXValue.setText("\u2014")
+            else:
+                self._x_value = str(value)
+                self.labelXValue.setText(str(value))
+            self._update_total_label()
+
+    def _handle_l_frame_click(self, event=None) -> None:
+        """Open NumpadDialog for L (uzunluk mm, decimal) parameter input."""
+        if not self._params_enabled:
+            return
+        if event is not None:
+            event.accept()
+        dialog = NumpadDialog(self, initial_value=self._l_value or "", allow_decimal=True)
+        if dialog.exec() == QDialog.Accepted:
+            value_str = dialog.get_value()
+            try:
+                value = float(value_str.replace(",", ".")) if value_str else 0.0
+            except (ValueError, TypeError):
+                value = 0.0
+            value = round(max(1.0, min(99999.0, value)), 1)
+            if value <= 0:
+                self._l_value = ""
+                self.labelLValue.setText("\u2014")
+            else:
+                # Display without trailing .0 if whole number
+                display = f"{value:.1f}" if value != int(value) else str(int(value))
+                self._l_value = str(value)
+                self.labelLValue.setText(display)
+
+    def _handle_c_frame_click(self, event=None) -> None:
+        """Open NumpadDialog for C (kesim hizi) parameter input and write to PLC."""
+        if not self._params_enabled:
+            return
+        if event is not None:
+            event.accept()
+        dialog = NumpadDialog(self, initial_value=self._c_value or "")
+        if dialog.exec() == QDialog.Accepted:
+            value_str = dialog.get_value()
+            try:
+                value = int(float(value_str)) if value_str else 0
+            except (ValueError, TypeError):
+                value = 0
+            value = max(0, min(500, value))
+            self._c_value = str(value)
+            self.labelCValue.setText(str(value))
+            if self.machine_control:
+                self.machine_control.write_cutting_speed(value)
+
+    def _handle_s_frame_click(self, event=None) -> None:
+        """Open NumpadDialog for S (inme hizi) parameter input and write to PLC."""
+        if not self._params_enabled:
+            return
+        if event is not None:
+            event.accept()
+        dialog = NumpadDialog(self, initial_value=self._s_value or "")
+        if dialog.exec() == QDialog.Accepted:
+            value_str = dialog.get_value()
+            try:
+                value = int(float(value_str)) if value_str else 0
+            except (ValueError, TypeError):
+                value = 0
+            value = max(0, min(500, value))
+            self._s_value = str(value)
+            self.labelSValue.setText(str(value))
+            if self.machine_control:
+                self.machine_control.write_descent_speed(float(value))
+
+    # -------------------------------------------------------------------------
+    # START / IPTAL Button Handlers
+    # -------------------------------------------------------------------------
+
+    def _validate_params(self) -> Optional[str]:
+        """Validate P, L, X mandatory params. Returns Turkish error string or None."""
+        if not self._p_value or int(self._p_value) <= 0:
+            return "P (hedef adet) girilmedi"
+        if not self._l_value or float(self._l_value) <= 0:
+            return "L (uzunluk) girilmedi"
+        if not self._x_value or int(self._x_value) <= 0:
+            return "X (paketteki adet) girilmedi"
+        return None
+
+    def _show_validation_error(self, message: str) -> None:
+        """Show validation error label for 3 seconds."""
+        self.labelValidationError.setText(message)
+        self.labelValidationError.setVisible(True)
+        QTimer.singleShot(3000, lambda: self.labelValidationError.setVisible(False))
+
+    def _handle_start_click(self) -> None:
+        """Validate params, write to PLC registers, then start auto cutting."""
+        error = self._validate_params()
+        if error:
+            self._show_validation_error(error)
+            return
+
+        p = int(self._p_value)
+        x = int(self._x_value)
+        l_mm = float(self._l_value)
+
+        if self.machine_control:
+            # Write all params BEFORE starting (Pitfall 6: prevent zero/null to PLC)
+            self.machine_control.write_target_adet(p, x)
+            self.machine_control.write_target_uzunluk(l_mm)
+            if self._c_value:
+                self.machine_control.write_cutting_speed(int(self._c_value))
+            if self._s_value:
+                self.machine_control.write_descent_speed(float(self._s_value))
+            self.machine_control.start_auto_cutting()
+
+        # UI updates per D-10
+        self.btnStart.setEnabled(False)
+        self.btnStart.setText("DEVAM EDIYOR...")
+        self._set_params_enabled(False)
+        self._cutting_active = True
+
+        # Start polling
+        if self._polling_timer and not self._polling_timer.isActive():
+            self._polling_timer.start()
+
+    def _handle_iptal_click(self) -> None:
+        """Cancel auto cutting and reset all UI state."""
+        if self.machine_control:
+            self.machine_control.cancel_auto_cutting()
+        self._set_params_enabled(True)
+        self._cutting_active = False
+        self.btnStart.setEnabled(True)
+        self.btnStart.setText("START")
+        self.labelCounter.setText("0 / 0")
+        self._previous_count = None  # reset ML detection
+
+        # Reset progress bar
+        self.progressWidget._progress = 0.0
+        self.progressWidget._complete = False
+        self.progressWidget.update()
+
+        self.labelComplete.setVisible(False)
+
+        # Stop polling
+        if self._polling_timer and self._polling_timer.isActive():
+            self._polling_timer.stop()
+
+    def _get_target(self) -> int:
+        """Return P * X total target, or 0 if not set."""
+        try:
+            return (
+                int(self._p_value) * int(self._x_value)
+                if self._p_value and self._x_value
+                else 0
+            )
+        except (ValueError, TypeError):
+            return 0
