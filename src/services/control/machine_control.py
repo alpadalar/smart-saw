@@ -506,8 +506,8 @@ class MachineControl:
     # ========================================================================
 
     def set_auto_cutting_mode(self, enabled: bool) -> bool:
-        """Set auto cutting mode: register 2 = 1 (on) or 2 (off)."""
-        value = 1 if enabled else 2
+        """Set auto cutting mode: register 2 = 1 (on) or 0 (off)."""
+        value = 1 if enabled else 0
         try:
             success = self._write_register(self.AUTO_MODE_REGISTER, value)
             if success:
@@ -518,7 +518,7 @@ class MachineControl:
             return False
 
     def read_auto_cutting_mode(self) -> Optional[bool]:
-        """Read auto cutting mode from register 2. Returns True if 1, False if 2, None on error."""
+        """Read auto cutting mode from register 2. Returns True if 1, False if 0, None on error."""
         val = self._read_register(self.AUTO_MODE_REGISTER)
         if val is None:
             return None

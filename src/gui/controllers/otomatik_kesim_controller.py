@@ -140,6 +140,10 @@ class OtomatikKesimController(QWidget):
         self._cutting_active: bool = False
         self._previous_count: Optional[int] = None  # None = first poll (Pitfall 4)
 
+        # AI mode initial speeds — saved at START, restored at each new cut
+        self._initial_cutting_speed: Optional[int] = None
+        self._initial_descent_speed: Optional[float] = None
+
         # RESET hold state
         self._reset_in_progress: bool = False
         self._reset_start: float = 0.0
@@ -954,6 +958,12 @@ class OtomatikKesimController(QWidget):
                 self.machine_control.write_cutting_speed(int(self._c_value))
             if self._s_value:
                 self.machine_control.write_descent_speed(float(self._s_value))
+
+            # Save initial speeds for AI mode — restore at each new cut
+            self._initial_cutting_speed = int(self._c_value) if self._c_value else None
+            self._initial_descent_speed = float(self._s_value) if self._s_value else None
+            logger.info(f"Initial speeds saved — C={self._initial_cutting_speed} S={self._initial_descent_speed}")
+
             self.machine_control.start_auto_cutting()
 
         # UI updates per D-10
@@ -1136,13 +1146,26 @@ class OtomatikKesimController(QWidget):
         logger.info("Auto cutting completed - target reached")
 
     def _trigger_ml_state_reset(self) -> None:
-        """Reset ML state when new cut cycle detected (D2056 count decreased)."""
+        """Reset ML state when new cut cycle detected (D2056 count decreased).
+
+        Restores initial speeds so AI mode starts from the same baseline
+        on every cut in a serial run.
+        """
+        # Restore initial speeds to PLC
+        if self.machine_control:
+            if self._initial_cutting_speed is not None:
+                self.machine_control.write_cutting_speed(self._initial_cutting_speed)
+            if self._initial_descent_speed is not None:
+                self.machine_control.write_descent_speed(self._initial_descent_speed)
+            logger.info(
+                f"Initial speeds restored — C={self._initial_cutting_speed} S={self._initial_descent_speed}"
+            )
+
         if self.control_manager and self.event_loop:
             asyncio.run_coroutine_threadsafe(
                 self.control_manager.set_mode(ControlMode.ML),
                 self.event_loop,
             )
-            # Sync button states
             self.btnManual.setChecked(False)
             self.btnAI.setChecked(True)
             logger.info("ML state reset triggered - new cut cycle detected")
