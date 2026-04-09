@@ -85,45 +85,37 @@ def test_write_target_adet(mock_client_class):
 
 
 # ---------------------------------------------------------------------------
-# PLC-02: write_target_uzunluk (FC16 double-word to D2064/D2065)
+# PLC-02: write_target_uzunluk (single word to D2064, value x10)
 # ---------------------------------------------------------------------------
 
 
 @patch("src.services.control.machine_control.ModbusTcpClient")
-def test_write_target_uzunluk_word_order(mock_client_class):
-    """write_target_uzunluk(1000.0) calls write_registers(address=2064, values=[0x2710, 0x0000])."""
+def test_write_target_uzunluk(mock_client_class):
+    """write_target_uzunluk(1000.0) calls write_register(address=2064, value=10000)."""
     mock_client = _make_connected_mc(mock_client_class)
     mock_result = MagicMock()
     mock_result.isError.return_value = False
-    mock_client.write_registers.return_value = mock_result
+    mock_client.write_register.return_value = mock_result
 
     mc = MachineControl()
     result = mc.write_target_uzunluk(1000.0)
 
-    # 1000mm * 10 = 10000 = 0x2710; D2064=0x2710 (low), D2065=0x0000 (high)
-    mock_client.write_registers.assert_called_once_with(
-        address=2064, values=[0x2710, 0x0000]
-    )
+    mock_client.write_register.assert_called_once_with(address=2064, value=10000)
     assert result is True
 
 
 @patch("src.services.control.machine_control.ModbusTcpClient")
 def test_write_target_uzunluk_float_rounding(mock_client_class):
-    """write_target_uzunluk(100.3) results in value 1003 (round handles float imprecision)."""
+    """write_target_uzunluk(100.3) writes 1003 (round handles float imprecision)."""
     mock_client = _make_connected_mc(mock_client_class)
     mock_result = MagicMock()
     mock_result.isError.return_value = False
-    mock_client.write_registers.return_value = mock_result
+    mock_client.write_register.return_value = mock_result
 
     mc = MachineControl()
     mc.write_target_uzunluk(100.3)
 
-    # 100.3 * 10 = 1003.0 (with float drift could be 1002.9999...), round() gives 1003
-    # 1003 = 0x000003EB: low = 0x03EB, high = 0x0000
-    call_args = mock_client.write_registers.call_args
-    values = call_args[1]["values"]
-    assert values[0] == 1003  # low word = 1003 (no overflow into high word)
-    assert values[1] == 0x0000  # high word = 0
+    mock_client.write_register.assert_called_once_with(address=2064, value=1003)
 
 
 # ---------------------------------------------------------------------------

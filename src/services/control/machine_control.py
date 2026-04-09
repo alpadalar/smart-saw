@@ -567,12 +567,12 @@ class MachineControl:
             return False
 
     def write_target_uzunluk(self, l_mm: float) -> bool:
-        """Write L (uzunluk) to register 2064-2065 as doubleword (value x10)."""
+        """Write L (uzunluk) to register 2064 as single word (value x10)."""
         try:
-            dword = int(round(l_mm * 10))
-            success = self._write_double_word(self.TARGET_UZUNLUK_REGISTER, dword)
+            value = int(round(l_mm * 10))
+            success = self._write_register(self.TARGET_UZUNLUK_REGISTER, value)
             if success:
-                logger.info(f"Target uzunluk set to {l_mm}mm (dword={dword})")
+                logger.info(f"Target uzunluk set to {l_mm}mm (reg={value})")
             return success
         except Exception as e:
             logger.error(f"Target uzunluk write error: {e}")
@@ -583,22 +583,11 @@ class MachineControl:
         return self._read_register(self.TARGET_ADET_REGISTER)
 
     def read_target_uzunluk(self) -> Optional[float]:
-        """Read target uzunluk from registers 2064-2065 as doubleword (value /10)."""
-        try:
-            if not self._ensure_connected():
-                return None
-            result = self.client.read_holding_registers(
-                address=self.TARGET_UZUNLUK_REGISTER, count=2
-            )
-            if result.isError():
-                return None
-            low_word = result.registers[0]
-            high_word = result.registers[1]
-            dword = (high_word << 16) | low_word
-            return dword / 10.0
-        except Exception as e:
-            logger.error(f"Target uzunluk read error: {e}")
-            return None
+        """Read target uzunluk from register 2064 as single word (value /10)."""
+        raw = self._read_register(self.TARGET_UZUNLUK_REGISTER)
+        if raw is not None:
+            return raw / 10.0
+        return None
 
     def read_kesilmis_adet(self) -> Optional[int]:
         """Read current cut count from register 2056."""
