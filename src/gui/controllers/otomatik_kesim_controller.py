@@ -855,8 +855,10 @@ class OtomatikKesimController(QWidget):
 
     def _handle_start_click(self) -> None:
         """Validate params, write to PLC registers, then start auto cutting."""
+        logger.info(f"START clicked — P={self._p_value!r} X={self._x_value!r} L={self._l_value!r} C={self._c_value!r} S={self._s_value!r}")
         error = self._validate_params()
         if error:
+            logger.warning(f"Validation failed: {error}")
             self._show_validation_error(error)
             return
 
@@ -866,6 +868,7 @@ class OtomatikKesimController(QWidget):
 
         if self.machine_control:
             # Write all params BEFORE starting (Pitfall 6: prevent zero/null to PLC)
+            logger.info(f"Writing to PLC — P*X={p*x} L={l_mm}mm")
             self.machine_control.write_target_adet(p, x)
             self.machine_control.write_target_uzunluk(l_mm)
             if self._c_value:
