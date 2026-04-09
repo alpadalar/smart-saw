@@ -1167,14 +1167,15 @@ class OtomatikKesimController(QWidget):
                 f"Cut reset — C={self._initial_cutting_speed} S={self._initial_descent_speed} L={self._l_value}"
             )
 
+        # Only reset ML state if currently in AI mode
         if self.control_manager and self.event_loop:
-            asyncio.run_coroutine_threadsafe(
-                self.control_manager.set_mode(ControlMode.ML),
-                self.event_loop,
-            )
-            self.btnManual.setChecked(False)
-            self.btnAI.setChecked(True)
-            logger.info("ML state reset triggered - new cut cycle detected")
+            current = self.control_manager.get_current_mode()
+            if current == ControlMode.ML:
+                asyncio.run_coroutine_threadsafe(
+                    self.control_manager.set_mode(ControlMode.ML),
+                    self.event_loop,
+                )
+                logger.info("ML state reset triggered - new cut cycle detected")
 
     # -------------------------------------------------------------------------
     # ML Mode Toggle (D-16, D-17)
