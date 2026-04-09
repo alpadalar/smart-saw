@@ -113,6 +113,11 @@ class AlarmController(QWidget):
 
     def _insert_alarm(self, code: int, description: str) -> int:
         ts = datetime.now().isoformat(timespec="seconds")
+        # Resolve any previous active alarms with the same code
+        self._db.execute(
+            "UPDATE alarm_events SET resolved_at=? WHERE code=? AND resolved_at IS NULL",
+            (ts, code),
+        )
         cur = self._db.execute(
             "INSERT INTO alarm_events (timestamp, code, description) VALUES (?, ?, ?)",
             (ts, code, description),
