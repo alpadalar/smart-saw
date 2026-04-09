@@ -109,27 +109,7 @@ class Ui_Dialog:
         self.pushButton_9.setStyleSheet(button_style)
         self.pushButton_9.setObjectName("pushButton_9")
 
-        # 0 button (narrower when decimal enabled to make room for dot)
-        if allow_decimal:
-            self.pushButton_11 = QPushButton(Dialog)
-            self.pushButton_11.setGeometry(176, 661, 168, 109)
-            self.pushButton_11.setStyleSheet(button_style)
-            self.pushButton_11.setObjectName("pushButton_11")
-
-            # Decimal dot button
-            self.pushButton_dot = QPushButton(Dialog)
-            self.pushButton_dot.setGeometry(369, 661, 120, 109)
-            self.pushButton_dot.setStyleSheet(button_style)
-            self.pushButton_dot.setObjectName("pushButton_dot")
-        else:
-            self.pushButton_11 = QPushButton(Dialog)
-            self.pushButton_11.setGeometry(273, 661, 217, 109)
-            self.pushButton_11.setStyleSheet(button_style)
-            self.pushButton_11.setObjectName("pushButton_11")
-
-            self.pushButton_dot = None
-
-        # Backspace button
+        # Backspace and enter button style
         tool_button_style = """
             background-color: qlineargradient(
                 x1: 0, y1: 1,
@@ -140,10 +120,45 @@ class Ui_Dialog:
             border-radius: 20px;
         """
 
-        self.toolButton = QToolButton(Dialog)
-        self.toolButton.setGeometry(31, 661, 217, 109)
-        self.toolButton.setStyleSheet(tool_button_style)
-        self.toolButton.setText("")
+        if allow_decimal:
+            # 4 buttons in bottom row: backspace, 0, dot, enter
+            self.toolButton = QToolButton(Dialog)
+            self.toolButton.setGeometry(31, 661, 163, 109)
+            self.toolButton.setStyleSheet(tool_button_style)
+            self.toolButton.setText("")
+
+            self.pushButton_11 = QPushButton(Dialog)
+            self.pushButton_11.setGeometry(204, 661, 163, 109)
+            self.pushButton_11.setStyleSheet(button_style)
+            self.pushButton_11.setObjectName("pushButton_11")
+
+            self.pushButton_dot = QPushButton(Dialog)
+            self.pushButton_dot.setGeometry(377, 661, 163, 109)
+            self.pushButton_dot.setStyleSheet(button_style)
+            self.pushButton_dot.setObjectName("pushButton_dot")
+
+            self.toolButton_2 = QToolButton(Dialog)
+            self.toolButton_2.setGeometry(550, 661, 182, 109)
+            self.toolButton_2.setStyleSheet(tool_button_style)
+            self.toolButton_2.setText("")
+        else:
+            # 3 buttons in bottom row: backspace, 0, enter
+            self.pushButton_dot = None
+
+            self.toolButton = QToolButton(Dialog)
+            self.toolButton.setGeometry(31, 661, 217, 109)
+            self.toolButton.setStyleSheet(tool_button_style)
+            self.toolButton.setText("")
+
+            self.pushButton_11 = QPushButton(Dialog)
+            self.pushButton_11.setGeometry(273, 661, 217, 109)
+            self.pushButton_11.setStyleSheet(button_style)
+            self.pushButton_11.setObjectName("pushButton_11")
+
+            self.toolButton_2 = QToolButton(Dialog)
+            self.toolButton_2.setGeometry(515, 661, 217, 109)
+            self.toolButton_2.setStyleSheet(tool_button_style)
+            self.toolButton_2.setText("")
 
         # Load backspace icon
         icon_path = os.path.join(os.path.dirname(__file__), "images", "backspace.png")
@@ -152,12 +167,6 @@ class Ui_Dialog:
             self.toolButton.setIcon(icon)
         self.toolButton.setIconSize(QSize(88, 70))
         self.toolButton.setObjectName("toolButton")
-
-        # Enter button
-        self.toolButton_2 = QToolButton(Dialog)
-        self.toolButton_2.setGeometry(515, 661, 217, 109)
-        self.toolButton_2.setStyleSheet(tool_button_style)
-        self.toolButton_2.setText("")
 
         # Load enter icon
         icon_path = os.path.join(os.path.dirname(__file__), "images", "enter.png")
