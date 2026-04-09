@@ -750,6 +750,7 @@ class OtomatikKesimController(QWidget):
                 self._p_value = str(value)
                 self.labelPValue.setText(str(value))
             self._update_total_label()
+            self._write_p_x_to_plc()
 
     def _handle_x_frame_click(self, event=None) -> None:
         """Open NumpadDialog for X (paketteki adet) parameter input."""
@@ -772,6 +773,7 @@ class OtomatikKesimController(QWidget):
                 self._x_value = str(value)
                 self.labelXValue.setText(str(value))
             self._update_total_label()
+            self._write_p_x_to_plc()
 
     def _handle_l_frame_click(self, event=None) -> None:
         """Open NumpadDialog for L (uzunluk mm, decimal) parameter input."""
@@ -794,6 +796,15 @@ class OtomatikKesimController(QWidget):
                 display = f"{value:.1f}" if value != int(value) else str(int(value))
                 self._l_value = str(value)
                 self.labelLValue.setText(display)
+            if self.machine_control and self._l_value:
+                self.machine_control.write_target_uzunluk(float(self._l_value))
+
+    def _write_p_x_to_plc(self):
+        """Write P*X to PLC register 2050 immediately."""
+        if self.machine_control and self._p_value and self._x_value:
+            p = int(self._p_value)
+            x = int(self._x_value)
+            self.machine_control.write_target_adet(p, x)
 
     def _handle_c_frame_click(self, event=None) -> None:
         """Open NumpadDialog for C (kesim hizi) parameter input and write to PLC."""
