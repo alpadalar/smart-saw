@@ -55,17 +55,7 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ### Active
 
-## Current Milestone: v2.1 Otomatik Kesim Sayfası
-
-**Goal:** Seri/otomatik kesim operasyonları için PLC entegrasyonlu yeni GUI sayfası eklenmesi
-
-**Target features:**
-- Otomatik kesim GUI sayfası (sidebar'da 2. sıra)
-- Parametre girişi: P (hedef adet), L (uzunluk mm), C (kesim hızı), S (inme hızı), X (paketteki adet)
-- PLC yazma: P×X → D2050 (Word), L×10 → D2064 (Double Word)
-- PLC okuma: Kesilmiş adet ← D2056 (Word), gerçek zamanlı gösterim
-- Kontrol butonları: START (20.13), RESET (20.14 hold-delay), İPTAL (20.4)
-- C ve S bu sayfadan da girilebilir (manuel kesimle ortak register'lar)
+(Next milestone requirements to be defined via `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -83,12 +73,10 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.1 Phase 26 complete — 2026-04-09):**
+**Current State (v2.0 shipped 2026-04-08):**
 - Camera vision pipeline: CameraService → DetectionWorker/LDCWorker → CameraResultsStore → GUI/IoT
 - VisionService: Daemon thread polling at 0.5s, CUTTING transition triggers recording (10s duration)
-- MachineControl auto cutting PLC methods: write_target_adet (FC6), write_target_uzunluk (FC16 Double Word), read_kesilmis_adet, start/reset/cancel auto cutting bit ops
-- OtomatikKesimController: Full-page auto cutting GUI (963 lines) — 5 param inputs (P,X,L,C,S), NumpadDialog with decimal, cut counter with D2056 polling, START/RESET/IPTAL controls, ML mode toggle
-- 89 unit tests (50 camera + 8 existing + 11 auto cutting + 20 otomatik kesim)
+- 50 unit tests for camera module (results_store, camera_service, detection_worker, ldc_worker, health_calculator, vision_service)
 - HealthCalculator: Config-driven weights (broken_weight=0.7, wear_weight=0.3 from config.yaml)
 - IoT: 6 camera fields in ThingsBoard telemetry (broken_count, crack_count, wear_percentage, health_score, etc.)
 - All 23 v2.0 requirements verified through VERIFICATION.md reports
@@ -131,22 +119,5 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | Config-driven HealthCalculator weights | broken_weight/wear_weight from config.yaml | ✓ Good |
 | annotated_frame unconditional store write | Bounding boxes always visible in live feed | ✓ Good |
 
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
-
 ---
-*Last updated: 2026-04-09 after Phase 26 (OtomatikKesimController) complete*
+*Last updated: 2026-04-08 after v2.0 Camera Vision & AI Detection milestone complete*

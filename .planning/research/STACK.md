@@ -1,191 +1,269 @@
-# Technology Stack — Otomatik Kesim Sayfası (v2.1)
+# Technology Stack — Camera Vision & AI Detection
 
-**Project:** Smart Saw Control System
-**Milestone:** v2.1 Otomatik Kesim Sayfası
-**Researched:** 2026-04-08
+**Project:** Smart Saw Control System v2.0
+**Milestone:** Camera Vision & AI Detection
+**Researched:** 2026-03-16
 **Overall confidence:** HIGH
 
 ---
 
 ## Executive Summary
 
-The automatic cutting page adds NO new library dependencies. All four capabilities required — Double Word Modbus write, bit-level Modbus operations, hold-delay button patterns, and numeric input validation — are already fully supported by the installed stack (pymodbus 3.5.4, PySide6 6.9.2, stdlib struct).
+This milestone adds camera capture, RT-DETR object detection, LDC edge-based wear calculation, and a camera GUI page to an existing PySide6 industrial desktop application. Four new library families are required: OpenCV for camera I/O, ultralytics for RT-DETR inference, PyTorch + kornia for LDC edge detection, and no new GUI toolkit (PySide6 QImage/QPixmap handles frame display natively).
 
-The work is entirely implementation inside existing modules: extend `MachineControl` with two new register addresses and a `write_registers()` call for the DWORD, and add a `QTimer`-gated confirm pattern for the RESET button. The `NumpadDialog` already handles decimal input but its validation is input-agnostic — a thin wrapper that rejects non-integer or out-of-range values is the only new logic needed.
+The single most important constraint: **numpy version pinning**. ultralytics >=8.3.x and opencv-python >=4.11.x have migrated toward numpy 2.x, but the transition is incomplete across the ecosystem. The existing `requirements.txt` pins `numpy<2.0,>=1.24.0`. This constraint must be relaxed to `numpy>=1.24.0` (no upper bound) and tested — or the inverse, hold numpy<2 and pin older opencv/ultralytics. Recommendation: allow numpy 2.x and pin opencv-python>=4.11.0 which declares numpy>=2 on Python 3.9+, then verify ultralytics 8.4.x works (it does as of 8.3.70+).
+
+The camera display thread pattern (QThread worker emitting QImage signals to a QLabel slot) is a well-established PySide6 pattern. No additional Qt packages required beyond what is already installed.
 
 ---
 
 ## New Dependencies Required
 
-**None.** requirements.txt is unchanged for this milestone.
+### Camera I/O
 
-Every capability needed is already present:
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `opencv-python-headless` | `>=4.11.0` | Frame capture (VideoCapture), BGR→RGB conversion, JPEG encoding | headless variant avoids OpenCV's own Qt5 GUI bindings which conflict with PySide6's Qt6. The `cv2` namespace is identical. Do NOT install `opencv-python` (has Qt5 GUI backend that conflicts). |
 
-| Capability | How It Is Already Covered |
-|-----------|--------------------------|
-| Double Word (32-bit) Modbus write | `pymodbus 3.5.4` — `write_registers([low, high], address)` (FC 16) |
-| Bit set/clear on register 20 | `MachineControl._set_bit()` and `_write_register_atomic()` already exist; add new bit constants |
-| Read D2056 Word | `AsyncModbusService.read_holding_registers(2056, 1)` already works |
-| Hold-delay (confirm-before-fire) button | `QTimer.singleShot()` with `pressed`/`released` signals — standard PySide6 pattern, no new widgets |
-| Numeric input with decimal validation | `NumpadDialog` already exists; add an integer-only validation wrapper |
-| Cross-thread GUI to asyncio scheduling | `asyncio.run_coroutine_threadsafe()` pattern already in use throughout the project |
+**Why opencv-python-headless not opencv-python:**
+`opencv-python` ships compiled against Qt5 for its `cv2.imshow()` GUI. PySide6 uses Qt6. Both try to load different Qt major versions into the same process, causing symbol conflicts on Linux. The headless variant strips the GUI backend entirely — safe to use alongside PySide6. The `cv2` API surface for VideoCapture, imencode, cvtColor, and numpy array operations is identical.
+
+**Latest version:** 4.13.0.92 (released 2026-02-05). Pin `>=4.11.0` to allow updates; the 4.11+ series adds numpy 2.x compatibility.
+
+### AI Object Detection (RT-DETR)
+
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `ultralytics` | `>=8.3.70` | RT-DETR inference via `from ultralytics import RTDETR` | Single unified API for loading custom `.pt` weights and running inference. Returns structured `Results` objects with `.boxes.xyxy`, `.boxes.conf`, `.boxes.cls`. Manages ONNX/TorchScript export if needed later. |
+
+**Usage pattern:**
+```python
+from ultralytics import RTDETR
+
+# Load custom-trained weights (best.pt or catlak-best.pt)
+model = RTDETR("data/models/best.pt")
+
+# Run inference on a numpy BGR frame from OpenCV
+results = model(frame, conf=0.5, verbose=False)
+
+# Extract detections
+for result in results:
+    boxes = result.boxes.xyxy    # (N, 4) tensor: x1, y1, x2, y2
+    confs = result.boxes.conf    # (N,) tensor: confidence scores
+    classes = result.boxes.cls   # (N,) tensor: class indices
+```
+
+**Latest version:** 8.4.22 (released 2026-03-14). Pin `>=8.3.70` for numpy 2.x compatibility fix.
+
+### Deep Learning Runtime (PyTorch)
+
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `torch` | `>=2.6.0` | Tensor operations, model execution backend for both ultralytics and LDC | Required by both ultralytics (RTDETR) and kornia (LDC). CPU-only sufficient for industrial panel PC without discrete GPU. |
+| `torchvision` | `>=0.21.0` | Image transforms used by ultralytics internals | ultralytics imports torchvision transforms; must be version-matched to torch. |
+
+**Version pairing (official PyTorch compatibility table):**
+
+| torch | torchvision | Notes |
+|-------|-------------|-------|
+| 2.10.0 | 0.25.0 | Latest stable (2026-01-21) |
+| 2.6.0 | 0.21.0 | Minimum recommended |
+
+**Recommendation:** Pin `torch>=2.6.0` and `torchvision>=0.21.0`. Let pip resolve to latest compatible pair. Do NOT pin to exact versions — PyTorch releases often; allow updates.
+
+**CPU-only install note:** The default `torch` wheel from PyPI includes CUDA. For industrial panel PCs without GPU, install from PyTorch's CPU index:
+```
+--index-url https://download.pytorch.org/whl/cpu
+```
+This reduces install size significantly (~200MB vs ~2GB). Add this to deployment documentation, not requirements.txt, since the index URL is environment-specific.
+
+### LDC Edge Detection + Wear Calculation
+
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `kornia` | `>=0.7.0` | Differentiable image processing used by LDC model (gaussian blur, morphological ops) | LDC's original implementation uses kornia for several preprocessing and postprocessing operations. Requires PyTorch (already added). |
+
+**LDC model integration approach:**
+LDC (Lightweight Dense CNN for Edge Detection, ~0.7M parameters) is not a pip package — it is source code. The model files (`modelB4.py` or `modelB5.py`) from [github.com/xavysp/LDC](https://github.com/xavysp/LDC) are copied directly into `src/services/camera/` as part of the codebase. The trained weights file (`.pth`) is loaded via `torch.load()`. This means:
+- No `pip install ldc` — copy model source into repo
+- Weights file path configured via `config.yaml` (same pattern as `ml.model_path`)
+- Inference is pure PyTorch forward pass on a single frame
+
+**LDC wear calculation output:** The edge map (float32 numpy array, 0-1 range) is postprocessed to count edge pixels in the tooth region, comparing against a reference baseline to compute wear percentage. This is custom application logic, not a library.
+
+**Latest kornia version:** 0.8.2 (released 2025-11-08). Pin `>=0.7.0` for stable API.
 
 ---
 
-## Implementation Details for Each Capability
+## numpy Version Strategy
 
-### 1. Double Word Write: L*10 to D2064 (FC 16, write_registers)
+**Critical constraint — resolve before any other install.**
 
-pymodbus 3.5.4 exposes `write_registers(address, values)` on both the sync client (`ModbusTcpClient`) and the async client (`AsyncModbusTcpClient`). The method maps to Modbus function code 0x10 (Write Multiple Registers).
+The existing `requirements.txt` pins `numpy<2.0,>=1.24.0`. This must change:
 
-**Confirmed API (from installed pymodbus 3.5.4):**
+| Package | numpy Requirement |
+|---------|-----------------|
+| ultralytics >=8.3.70 | numpy >=1.23.0 (no upper bound since 8.3.70) |
+| opencv-python-headless >=4.11.0 | numpy >=2 (on Python 3.9+) for 4.13.x |
+| torch 2.6+ | numpy >=1.26.4 |
+| kornia 0.7+ | numpy >=1.21.2 |
+| existing scikit-learn, pandas | numpy >=1.24.0 |
+
+**Resolution:** Change requirements.txt line from `numpy<2.0,>=1.24.0` to `numpy>=1.24.0`. Allow pip to install numpy 2.x. Test the full stack. If scikit-learn or joblib complain (they typically don't above numpy 2.0 with recent versions), pin those to current versions explicitly.
+
+**Do NOT** stay on numpy<2.0 and try to work around it — opencv-python-headless 4.13.x requires numpy>=2 on Python 3.9+.
+
+---
+
+## PySide6 Camera Display (No New Packages)
+
+PySide6 already installed (`>=6.4.0`). The camera display pipeline uses built-in Qt classes:
+
+| Qt Class | Import | Purpose |
+|----------|--------|---------|
+| `QThread` | `PySide6.QtCore` | Camera capture worker — isolates blocking VideoCapture.read() from GUI event loop |
+| `Signal` | `PySide6.QtCore` | Worker emits `Signal(QImage)` per frame |
+| `QImage` | `PySide6.QtGui` | Wrap numpy BGR frame (after cvtColor to RGB) |
+| `QPixmap` | `PySide6.QtGui` | Convert QImage for display in QLabel |
+| `QLabel` | `PySide6.QtWidgets` | Display area — `setPixmap(QPixmap.fromImage(qimage))` |
+
+**Frame conversion pattern (no extra library needed):**
 ```python
-result = client.write_registers(
-    address=2064,
-    values=[low_word, high_word]  # List[int], each 0-65535
-)
+import cv2
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtCore import Qt
+
+# Convert OpenCV BGR frame to QImage
+frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+h, w, ch = frame_rgb.shape
+bytes_per_line = ch * w
+qimage = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+
+# Display in QLabel (called via signal from worker thread)
+label.setPixmap(QPixmap.fromImage(qimage).scaled(
+    label.size(), Qt.AspectRatioMode.KeepAspectRatio,
+    Qt.TransformationMode.SmoothTransformation
+))
 ```
 
-**Mitsubishi Q-series PLC word order for Double Word:** low word at the base address (D2064), high word at base + 1 (D2065). This matches the project's existing IEEE754 decode pattern in `ModbusReader._decode_ieee754()` which uses `(high_word << 16) | low_word` with `registers[42]` as low and `registers[43]` as high — the same convention.
+**Why not qimage2ndarray:** Adds a dependency for a 3-line conversion. The manual QImage construction is adequate and keeps dependencies minimal.
 
-**Encoding for L*10:**
-```python
-def encode_dword(value: int) -> list[int]:
-    """Encode a 32-bit integer as [low_word, high_word] for Mitsubishi DWORD register."""
-    low = value & 0xFFFF
-    high = (value >> 16) & 0xFFFF
-    return [low, high]
+**Thread model:** QThread subclass owns the VideoCapture loop. Emits `frame_ready = Signal(QImage)` at the camera's native frame rate (typ. 15-30 FPS). The GUI slot connected to this signal calls `setPixmap`. This follows the established project pattern (`run_coroutine_threadsafe` for async→GUI, this is GUI→GUI but cross-thread via signal).
 
-# Usage: L = 1000 mm -> D2064 = 10000 decimal = 0x00002710
-# encode_dword(1000 * 10) -> [0x2710, 0x0000]
+---
+
+## Updated requirements.txt
+
+```txt
+# Smart Saw Control System - Dependencies
+# Python >= 3.10 required
+
+# Core
+python-dotenv>=1.0.0
+
+# Async I/O
+aiofiles>=23.0.0
+
+# Modbus Communication
+pymodbus[asyncio]>=3.5.0
+
+# Database
+aiosqlite>=0.19.0
+asyncpg>=0.29.0
+
+# MQTT / IoT
+aiomqtt>=1.2.0
+httpx>=0.24.0
+
+# GUI
+PySide6>=6.4.0
+
+# Machine Learning (existing)
+numpy>=1.24.0          # Removed <2.0 cap — required by opencv-python-headless >=4.11
+scikit-learn>=1.3.0
+joblib>=1.3.0
+pandas>=2.0.0
+
+# Configuration
+pyyaml>=6.0
+
+# Logging
+colorlog>=6.7.0
+
+# === NEW: Camera Vision & AI Detection (v2.0) ===
+
+# Camera capture (headless — no Qt5 GUI backend, safe alongside PySide6 Qt6)
+opencv-python-headless>=4.11.0
+
+# RT-DETR object detection (broken teeth, crack detection)
+ultralytics>=8.3.70
+
+# PyTorch runtime (required by ultralytics and LDC)
+# NOTE: For CPU-only deployment install from:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.6.0
+torchvision>=0.21.0
+
+# Differentiable image ops used by LDC edge detection model
+kornia>=0.7.0
 ```
 
-**Where to add this:** Extend `MachineControl` (in `src/services/control/machine_control.py`) with a `write_length()` method using the synchronous `ModbusTcpClient` (same pattern as all existing machine control methods). This is correct because the automatic cutting page, like the positioning page, calls `MachineControl` from the GUI thread without an asyncio bridge.
+---
 
-**MachineControl is the right home** (not `ModbusWriter`/`AsyncModbusService`) because:
-- `ModbusWriter` is used only by `MLController` for speed writes during ML cutting cycles
-- `MachineControl` owns all register-20 bit operations and all direct PLC commands
-- The auto-cutting page will call these methods the same way `PositioningController` calls `machine_control.start_cutting()`
+## Alternatives Considered
 
-### 2. Bit Operations on Register 20: START (20.13), RESET (20.14), IPTAL (20.4)
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Camera capture | `opencv-python-headless` | `opencv-python` | Qt5 vs Qt6 conflict on Linux |
+| Object detection | `ultralytics` (RTDETR) | PyTorch native (raw model code) | ultralytics handles preprocessing, NMS-free pipeline, results API |
+| Object detection | `ultralytics` (RTDETR) | ONNX Runtime + exported model | Adds onnxruntime dependency; losing ultralytics training/export workflow |
+| Edge detection | LDC (vendored source) | Canny (cv2.Canny) | Canny is parameter-sensitive, non-learned; LDC is pretrained on edge datasets |
+| Edge detection | LDC (vendored source) | HED (pytorch-hed pip) | LDC is lighter (~0.7M params vs HED's ~14.7M); better for real-time on CPU |
+| Frame display | PySide6 QImage/QPixmap | `cv2PySide6` package | Adds dependency; 3-line QImage construction is sufficient |
+| Frame display | PySide6 QImage/QPixmap | `qimage2ndarray` | Same as above — unnecessary |
+| numpy | `>=1.24.0` (allow 2.x) | Pin `<2.0` | Would require pinning older opencv-python-headless; blocks security updates |
 
-The bit operation infrastructure already exists in `MachineControl._set_bit()` and `_write_register_atomic()`. Only new bit constant definitions are needed:
+---
 
-```python
-# Add to MachineControl class constants:
-AUTO_START_BIT = 13      # 20.13: Start automatic cutting
-AUTO_RESET_BIT = 14      # 20.14: Reset automatic sequence
-AUTO_IPTAL_BIT = 4       # 20.4:  Cancel / stop (same as CUTTING_STOP_BIT = 4)
+## Config-Driven Modularity
+
+The project requires `camera.enabled=false` to prevent any camera code from loading. This is a design constraint, not a library constraint. The pattern from `lifecycle.py` (config-driven service init):
+
+**config.yaml addition:**
+```yaml
+camera:
+  enabled: false          # Set true to enable camera module
+  device_index: 0         # VideoCapture device index (0 = first USB cam)
+  fps: 15                 # Target capture rate
+  resolution:
+    width: 1280
+    height: 720
+  jpeg_quality: 85        # JPEG recording quality
+  models:
+    broken_tooth: "data/models/best.pt"
+    crack: "data/models/catlak-best.pt"
+    ldc_weights: "data/models/ldc_weights.pth"
+  detection:
+    confidence_threshold: 0.5
+    inference_rate_hz: 2    # Run inference at 2 Hz to manage CPU load
+  wear:
+    baseline_edge_count: null   # Calibrated per saw band
+    wear_threshold_percent: 70  # Warn above 70% wear
+  health:
+    broken_weight: 0.70   # 70% contribution from broken/crack detections
+    wear_weight: 0.30     # 30% contribution from wear calculation
 ```
 
-Note: `AUTO_IPTAL_BIT = 4` is the same physical bit as the existing `CUTTING_STOP_BIT = 4` (20.4 stop cutting). This is expected — IPTAL on the auto page is the same stop signal. No conflict; just use the existing constant or alias it.
-
-**New methods to add to MachineControl:**
+**Lifecycle guard pattern (matches existing style):**
 ```python
-def start_auto_cutting(self) -> bool:
-    return self._set_bit(self.CONTROL_REGISTER, self.AUTO_START_BIT, True)
-
-def reset_auto_cutting(self) -> bool:
-    return self._set_bit(self.CONTROL_REGISTER, self.AUTO_RESET_BIT, True)
-
-def cancel_auto_cutting(self) -> bool:
-    return self._set_bit(self.CONTROL_REGISTER, self.CUTTING_STOP_BIT, True)
+# In lifecycle.py — camera services only loaded if enabled
+if self.config.get("camera.enabled", False):
+    from ..services.camera import CameraService
+    self.camera_service = CameraService(config=self.config)
+    await self.camera_service.start()
 ```
 
-No new pymodbus calls — `_set_bit` performs read-modify-write on a single holding register, identical to how all other bits are set today.
-
-### 3. Reading D2056 (Word): Kesilmis Adet
-
-D2056 is a single 16-bit Word register. `AsyncModbusService.read_holding_registers(2056, 1)` works directly, matching the existing pattern for reading target speed registers (2066, 2041) in `ModbusReader.read_all_sensors()`.
-
-**Integration point:** Add D2056 reading to `ModbusReader` (or read it directly in the new page controller via `AsyncModbusService`). The 10 Hz read cycle in `ModbusReader.read_all_sensors()` is the natural place to add it — append `kesilen_adet_auto` to `RawSensorData`. Alternatively, the auto cutting page controller can poll D2056 independently using `asyncio.run_coroutine_threadsafe` (same threading bridge already used by `ControlPanelController` and `PositioningController`).
-
-The simpler path that avoids model changes: add a dedicated `read_auto_status()` method to `ModbusReader` that reads D2056 on demand, and call it from the GUI page at 1 Hz via a `QTimer`.
-
-### 4. Hold-Delay Pattern for RESET Button (20.14)
-
-The project already has two button interaction patterns:
-
-| Pattern | Where Used | What It Does |
-|---------|-----------|--------------|
-| Instant press-and-hold (TouchButton) | Positioning page jog buttons | Action fires on press, stops on release |
-| Single click | Control panel START/STOP | Action fires immediately on click |
-
-The RESET button needs a third pattern: hold-to-confirm (press and hold for N milliseconds before the PLC command fires). This prevents accidental resets. This pattern is implemented entirely with `QTimer.singleShot()` — no new classes needed.
-
-**Implementation using existing PySide6 QTimer:**
-```python
-from PySide6.QtCore import QTimer
-
-class AutoCuttingController(QWidget):
-    RESET_HOLD_MS = 1500  # Hold 1.5 seconds to confirm reset
-
-    def _setup_reset_button(self):
-        self.btnReset.pressed.connect(self._on_reset_pressed)
-        self.btnReset.released.connect(self._on_reset_released)
-        self._reset_timer = QTimer(self)
-        self._reset_timer.setSingleShot(True)
-        self._reset_timer.timeout.connect(self._execute_reset)
-
-    def _on_reset_pressed(self):
-        self._reset_timer.start(self.RESET_HOLD_MS)
-        # Optional: show progress indicator
-
-    def _on_reset_released(self):
-        self._reset_timer.stop()  # Cancelled if released before timeout
-        # Optional: cancel progress indicator
-
-    def _execute_reset(self):
-        # Fires only if button held for RESET_HOLD_MS
-        asyncio.run_coroutine_threadsafe(
-            self._do_reset(), self.event_loop
-        )
-```
-
-This is pure PySide6 — `QTimer` with `setSingleShot(True)` is well-established for exactly this use case. No third-party library. `QTimer` parent is `self` so Qt handles cleanup automatically.
-
-**Touch support:** The existing `TouchButton` widget emits `touch_pressed`/`touch_released` signals that mirror `pressed`/`released`. If the RESET button needs touchscreen hold-to-confirm, use `TouchButton` instead of `QPushButton` and connect `touch_pressed`/`touch_released` in addition to mouse signals.
-
-### 5. Numeric Input Validation for Parameter Fields
-
-The `NumpadDialog` in `src/gui/numpad.py` already handles:
-- Touch-friendly digit entry (0-9, backspace, enter)
-- Up to 10-digit string values
-- Returns a string from `get_value()`; caller parses
-
-**Current state:** The numpad has no decimal point key — only digit buttons 0-9, backspace, and enter. This is confirmed by direct inspection of `numpad.py`.
-
-**What is needed for the new parameters:**
-
-| Parameter | Type | Range | Input Strategy |
-|-----------|------|-------|----------------|
-| P (hedef adet) | Integer | >=1 | NumpadDialog as-is, validate int(raw) >= 1 |
-| L (uzunluk mm) | Integer | >=1, <=65535 | NumpadDialog as-is, validate range; L*10 fits DWORD easily |
-| C (kesim hizi) | Integer | >=40, <=90 | NumpadDialog as-is, same limits as existing speed entry |
-| S (inme hizi) | Float (stored as int*100) | >=10, <=60 | Accept integer mm/min; multiply by 100 for register. Fractional precision not operationally needed |
-| X (paketteki adet) | Integer | >=1 | NumpadDialog as-is, validate int(raw) >= 1 |
-
-**Recommended approach:** Keep `NumpadDialog` integer-only. For S (inme hizi), accept integer input (consistent with how the existing control panel handles speed entry — the user enters "20" meaning 20.0 mm/min). The existing `write_descent_speed(value)` in `MachineControl` already multiplies by 100 for the register.
-
-**Validation wrapper (no new library, stdlib only):**
-```python
-def open_integer_input(
-    parent, current: int, min_val: int, max_val: int
-) -> Optional[int]:
-    """Open numpad and return validated integer, or None if cancelled/invalid."""
-    dialog = NumpadDialog(parent, initial_value=str(current))
-    if dialog.exec() == QDialog.Accepted:
-        raw = dialog.get_value()
-        try:
-            val = int(raw)
-            if min_val <= val <= max_val:
-                return val
-        except ValueError:
-            pass
-    return None
-```
-
-This is 10 lines of stdlib — no new package.
+This ensures `import ultralytics`, `import cv2`, `import torch` never execute when `camera.enabled=false`, so the application starts normally even without these packages installed in constrained environments.
 
 ---
 
@@ -193,14 +271,12 @@ This is 10 lines of stdlib — no new package.
 
 | New Component | Integrates With | How |
 |---------------|----------------|-----|
-| `AutoCuttingController` (new page) | `MainController` | Added as 6th page in `QStackedWidget`; sidebar button in position 2 (after Kontrol Paneli) |
-| `AutoCuttingController` | `MachineControl` | Same singleton pattern as `PositioningController` — `self.machine_control = MachineControl()` |
-| `MachineControl.write_length(L)` | `ModbusTcpClient.write_registers()` | Calls FC 16 with `[low_word, high_word]` at address 2064 |
-| `MachineControl.write_piece_count(n)` | `ModbusTcpClient.write_register()` | FC 06 single write at address 2050 — same as existing `_write_register()` |
-| D2056 reading | `AsyncModbusService` | Via `asyncio.run_coroutine_threadsafe()` + 1 Hz `QTimer`, or a new `read_auto_status()` on `ModbusReader` |
-| C, S writes | `MachineControl.write_cutting_speed()` / `write_descent_speed()` | Already implemented — the auto page reuses these exact methods |
-| IPTAL button | `MachineControl.cancel_auto_cutting()` (equals `stop_cutting()`) | Sets bit 20.4, same as existing stop_cutting |
-| START / RESET | New `MachineControl.start_auto_cutting()` / `reset_auto_cutting()` | Sets bits 20.13 / 20.14 using existing `_set_bit()` |
+| CameraService (new) | `lifecycle.py` | Config-guarded startup/shutdown, same pattern as `MQTTService` |
+| RT-DETR detector | `SQLiteService` | Writes detection events to new `camera_detections` table in `anomaly.db` or new `camera.db` |
+| RT-DETR detector | `ThingsBoard IoT` | Publishes detection results as telemetry fields (broken_tooth_detected, crack_detected, wear_percent, health_score) |
+| Camera GUI page | `GUIApplication` (app.py) | Added as 5th page in `QStackedWidget`; sidebar button added to navigation |
+| Camera GUI page | `CameraService` | Worker `QThread` lives in service; GUI page connects to its signals |
+| LDC wear calculator | existing `ProcessedData` model | No model change — wear % stored separately in camera DB |
 
 ---
 
@@ -208,38 +284,48 @@ This is 10 lines of stdlib — no new package.
 
 | Package | Reason |
 |---------|--------|
-| Any new pip package | Zero new dependencies required for this milestone |
-| `AsyncModbusService` for new page control commands | The auto cutting page uses `MachineControl` (sync client, GUI thread) — same pattern as `PositioningController`. `AsyncModbusService` is for the 10 Hz data collection loop only. |
-| `write_coil` / FC 05 | Not needed — the PLC uses holding registers (FC 06/16) for all control, not discrete coils. All existing bit operations use read-modify-write on holding registers. |
-| `mask_write_register` (FC 22) | Available in pymodbus 3.5.4 but unsuitable. FC 22 requires PLC support for the Mask Write Register function code. The existing project uses read-modify-write which is proven working with this PLC. |
-| New widget classes | `QPushButton` + `QTimer` is sufficient for hold-delay RESET. `TouchButton` already exists if touchscreen hold-confirm is needed. |
-| Decimal point in NumpadDialog | Avoid unless fractional descent speed is operationally required — integer mm/min input is consistent with the existing control panel and covers all practical values. |
+| `onnxruntime` | Not needed — ultralytics runs native PyTorch; ONNX export is optional for deployment |
+| `tensorrt` | GPU-specific; industrial panel PC is CPU-only |
+| `opencv-python` | Conflicts with PySide6 Qt6 on Linux — use headless variant only |
+| `Pillow` | Not needed — OpenCV handles JPEG encoding; QImage handles display |
+| `supervision` | Roboflow's annotation library; unnecessary wrapper over ultralytics Results API |
+| `albumentations` | Training augmentation only; not used at inference time |
+| `tflite-runtime` | TF-specific; project uses PyTorch models |
+| `cv2PySide6` | Thin wrapper providing no value over direct QImage construction |
+| `qimage2ndarray` | Same as above — 3-line conversion is sufficient |
+| `imutils` | Old utility library; opencv-python-headless covers all needed ops |
+| `torchaudio` | Audio processing; irrelevant to vision pipeline |
 
 ---
 
 ## Confidence Assessment
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| pymodbus `write_registers` API | HIGH | Verified from installed pymodbus 3.5.4 via direct `help()` inspection — `write_registers(address, values: List[int])` confirmed |
-| Mitsubishi DWORD word order [low, high] | HIGH | Consistent with existing `_decode_ieee754()` in `ModbusReader` which uses the same low/high convention |
-| Bit 20.13 / 20.14 via `_set_bit()` | HIGH | `_set_bit()` is proven working for bits 3-10 on register 20; bits 13 and 14 use an identical mechanism |
-| `QTimer.setSingleShot(True)` hold-delay | HIGH | Standard Qt pattern; PySide6 6.9.2 installed and confirmed |
-| No new dependencies needed | HIGH | Based on direct code inspection of installed packages — all required APIs present |
-| Integer-only NumpadDialog for S field | MEDIUM | Operationally acceptable but worth confirming the operator requirement — fractional descent speed may be needed |
+| Area | Confidence | Sources | Notes |
+|------|------------|---------|-------|
+| ultralytics RT-DETR API | HIGH | PyPI (8.4.22), ultralytics docs, official RT-DETR docs | Verified latest version, API confirmed stable |
+| opencv-python-headless version | HIGH | PyPI (4.13.0.92 current) | Official PyPI, date verified |
+| torch/torchvision versions | HIGH | PyTorch Versions wiki (official), PyPI | 2.10.0/0.25.0 latest; 2.6.0/0.21.0 minimum safe |
+| kornia version | HIGH | PyPI (0.8.2 current) | Official PyPI |
+| numpy 2.x transition | MEDIUM | Multiple GitHub issues, PyPI metadata | Ecosystem still in transition; `>=4.11.0` opencv-python-headless works with numpy 2.x; verify on deployment |
+| opencv-python-headless vs opencv-python conflict | HIGH | OpenCV forum, multiple sources | Qt5 vs Qt6 symbol conflict is well-documented and consistent |
+| QThread + QImage camera display | HIGH | Qt for Python official docs, multiple working examples | Standard established pattern |
+| LDC as vendored source | HIGH | LDC GitHub (xavysp/LDC) — pip package does not exist | Confirmed: no pip install, must vendor model code |
+| CPU-only PyTorch performance | MEDIUM | General knowledge | Inference at 2 Hz on CPU for ~720p image should be feasible for panel PC; validate with actual hardware |
 
 ---
 
 ## Sources
 
-All findings based on direct inspection of installed project code and installed packages:
-
-- `src/services/control/machine_control.py` — existing `_set_bit()`, `_write_register()`, `CONTROL_REGISTER = 20`, sync Modbus from GUI thread pattern
-- `src/services/modbus/client.py` — `AsyncModbusService.write_register()` and `read_holding_registers()`, rate-limiting semaphore architecture
-- `src/services/modbus/reader.py` — `_decode_ieee754()` confirming low/high word order for multi-register reads; D2066/D2041 polling pattern
-- `src/gui/widgets/touch_button.py` — `touch_pressed`/`touch_released` signals for touchscreen hold patterns
-- `src/gui/numpad.py` — `NumpadDialog` — integer-only digit buttons, no decimal point key confirmed
-- `src/gui/controllers/positioning_controller.py` — `QTimer` + `pressed`/`released` for existing hold-to-jog pattern
-- pymodbus 3.5.4 (installed) — `write_registers(address, values: List[int])` confirmed via `help()` introspection
-- PySide6 6.9.2 (installed) — `QTimer.singleShot()`, `setSingleShot(True)` confirmed
-- `requirements.txt` — current dependency list; no changes needed for v2.1
+- [ultralytics PyPI page](https://pypi.org/project/ultralytics/) — version 8.4.22 confirmed (2026-03-14)
+- [Ultralytics RT-DETR docs](https://docs.ultralytics.com/models/rtdetr/) — custom model loading, Results API
+- [ultralytics predict docs](https://docs.ultralytics.com/modes/predict/) — `.boxes.xyxy`, `.boxes.conf`, `.boxes.cls`
+- [opencv-python PyPI](https://pypi.org/project/opencv-python/) — latest 4.13.0.92 (2026-02-05)
+- [PyTorch Versions wiki](https://github.com/pytorch/pytorch/wiki/PyTorch-Versions) — official version compatibility table
+- [torch PyPI](https://pypi.org/project/torch/) — 2.10.0 latest (2026-01-21)
+- [torchvision PyPI](https://pypi.org/project/torchvision/) — 0.25.0 latest
+- [kornia PyPI](https://pypi.org/project/kornia/) — 0.8.2 latest (2025-11-08)
+- [LDC GitHub xavysp/LDC](https://github.com/xavysp/LDC) — Lightweight Dense CNN, ~0.7M params, PyTorch >=1.6
+- [Qt for Python QThread docs](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QThread.html) — official threading docs
+- [QImage construction from numpy](https://github.com/fernicar/PySide6_Examples_Doc_2025_v6.9.1/tree/6.9.1/examples/external/opencv) — PySide6 2025 official example
+- [opencv-python GitHub](https://github.com/opencv/opencv-python) — headless vs full variant documentation
+- [numpy 2.x ecosystem tracking](https://github.com/numpy/numpy/issues/26191) — compatibility status
