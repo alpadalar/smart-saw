@@ -52,11 +52,17 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 - ✓ GUI sidebar'a kamera navigasyon butonu eklenmesi — v2.0
 - ✓ Tespit sonuclarinin SQLite'a kaydedilmesi (camera.db) — v2.0
 - ✓ Tespit sonuclarinin ThingsBoard IoT'a gonderilmesi — v2.0
+- ✓ OtomatikKesimController sayfasi MainController sidebar entegrasyonu — v2.1
+- ✓ PageIndex IntEnum ile tip-guvenli sayfa gecisi — v2.1
+- ✓ MachineControl otomatik kesim register/bit metotlari (adet, uzunluk, start/reset/cancel) — v2.1
+- ✓ Numpad ile P/X/L parametre girisi (ondalik destekli) ve dogrudan PLC register yazimi — v2.1
+- ✓ PLC register okuma ve otomatik kesim senkronizasyonu (D2056 polling) — v2.1
+- ✓ AI/ML mod toggle iki yonlu senkron + AI modunda hiz kaydet/geri yukle — v2.1
+- ✓ 40.10 onay biti coil/_set_bit ile yazimi (PLC scan cycle cozumu) — v2.1
 
 ### Active
 
-- ✓ OtomatikKesimController sayfasi MainController sidebar entegrasyonu — v2.1
-- ✓ PageIndex IntEnum ile tip-guvenli sayfa gecisi — v2.1
+- (Sonraki milestone'da tanimlanacak — /gsd-new-milestone)
 
 ### Out of Scope
 
@@ -74,9 +80,13 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 
 ## Context
 
-**Current State (v2.1 Phase 27 complete 2026-04-09):**
-- OtomatikKesimController integrated into MainController sidebar navigation
-- PageIndex IntEnum for type-safe page switching (zero hardcoded integers)
+**Current State (v2.1 SHIPPED 2026-07-01):**
+- Yeni Otomatik Kesim Sayfası (`OtomatikKesimController`) — sidebar navigasyonu ile entegre, PageIndex IntEnum tabanlı tip-güvenli geçiş
+- MachineControl otomatik kesim uzantısı: adet/uzunluk/start/reset/cancel register+bit metotları (register 20 bit işlemleri singleton üzerinden)
+- Numpad ile P/X/L parametre girişi (ondalık destekli) → doğrudan PLC register yazımı (2050/2070/2064, uzunluk ×10)
+- PLC register okuma + tam senkron (D2056 500ms QTimer polling), AI/ML mod iki yönlü toggle senkronu, AI modunda hız kaydet/geri yükle
+- 40.10 onay biti coil/`_set_bit` ile (register read-modify-write PLC scan cycle'a takıldığı için)
+- Not: Phase 25/26 doğrudan commit'lerle uygulandı (GSD execute akışı dışında); SUMMARY artefaktları üretilmedi
 
 **Previous State (v2.0 shipped 2026-04-08):**
 - Camera vision pipeline: CameraService → DetectionWorker/LDCWorker → CameraResultsStore → GUI/IoT
@@ -123,6 +133,12 @@ Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagligi
 | VisionService polls at 0.5s (2 Hz) | Configurable via vision.polling_interval | ✓ Good |
 | Config-driven HealthCalculator weights | broken_weight/wear_weight from config.yaml | ✓ Good |
 | annotated_frame unconditional store write | Bounding boxes always visible in live feed | ✓ Good |
+| Register 20 bit islemleri MachineControl singleton uzerinden | read-modify-write race onlemi | ✓ Good |
+| L uzunluk single word register 2064 (×10) | doubleword yaklasimi superseded | ✓ Good |
+| D2056 polling 500ms QTimer (async loop disi) | async pipeline degisikligini onler | ✓ Good |
+| RESET dort sinyale bagli (pressed/released + touch) | fabrika dokunmatik uyumu | ✓ Good |
+| Sidebar insertion PageIndex named constants | atomic index guncellemesi | ✓ Good |
+| 40.10 onay biti coil/_set_bit ile | register RMW PLC scan cycle'a takiliyor | ✓ Good |
 
 ---
-*Last updated: 2026-04-09 after Phase 27 MainController Integration complete*
+*Last updated: 2026-07-01 after v2.1 Otomatik Kesim Sayfası milestone complete*

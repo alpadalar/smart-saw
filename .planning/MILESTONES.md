@@ -1,5 +1,34 @@
 # Project Milestones: Smart Saw
 
+## v2.1 Otomatik Kesim Sayfası (Shipped: 2026-07-01)
+
+**Delivered:** Operatörün P/X/L parametrelerini girip PLC'ye yazabildiği, kesim ilerlemesini canlı izleyebildiği ve AI/ML modunu yönetebildiği yeni Otomatik Kesim Sayfası eklendi.
+
+**Phases completed:** 25-27 (3 phases, 5 plans)
+
+**Key accomplishments:**
+
+- Yeni Otomatik Kesim Sayfası (`OtomatikKesimController`) — MainController sidebar navigasyonuna PageIndex IntEnum ile tip-güvenli entegrasyon
+- MachineControl otomatik kesim uzantısı: adet/uzunluk/start/reset/cancel register+bit metotları (register 20 bit işlemleri singleton üzerinden, RMW race önlemi)
+- Numpad ile P/X/L parametre girişi (ondalık destekli) → doğrudan PLC register yazımı (2050/2070/2064, uzunluk ×10 ölçekli)
+- PLC register okuma + tam senkron: D2056 500ms QTimer polling, kesilmiş adet takibi
+- AI/ML mod toggle iki yönlü senkron + AI modunda başlangıç hızlarını kaydet/geri yükle
+- 40.10 onay biti coil/`_set_bit` ile yazımı (register read-modify-write PLC scan cycle'a takıldığı için)
+
+**Stats:**
+
+- 56 files changed (3,784 insertions, 4,187 deletions)
+- 3 phases, 5 plans
+- Timeline: 2026-04-08 → 2026-04-09 (kod), 2026-06-24 doküman senkronu
+
+**Git range:** `docs: start milestone v2.1` (0501340) → `fix: 40.10 onay coil` (42b4fe3)
+
+**Known gaps (tech debt):** Phase 25/26 doğrudan commit'lerle uygulandı (GSD execute akışı dışında); SUMMARY artefaktları ve Phase 26 dizini üretilmedi. Milestone audit çalıştırılmadan kapatıldı.
+
+**What's next:** Sonraki milestone için /gsd-new-milestone
+
+---
+
 ## v2.0 Camera Vision & AI Detection (Shipped: 2026-04-08)
 
 **Delivered:** Kamera tabanlı yapay zeka ile şerit testere diş kırığı, çatlak ve aşınma tespiti sistemi entegre edildi; camera.enabled=false olduğunda sıfır etki ile çalışır.

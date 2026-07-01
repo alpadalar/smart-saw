@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Not started
-stopped_at: Phase 27 context gathered
-last_updated: "2026-04-09T04:56:23.742Z"
-last_activity: 2026-04-09
+milestone: v2.1
+milestone_name: Otomatik Kesim Sayfası
+status: Awaiting next milestone
+stopped_at: v2.1 kodda tamamlandı; planlama dosyaları senkronlandı
+last_updated: "2026-07-01T07:57:16.357Z"
+last_activity: 2026-07-01 — Milestone v2.1 completed and archived
 progress:
-  total_phases: 2
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
   percent: 100
 ---
 
@@ -18,18 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-08)
+See: .planning/PROJECT.md (updated 2026-07-01)
 
 **Core value:** Endustriyel testere operasyonlarinin guvenilir kontrolu ve serit testere sagliginin yapay zeka ile surekli izlenmesi.
-**Current focus:** v2.1 Otomatik Kesim Sayfası — Phase 25: MachineControl Extension
+**Current focus:** Sonraki milestone planlaması (v2.1 arşivlendi 2026-07-01).
 
 ## Current Position
 
-Phase: 27
-Plan: Not started
-Status: Not started
-Progress: [░░░░░░░░░░] 0% (0/3 phases)
-Last activity: 2026-04-09
+Phase: Milestone v2.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-01 — Milestone v2.1 completed and archived
 
 ## Performance Metrics
 
@@ -46,10 +45,11 @@ All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions tab
 **v2.1 key architectural decisions:**
 
 - All register 20 bit operations route through MachineControl singleton (not AsyncModbusService) — prevents read-modify-write race condition
-- D2064/D2065 Double Word written via single FC16 write_registers([low, high]) — Mitsubishi low-word-at-lower-address convention
+- ~~D2064/D2065 Double Word written via single FC16 write_registers([low, high])~~ → **SUPERSEDED (impl 2026-04-09):** L uzunluk single word register 2064'e ×10 ölçekli yazılıyor (commit 8160434), doubleword kullanılmadı
 - D2056 polling via 500ms QTimer on OtomatikKesimController (NOT added to 10Hz async loop) — avoids async pipeline changes
 - RESET button wired to all four signals: pressed/released + touch_pressed/touch_released — factory touchscreen compatibility
 - Sidebar insertion at index 1 uses PageIndex named constants for all lambdas (atomic update)
+- **40.10 onay biti coil/`_set_bit` ile yazılıyor** (impl 2026-04-09): register read-modify-write PLC scan cycle'ına takıldığı için coil yazımına geçildi (commits 9b3fae9, 42b4fe3)
 
 ### Open Verification Items
 
@@ -72,10 +72,17 @@ All decisions from v1.0-v2.0 milestones captured in PROJECT.md Key Decisions tab
 - Milestone v1.6 COMPLETE: 2026-03-16
 - Milestone v2.0 COMPLETE: 2026-04-08
 - Milestone v2.1 STARTED: 2026-04-09 (roadmap created, 3 phases)
+- Milestone v2.1 CODE COMPLETE: 2026-04-09 (Phase 25/26/27 doğrudan commit'lerle uygulandı; Phase 25/26 SUMMARY artefaktları üretilmedi — iş GSD execute akışı dışında yapıldı)
+- 2026-06-24: STATE.md + ROADMAP checkbox'ları gerçek duruma senkronize edildi (kod değişikliği yapılmadı; milestone arşivlenmedi)
+- Milestone v2.1 COMPLETE & ARCHIVED: 2026-07-01 (3 phase, 5 plan; audit'siz kapatıldı — Phase 25/26 SUMMARY artefaktları tech debt olarak kabul edildi)
 
 ## Session Continuity
 
-Last session: 2026-04-09T04:17:09.191Z
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-maincontroller-integration/27-CONTEXT.md
-Next action: /gsd-plan-phase 25
+Last session: 2026-07-01 (v2.1 milestone kapatma ve arşivleme)
+Stopped at: v2.1 arşivlendi; sonraki milestone bekleniyor
+Resume file: (yok)
+Next action: /gsd-new-milestone ile sonraki milestone'u başlat
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

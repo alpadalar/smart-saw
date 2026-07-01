@@ -2,6 +2,36 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v2.1 — Otomatik Kesim Sayfası
+
+**Shipped:** 2026-07-01
+**Phases:** 3 | **Plans:** 5
+
+### What Was Built
+Operatörün P/X/L parametrelerini girip PLC'ye yazabildiği, kesim ilerlemesini canlı izleyip AI/ML modunu yönetebildiği yeni Otomatik Kesim Sayfası. MachineControl otomatik kesim register/bit metotlarıyla genişletildi; numpad girişleri doğrudan PLC register'larına yazılıyor; D2056 polling ile senkron; 40.10 onay biti coil/`_set_bit` ile.
+
+### What Worked
+- Register 20 bit işlemlerini MachineControl singleton üzerinden tekilleştirmek, read-modify-write race'ini baştan önledi.
+- PageIndex IntEnum sidebar entegrasyonunu tip-güvenli ve atomik yaptı; hardcoded index kalmadı.
+- Phase 25 TDD ile yürüdü (RED→GREEN→refactor, 11/11 test, ruff temiz) — sağlam bir temel oldu.
+
+### What Was Inefficient
+- Phase 25/26 işi GSD execute akışının dışında doğrudan commit'lerle yapıldı; SUMMARY artefaktları ve Phase 26 dizini hiç üretilmedi. Bu, `milestone.complete` CLI'sinin yanlış saymasına (2 phase/50%) yol açtı ve MILESTONES/STATE girişlerinin elle düzeltilmesini gerektirdi.
+- PLC yazım stratejisi iterasyonla oturdu: doubleword → single word ×10, register RMW → coil. Donanım davranışı önceden doğrulanmadığı için birden çok düzeltme commit'i gerekti.
+
+### Patterns Established
+- PLC register/bit yazımlarının tek noktadan (MachineControl singleton) geçmesi.
+- Sayfa geçişlerinde PageIndex IntEnum kullanımı (hardcoded integer yok).
+- PLC senkronu için async loop'a dokunmadan widget seviyesinde QTimer polling (500ms).
+
+### Key Lessons
+- GSD execute akışı dışında doğrudan commit'le ilerlemek, artefakt boşlukları ve CLI sayım hataları olarak geri döner — hızlı iterasyonda bile en azından SUMMARY iskeletini bırakmak arşivlemeyi kolaylaştırır.
+- PLC gibi donanım-bağımlı davranışlarda "önce gerçek cihazda doğrula" olmadan tasarım kararları (word order, hold süresi) commit-düzeltme döngüsüne dönüşüyor.
+
+### Cost Observations
+- Kod işi ~2 günde yoğunlaştı (2026-04-08 → 09), doküman senkronu 2026-06-24, arşivleme 2026-07-01.
+- 82 commit / 56 dosya (+3.784 / −4.187).
+
 ## Milestone: v2.0 — Camera Vision & AI Detection
 
 **Shipped:** 2026-04-08
